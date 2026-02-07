@@ -81,6 +81,32 @@ export default function GuidesPage() {
         ))}
       </div>
 
+      {/* Cross-links */}
+      <div className="mt-12 grid gap-4 sm:grid-cols-2">
+        <Link
+          href="/calculateur-roi"
+          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Calculez votre ROI
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Estimez les gains de temps et d&apos;argent avec notre outil gratuit.
+          </p>
+        </Link>
+        <Link
+          href="/comparatif"
+          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Comparatifs outils IA
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Claude vs ChatGPT, n8n vs Make, Agent IA vs Chatbot...
+          </p>
+        </Link>
+      </div>
+
       {/* CTA */}
       <div className="mt-12 rounded-xl border border-primary/20 bg-primary/5 p-6 sm:p-8 text-center">
         <h2 className="text-xl font-bold sm:text-2xl">

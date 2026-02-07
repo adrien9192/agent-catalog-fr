@@ -103,6 +103,32 @@ export default async function MetierPage({ params }: PageProps) {
         </div>
       </div>
 
+      {/* Cross-links */}
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <Link
+          href="/calculateur-roi"
+          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Calculez votre ROI
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Estimez les gains de temps et d&apos;argent avec notre calculateur gratuit.
+          </p>
+        </Link>
+        <Link
+          href="/comparatif"
+          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Comparez les solutions
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Agent IA vs Chatbot, Claude vs ChatGPT, n8n vs Make...
+          </p>
+        </Link>
+      </div>
+
       {/* Newsletter */}
       <div className="mt-8">
         <NewsletterSignup variant="inline" />
