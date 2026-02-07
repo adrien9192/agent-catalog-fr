@@ -17,11 +17,17 @@ export const metadata: Metadata = {
   },
   description:
     "Découvrez des cas d'usage concrets d'Agents IA implantables en entreprise. Stack technique, tutoriels pas-à-pas, et ROI pour chaque solution.",
-  metadataBase: new URL("https://agentcatalog.vercel.app"),
+  metadataBase: new URL("https://agent-catalog-fr.vercel.app"),
   openGraph: {
     locale: "fr_FR",
     type: "website",
     siteName: "AgentCatalog",
+    url: "https://agent-catalog-fr.vercel.app",
+    description:
+      "Découvrez des cas d'usage concrets d'Agents IA implantables en entreprise. Stack technique, tutoriels pas-à-pas, et ROI pour chaque solution.",
+  },
+  twitter: {
+    card: "summary_large_image",
   },
 };
 

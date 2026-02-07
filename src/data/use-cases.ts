@@ -30,7 +30,7 @@ export const useCases: UseCase[] = [
     roiIndicatif:
       "Réduction de 60% du temps de triage. Amélioration de 25% du taux de résolution au premier contact.",
     recommendedStack: [
-      { name: "OpenAI GPT-4o", category: "LLM" },
+      { name: "OpenAI GPT-4.1", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
       { name: "Pinecone", category: "Database" },
       { name: "Vercel", category: "Hosting" },
@@ -38,6 +38,7 @@ export const useCases: UseCase[] = [
     lowCostAlternatives: [
       { name: "Ollama + Llama 3", category: "LLM", isFree: true },
       { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
       { name: "Railway", category: "Hosting", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -123,7 +124,7 @@ Analyse le ticket et classifie-le. Contexte KB: {context}
     ("user", "{ticket_content}")
 ])
 
-llm = ChatOpenAI(model="gpt-4o", temperature=0)
+llm = ChatOpenAI(model="gpt-4.1", temperature=0)
 chain = prompt | llm | parser
 
 def classify_ticket(content: str, context: str) -> TicketClassification:
@@ -233,7 +234,7 @@ def test_billing_ticket():
     roiIndicatif:
       "Augmentation de 35% du taux de conversion MQL→SQL. Réduction de 50% du temps de qualification par lead.",
     recommendedStack: [
-      { name: "Anthropic Claude 3.5", category: "LLM" },
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
       { name: "PostgreSQL", category: "Database" },
       { name: "Vercel", category: "Hosting" },
@@ -242,6 +243,7 @@ def test_billing_ticket():
       { name: "Mistral Large", category: "LLM", isFree: false },
       { name: "SQLite", category: "Database", isFree: true },
       { name: "Ollama + Mixtral", category: "LLM", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
 │  Formulaire │────▶│  Agent LLM   │────▶│    CRM      │
@@ -306,7 +308,7 @@ client = anthropic.Anthropic()
 
 def qualify_lead(lead_data: dict, icp_context: str) -> LeadScore:
     message = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-sonnet-4-5-20250514",
         max_tokens=1024,
         messages=[{
             "role": "user",
@@ -387,7 +389,7 @@ async def process_lead(lead: dict):
     roiIndicatif:
       "Réduction de 70% du temps de pré-sélection. Amélioration de 20% de la qualité des shortlists.",
     recommendedStack: [
-      { name: "OpenAI GPT-4o", category: "LLM" },
+      { name: "OpenAI GPT-4.1", category: "LLM" },
       { name: "LlamaIndex", category: "Orchestration" },
       { name: "Supabase", category: "Database" },
       { name: "Unstructured.io", category: "Other" },
@@ -395,6 +397,7 @@ async def process_lead(lead: dict):
     lowCostAlternatives: [
       { name: "Ollama + Llama 3", category: "LLM", isFree: true },
       { name: "PyPDF2 + docx2txt", category: "Other", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
       { name: "SQLite", category: "Database", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -450,7 +453,7 @@ client = OpenAI()
 
 def extract_profile(cv_text: str) -> CVProfile:
     response = client.beta.chat.completions.parse(
-        model="gpt-4o",
+        model="gpt-4.1",
         messages=[
             {"role": "system", "content": "Extrais le profil structuré de ce CV."},
             {"role": "user", "content": cv_text}
@@ -471,7 +474,7 @@ def extract_profile(cv_text: str) -> CVProfile:
             language: "python",
             code: `def score_candidate(profile: CVProfile, job_requirements: dict) -> dict:
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         messages=[{
             "role": "user",
             "content": f"""Évalue ce candidat par rapport au poste.
@@ -551,7 +554,7 @@ def delete_candidate_data(candidate_id: str):
     roiIndicatif:
       "Gain de 15h/semaine d'analyse manuelle. Détection de signaux concurrentiels 3x plus rapide.",
     recommendedStack: [
-      { name: "Anthropic Claude 3.5", category: "LLM" },
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
       { name: "Firecrawl", category: "Other" },
       { name: "Supabase", category: "Database" },
@@ -560,6 +563,7 @@ def delete_candidate_data(candidate_id: str):
     lowCostAlternatives: [
       { name: "Mistral Large", category: "LLM", isFree: false },
       { name: "BeautifulSoup + Requests", category: "Other", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
       { name: "SQLite", category: "Database", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -629,7 +633,7 @@ client = anthropic.Anthropic()
 
 def analyze_competitor(name: str, content: str, history: str) -> str:
     message = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-sonnet-4-5-20250514",
         max_tokens=2048,
         messages=[{
             "role": "user",
@@ -721,7 +725,7 @@ schedule.every().day.at("07:00").do(daily_scan)`,
     roiIndicatif:
       "Réduction de 80% du temps de production des rapports. Détection de 95% des anomalies comptables.",
     recommendedStack: [
-      { name: "OpenAI GPT-4o", category: "LLM" },
+      { name: "OpenAI GPT-4.1", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
       { name: "PostgreSQL", category: "Database" },
       { name: "Pandas + Plotly", category: "Other" },
@@ -730,6 +734,7 @@ schedule.every().day.at("07:00").do(daily_scan)`,
     lowCostAlternatives: [
       { name: "Ollama + CodeLlama", category: "LLM", isFree: true },
       { name: "DuckDB", category: "Database", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
       { name: "Matplotlib", category: "Other", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -815,7 +820,7 @@ client = OpenAI()
 
 def generate_commentary(data_summary: str, anomalies: list) -> str:
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         messages=[{
             "role": "system",
             "content": """Tu es un analyste financier senior.
@@ -905,7 +910,7 @@ def generate_report_pdf(data: dict, commentary: str, period: str):
     roiIndicatif:
       "Résolution automatique de 45% des incidents L1. Réduction du MTTR de 60%.",
     recommendedStack: [
-      { name: "OpenAI GPT-4o", category: "LLM" },
+      { name: "OpenAI GPT-4.1", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
       { name: "Elasticsearch", category: "Database" },
       { name: "PagerDuty", category: "Monitoring" },
@@ -913,6 +918,7 @@ def generate_report_pdf(data: dict, commentary: str, period: str):
     lowCostAlternatives: [
       { name: "Ollama + Mistral", category: "LLM", isFree: true },
       { name: "Loki + Grafana", category: "Monitoring", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
       { name: "SQLite FTS", category: "Database", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -983,7 +989,7 @@ client = OpenAI()
 
 def diagnose_incident(events: list, runbooks: str) -> dict:
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         messages=[{
             "role": "system",
             "content": f"""Tu es un ingénieur SRE senior.
@@ -1069,13 +1075,14 @@ def execute_runbook(runbook_id: str, params: dict) -> dict:
     roiIndicatif:
       "Production de contenu 4x plus rapide. Réduction de 60% du coût par article.",
     recommendedStack: [
-      { name: "Anthropic Claude 3.5", category: "LLM" },
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
       { name: "Supabase", category: "Database" },
     ],
     lowCostAlternatives: [
       { name: "Ollama + Llama 3", category: "LLM", isFree: true },
       { name: "Mistral API (gratuit 1M tokens)", category: "LLM", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
       { name: "SQLite", category: "Database", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -1125,7 +1132,7 @@ client = anthropic.Anthropic()
 
 def generate_article(brief: dict) -> str:
     message = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-sonnet-4-5-20250514",
         max_tokens=4096,
         messages=[{
             "role": "user",
@@ -1156,7 +1163,7 @@ Structure: titre H1, intro, 3-5 sections H2, conclusion, CTA."""
     for platform in platforms:
         limits = {"linkedin": 3000, "twitter": 280, "instagram": 2200}
         message = client.messages.create(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-sonnet-4-5-20250514",
             max_tokens=500,
             messages=[{
                 "role": "user",
@@ -1187,7 +1194,7 @@ Article: {article[:2000]}"""
 
     # 3. Méta-description SEO
     meta = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-sonnet-4-5-20250514",
         max_tokens=200,
         messages=[{"role": "user", "content": f"Méta-description SEO (155 chars max) pour: {article[:500]}"}]
     )
@@ -1241,7 +1248,7 @@ Article: {article[:2000]}"""
     roiIndicatif:
       "Réduction de 50% des sollicitations RH répétitives. Time-to-productivity amélioré de 30%.",
     recommendedStack: [
-      { name: "OpenAI GPT-4o-mini", category: "LLM" },
+      { name: "OpenAI GPT-4.1-mini", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
       { name: "Pinecone", category: "Database" },
       { name: "Slack API", category: "Other" },
@@ -1249,6 +1256,7 @@ Article: {article[:2000]}"""
     lowCostAlternatives: [
       { name: "Ollama + Phi-3", category: "LLM", isFree: true },
       { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
       { name: "Discord Bot", category: "Other", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -1303,7 +1311,7 @@ memory = ConversationBufferMemory(
 )
 
 qa_chain = ConversationalRetrievalChain.from_llm(
-    llm=ChatOpenAI(model="gpt-4o-mini", temperature=0.3),
+    llm=ChatOpenAI(model="gpt-4.1-mini", temperature=0.3),
     retriever=vectorstore.as_retriever(search_kwargs={"k": 4}),
     memory=memory,
     verbose=True,
@@ -1416,7 +1424,7 @@ def create_onboarding_checklist(department: str, name: str) -> dict:
     roiIndicatif:
       "Réduction de 70% des faux positifs. Détection de 30% de fraudes supplémentaires non capturées par les règles.",
     recommendedStack: [
-      { name: "OpenAI GPT-4o", category: "LLM" },
+      { name: "OpenAI GPT-4.1", category: "LLM" },
       { name: "Apache Kafka", category: "Other" },
       { name: "PostgreSQL + TimescaleDB", category: "Database" },
       { name: "scikit-learn / XGBoost", category: "Other" },
@@ -1425,6 +1433,7 @@ def create_onboarding_checklist(department: str, name: str) -> dict:
     lowCostAlternatives: [
       { name: "Ollama + Llama 3", category: "LLM", isFree: true },
       { name: "Redis Streams", category: "Other", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
       { name: "DuckDB", category: "Database", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -1516,7 +1525,7 @@ def analyze_with_llm(transaction: dict, ml_score: float) -> dict:
     recent_transactions = get_recent_transactions(transaction["customer_id"])
 
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         messages=[{
             "role": "system",
             "content": """Analyste fraude expert. Évalue cette transaction.
@@ -1546,7 +1555,7 @@ Verdict: légitime/suspecte/frauduleuse + explication."""
             code: `def generate_sar_report(transaction: dict, analysis: dict) -> str:
     """Génère un rapport SAR (Suspicious Activity Report)"""
     report = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4.1",
         messages=[{
             "role": "user",
             "content": f"""Génère un rapport SAR conforme LCB-FT.
@@ -1613,7 +1622,7 @@ def log_decision(transaction_id: str, decision: str, analysis: str):
     roiIndicatif:
       "Réduction de 25% des coûts d'achat. Cycle d'achat raccourci de 40%.",
     recommendedStack: [
-      { name: "Anthropic Claude 3.5", category: "LLM" },
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
       { name: "PostgreSQL", category: "Database" },
       { name: "Unstructured.io", category: "Other" },
@@ -1621,6 +1630,7 @@ def log_decision(transaction_id: str, decision: str, analysis: str):
     lowCostAlternatives: [
       { name: "Mistral Large", category: "LLM", isFree: false },
       { name: "PyPDF2", category: "Other", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
       { name: "SQLite", category: "Database", isFree: true },
     ],
     architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
@@ -1655,7 +1665,7 @@ def extract_quote_data(pdf_path: str) -> dict:
     text = "\\n".join([str(el) for el in elements])
 
     message = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-sonnet-4-5-20250514",
         max_tokens=2048,
         messages=[{
             "role": "user",
@@ -1679,7 +1689,7 @@ qté, prix_unitaire, total), conditions, délai livraison."""
             language: "python",
             code: `def compare_quotes(quotes: list, criteria_weights: dict) -> dict:
     message = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-sonnet-4-5-20250514",
         max_tokens=2048,
         messages=[{
             "role": "user",
@@ -1739,7 +1749,7 @@ async def submit_for_approval(purchase_request: dict):
     total_savings = sum(p.get("savings", 0) for p in purchases)
 
     report = client.messages.create(
-        model="claude-sonnet-4-5-20250929",
+        model="claude-sonnet-4-5-20250514",
         max_tokens=1024,
         messages=[{
             "role": "user",
