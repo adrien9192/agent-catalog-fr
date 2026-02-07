@@ -169,8 +169,11 @@ function DemandeContent() {
               disabled={status === "loading"}
               className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {status === "loading" ? "Envoi en cours..." : "Envoyer ma demande"}
+              {status === "loading" ? "Envoi en cours..." : "Recevoir mon workflow sur mesure"}
             </button>
+            <p className="text-xs text-muted-foreground text-center">
+              Réponse sous 48h. Workflow livré sous 5 jours ouvrés.
+            </p>
           </form>
         </CardContent>
       </Card>

@@ -48,12 +48,14 @@ export default function HomePage() {
               Gratuit et open-source
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Automatisez votre entreprise{" "}
-              <span className="gradient-text">avec des Agents IA</span>
+              Déployez un Agent IA{" "}
+              <span className="gradient-text">en quelques heures,</span>
+              <br className="hidden sm:block" />
+              pas en 6 mois
             </h1>
             <p className="mt-4 text-lg text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
-              Des workflows IA prêts à déployer avec tutoriel complet, stack technique
-              et estimation de ROI. Gagnez du temps dès la première semaine.
+              10 workflows IA documentés avec tutoriel pas-à-pas, stack technique
+              et estimation de ROI. Prêts à copier et déployer. Gratuit.
             </p>
 
             {/* CTA pills */}

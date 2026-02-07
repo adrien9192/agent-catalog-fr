@@ -55,7 +55,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
               className="flex-1 rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <Button type="submit" disabled={status === "loading"} size="default">
-              {status === "loading" ? "..." : "C'est gratuit"}
+              {status === "loading" ? "..." : "Recevoir mon workflow"}
             </Button>
           </form>
         )}
@@ -123,7 +123,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
               className="flex-1 min-w-0 rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <Button type="submit" disabled={status === "loading"}>
-              {status === "loading" ? "Inscription..." : "S'inscrire gratuitement"}
+              {status === "loading" ? "Inscription..." : "Recevoir 1 workflow/jour — gratuit"}
             </Button>
           </form>
         )}
