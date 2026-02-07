@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { useCases } from "@/data/use-cases";
 
 const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
-const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || "2", 10);
-const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "newsletter@agentcatalog.fr";
+const BREVO_LIST_ID = parseInt(process.env.BREVO_LIST_ID || "3", 10);
+const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "adrienlaine91@gmail.com";
 const BREVO_SENDER_NAME = process.env.BREVO_SENDER_NAME || "AgentCatalog";
 const CRON_SECRET = process.env.CRON_SECRET || "";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://agent-catalog-fr.vercel.app";
