@@ -13922,4 +13922,2813 @@ def test_detection_doublon():
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
+  {
+    slug: "agent-veille-concurrentielle-automatisee",
+    title: "Agent de Veille Concurrentielle Automatisée",
+    subtitle: "Orchestrez une surveillance multi-sources en continu de vos concurrents avec alertes intelligentes et rapports stratégiques",
+    problem:
+      "Les équipes marketing et stratégie n'ont pas les moyens de surveiller en continu l'ensemble des mouvements concurrentiels : lancements produits, changements de prix, campagnes publicitaires, recrutements clés, brevets déposés et partenariats annoncés. La veille manuelle est fragmentée, réactive et ne couvre qu'une fraction des sources pertinentes. Les décideurs reçoivent des rapports obsolètes qui ne permettent pas d'anticiper les mouvements du marché. Les signaux faibles sont systématiquement manqués car noyés dans le bruit informationnel.",
+    value:
+      "Un agent IA orchestre un réseau de collecteurs automatisés qui scrapent en continu les sites concurrents, flux RSS, réseaux sociaux, bases de brevets, offres d'emploi et communiqués de presse. Un pipeline NLP analyse chaque source, détecte les changements significatifs, les classifie par type (prix, produit, stratégie, RH) et niveau d'impact, puis génère des alertes en temps réel et des rapports de synthèse hebdomadaires avec recommandations stratégiques actionnables.",
+    inputs: [
+      "Liste des concurrents avec URLs de sites web, pages produits et réseaux sociaux",
+      "Flux RSS et newsletters sectorielles",
+      "Bases de brevets (INPI, EPO, USPTO)",
+      "Sites d'offres d'emploi (LinkedIn, Indeed, Welcome to the Jungle)",
+      "Critères de surveillance pondérés par priorité stratégique",
+      "Historique de veille et rapports précédents",
+    ],
+    outputs: [
+      "Alertes temps réel sur changements critiques (prix, lancements, partenariats)",
+      "Rapport de synthèse hebdomadaire avec scoring d'impact",
+      "Tableau comparatif des positionnements prix actualisé",
+      "Cartographie des mouvements RH clés (recrutements, départs)",
+      "Analyse des tendances brevets et innovation par concurrent",
+      "Recommandations stratégiques contextualisées",
+    ],
+    risks: [
+      "Violation des CGU lors du scraping de sites concurrents",
+      "Faux positifs sur la détection de changements mineurs interprétés comme stratégiques",
+      "Dépendance à des sources web instables (changements de structure HTML)",
+      "Biais de confirmation dans l'interprétation LLM des signaux faibles",
+      "Surcharge informationnelle si les seuils d'alerte sont mal calibrés",
+    ],
+    roiIndicatif:
+      "Réduction de 75% du temps analyste consacré à la veille manuelle. Détection des mouvements concurrentiels 3x plus rapide. Couverture de sources multipliée par 10.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Supabase", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+      { name: "Firecrawl", category: "Other" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral Large", category: "LLM", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "SQLite + ChromaDB", category: "Database", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+      { name: "Scrapy", category: "Other", isFree: true },
+    ],
+    architectureDiagram: `┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  Scraper     │  │  RSS/API     │  │  Réseaux     │
+│  Web Sites   │  │  Collector   │  │  Sociaux     │
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       │                 │                 │
+       └─────────┬───────┴─────────┬───────┘
+                 │                 │
+          ┌──────▼───────┐  ┌─────▼────────┐
+          │  Pipeline    │  │  Vector DB   │
+          │  NLP/LLM     │  │  (Historique)│
+          └──────┬───────┘  └──────────────┘
+                 │
+          ┌──────▼───────┐
+          │  Alertes +   │
+          │  Rapports    │
+          └──────────────┘`,
+    tutorial: [
+      {
+        title: "Configuration de l'infrastructure de collecte",
+        content:
+          "Mettez en place le système de collecte multi-sources. Configurez Firecrawl pour le scraping web structuré, les connecteurs RSS, et les API de réseaux sociaux. Chaque source est normalisée dans un format commun avant analyse.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install langchain anthropic supabase firecrawl-py feedparser tweepy python-dotenv schedule`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_KEY=eyJ...
+FIRECRAWL_API_KEY=fc-...
+TWITTER_BEARER_TOKEN=...`,
+            filename: ".env",
+          },
+          {
+            language: "python",
+            code: `import feedparser
+from firecrawl import FirecrawlApp
+from dataclasses import dataclass
+from datetime import datetime
+
+@dataclass
+class SourceItem:
+    source_type: str  # web, rss, social, patent
+    competitor: str
+    url: str
+    title: str
+    content: str
+    collected_at: str
+    raw_metadata: dict
+
+class MultiSourceCollector:
+    def __init__(self):
+        self.firecrawl = FirecrawlApp()
+        self.sources_config = {}
+
+    def collect_web_pages(self, competitor: str, urls: list[str]) -> list[SourceItem]:
+        """Scrape les pages web des concurrents via Firecrawl."""
+        items = []
+        for url in urls:
+            result = self.firecrawl.scrape_url(url, params={"formats": ["markdown"]})
+            items.append(SourceItem(
+                source_type="web",
+                competitor=competitor,
+                url=url,
+                title=result.get("metadata", {}).get("title", ""),
+                content=result.get("markdown", ""),
+                collected_at=datetime.utcnow().isoformat(),
+                raw_metadata=result.get("metadata", {}),
+            ))
+        return items
+
+    def collect_rss_feeds(self, competitor: str, feed_urls: list[str]) -> list[SourceItem]:
+        """Collecte les derniers articles via flux RSS."""
+        items = []
+        for feed_url in feed_urls:
+            feed = feedparser.parse(feed_url)
+            for entry in feed.entries[:10]:
+                items.append(SourceItem(
+                    source_type="rss",
+                    competitor=competitor,
+                    url=entry.get("link", ""),
+                    title=entry.get("title", ""),
+                    content=entry.get("summary", ""),
+                    collected_at=datetime.utcnow().isoformat(),
+                    raw_metadata={"published": entry.get("published", "")},
+                ))
+        return items`,
+            filename: "collector.py",
+          },
+        ],
+      },
+      {
+        title: "Détection de changements et analyse NLP",
+        content:
+          "Implémentez le moteur de détection de changements qui compare les collectes successives et identifie les modifications significatives. Le LLM analyse le contexte de chaque changement pour le classifier et évaluer son impact stratégique.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from anthropic import Anthropic
+from supabase import create_client
+import json
+import hashlib
+import os
+
+client = Anthropic()
+supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+
+ANALYSIS_PROMPT = """Tu es un analyste en intelligence concurrentielle pour le marché français.
+
+Analyse le changement détecté ci-dessous et produis un rapport structuré.
+
+## Concurrent: {competitor}
+## Source: {source_type}
+## Contenu précédent:
+{previous_content}
+
+## Contenu actuel:
+{current_content}
+
+## Consignes:
+1. Identifie la nature du changement (prix, produit, stratégie, RH, communication, partenariat)
+2. Évalue l'impact stratégique de 1 (mineur) à 5 (critique)
+3. Explique les implications pour notre entreprise
+4. Suggère des actions concrètes à envisager
+
+Retourne un JSON avec: change_type, impact_score, summary, implications, recommended_actions"""
+
+def detect_changes(item: dict) -> dict | None:
+    """Compare avec la version précédente et détecte les changements."""
+    content_hash = hashlib.sha256(item["content"].encode()).hexdigest()
+    previous = supabase.table("veille_snapshots").select("*").eq(
+        "url", item["url"]
+    ).order("collected_at", desc=True).limit(1).execute()
+
+    if previous.data and previous.data[0]["content_hash"] == content_hash:
+        return None  # Pas de changement
+
+    # Sauvegarder le nouveau snapshot
+    supabase.table("veille_snapshots").insert({
+        "url": item["url"],
+        "competitor": item["competitor"],
+        "content": item["content"],
+        "content_hash": content_hash,
+        "collected_at": item["collected_at"],
+    }).execute()
+
+    if not previous.data:
+        return None  # Premier snapshot, pas de comparaison possible
+
+    # Analyser le changement avec le LLM
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=1500,
+        messages=[{
+            "role": "user",
+            "content": ANALYSIS_PROMPT.format(
+                competitor=item["competitor"],
+                source_type=item["source_type"],
+                previous_content=previous.data[0]["content"][:3000],
+                current_content=item["content"][:3000],
+            ),
+        }],
+    )
+    return json.loads(response.content[0].text)`,
+            filename: "change_detector.py",
+          },
+        ],
+      },
+      {
+        title: "Système d'alertes et notifications",
+        content:
+          "Configurez le système d'alertes intelligentes qui notifie les bonnes personnes selon le type et l'impact du changement détecté. Les alertes critiques (impact >= 4) déclenchent une notification immédiate. Les changements mineurs sont agrégés dans le rapport hebdomadaire.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+from datetime import datetime
+
+class AlertManager:
+    def __init__(self, slack_webhook_url: str, email_config: dict):
+        self.slack_webhook = slack_webhook_url
+        self.email_config = email_config
+        self.alert_rules = {
+            "prix": {"threshold": 3, "channels": ["slack", "email"], "mentions": ["@pricing-team"]},
+            "produit": {"threshold": 3, "channels": ["slack"], "mentions": ["@product-team"]},
+            "stratégie": {"threshold": 4, "channels": ["slack", "email"], "mentions": ["@direction"]},
+            "RH": {"threshold": 2, "channels": ["slack"], "mentions": ["@rh-veille"]},
+            "partenariat": {"threshold": 3, "channels": ["slack", "email"], "mentions": ["@bizdev"]},
+        }
+
+    def process_alert(self, change: dict, competitor: str):
+        """Traite un changement détecté et envoie les alertes appropriées."""
+        change_type = change["change_type"]
+        impact = change["impact_score"]
+        rule = self.alert_rules.get(change_type, {"threshold": 4, "channels": ["slack"], "mentions": []})
+
+        if impact < rule["threshold"]:
+            # Stocker pour le rapport hebdomadaire
+            supabase.table("veille_weekly_buffer").insert({
+                "competitor": competitor,
+                "change": change,
+                "created_at": datetime.utcnow().isoformat(),
+            }).execute()
+            return
+
+        # Alerte immédiate
+        message = self._format_alert(change, competitor)
+        if "slack" in rule["channels"]:
+            self._send_slack(message, rule["mentions"])
+        if "email" in rule["channels"]:
+            self._send_email(message, change_type)
+
+    def _format_alert(self, change: dict, competitor: str) -> str:
+        impact_emoji = "🔴" if change["impact_score"] >= 4 else "🟡"
+        return (
+            f"{impact_emoji} *Alerte Veille Concurrentielle*\\n"
+            f"*Concurrent:* {competitor}\\n"
+            f"*Type:* {change['change_type']} | *Impact:* {change['impact_score']}/5\\n"
+            f"*Résumé:* {change['summary']}\\n"
+            f"*Actions recommandées:*\\n"
+            + "\\n".join(f"• {a}" for a in change["recommended_actions"])
+        )
+
+    def _send_slack(self, message: str, mentions: list[str]):
+        mention_str = " ".join(mentions)
+        requests.post(self.slack_webhook, json={
+            "text": f"{mention_str}\\n{message}",
+        })`,
+            filename: "alert_manager.py",
+          },
+        ],
+      },
+      {
+        title: "Génération de rapports stratégiques hebdomadaires",
+        content:
+          "Chaque semaine, l'agent génère un rapport de synthèse consolidant tous les changements détectés, les tendances identifiées et les recommandations stratégiques. Le rapport est structuré par concurrent et par thématique, avec un scoring d'importance.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `WEEKLY_REPORT_PROMPT = """Tu es un directeur de veille stratégique dans un cabinet de conseil français.
+
+Génère un rapport de veille concurrentielle hebdomadaire à partir des changements détectés.
+
+## Changements de la semaine:
+{changes_json}
+
+## Consignes:
+1. Structure le rapport par concurrent puis par thématique
+2. Identifie les 3 tendances principales de la semaine
+3. Mets en avant les signaux faibles qui méritent une surveillance renforcée
+4. Propose 5 recommandations stratégiques actionnables et priorisées
+5. Attribue un score de menace global (1-10) pour chaque concurrent
+6. Rédige en français professionnel, ton analytique et factuel
+
+Retourne le rapport en Markdown structuré."""
+
+def generate_weekly_report() -> str:
+    """Génère le rapport hebdomadaire de veille concurrentielle."""
+    from datetime import datetime, timedelta
+
+    # Récupérer les changements de la semaine
+    week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat()
+    changes = supabase.table("veille_weekly_buffer").select("*").gte(
+        "created_at", week_ago
+    ).execute()
+
+    # Récupérer aussi les alertes immédiates de la semaine
+    alerts = supabase.table("veille_alerts").select("*").gte(
+        "created_at", week_ago
+    ).execute()
+
+    all_changes = [c["change"] for c in changes.data] + [a["change"] for a in alerts.data]
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4000,
+        messages=[{
+            "role": "user",
+            "content": WEEKLY_REPORT_PROMPT.format(
+                changes_json=json.dumps(all_changes, ensure_ascii=False, indent=2)
+            ),
+        }],
+    )
+
+    report_md = response.content[0].text
+
+    # Sauvegarder le rapport
+    supabase.table("veille_reports").insert({
+        "report_date": datetime.utcnow().date().isoformat(),
+        "content_md": report_md,
+        "changes_count": len(all_changes),
+        "created_at": datetime.utcnow().isoformat(),
+    }).execute()
+
+    return report_md`,
+            filename: "weekly_report.py",
+          },
+        ],
+      },
+      {
+        title: "Orchestration et scheduling",
+        content:
+          "Mettez en place le scheduler qui orchestre les collectes à intervalles réguliers. Les pages web sont scrapées quotidiennement, les flux RSS toutes les 4 heures, et le rapport hebdomadaire est généré chaque lundi matin. Déployez l'ensemble sur Railway ou Vercel avec des cron jobs.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import schedule
+import time
+from collector import MultiSourceCollector
+from change_detector import detect_changes
+from alert_manager import AlertManager
+from weekly_report import generate_weekly_report
+
+collector = MultiSourceCollector()
+alert_mgr = AlertManager(
+    slack_webhook_url=os.getenv("SLACK_WEBHOOK_URL"),
+    email_config={"smtp_host": "smtp.gmail.com", "port": 587},
+)
+
+COMPETITORS = {
+    "Concurrent A": {
+        "web_urls": ["https://concurrent-a.fr/produits", "https://concurrent-a.fr/tarifs"],
+        "rss_feeds": ["https://concurrent-a.fr/blog/feed"],
+    },
+    "Concurrent B": {
+        "web_urls": ["https://concurrent-b.fr/offres"],
+        "rss_feeds": ["https://concurrent-b.fr/actualites/rss"],
+    },
+}
+
+def run_collection_cycle():
+    """Exécute un cycle complet de collecte et analyse."""
+    for competitor, sources in COMPETITORS.items():
+        # Collecter les pages web
+        items = collector.collect_web_pages(competitor, sources["web_urls"])
+        items += collector.collect_rss_feeds(competitor, sources["rss_feeds"])
+
+        # Détecter et analyser les changements
+        for item in items:
+            change = detect_changes(item.__dict__)
+            if change:
+                alert_mgr.process_alert(change, competitor)
+                print(f"[CHANGE] {competitor}: {change['summary']}")
+
+# Programmer les collectes
+schedule.every(4).hours.do(run_collection_cycle)
+schedule.every().monday.at("08:00").do(generate_weekly_report)
+
+if __name__ == "__main__":
+    print("Démarrage de l'agent de veille concurrentielle automatisée...")
+    run_collection_cycle()  # Première exécution immédiate
+    while True:
+        schedule.run_pending()
+        time.sleep(60)`,
+            filename: "main.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données collectées peuvent contenir des informations personnelles (noms de dirigeants, profils LinkedIn). Appliquer un filtre de pseudonymisation avant stockage long terme. Les données brutes de scraping sont purgées après extraction des insights. Conformité RGPD assurée car seules des données publiquement accessibles sont collectées.",
+      auditLog: "Chaque collecte est loguée avec : timestamp, source URL, concurrent, hash du contenu, changements détectés, score d'impact attribué, alertes déclenchées. Rétention 12 mois avec archivage automatique des rapports hebdomadaires.",
+      humanInTheLoop: "Les changements classifiés avec un impact >= 4 nécessitent une validation humaine avant diffusion au comité de direction. Les analystes peuvent corriger la classification et le scoring via un dashboard de modération. Les recommandations stratégiques du rapport hebdomadaire sont relues par le responsable veille avant envoi.",
+      monitoring: "Dashboard Langfuse : nombre de sources collectées par cycle, taux de changements détectés, distribution des scores d'impact, temps de traitement par source, coût LLM par cycle de collecte. Alertes si le taux de succès du scraping descend sous 90% ou si aucun changement n'est détecté pendant 72h.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (toutes les 4h) -> Node HTTP Request (Firecrawl scraping) -> Node RSS Feed Reader -> Node Code (normalisation multi-sources) -> Node Supabase (comparaison avec snapshots précédents) -> Node IF (changement détecté ?) -> Node HTTP Request (API Claude - analyse d'impact) -> Node Switch (impact >= 4 ?) -> Branch haute priorité : Node Slack (alerte immédiate) + Node Email -> Branch basse priorité : Node Supabase (buffer hebdomadaire) -> Cron hebdomadaire : Node HTTP Request (génération rapport) -> Node Email (envoi rapport).",
+      nodes: ["Cron Trigger (4h)", "HTTP Request (Firecrawl)", "RSS Feed Reader", "Code (normalisation)", "Supabase (snapshots)", "IF (changement détecté)", "HTTP Request (Claude API)", "Switch (impact score)", "Slack (alerte)", "Email (notification)", "Supabase (buffer)", "Cron Monday (rapport)"],
+      triggerType: "Cron (toutes les 4 heures + hebdomadaire lundi 8h)",
+    },
+    estimatedTime: "6-10h",
+    difficulty: "Moyen",
+    sectors: ["Services", "E-commerce", "Industrie", "Tech"],
+    metiers: ["Marketing Strategique", "Direction Générale"],
+    functions: ["Marketing", "Stratégie"],
+    metaTitle: "Agent IA de Veille Concurrentielle Automatisée — Guide Complet",
+    metaDescription:
+      "Déployez un agent IA de surveillance concurrentielle multi-sources avec détection de changements, alertes intelligentes et rapports stratégiques hebdomadaires. Tutoriel complet.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-notes-frais-ocr-conformite",
+    title: "Agent de Gestion des Notes de Frais avec OCR et Conformité",
+    subtitle: "Automatisez l'extraction OCR, la vérification de conformité et l'imputation comptable des notes de frais en temps réel",
+    problem:
+      "Les services comptabilité des ETI et grands groupes français traitent des milliers de notes de frais mensuellement. La saisie manuelle des justificatifs génère en moyenne 15% d'erreurs de montant ou de catégorisation. Les contrôles de conformité à la politique de dépenses sont inconsistants : certains dépassements passent inaperçus tandis que des dépenses légitimes sont bloquées. Les délais de remboursement dépassant 3 semaines impactent la satisfaction des collaborateurs. La réconciliation avec les relevés de cartes bancaires corporate mobilise 2 ETP à temps plein dans les structures de plus de 500 salariés.",
+    value:
+      "Un agent IA équipé d'OCR avancé extrait automatiquement les données de chaque justificatif (montant, date, fournisseur, TVA), les croise avec le relevé de carte corporate, vérifie la conformité en temps réel avec la politique de dépenses paramétrable, détecte les anomalies et doublons, impute comptablement chaque ligne, et soumet le dossier complet pour validation managériale. Le délai de traitement chute de 21 jours à 48 heures.",
+    inputs: [
+      "Photos ou scans de justificatifs (tickets, factures, reçus de restaurant)",
+      "Relevés de cartes bancaires corporate (CSV ou API bancaire)",
+      "Politique de dépenses paramétrable (plafonds par catégorie, par grade, par zone)",
+      "Plan comptable avec axes analytiques (centre de coût, projet, activité)",
+      "Données collaborateur (service, grade, lieu d'affectation, supérieur hiérarchique)",
+      "Historique des notes de frais précédentes (détection patterns)",
+    ],
+    outputs: [
+      "Extraction structurée de chaque justificatif (montant HT/TTC, TVA, date, fournisseur)",
+      "Rapport de conformité avec alertes sur les dépassements",
+      "Imputation comptable automatique (compte, centre de coût, axe analytique)",
+      "Score de risque fraude par note de frais (0-100)",
+      "Dossier complet réconcilié prêt pour validation managériale",
+      "Tableau de bord consolidé des dépenses par service/projet",
+    ],
+    risks: [
+      "Erreurs OCR sur les justificatifs de mauvaise qualité (tickets thermiques effacés)",
+      "Faux positifs de fraude créant de la friction avec les collaborateurs",
+      "Mauvaise imputation comptable impactant les clôtures mensuelles",
+      "Non-conformité fiscale si la TVA récupérable est mal calculée",
+      "Dépendance au LLM pour des décisions financières auditables",
+    ],
+    roiIndicatif:
+      "Réduction de 80% du temps de traitement comptable. Taux d'erreur de saisie divisé par 10. Délai de remboursement réduit de 21 jours à 48h. Détection de 95% des anomalies et doublons.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Supabase", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+      { name: "Azure Document Intelligence", category: "Other" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "PostgreSQL", category: "Database", isFree: true },
+      { name: "Tesseract OCR", category: "Other", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Upload      │────▶│  OCR Engine  │────▶│  Agent LLM   │
+│  Justificatif│     │  (Extraction)│     │  (Conformité)│
+└──────────────┘     └──────────────┘     └──────┬───────┘
+                                                  │
+┌──────────────┐     ┌──────────────┐     ┌──────▼───────┐
+│  Relevé CB   │────▶│  Réconcil.   │────▶│  Imputation  │
+│  Corporate   │     │  Automatique │     │  Comptable   │
+└──────────────┘     └──────────────┘     └──────┬───────┘
+                                                  │
+                                           ┌──────▼───────┐
+                                           │  Validation  │
+                                           │  Manager     │
+                                           └──────────────┘`,
+    tutorial: [
+      {
+        title: "Configuration OCR et extraction de justificatifs",
+        content:
+          "Mettez en place le pipeline OCR qui transforme les photos de justificatifs en données structurées. Azure Document Intelligence offre une extraction de haute qualité pour les tickets et factures français, avec reconnaissance automatique des champs clés (montant, TVA, date, fournisseur).",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install langchain openai supabase azure-ai-documentintelligence python-dotenv pillow`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `from azure.ai.documentintelligence import DocumentIntelligenceClient
+from azure.core.credentials import AzureKeyCredential
+from dataclasses import dataclass
+from decimal import Decimal
+import os
+
+@dataclass
+class ExtractedReceipt:
+    merchant_name: str
+    date: str
+    total_ttc: Decimal
+    total_ht: Decimal | None
+    tva_amount: Decimal | None
+    tva_rate: str | None
+    currency: str
+    items: list[dict]
+    confidence_score: float
+    raw_text: str
+
+class ReceiptOCR:
+    def __init__(self):
+        self.client = DocumentIntelligenceClient(
+            endpoint=os.getenv("AZURE_DOC_ENDPOINT"),
+            credential=AzureKeyCredential(os.getenv("AZURE_DOC_KEY")),
+        )
+
+    def extract_receipt(self, image_bytes: bytes) -> ExtractedReceipt:
+        """Extrait les données structurées d'un justificatif."""
+        poller = self.client.begin_analyze_document(
+            "prebuilt-receipt",
+            body=image_bytes,
+            content_type="application/octet-stream",
+        )
+        result = poller.result()
+        receipt = result.documents[0] if result.documents else None
+
+        if not receipt:
+            raise ValueError("Aucun justificatif détecté dans l'image")
+
+        fields = receipt.fields
+        return ExtractedReceipt(
+            merchant_name=self._get_field(fields, "MerchantName", "Inconnu"),
+            date=self._get_field(fields, "TransactionDate", ""),
+            total_ttc=Decimal(str(self._get_field(fields, "Total", 0))),
+            total_ht=self._calc_ht(fields),
+            tva_amount=self._get_tva(fields),
+            tva_rate=self._detect_tva_rate(fields),
+            currency=self._get_field(fields, "Currency", "EUR"),
+            items=self._extract_items(fields),
+            confidence_score=receipt.confidence,
+            raw_text=result.content or "",
+        )
+
+    def _get_field(self, fields, name, default):
+        f = fields.get(name)
+        return f.value if f else default
+
+    def _calc_ht(self, fields):
+        total = fields.get("Total")
+        tax = fields.get("TotalTax")
+        if total and tax:
+            return Decimal(str(total.value)) - Decimal(str(tax.value))
+        return None
+
+    def _get_tva(self, fields):
+        tax = fields.get("TotalTax")
+        return Decimal(str(tax.value)) if tax else None
+
+    def _detect_tva_rate(self, fields):
+        ht = self._calc_ht(fields)
+        tva = self._get_tva(fields)
+        if ht and tva and ht > 0:
+            rate = (tva / ht * 100).quantize(Decimal("0.1"))
+            if rate >= 19 and rate <= 21:
+                return "20%"
+            elif rate >= 9 and rate <= 11:
+                return "10%"
+            elif rate >= 4.5 and rate <= 6:
+                return "5.5%"
+        return None
+
+    def _extract_items(self, fields):
+        items_field = fields.get("Items")
+        if not items_field:
+            return []
+        return [{"description": i.value.get("Description", {}).get("value", ""),
+                 "amount": str(i.value.get("TotalPrice", {}).get("value", ""))}
+                for i in items_field.value]`,
+            filename: "receipt_ocr.py",
+          },
+        ],
+      },
+      {
+        title: "Moteur de conformité et politique de dépenses",
+        content:
+          "Implémentez le moteur de règles qui vérifie chaque note de frais contre la politique de dépenses de l'entreprise. Les règles sont paramétrables par catégorie, grade du collaborateur et zone géographique. Le LLM intervient pour les cas ambigus que les règles déterministes ne couvrent pas.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+from dataclasses import dataclass
+from decimal import Decimal
+import json
+
+client = OpenAI()
+
+@dataclass
+class ComplianceResult:
+    is_compliant: bool
+    violations: list[str]
+    warnings: list[str]
+    fraud_score: int  # 0-100
+    auto_approved: bool
+    needs_manager_review: bool
+
+# Politique de dépenses paramétrable
+EXPENSE_POLICY = {
+    "restaurant": {
+        "plafond_par_personne": {"standard": 25, "manager": 40, "directeur": 60},
+        "requires_guest_list": True,
+        "max_alcohol_pct": 20,
+    },
+    "transport": {
+        "taxi_max_km": 50,
+        "train_class": {"standard": 2, "manager": 1, "directeur": 1},
+        "avion_requires_approval": True,
+    },
+    "hotel": {
+        "plafond_nuit": {"paris": 180, "province": 130, "etranger": 200},
+        "max_consecutive_nights": 5,
+    },
+    "fournitures": {"plafond_mensuel": 100},
+}
+
+def check_compliance(receipt: dict, employee: dict, category: str) -> ComplianceResult:
+    """Vérifie la conformité d'une dépense avec la politique."""
+    violations = []
+    warnings = []
+    fraud_score = 0
+    grade = employee.get("grade", "standard")
+
+    policy = EXPENSE_POLICY.get(category, {})
+
+    # Vérification des plafonds
+    if category == "restaurant":
+        plafond = policy["plafond_par_personne"].get(grade, 25)
+        nb_convives = receipt.get("nb_convives", 1)
+        max_amount = Decimal(str(plafond * nb_convives))
+        if receipt["total_ttc"] > max_amount:
+            violations.append(
+                f"Dépassement plafond restaurant: {receipt['total_ttc']}EUR > "
+                f"{max_amount}EUR ({nb_convives} convive(s) x {plafond}EUR)"
+            )
+        if policy["requires_guest_list"] and not receipt.get("guest_list"):
+            warnings.append("Liste des convives manquante pour le repas d'affaires")
+
+    elif category == "hotel":
+        zone = employee.get("zone", "province")
+        plafond = Decimal(str(policy["plafond_nuit"].get(zone, 130)))
+        if receipt["total_ttc"] > plafond:
+            violations.append(
+                f"Dépassement plafond hôtel ({zone}): {receipt['total_ttc']}EUR > {plafond}EUR/nuit"
+            )
+
+    # Détection doublons et anomalies
+    fraud_indicators = detect_fraud_indicators(receipt, employee)
+    fraud_score = fraud_indicators["score"]
+    if fraud_score > 60:
+        warnings.append(f"Score de risque fraude élevé: {fraud_score}/100")
+
+    is_compliant = len(violations) == 0
+    auto_approved = is_compliant and fraud_score < 30
+    needs_review = not is_compliant or fraud_score >= 40
+
+    return ComplianceResult(
+        is_compliant=is_compliant,
+        violations=violations,
+        warnings=warnings,
+        fraud_score=fraud_score,
+        auto_approved=auto_approved,
+        needs_manager_review=needs_review,
+    )
+
+def detect_fraud_indicators(receipt: dict, employee: dict) -> dict:
+    """Détecte les indicateurs de fraude potentielle via LLM."""
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0,
+        response_format={"type": "json_object"},
+        messages=[{
+            "role": "system",
+            "content": "Tu es un auditeur financier spécialisé en détection de fraude sur notes de frais.",
+        }, {
+            "role": "user",
+            "content": f"""Analyse cette dépense pour détecter des indicateurs de fraude:
+- Montant: {receipt['total_ttc']}EUR
+- Fournisseur: {receipt.get('merchant_name', 'N/A')}
+- Date: {receipt.get('date', 'N/A')} (jour: {receipt.get('day_of_week', 'N/A')})
+- Catégorie: {receipt.get('category', 'N/A')}
+- Collaborateur grade: {employee.get('grade', 'N/A')}
+- Montant arrondi: {'oui' if float(receipt['total_ttc']) % 1 == 0 else 'non'}
+
+Retourne un JSON: score (0-100), indicators (liste de strings), explanation (string)""",
+        }],
+    )
+    return json.loads(response.choices[0].message.content)`,
+            filename: "compliance_engine.py",
+          },
+        ],
+      },
+      {
+        title: "Réconciliation bancaire automatique",
+        content:
+          "Le module de réconciliation croise automatiquement les justificatifs soumis avec les transactions du relevé de carte corporate. Il détecte les dépenses non justifiées et les justificatifs orphelins, en utilisant un matching intelligent par montant, date et fournisseur.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import csv
+from datetime import datetime, timedelta
+from decimal import Decimal
+from dataclasses import dataclass
+
+@dataclass
+class ReconciliationResult:
+    matched: list[dict]       # Justificatif <-> transaction appariés
+    unmatched_receipts: list[dict]  # Justificatifs sans transaction
+    unmatched_transactions: list[dict]  # Transactions sans justificatif
+    match_confidence: dict    # ID -> score de confiance
+
+class BankReconciler:
+    def __init__(self, tolerance_amount: Decimal = Decimal("0.50"),
+                 tolerance_days: int = 3):
+        self.tolerance_amount = tolerance_amount
+        self.tolerance_days = tolerance_days
+
+    def load_bank_statement(self, csv_path: str) -> list[dict]:
+        """Charge un relevé bancaire au format CSV."""
+        transactions = []
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f, delimiter=";")
+            for row in reader:
+                transactions.append({
+                    "date": datetime.strptime(row["Date"], "%d/%m/%Y"),
+                    "amount": Decimal(row["Montant"].replace(",", ".")),
+                    "merchant": row.get("Libellé", ""),
+                    "reference": row.get("Référence", ""),
+                })
+        return transactions
+
+    def reconcile(self, receipts: list[dict],
+                  transactions: list[dict]) -> ReconciliationResult:
+        """Réconcilie les justificatifs avec les transactions bancaires."""
+        matched = []
+        used_tx_ids = set()
+        match_confidence = {}
+
+        for receipt in receipts:
+            best_match = None
+            best_score = 0
+
+            for i, tx in enumerate(transactions):
+                if i in used_tx_ids:
+                    continue
+                score = self._compute_match_score(receipt, tx)
+                if score > best_score:
+                    best_score = score
+                    best_match = i
+
+            if best_match is not None and best_score >= 0.6:
+                matched.append({
+                    "receipt": receipt,
+                    "transaction": transactions[best_match],
+                    "confidence": best_score,
+                })
+                used_tx_ids.add(best_match)
+                match_confidence[receipt.get("id", "")] = best_score
+
+        unmatched_receipts = [r for r in receipts
+                              if r.get("id") not in match_confidence]
+        unmatched_transactions = [t for i, t in enumerate(transactions)
+                                   if i not in used_tx_ids]
+
+        return ReconciliationResult(
+            matched=matched,
+            unmatched_receipts=unmatched_receipts,
+            unmatched_transactions=unmatched_transactions,
+            match_confidence=match_confidence,
+        )
+
+    def _compute_match_score(self, receipt: dict, tx: dict) -> float:
+        score = 0.0
+        # Matching montant (40% du score)
+        r_amount = Decimal(str(receipt.get("total_ttc", 0)))
+        t_amount = abs(tx["amount"])
+        if abs(r_amount - t_amount) <= self.tolerance_amount:
+            score += 0.4
+        # Matching date (30% du score)
+        r_date = datetime.strptime(receipt["date"], "%Y-%m-%d") if isinstance(receipt["date"], str) else receipt["date"]
+        if abs((r_date - tx["date"]).days) <= self.tolerance_days:
+            score += 0.3
+        # Matching fournisseur (30% du score)
+        r_merchant = receipt.get("merchant_name", "").lower()
+        t_merchant = tx.get("merchant", "").lower()
+        if r_merchant and t_merchant and (r_merchant in t_merchant or t_merchant in r_merchant):
+            score += 0.3
+        return score`,
+            filename: "bank_reconciler.py",
+          },
+        ],
+      },
+      {
+        title: "Imputation comptable automatique",
+        content:
+          "L'agent classifie chaque dépense selon le plan comptable de l'entreprise et attribue les axes analytiques (centre de coût, projet, activité). Il utilise l'historique des imputations précédentes et les règles métier pour proposer une imputation fiable.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `ACCOUNTING_PROMPT = """Tu es un comptable expert en plan comptable français (PCG).
+
+Attribue l'imputation comptable pour la dépense suivante:
+- Catégorie: {category}
+- Fournisseur: {merchant}
+- Montant HT: {amount_ht} EUR
+- TVA: {tva_amount} EUR (taux: {tva_rate})
+- Collaborateur service: {department}
+- Projet: {project}
+
+## Plan comptable disponible:
+625100 - Déplacements, missions et réceptions
+625600 - Missions (transport)
+625700 - Réceptions
+606100 - Fournitures non stockables
+611000 - Sous-traitance générale
+613200 - Locations mobilières
+616000 - Assurances
+618100 - Documentation générale
+623400 - Cadeaux à la clientèle
+635100 - Impôts directs
+
+## Comptes de TVA:
+445660 - TVA déductible sur ABS (20%)
+445662 - TVA déductible sur ABS (10%)
+445664 - TVA déductible sur ABS (5.5%)
+
+## Règles:
+1. Retourne le compte de charge principal
+2. Retourne le compte de TVA si la TVA est récupérable
+3. Indique le centre de coût basé sur le service
+4. Justifie brièvement ton choix
+
+Retourne un JSON: compte_charge, compte_tva, centre_cout, axe_projet, justification"""
+
+def compute_accounting_entry(receipt: dict, employee: dict) -> dict:
+    """Calcule l'imputation comptable automatique."""
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0,
+        response_format={"type": "json_object"},
+        messages=[{
+            "role": "user",
+            "content": ACCOUNTING_PROMPT.format(
+                category=receipt.get("category", ""),
+                merchant=receipt.get("merchant_name", ""),
+                amount_ht=receipt.get("total_ht", receipt.get("total_ttc", 0)),
+                tva_amount=receipt.get("tva_amount", 0),
+                tva_rate=receipt.get("tva_rate", "N/A"),
+                department=employee.get("department", ""),
+                project=employee.get("current_project", "N/A"),
+            ),
+        }],
+    )
+    return json.loads(response.choices[0].message.content)`,
+            filename: "accounting_engine.py",
+          },
+        ],
+      },
+      {
+        title: "API REST et workflow de validation",
+        content:
+          "Exposez l'ensemble du pipeline via une API REST. Le collaborateur soumet ses justificatifs, l'agent traite tout automatiquement, et le manager reçoit un dossier complet prêt à valider en un clic. Déployez sur Vercel ou Railway.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, UploadFile, File
+from pydantic import BaseModel
+
+app = FastAPI(title="Agent Notes de Frais")
+
+@app.post("/api/expense-reports/submit")
+async def submit_expense(
+    files: list[UploadFile] = File(...),
+    employee_id: str = "",
+):
+    """Soumet une note de frais avec justificatifs."""
+    ocr = ReceiptOCR()
+    results = []
+
+    # 1. Extraction OCR de chaque justificatif
+    for file in files:
+        image_bytes = await file.read()
+        receipt = ocr.extract_receipt(image_bytes)
+        receipt_dict = receipt.__dict__
+
+        # 2. Récupérer les données collaborateur
+        employee = supabase.table("employees").select("*").eq(
+            "id", employee_id
+        ).single().execute().data
+
+        # 3. Classification automatique de la catégorie
+        category = classify_expense_category(receipt_dict)
+        receipt_dict["category"] = category
+
+        # 4. Vérification de conformité
+        compliance = check_compliance(receipt_dict, employee, category)
+
+        # 5. Imputation comptable
+        accounting = compute_accounting_entry(receipt_dict, employee)
+
+        # 6. Sauvegarder
+        entry = {
+            "employee_id": employee_id,
+            "receipt_data": receipt_dict,
+            "category": category,
+            "compliance": compliance.__dict__,
+            "accounting": accounting,
+            "status": "auto_approved" if compliance.auto_approved else "pending_review",
+        }
+        saved = supabase.table("expense_entries").insert(entry).execute()
+        results.append(saved.data[0])
+
+    # Notifier le manager si validation requise
+    pending = [r for r in results if r["status"] == "pending_review"]
+    if pending:
+        notify_manager(employee, pending)
+
+    return {"entries": results, "auto_approved": len(results) - len(pending), "pending_review": len(pending)}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les justificatifs contiennent des données personnelles (noms, numéros de carte, lieux fréquentés). Les images brutes sont chiffrées AES-256 au repos dans Supabase Storage. Les numéros de carte sont masqués après extraction OCR (seuls les 4 derniers chiffres sont conservés). Conformité RGPD : droit à l'effacement des justificatifs après le délai légal de conservation comptable (10 ans).",
+      auditLog: "Chaque note de frais est tracée intégralement : horodatage de soumission, résultat OCR brut, score de confiance extraction, catégorie attribuée, résultat du contrôle de conformité, score de fraude, imputation comptable proposée, identifiant du valideur, horodatage de validation/rejet, motif de rejet le cas échéant. Piste d'audit complète exportable pour les commissaires aux comptes.",
+      humanInTheLoop: "Les notes de frais avec un score de fraude supérieur à 40 ou un dépassement de plafond sont systématiquement routées vers le manager pour validation. Les dépenses dépassant 500 EUR nécessitent une double validation (manager + contrôleur de gestion). Les imputations comptables avec un score de confiance inférieur à 0.8 sont vérifiées par un comptable.",
+      monitoring: "Dashboard Langfuse et Supabase : volume de notes traitées par jour, taux d'extraction OCR réussi, taux de conformité automatique, délai moyen de remboursement, distribution des scores de fraude, taux de correction d'imputation comptable, coût LLM moyen par note de frais. Alertes si le taux d'erreur OCR dépasse 5% ou si le délai moyen de validation dépasse 72h.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (soumission justificatif) -> Node HTTP Request (Azure Document Intelligence OCR) -> Node Code (structuration données extraites) -> Node Supabase (récupération profil employé + politique) -> Node HTTP Request (GPT-4.1 classification + conformité) -> Node Switch (auto-approuvé ?) -> Branch OK : Node Supabase (sauvegarde + statut approuvé) -> Branch KO : Node Slack (notification manager) -> Node Wait (approbation manager) -> Node Supabase (mise à jour statut) -> Node HTTP Request (imputation comptable) -> Node HTTP Request (export ERP/SAP).",
+      nodes: ["Webhook (soumission)", "HTTP Request (OCR Azure)", "Code (structuration)", "Supabase (profil employé)", "HTTP Request (GPT-4.1 conformité)", "Switch (auto-approuvé)", "Supabase (sauvegarde)", "Slack (notification manager)", "Wait (approbation)", "HTTP Request (imputation)", "HTTP Request (export ERP)"],
+      triggerType: "Webhook (soumission de note de frais via app mobile ou web)",
+    },
+    estimatedTime: "6-8h",
+    difficulty: "Moyen",
+    sectors: ["Services", "Industrie", "Banque", "Conseil"],
+    metiers: ["Comptabilité", "Finance", "Contrôle de Gestion"],
+    functions: ["Finance", "Comptabilité"],
+    metaTitle: "Agent IA de Gestion des Notes de Frais avec OCR — Guide Complet",
+    metaDescription:
+      "Automatisez le traitement des notes de frais avec OCR intelligent, contrôle de conformité en temps réel et imputation comptable automatique. Tutoriel pas-à-pas avec code Python.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-planification-reunions-intelligente",
+    title: "Agent de Planification de Réunions Intelligente",
+    subtitle: "Optimisez automatiquement la planification des réunions en tenant compte des disponibilités, des fuseaux horaires et de la charge cognitive des participants",
+    problem:
+      "La planification de réunions dans les organisations de plus de 100 collaborateurs est un cauchemar logistique. Les assistants de direction passent en moyenne 5 heures par semaine à coordonner les agendas. Les conflits de créneaux génèrent des chaînes d'emails interminables. Les réunions s'accumulent sans tenir compte de la charge cognitive des participants : pas de temps de respiration entre deux meetings, réunions placées sur les plages de travail profond, fuseaux horaires ignorés pour les équipes internationales. Résultat : 67% des cadres estiment que les réunions les empêchent de travailler efficacement.",
+    value:
+      "Un agent IA analyse les agendas de tous les participants, identifie les créneaux optimaux en tenant compte des préférences individuelles (travail profond le matin, pas de réunion le vendredi après-midi), des fuseaux horaires, de la charge de réunions quotidienne, et de la priorité du sujet. Il propose automatiquement les 3 meilleurs créneaux, gère les relances, réserve les salles et génère un ordre du jour structuré.",
+    inputs: [
+      "Agendas Google Calendar ou Microsoft Outlook de tous les participants",
+      "Préférences individuelles de planning (plages protégées, jours sans réunion)",
+      "Fuseaux horaires des participants distants",
+      "Priorité et durée estimée de la réunion",
+      "Sujet et objectifs de la réunion",
+      "Disponibilité des salles de réunion (intégration room booking)",
+    ],
+    outputs: [
+      "Top 3 des créneaux optimaux avec score de pertinence",
+      "Invitation calendrier envoyée automatiquement avec salle réservée",
+      "Ordre du jour structuré généré à partir du sujet",
+      "Rappels intelligents avec documents préparatoires",
+      "Rapport hebdomadaire de charge réunion par équipe",
+      "Suggestions de réunions à annuler ou fusionner",
+    ],
+    risks: [
+      "Accès en lecture aux agendas personnels soulevant des questions de vie privée",
+      "Créneaux imposés sans consentement réel des participants",
+      "Sur-optimisation rendant les agendas trop rigides",
+      "Erreurs de fuseau horaire pour les équipes multi-sites",
+      "Dépendance aux API de calendrier tierces (rate limiting, pannes)",
+    ],
+    roiIndicatif:
+      "Réduction de 80% du temps de coordination des réunions. Diminution de 30% du nombre de réunions grâce aux suggestions de fusion. Amélioration de 25% du score de satisfaction planning des collaborateurs.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Supabase", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral Large", category: "LLM", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "PostgreSQL", category: "Database", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  Google      │  │  Outlook     │  │  Room        │
+│  Calendar    │  │  Calendar    │  │  Booking     │
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       │                 │                 │
+       └─────────┬───────┴─────────┬───────┘
+                 │                 │
+          ┌──────▼───────┐  ┌─────▼────────┐
+          │  Agent LLM   │  │  Préférences │
+          │  (Optimizer)  │  │  DB          │
+          └──────┬───────┘  └──────────────┘
+                 │
+       ┌─────────┼─────────┐
+       │         │         │
+┌──────▼──┐ ┌───▼────┐ ┌──▼───────┐
+│ Invite  │ │ Salle  │ │ Ordre du │
+│ Calendar│ │ Réserv.│ │ jour     │
+└─────────┘ └────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Connexion aux API de calendrier",
+        content:
+          "Configurez les connecteurs Google Calendar et Microsoft Graph pour accéder en lecture/écriture aux agendas des participants. Utilisez OAuth 2.0 pour l'authentification sécurisée. Le service account Google permet un accès délégué à l'échelle de l'organisation.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install langchain openai supabase google-auth google-api-python-client msal python-dotenv pytz`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from datetime import datetime, timedelta
+import pytz
+
+SCOPES = ["https://www.googleapis.com/auth/calendar.readonly",
+           "https://www.googleapis.com/auth/calendar.events"]
+
+class GoogleCalendarConnector:
+    def __init__(self, service_account_file: str):
+        self.credentials = service_account.Credentials.from_service_account_file(
+            service_account_file, scopes=SCOPES
+        )
+
+    def get_busy_slots(self, email: str, start: datetime,
+                       end: datetime) -> list[dict]:
+        """Récupère les créneaux occupés d'un utilisateur."""
+        service = build("calendar", "v3",
+                       credentials=self.credentials.with_subject(email))
+        body = {
+            "timeMin": start.isoformat(),
+            "timeMax": end.isoformat(),
+            "timeZone": "Europe/Paris",
+            "items": [{"id": email}],
+        }
+        result = service.freebusy().query(body=body).execute()
+        busy = result["calendars"][email]["busy"]
+        return [{"start": b["start"], "end": b["end"]} for b in busy]
+
+    def get_events_detail(self, email: str, start: datetime,
+                          end: datetime) -> list[dict]:
+        """Récupère les détails des événements (pour analyse de charge)."""
+        service = build("calendar", "v3",
+                       credentials=self.credentials.with_subject(email))
+        events = service.events().list(
+            calendarId=email,
+            timeMin=start.isoformat(),
+            timeMax=end.isoformat(),
+            singleEvents=True,
+            orderBy="startTime",
+        ).execute()
+        return [{
+            "summary": e.get("summary", "Sans titre"),
+            "start": e["start"].get("dateTime", e["start"].get("date")),
+            "end": e["end"].get("dateTime", e["end"].get("date")),
+            "attendees_count": len(e.get("attendees", [])),
+            "is_recurring": "recurringEventId" in e,
+        } for e in events.get("items", [])]
+
+    def create_event(self, organizer_email: str, event: dict) -> str:
+        """Crée un événement dans le calendrier de l'organisateur."""
+        service = build("calendar", "v3",
+                       credentials=self.credentials.with_subject(organizer_email))
+        created = service.events().insert(
+            calendarId=organizer_email,
+            body=event,
+            sendUpdates="all",
+        ).execute()
+        return created["htmlLink"]`,
+            filename: "calendar_connector.py",
+          },
+        ],
+      },
+      {
+        title: "Moteur d'optimisation de créneaux",
+        content:
+          "Implémentez l'algorithme de scoring qui évalue chaque créneau possible en tenant compte de multiples critères pondérés : disponibilité de tous les participants, respect des préférences individuelles, charge cognitive quotidienne, proximité avec d'autres réunions, et fuseaux horaires. Le LLM intervient pour les arbitrages complexes.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from dataclasses import dataclass
+from datetime import datetime, timedelta, time
+import pytz
+
+@dataclass
+class SlotScore:
+    start: datetime
+    end: datetime
+    total_score: float
+    availability_score: float
+    preference_score: float
+    cognitive_load_score: float
+    timezone_score: float
+    details: dict
+
+@dataclass
+class UserPreferences:
+    email: str
+    timezone: str
+    protected_hours: list[dict]  # [{"day": "monday", "start": "09:00", "end": "12:00", "reason": "deep work"}]
+    no_meeting_days: list[str]   # ["friday"]
+    max_meetings_per_day: int
+    min_break_minutes: int       # Pause minimale entre 2 réunions
+    preferred_hours: dict        # {"start": "10:00", "end": "17:00"}
+
+class SlotOptimizer:
+    def __init__(self, calendar_connector):
+        self.calendar = calendar_connector
+        self.weights = {
+            "availability": 0.35,
+            "preference": 0.25,
+            "cognitive_load": 0.25,
+            "timezone": 0.15,
+        }
+
+    def find_optimal_slots(
+        self, participants: list[dict], duration_minutes: int,
+        search_window_days: int = 5, priority: str = "normal"
+    ) -> list[SlotScore]:
+        """Trouve les 3 meilleurs créneaux pour une réunion."""
+        now = datetime.now(pytz.timezone("Europe/Paris"))
+        search_end = now + timedelta(days=search_window_days)
+
+        # Collecter les disponibilités de tous les participants
+        all_busy = {}
+        all_events = {}
+        all_prefs = {}
+        for p in participants:
+            email = p["email"]
+            tz = pytz.timezone(p.get("timezone", "Europe/Paris"))
+            all_busy[email] = self.calendar.get_busy_slots(email, now, search_end)
+            all_events[email] = self.calendar.get_events_detail(email, now, search_end)
+            all_prefs[email] = self._load_preferences(email)
+
+        # Générer tous les créneaux possibles (par tranches de 30 min)
+        candidates = self._generate_candidates(now, search_end, duration_minutes)
+
+        # Scorer chaque créneau
+        scored = []
+        for slot_start, slot_end in candidates:
+            score = self._score_slot(
+                slot_start, slot_end, participants,
+                all_busy, all_events, all_prefs, priority
+            )
+            if score.availability_score > 0:  # Au moins un créneau dispo
+                scored.append(score)
+
+        # Retourner le top 3
+        scored.sort(key=lambda s: s.total_score, reverse=True)
+        return scored[:3]
+
+    def _score_slot(self, start, end, participants, all_busy,
+                    all_events, all_prefs, priority) -> SlotScore:
+        avail_scores = []
+        pref_scores = []
+        cognitive_scores = []
+        tz_scores = []
+
+        for p in participants:
+            email = p["email"]
+            prefs = all_prefs.get(email)
+
+            # Disponibilité (0 ou 1)
+            is_free = not any(
+                self._overlaps(start, end, b["start"], b["end"])
+                for b in all_busy.get(email, [])
+            )
+            avail_scores.append(1.0 if is_free else 0.0)
+
+            # Préférences (0 à 1)
+            pref_score = self._score_preferences(start, end, prefs)
+            pref_scores.append(pref_score)
+
+            # Charge cognitive (0 à 1)
+            day_events = [e for e in all_events.get(email, [])
+                          if self._same_day(start, e["start"])]
+            max_meetings = prefs.max_meetings_per_day if prefs else 6
+            load = 1.0 - (len(day_events) / max(max_meetings, 1))
+            cognitive_scores.append(max(load, 0.0))
+
+            # Fuseau horaire (0 à 1) - heure locale acceptable ?
+            tz = pytz.timezone(p.get("timezone", "Europe/Paris"))
+            local_hour = start.astimezone(tz).hour
+            tz_score = 1.0 if 9 <= local_hour <= 17 else (0.5 if 8 <= local_hour <= 18 else 0.0)
+            tz_scores.append(tz_score)
+
+        availability = sum(avail_scores) / len(avail_scores)
+        preference = sum(pref_scores) / len(pref_scores)
+        cognitive = sum(cognitive_scores) / len(cognitive_scores)
+        timezone = sum(tz_scores) / len(tz_scores)
+
+        total = (
+            availability * self.weights["availability"]
+            + preference * self.weights["preference"]
+            + cognitive * self.weights["cognitive_load"]
+            + timezone * self.weights["timezone"]
+        )
+
+        return SlotScore(
+            start=start, end=end, total_score=total,
+            availability_score=availability, preference_score=preference,
+            cognitive_load_score=cognitive, timezone_score=timezone,
+            details={"participants_free": sum(avail_scores), "total_participants": len(participants)},
+        )
+
+    def _generate_candidates(self, start, end, duration):
+        candidates = []
+        current = start.replace(hour=8, minute=0, second=0, microsecond=0)
+        if current < start:
+            current += timedelta(days=1)
+        while current < end:
+            if current.weekday() < 5:  # Lundi-Vendredi
+                slot_start = current.replace(hour=8, minute=0)
+                day_end = current.replace(hour=19, minute=0)
+                while slot_start + timedelta(minutes=duration) <= day_end:
+                    candidates.append((slot_start, slot_start + timedelta(minutes=duration)))
+                    slot_start += timedelta(minutes=30)
+            current += timedelta(days=1)
+        return candidates
+
+    def _overlaps(self, s1, e1, s2, e2):
+        if isinstance(s2, str):
+            s2 = datetime.fromisoformat(s2)
+            e2 = datetime.fromisoformat(e2)
+        return s1 < e2 and s2 < e1
+
+    def _same_day(self, dt, dt_str):
+        if isinstance(dt_str, str):
+            other = datetime.fromisoformat(dt_str)
+        else:
+            other = dt_str
+        return dt.date() == other.date()
+
+    def _score_preferences(self, start, end, prefs):
+        if not prefs:
+            return 0.5
+        score = 1.0
+        day_name = start.strftime("%A").lower()
+        if day_name in [d.lower() for d in prefs.no_meeting_days]:
+            score -= 0.8
+        for protected in prefs.protected_hours:
+            if protected["day"].lower() == day_name:
+                p_start = time.fromisoformat(protected["start"])
+                p_end = time.fromisoformat(protected["end"])
+                if start.time() < p_end and end.time() > p_start:
+                    score -= 0.6
+        return max(score, 0.0)
+
+    def _load_preferences(self, email):
+        result = supabase.table("user_preferences").select("*").eq("email", email).execute()
+        if result.data:
+            d = result.data[0]
+            return UserPreferences(**d)
+        return None`,
+            filename: "slot_optimizer.py",
+          },
+        ],
+      },
+      {
+        title: "Génération d'ordre du jour intelligent",
+        content:
+          "L'agent génère automatiquement un ordre du jour structuré à partir du sujet de la réunion, de l'historique des réunions précédentes sur le même sujet, et des documents pertinents. Il estime la durée de chaque point et propose un minutage réaliste.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+import json
+
+client = OpenAI()
+
+AGENDA_PROMPT = """Tu es un facilitateur de réunion professionnel dans une entreprise française.
+
+Génère un ordre du jour structuré pour la réunion suivante:
+
+## Sujet: {subject}
+## Objectifs: {objectives}
+## Participants: {participants}
+## Durée totale: {duration} minutes
+## Contexte: {context}
+## Notes de la dernière réunion sur ce sujet: {previous_notes}
+
+## Consignes:
+1. Structure l'ordre du jour en 4-6 points maximum
+2. Attribue une durée réaliste à chaque point (total = durée de la réunion)
+3. Identifie le responsable de chaque point parmi les participants
+4. Commence par un tour de table rapide (5 min max)
+5. Termine par les décisions à prendre et prochaines étapes
+6. Indique les documents à préparer avant la réunion
+
+Retourne un JSON avec: points (array de {{title, duration_min, owner, description}}),
+preparation_docs (array de strings), expected_outcomes (array de strings)"""
+
+def generate_agenda(meeting: dict) -> dict:
+    """Génère un ordre du jour intelligent pour une réunion."""
+    # Rechercher les réunions précédentes sur le même sujet
+    previous = supabase.table("meeting_notes").select("*").ilike(
+        "subject", f"%{meeting['subject']}%"
+    ).order("date", desc=True).limit(3).execute()
+
+    previous_notes = "\\n---\\n".join(
+        [f"{p['date']}: {p['summary']}" for p in previous.data]
+    ) if previous.data else "Aucune réunion précédente trouvée."
+
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0.3,
+        response_format={"type": "json_object"},
+        messages=[{
+            "role": "user",
+            "content": AGENDA_PROMPT.format(
+                subject=meeting["subject"],
+                objectives=meeting.get("objectives", "À définir"),
+                participants=", ".join([p["name"] for p in meeting["participants"]]),
+                duration=meeting["duration_minutes"],
+                context=meeting.get("context", ""),
+                previous_notes=previous_notes,
+            ),
+        }],
+    )
+    return json.loads(response.choices[0].message.content)`,
+            filename: "agenda_generator.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse de charge réunion et suggestions d'optimisation",
+        content:
+          "L'agent analyse la charge de réunions de chaque collaborateur et identifie les opportunités d'optimisation : réunions récurrentes qui pourraient être remplacées par un message asynchrone, réunions trop longues, participants non essentiels. Il génère un rapport hebdomadaire avec des recommandations.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `MEETING_AUDIT_PROMPT = """Tu es un consultant en productivité organisationnelle.
+
+Analyse le planning de réunions de cette semaine pour l'équipe et identifie les optimisations:
+
+## Réunions de la semaine:
+{meetings_json}
+
+## Statistiques:
+- Nombre total de réunions: {total_meetings}
+- Temps total en réunion: {total_hours}h
+- Moyenne par personne: {avg_per_person}h
+- Collaborateur le plus chargé: {busiest_person} ({busiest_hours}h)
+
+## Analyse demandée:
+1. Identifie les réunions qui pourraient être un email/Slack
+2. Repère les réunions récurrentes avec trop de participants
+3. Détecte les créneaux surchargés
+4. Propose des fusions de réunions sur des sujets proches
+5. Calcule le coût estimé en heures-personne
+
+Retourne un JSON: recommendations (array), savings_hours, meetings_to_cancel (array), meetings_to_merge (array de pairs)"""
+
+def weekly_meeting_audit(team_emails: list[str]) -> dict:
+    """Audit hebdomadaire de la charge de réunions."""
+    now = datetime.now(pytz.timezone("Europe/Paris"))
+    week_start = now - timedelta(days=now.weekday())
+    week_end = week_start + timedelta(days=5)
+
+    all_meetings = []
+    per_person = {}
+    for email in team_emails:
+        events = calendar.get_events_detail(email, week_start, week_end)
+        per_person[email] = {
+            "count": len(events),
+            "hours": sum(calculate_duration(e) for e in events) / 60,
+        }
+        all_meetings.extend(events)
+
+    total_hours = sum(p["hours"] for p in per_person.values())
+    busiest = max(per_person.items(), key=lambda x: x[1]["hours"])
+
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0.2,
+        response_format={"type": "json_object"},
+        messages=[{
+            "role": "user",
+            "content": MEETING_AUDIT_PROMPT.format(
+                meetings_json=json.dumps(all_meetings[:50], ensure_ascii=False, default=str),
+                total_meetings=len(all_meetings),
+                total_hours=round(total_hours, 1),
+                avg_per_person=round(total_hours / max(len(team_emails), 1), 1),
+                busiest_person=busiest[0],
+                busiest_hours=round(busiest[1]["hours"], 1),
+            ),
+        }],
+    )
+    return json.loads(response.choices[0].message.content)
+
+def calculate_duration(event: dict) -> float:
+    """Calcule la durée d'un événement en minutes."""
+    start = datetime.fromisoformat(event["start"])
+    end = datetime.fromisoformat(event["end"])
+    return (end - start).total_seconds() / 60`,
+            filename: "meeting_audit.py",
+          },
+        ],
+      },
+      {
+        title: "API et bot Slack d'interaction",
+        content:
+          "Exposez l'agent via une API REST et un bot Slack pour permettre aux collaborateurs de planifier des réunions en langage naturel. Le bot comprend des requêtes comme 'Planifie un point hebdo de 30 min avec l'équipe produit' et gère tout automatiquement.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, Request
+from openai import OpenAI
+import json
+
+app = FastAPI(title="Agent Planification Réunions")
+client = OpenAI()
+
+INTENT_PROMPT = """Tu es un assistant de planification de réunions.
+Extrais les informations de la demande utilisateur:
+
+Demande: {user_message}
+
+Retourne un JSON:
+- action: "schedule" | "reschedule" | "cancel" | "audit"
+- subject: string (sujet de la réunion)
+- participants: array de strings (emails ou noms)
+- duration_minutes: int
+- priority: "low" | "normal" | "high"
+- constraints: string (contraintes spécifiques mentionnées)
+- recurring: boolean
+- recurring_pattern: string | null ("weekly", "biweekly", "monthly")"""
+
+@app.post("/api/slack/events")
+async def handle_slack_event(request: Request):
+    """Gère les messages Slack pour planification en langage naturel."""
+    body = await request.json()
+
+    if body.get("type") == "url_verification":
+        return {"challenge": body["challenge"]}
+
+    event = body.get("event", {})
+    if event.get("type") != "app_mention":
+        return {"ok": True}
+
+    user_message = event["text"]
+    channel = event["channel"]
+
+    # Extraire l'intention
+    intent_response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0,
+        response_format={"type": "json_object"},
+        messages=[{"role": "user", "content": INTENT_PROMPT.format(user_message=user_message)}],
+    )
+    intent = json.loads(intent_response.choices[0].message.content)
+
+    if intent["action"] == "schedule":
+        # Résoudre les participants
+        participants = resolve_participants(intent["participants"])
+
+        # Trouver les créneaux optimaux
+        optimizer = SlotOptimizer(calendar)
+        slots = optimizer.find_optimal_slots(
+            participants=participants,
+            duration_minutes=intent["duration_minutes"],
+            priority=intent["priority"],
+        )
+
+        if not slots:
+            post_slack_message(channel, "Aucun créneau disponible trouvé dans les 5 prochains jours.")
+            return {"ok": True}
+
+        # Proposer les 3 meilleurs créneaux
+        message = f"*Planification: {intent['subject']}*\\n"
+        message += f"Durée: {intent['duration_minutes']} min | Participants: {len(participants)}\\n\\n"
+        for i, slot in enumerate(slots):
+            local_time = slot.start.strftime("%A %d/%m à %Hh%M")
+            message += f"{i+1}. {local_time} (score: {slot.total_score:.0%})\\n"
+        message += "\\nRépondez avec le numéro de votre choix."
+
+        post_slack_message(channel, message)
+
+    elif intent["action"] == "audit":
+        team_emails = resolve_team_emails(intent.get("participants", []))
+        audit = weekly_meeting_audit(team_emails)
+        post_slack_message(channel, format_audit_report(audit))
+
+    return {"ok": True}`,
+            filename: "slack_bot.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "L'accès aux calendriers expose les rendez-vous personnels (médecin, entretiens). Configurer le connecteur pour ne remonter que les informations de disponibilité (free/busy) sans les détails des événements personnels. Les événements marqués 'privé' dans Google/Outlook sont traités comme des créneaux occupés sans exposer le contenu. Conformité RGPD via consentement explicite de chaque collaborateur.",
+      auditLog: "Chaque planification est tracée : demandeur, participants, créneaux proposés, créneau choisi, salle réservée, ordre du jour généré. Les accès aux calendriers sont loggués avec timestamp et périmètre. Rétention 6 mois. Export CSV pour audit RH sur la charge de réunions.",
+      humanInTheLoop: "L'organisateur valide toujours le créneau final parmi les propositions de l'agent. Les réunions impliquant plus de 10 personnes ou des membres du comité de direction nécessitent une confirmation explicite. Les suggestions d'annulation de réunions récurrentes sont soumises à l'organisateur original.",
+      monitoring: "Dashboard Langfuse : nombre de réunions planifiées par jour, score moyen de satisfaction des créneaux, taux d'acceptation des propositions, temps moyen de planification, nombre de conflits résolus, charge de réunion moyenne par équipe. Alertes si le taux d'acceptation descend sous 70% ou si le temps de réponse de l'API calendrier dépasse 5 secondes.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Slack Trigger (mention du bot) -> Node Code (extraction intention via GPT-4.1) -> Node Switch (action: schedule/reschedule/audit) -> Branch schedule : Node Google Calendar (get free/busy) -> Node Code (algorithme scoring créneaux) -> Node Slack (proposition 3 créneaux) -> Node Wait (choix utilisateur) -> Node Google Calendar (création événement) -> Node HTTP Request (génération ordre du jour) -> Node Slack (confirmation + agenda). Branch audit : Node Google Calendar (get events semaine) -> Node HTTP Request (GPT-4.1 analyse) -> Node Slack (rapport).",
+      nodes: ["Slack Trigger (mention)", "Code (extraction intention)", "Switch (action)", "Google Calendar (free/busy)", "Code (scoring créneaux)", "Slack (proposition)", "Wait (choix)", "Google Calendar (créer événement)", "HTTP Request (ordre du jour)", "Slack (confirmation)"],
+      triggerType: "Slack mention du bot + Cron hebdomadaire (audit lundi 7h)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["Services", "Tech", "Conseil", "Banque"],
+    metiers: ["IT", "Management", "Assistanat de Direction"],
+    functions: ["IT", "Organisation", "Productivité"],
+    metaTitle: "Agent IA de Planification de Réunions Intelligente — Guide Complet",
+    metaDescription:
+      "Automatisez la planification de réunions avec un agent IA qui optimise les créneaux selon les disponibilités, fuseaux horaires et charge cognitive. Bot Slack inclus.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-fraude-transactionnelle-temps-reel",
+    title: "Agent de Détection de Fraude Transactionnelle en Temps Réel",
+    subtitle: "Combinez scoring ML et analyse contextuelle LLM pour détecter les fraudes bancaires avec un taux de faux positifs réduit de 70%",
+    problem:
+      "Les banques et fintechs françaises font face à une explosion des fraudes transactionnelles (+30% par an). Les systèmes traditionnels basés sur des règles statiques (montant > seuil, pays à risque) génèrent jusqu'à 95% de faux positifs, mobilisant des dizaines d'analystes sur des alertes non pertinentes. Parallèlement, les fraudeurs sophistiqués contournent ces règles en fragmentant les montants et en utilisant des schémas comportementaux inédits. Le coût de la fraude non détectée et du traitement des faux positifs dépasse 2% du chiffre d'affaires pour les acteurs du paiement. Les exigences de la DSP2 imposent une authentification forte tout en maintenant une expérience client fluide.",
+    value:
+      "Un agent IA combine un modèle de scoring ML en temps réel (< 100ms par transaction) avec un LLM pour l'analyse contextuelle des transactions suspectes. Le ML filtre 99% des transactions légitimes. Les 1% restants sont analysés par le LLM qui examine le contexte comportemental complet du client, génère une explication en langage naturel, et recommande une action (bloquer, authentifier, laisser passer). Les faux positifs sont réduits de 70% et les fraudes non détectées de 40%.",
+    inputs: [
+      "Flux de transactions en temps réel (montant, devise, marchand, géolocalisation, device)",
+      "Profil comportemental historique du porteur (habitudes de dépenses, lieux fréquents)",
+      "Données de device fingerprinting (IP, user agent, empreinte navigateur)",
+      "Signaux de vélocité (nombre de transactions dans les dernières heures)",
+      "Base de marchands à risque et BIN blacklistés",
+      "Historique des fraudes confirmées pour entraînement du modèle",
+    ],
+    outputs: [
+      "Score de fraude en temps réel (0-1000) avec seuils configurables",
+      "Explication LLM en langage naturel de la décision",
+      "Action recommandée (approuver, challenger 3DS, bloquer, escalader)",
+      "Graphe de liens entre transactions suspectes (détection de réseaux)",
+      "Rapport quotidien des patterns de fraude émergents",
+      "Métriques de performance : taux de détection, faux positifs, latence",
+    ],
+    risks: [
+      "Latence excessive bloquant l'expérience de paiement (SLA < 200ms)",
+      "Faux positifs restants générant de la friction client et des pertes commerciales",
+      "Biais du modèle ML discriminant certains profils démographiques",
+      "Attaques adversariales contre le modèle de scoring",
+      "Non-conformité réglementaire si les décisions ne sont pas explicables (IA Act EU)",
+    ],
+    roiIndicatif:
+      "Réduction de 70% des faux positifs. Augmentation de 40% du taux de détection des fraudes. Économie estimée : 2-5M EUR/an pour une banque traitant 10M transactions/mois. Réduction de 60% de la charge des analystes fraude.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Supabase", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+      { name: "scikit-learn", category: "Other" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "PostgreSQL + Redis", category: "Database", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+      { name: "XGBoost", category: "Other", isFree: true },
+    ],
+    architectureDiagram: `┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Transaction │────▶│  Feature     │────▶│  ML Scoring  │
+│  Stream      │     │  Engineering │     │  (< 50ms)    │
+└──────────────┘     └──────────────┘     └──────┬───────┘
+                                                  │
+                                           ┌──────▼───────┐
+                                           │  Seuil ML    │
+                                           │  Score > 500 ?│
+                                           └──────┬───────┘
+                                          ┌───────┴───────┐
+                                     NON  │               │ OUI
+                                ┌─────────▼──┐    ┌───────▼──────┐
+                                │  Approuver │    │  Agent LLM   │
+                                │  (auto)    │    │  (Contexte)  │
+                                └────────────┘    └──────┬───────┘
+                                                         │
+                                                  ┌──────▼───────┐
+                                                  │  Décision    │
+                                                  │  + Explication│
+                                                  └──────────────┘`,
+    tutorial: [
+      {
+        title: "Feature engineering pour le scoring transactionnel",
+        content:
+          "Construisez le pipeline de feature engineering qui transforme chaque transaction brute en un vecteur de features exploitables par le modèle ML. Les features incluent des signaux de vélocité, d'écart au comportement habituel, de géolocalisation et de device.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install langchain anthropic supabase scikit-learn xgboost pandas numpy redis python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import numpy as np
+from datetime import datetime, timedelta
+from dataclasses import dataclass
+import redis
+import json
+
+r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+
+@dataclass
+class TransactionFeatures:
+    # Features brutes
+    amount: float
+    is_international: bool
+    is_online: bool
+    hour_of_day: int
+    day_of_week: int
+    # Features de vélocité
+    tx_count_1h: int
+    tx_count_24h: int
+    total_amount_1h: float
+    total_amount_24h: float
+    # Features comportementales
+    amount_vs_avg_ratio: float  # montant / moyenne habituelle
+    amount_vs_max_ratio: float  # montant / max historique
+    new_merchant: bool
+    new_country: bool
+    new_device: bool
+    # Features de distance
+    distance_from_last_tx_km: float
+    time_since_last_tx_minutes: float
+    # Features agrégées
+    distinct_merchants_24h: int
+    distinct_countries_24h: int
+    declined_count_24h: int
+
+class FeatureEngine:
+    def __init__(self):
+        self.redis = r
+
+    def compute_features(self, tx: dict, card_id: str) -> TransactionFeatures:
+        """Calcule les features en temps réel pour une transaction."""
+        now = datetime.utcnow()
+        profile = self._get_cardholder_profile(card_id)
+        recent_txs = self._get_recent_transactions(card_id, hours=24)
+        recent_1h = [t for t in recent_txs
+                     if (now - datetime.fromisoformat(t["timestamp"])).seconds < 3600]
+
+        return TransactionFeatures(
+            amount=tx["amount"],
+            is_international=tx.get("country", "FR") != "FR",
+            is_online=tx.get("channel") == "ecommerce",
+            hour_of_day=now.hour,
+            day_of_week=now.weekday(),
+            tx_count_1h=len(recent_1h),
+            tx_count_24h=len(recent_txs),
+            total_amount_1h=sum(t["amount"] for t in recent_1h),
+            total_amount_24h=sum(t["amount"] for t in recent_txs),
+            amount_vs_avg_ratio=tx["amount"] / max(profile.get("avg_amount", 50), 1),
+            amount_vs_max_ratio=tx["amount"] / max(profile.get("max_amount", 100), 1),
+            new_merchant=tx.get("merchant_id") not in profile.get("known_merchants", []),
+            new_country=tx.get("country") not in profile.get("known_countries", ["FR"]),
+            new_device=tx.get("device_hash") not in profile.get("known_devices", []),
+            distance_from_last_tx_km=self._calc_distance(tx, recent_txs),
+            time_since_last_tx_minutes=self._time_since_last(recent_txs),
+            distinct_merchants_24h=len(set(t.get("merchant_id") for t in recent_txs)),
+            distinct_countries_24h=len(set(t.get("country") for t in recent_txs)),
+            declined_count_24h=sum(1 for t in recent_txs if t.get("declined")),
+        )
+
+    def _get_cardholder_profile(self, card_id: str) -> dict:
+        """Récupère le profil comportemental depuis Redis."""
+        profile = self.redis.get(f"profile:{card_id}")
+        return json.loads(profile) if profile else {}
+
+    def _get_recent_transactions(self, card_id: str, hours: int) -> list:
+        """Récupère les transactions récentes depuis Redis."""
+        txs = self.redis.lrange(f"txs:{card_id}", 0, 200)
+        return [json.loads(t) for t in txs]
+
+    def _calc_distance(self, tx, recent_txs):
+        if not recent_txs or "lat" not in tx:
+            return 0.0
+        last = recent_txs[-1]
+        if "lat" not in last:
+            return 0.0
+        # Haversine simplifié
+        dlat = abs(tx["lat"] - last["lat"])
+        dlon = abs(tx["lon"] - last["lon"])
+        return (dlat**2 + dlon**2)**0.5 * 111  # Approximation km
+
+    def _time_since_last(self, recent_txs):
+        if not recent_txs:
+            return 999
+        last = datetime.fromisoformat(recent_txs[-1]["timestamp"])
+        return (datetime.utcnow() - last).total_seconds() / 60`,
+            filename: "feature_engine.py",
+          },
+        ],
+      },
+      {
+        title: "Modèle ML de scoring en temps réel",
+        content:
+          "Entraînez un modèle XGBoost sur les transactions historiques étiquetées (fraude/légitime). Le modèle doit produire un score en moins de 50ms. Utilisez un pipeline de sérialisation pour le déploiement en production. Le scoring ML filtre 99% des transactions avant intervention du LLM.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import xgboost as xgb
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import precision_recall_curve, roc_auc_score
+import joblib
+
+class FraudScoringModel:
+    def __init__(self, model_path: str | None = None):
+        if model_path:
+            self.model = joblib.load(model_path)
+        else:
+            self.model = None
+
+    def train(self, labeled_data: pd.DataFrame):
+        """Entraîne le modèle sur les transactions étiquetées."""
+        feature_cols = [
+            "amount", "is_international", "is_online", "hour_of_day",
+            "day_of_week", "tx_count_1h", "tx_count_24h", "total_amount_1h",
+            "total_amount_24h", "amount_vs_avg_ratio", "amount_vs_max_ratio",
+            "new_merchant", "new_country", "new_device",
+            "distance_from_last_tx_km", "time_since_last_tx_minutes",
+            "distinct_merchants_24h", "distinct_countries_24h", "declined_count_24h",
+        ]
+        X = labeled_data[feature_cols]
+        y = labeled_data["is_fraud"]
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, stratify=y, random_state=42
+        )
+
+        # Gestion du déséquilibre (fraudes = ~0.1% des transactions)
+        scale_pos = len(y_train[y_train == 0]) / max(len(y_train[y_train == 1]), 1)
+
+        self.model = xgb.XGBClassifier(
+            n_estimators=500,
+            max_depth=6,
+            learning_rate=0.05,
+            scale_pos_weight=scale_pos,
+            eval_metric="aucpr",
+            early_stopping_rounds=20,
+            use_label_encoder=False,
+        )
+        self.model.fit(
+            X_train, y_train,
+            eval_set=[(X_test, y_test)],
+            verbose=False,
+        )
+
+        # Métriques
+        y_prob = self.model.predict_proba(X_test)[:, 1]
+        auc = roc_auc_score(y_test, y_prob)
+        precision, recall, thresholds = precision_recall_curve(y_test, y_prob)
+        print(f"AUC-ROC: {auc:.4f}")
+
+        # Sauvegarder
+        joblib.dump(self.model, "fraud_model.joblib")
+        return {"auc_roc": auc, "model_path": "fraud_model.joblib"}
+
+    def score(self, features: dict) -> dict:
+        """Score une transaction en temps réel (< 50ms)."""
+        feature_array = np.array([[
+            features.amount, features.is_international, features.is_online,
+            features.hour_of_day, features.day_of_week,
+            features.tx_count_1h, features.tx_count_24h,
+            features.total_amount_1h, features.total_amount_24h,
+            features.amount_vs_avg_ratio, features.amount_vs_max_ratio,
+            features.new_merchant, features.new_country, features.new_device,
+            features.distance_from_last_tx_km, features.time_since_last_tx_minutes,
+            features.distinct_merchants_24h, features.distinct_countries_24h,
+            features.declined_count_24h,
+        ]])
+        proba = self.model.predict_proba(feature_array)[0][1]
+        score = int(proba * 1000)  # Score 0-1000
+        return {
+            "score": score,
+            "probability": float(proba),
+            "risk_level": "high" if score > 700 else ("medium" if score > 400 else "low"),
+        }`,
+            filename: "scoring_model.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse contextuelle LLM des transactions suspectes",
+        content:
+          "Pour les transactions ayant un score ML élevé (> 500), le LLM analyse le contexte complet : profil comportemental du client, historique des transactions récentes, cohérence géographique et temporelle. Il génère une explication humainement lisible et une recommandation d'action.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from anthropic import Anthropic
+import json
+
+client = Anthropic()
+
+FRAUD_ANALYSIS_PROMPT = """Tu es un analyste fraude senior dans une banque française.
+
+Analyse cette transaction suspecte et décide de l'action à prendre.
+
+## Transaction suspecte:
+- Montant: {amount} {currency}
+- Marchand: {merchant_name} ({merchant_category})
+- Pays: {country}
+- Canal: {channel}
+- Date/Heure: {timestamp}
+- Score ML: {ml_score}/1000
+
+## Profil du porteur:
+- Client depuis: {client_since}
+- Montant moyen habituel: {avg_amount} EUR
+- Montant max historique: {max_amount} EUR
+- Pays habituels: {usual_countries}
+- Catégories marchands habituelles: {usual_categories}
+- Dernière transaction: {last_tx_summary}
+
+## Signaux d'alerte:
+{alert_signals}
+
+## Transactions récentes (24h):
+{recent_transactions}
+
+## Consignes:
+1. Analyse la cohérence de la transaction avec le profil
+2. Identifie les facteurs suspects ET les facteurs rassurants
+3. Détermine l'action: APPROVE, CHALLENGE_3DS, BLOCK, ESCALATE
+4. Explique ta décision en 2-3 phrases claires (pour l'analyste humain)
+5. Attribue un score de confiance à ta décision (0-100)
+
+Retourne un JSON: action, confidence, explanation, suspicious_factors, reassuring_factors, risk_assessment"""
+
+def analyze_suspicious_transaction(tx: dict, features: dict,
+                                    ml_result: dict, profile: dict) -> dict:
+    """Analyse contextuelle LLM d'une transaction suspecte."""
+    # Construire le résumé des signaux d'alerte
+    alerts = []
+    if features.new_merchant:
+        alerts.append("Marchand jamais utilisé par ce client")
+    if features.new_country:
+        alerts.append(f"Transaction depuis un nouveau pays: {tx.get('country')}")
+    if features.amount_vs_avg_ratio > 3:
+        alerts.append(f"Montant {features.amount_vs_avg_ratio:.1f}x supérieur à la moyenne")
+    if features.tx_count_1h > 3:
+        alerts.append(f"Vélocité élevée: {features.tx_count_1h} transactions en 1h")
+    if features.distance_from_last_tx_km > 500:
+        alerts.append(f"Distance impossible: {features.distance_from_last_tx_km:.0f}km depuis la dernière tx")
+
+    recent_txs = get_recent_transactions_summary(tx["card_id"])
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=1000,
+        messages=[{
+            "role": "user",
+            "content": FRAUD_ANALYSIS_PROMPT.format(
+                amount=tx["amount"],
+                currency=tx.get("currency", "EUR"),
+                merchant_name=tx.get("merchant_name", "N/A"),
+                merchant_category=tx.get("mcc_description", "N/A"),
+                country=tx.get("country", "N/A"),
+                channel=tx.get("channel", "N/A"),
+                timestamp=tx.get("timestamp", "N/A"),
+                ml_score=ml_result["score"],
+                client_since=profile.get("client_since", "N/A"),
+                avg_amount=profile.get("avg_amount", "N/A"),
+                max_amount=profile.get("max_amount", "N/A"),
+                usual_countries=", ".join(profile.get("known_countries", [])),
+                usual_categories=", ".join(profile.get("usual_categories", [])),
+                last_tx_summary=profile.get("last_tx_summary", "N/A"),
+                alert_signals="\\n".join(f"- {a}" for a in alerts) or "Aucun signal majeur",
+                recent_transactions=recent_txs,
+            ),
+        }],
+    )
+    return json.loads(response.content[0].text)`,
+            filename: "llm_analyzer.py",
+          },
+        ],
+      },
+      {
+        title: "Pipeline temps réel et orchestration",
+        content:
+          "Assemblez le pipeline complet qui traite chaque transaction en moins de 200ms : feature engineering (20ms), scoring ML (30ms), et analyse LLM conditionnelle (150ms pour les cas suspects uniquement). Utilisez Redis pour le cache et les profils en mémoire.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+import time
+from typing import Optional
+
+app = FastAPI(title="Agent Détection Fraude")
+feature_engine = FeatureEngine()
+scoring_model = FraudScoringModel("fraud_model.joblib")
+
+ML_THRESHOLD = 500      # Score ML au-dessus duquel le LLM intervient
+BLOCK_THRESHOLD = 800   # Score ML au-dessus duquel on bloque directement
+
+class TransactionRequest(BaseModel):
+    card_id: str
+    amount: float
+    currency: str
+    merchant_id: str
+    merchant_name: str
+    mcc_code: str
+    country: str
+    channel: str
+    device_hash: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+
+class FraudDecision(BaseModel):
+    action: str  # APPROVE, CHALLENGE_3DS, BLOCK, ESCALATE
+    ml_score: int
+    llm_analysis: Optional[dict] = None
+    explanation: str
+    processing_time_ms: int
+
+@app.post("/api/fraud/check", response_model=FraudDecision)
+async def check_transaction(tx: TransactionRequest):
+    """Vérifie une transaction en temps réel."""
+    start = time.time()
+    tx_dict = tx.model_dump()
+    tx_dict["timestamp"] = datetime.utcnow().isoformat()
+
+    # Étape 1: Feature engineering (< 20ms)
+    features = feature_engine.compute_features(tx_dict, tx.card_id)
+
+    # Étape 2: Scoring ML (< 30ms)
+    ml_result = scoring_model.score(features)
+
+    # Étape 3: Décision rapide pour les cas clairs
+    if ml_result["score"] < ML_THRESHOLD:
+        elapsed = int((time.time() - start) * 1000)
+        save_decision(tx_dict, ml_result, None, "APPROVE", elapsed)
+        return FraudDecision(
+            action="APPROVE",
+            ml_score=ml_result["score"],
+            explanation="Transaction conforme au profil habituel du porteur.",
+            processing_time_ms=elapsed,
+        )
+
+    if ml_result["score"] > BLOCK_THRESHOLD:
+        elapsed = int((time.time() - start) * 1000)
+        save_decision(tx_dict, ml_result, None, "BLOCK", elapsed)
+        return FraudDecision(
+            action="BLOCK",
+            ml_score=ml_result["score"],
+            explanation="Score de risque critique. Transaction bloquée préventivement.",
+            processing_time_ms=elapsed,
+        )
+
+    # Étape 4: Analyse LLM pour les cas ambigus (score 500-800)
+    profile = feature_engine._get_cardholder_profile(tx.card_id)
+    llm_result = analyze_suspicious_transaction(tx_dict, features, ml_result, profile)
+
+    elapsed = int((time.time() - start) * 1000)
+    action = llm_result.get("action", "CHALLENGE_3DS")
+
+    save_decision(tx_dict, ml_result, llm_result, action, elapsed)
+    return FraudDecision(
+        action=action,
+        ml_score=ml_result["score"],
+        llm_analysis=llm_result,
+        explanation=llm_result.get("explanation", "Analyse contextuelle effectuée."),
+        processing_time_ms=elapsed,
+    )
+
+def save_decision(tx, ml_result, llm_result, action, elapsed_ms):
+    """Sauvegarde la décision pour audit et entraînement."""
+    supabase.table("fraud_decisions").insert({
+        "transaction": tx,
+        "ml_score": ml_result["score"],
+        "llm_analysis": llm_result,
+        "action": action,
+        "processing_time_ms": elapsed_ms,
+        "created_at": datetime.utcnow().isoformat(),
+    }).execute()`,
+            filename: "fraud_pipeline.py",
+          },
+        ],
+      },
+      {
+        title: "Monitoring, feedback loop et réentraînement",
+        content:
+          "Mettez en place le circuit de feedback qui permet aux analystes fraude de confirmer ou infirmer les décisions de l'agent. Ces retours alimentent le réentraînement hebdomadaire du modèle ML. Configurez les alertes de dérive du modèle.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from datetime import datetime, timedelta
+
+class FraudFeedbackLoop:
+    def __init__(self):
+        self.metrics = {
+            "true_positives": 0,
+            "false_positives": 0,
+            "true_negatives": 0,
+            "false_negatives": 0,
+        }
+
+    def record_analyst_feedback(self, decision_id: str, is_fraud: bool):
+        """Enregistre le feedback de l'analyste sur une décision."""
+        decision = supabase.table("fraud_decisions").select("*").eq(
+            "id", decision_id
+        ).single().execute().data
+
+        original_action = decision["action"]
+        was_flagged = original_action in ["BLOCK", "CHALLENGE_3DS", "ESCALATE"]
+
+        if is_fraud and was_flagged:
+            category = "true_positive"
+        elif is_fraud and not was_flagged:
+            category = "false_negative"
+        elif not is_fraud and was_flagged:
+            category = "false_positive"
+        else:
+            category = "true_negative"
+
+        supabase.table("fraud_feedback").insert({
+            "decision_id": decision_id,
+            "is_confirmed_fraud": is_fraud,
+            "original_action": original_action,
+            "feedback_category": category,
+            "analyst_id": "system",
+            "created_at": datetime.utcnow().isoformat(),
+        }).execute()
+
+    def compute_daily_metrics(self) -> dict:
+        """Calcule les métriques quotidiennes de performance."""
+        yesterday = (datetime.utcnow() - timedelta(days=1)).isoformat()
+        feedbacks = supabase.table("fraud_feedback").select("*").gte(
+            "created_at", yesterday
+        ).execute()
+
+        metrics = {"tp": 0, "fp": 0, "tn": 0, "fn": 0}
+        for f in feedbacks.data:
+            cat = f["feedback_category"]
+            if cat == "true_positive":
+                metrics["tp"] += 1
+            elif cat == "false_positive":
+                metrics["fp"] += 1
+            elif cat == "true_negative":
+                metrics["tn"] += 1
+            elif cat == "false_negative":
+                metrics["fn"] += 1
+
+        precision = metrics["tp"] / max(metrics["tp"] + metrics["fp"], 1)
+        recall = metrics["tp"] / max(metrics["tp"] + metrics["fn"], 1)
+
+        report = {
+            "date": datetime.utcnow().date().isoformat(),
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+            "f1_score": round(2 * precision * recall / max(precision + recall, 0.001), 4),
+            "false_positive_rate": round(metrics["fp"] / max(sum(metrics.values()), 1), 4),
+            "total_reviewed": sum(metrics.values()),
+            "metrics": metrics,
+        }
+
+        # Alerte si les métriques se dégradent
+        if precision < 0.3:
+            send_alert("Précision fraude sous 30% - réentraînement nécessaire")
+        if recall < 0.8:
+            send_alert("Rappel fraude sous 80% - fraudes non détectées en hausse")
+
+        return report`,
+            filename: "feedback_loop.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les transactions contiennent des données personnelles sensibles (numéro de carte, géolocalisation, habitudes de consommation). Tokenisation PCI-DSS obligatoire des PAN avant traitement. Les données envoyées au LLM sont pseudonymisées (pas de numéro de carte complet, pas de nom du porteur). Stockage chiffré AES-256 en base. Conformité RGPD : base légale = intérêt légitime (prévention de la fraude, art. 6.1.f).",
+      auditLog: "Piste d'audit complète pour chaque décision : timestamp, features calculées, score ML, analyse LLM complète (prompt + réponse), action prise, temps de traitement, feedback analyste ultérieur. Conservation 5 ans (obligation réglementaire ACPR). Export automatique pour les rapports de contrôle interne et les audits de la Banque de France.",
+      humanInTheLoop: "Les transactions avec une action ESCALATE sont systématiquement traitées par un analyste fraude dans un SLA de 15 minutes. Les décisions de blocage avec un score de confiance LLM < 60% déclenchent une revue humaine avant notification au client. Un comité hebdomadaire revoit les faux positifs et faux négatifs pour ajuster les seuils.",
+      monitoring: "Dashboard temps réel Grafana : volume de transactions/seconde, latence P50/P95/P99, taux de blocage, taux de faux positifs (mise à jour quotidienne via feedback), distribution des scores ML, dérive du modèle (PSI - Population Stability Index), coût LLM par jour. Alertes critiques : latence > 200ms, taux de blocage > 5%, PSI > 0.2.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (nouvelle transaction via API gateway) -> Node Code (feature engineering depuis Redis) -> Node HTTP Request (scoring ML via API interne) -> Node Switch (score < 500 / 500-800 / > 800) -> Branch approuver : Node HTTP Request (réponse approve) -> Branch suspecte : Node HTTP Request (API Claude - analyse contextuelle) -> Node Code (décision finale) -> Node Switch (action) -> Node HTTP Request (réponse) + Node Supabase (log décision) -> Branch bloquer : Node HTTP Request (réponse block) + Node Slack (alerte analyste).",
+      nodes: ["Webhook (transaction)", "Code (features Redis)", "HTTP Request (ML scoring)", "Switch (score threshold)", "HTTP Request (Claude analyse)", "Code (décision finale)", "Switch (action)", "HTTP Request (réponse gateway)", "Supabase (audit log)", "Slack (alerte analyste)"],
+      triggerType: "Webhook (chaque transaction en temps réel via API gateway PSP)",
+    },
+    estimatedTime: "12-20h",
+    difficulty: "Expert",
+    sectors: ["Banque", "Fintech", "Assurance", "E-commerce"],
+    metiers: ["Analyse Fraude", "Risk Management", "Data Science"],
+    functions: ["Risk", "Sécurité", "Data"],
+    metaTitle: "Agent IA de Détection de Fraude Transactionnelle — Guide Expert",
+    metaDescription:
+      "Construisez un agent IA combinant ML temps réel et analyse contextuelle LLM pour détecter la fraude bancaire. Réduction de 70% des faux positifs. Pipeline complet avec code.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-personnalisation-email-marketing",
+    title: "Agent de Personnalisation Email Marketing",
+    subtitle: "Générez des emails marketing hyper-personnalisés à grande échelle en combinant segmentation IA et rédaction contextuelle par LLM",
+    problem:
+      "Les équipes marketing envoient des campagnes email segmentées de manière rudimentaire (âge, sexe, localisation) avec des contenus génériques qui génèrent des taux d'ouverture de 15-20% et des taux de clic inférieurs à 3%. La personnalisation manuelle est impossible au-delà de 5-6 segments. Les A/B tests sont limités à 2-3 variantes par campagne, laissant inexploité le potentiel de personnalisation massive. Les désabonnements augmentent car les destinataires reçoivent du contenu non pertinent. Le coût d'acquisition client via email augmente tandis que le ROI se dégrade.",
+    value:
+      "Un agent IA analyse le profil comportemental complet de chaque destinataire (historique d'achats, navigation, interactions email précédentes, préférences déclarées) et génère un email entièrement personnalisé : objet, corps du texte, recommandations produits, timing d'envoi optimal, et tonalité adaptée. Chaque destinataire reçoit un email unique. Les taux d'ouverture augmentent de 40% et les conversions de 25%.",
+    inputs: [
+      "Base de contacts avec données comportementales (achats, navigation, clics email)",
+      "Catalogue produits avec descriptions, prix et disponibilité",
+      "Historique des campagnes précédentes (performance par segment)",
+      "Charte éditoriale et guidelines de marque",
+      "Templates HTML email responsive",
+      "Règles RGPD et préférences de consentement par contact",
+    ],
+    outputs: [
+      "Email personnalisé par destinataire (objet, contenu, CTA, produits recommandés)",
+      "Heure d'envoi optimale par fuseau horaire et habitude du destinataire",
+      "Score de pertinence prédictif par email (probabilité d'engagement)",
+      "Rapport de campagne avec attribution des conversions",
+      "Suggestions d'optimisation pour les prochaines campagnes",
+      "Segments dynamiques identifiés par clustering comportemental",
+    ],
+    risks: [
+      "Hyper-personnalisation perçue comme intrusive par les destinataires",
+      "Non-conformité RGPD si le profilage n'est pas déclaré dans la politique de confidentialité",
+      "Fatigue email si la fréquence d'envoi n'est pas contrôlée",
+      "Hallucinations du LLM inventant des caractéristiques produit inexistantes",
+      "Coût LLM élevé si chaque email est généré individuellement sans cache",
+    ],
+    roiIndicatif:
+      "Augmentation de 40% du taux d'ouverture. Augmentation de 25% du taux de conversion. Réduction de 50% du taux de désabonnement. ROI email marketing multiplié par 3.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Supabase", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+      { name: "Resend", category: "Other" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral Large", category: "LLM", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "PostgreSQL", category: "Database", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+      { name: "Nodemailer", category: "Other", isFree: true },
+    ],
+    architectureDiagram: `┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│  CRM/CDP     │  │  Catalogue   │  │  Analytics   │
+│  Contacts    │  │  Produits    │  │  Email       │
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       │                 │                 │
+       └─────────┬───────┴─────────┬───────┘
+                 │                 │
+          ┌──────▼───────┐  ┌─────▼────────┐
+          │  Agent LLM   │  │  Moteur de   │
+          │  (Rédaction)  │  │  Recomm.     │
+          └──────┬───────┘  └──────────────┘
+                 │
+       ┌─────────┼─────────┐
+       │         │         │
+┌──────▼──┐ ┌───▼────┐ ┌──▼───────┐
+│ Email   │ │ Send   │ │ Tracking │
+│ Rendu   │ │ Queue  │ │ Analytics│
+└─────────┘ └────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Segmentation comportementale et profils destinataires",
+        content:
+          "Construisez le pipeline de segmentation qui enrichit chaque contact avec un profil comportemental complet. Le profil agrège les données d'achat, de navigation, d'interaction email et de préférences pour créer un portrait unique exploitable par le LLM. Utilisez un clustering pour identifier des micro-segments dynamiques.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install langchain anthropic supabase resend scikit-learn pandas jinja2 python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `from supabase import create_client
+from dataclasses import dataclass
+from sklearn.cluster import KMeans
+import pandas as pd
+import numpy as np
+import os
+
+supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+
+@dataclass
+class RecipientProfile:
+    email: str
+    first_name: str
+    segment: str
+    # Comportement d'achat
+    total_purchases: int
+    avg_order_value: float
+    last_purchase_days_ago: int
+    favorite_categories: list[str]
+    # Comportement email
+    avg_open_rate: float
+    avg_click_rate: float
+    preferred_send_time: str  # "morning", "afternoon", "evening"
+    last_open_days_ago: int
+    # Engagement
+    engagement_score: float  # 0-100
+    churn_risk: str  # "low", "medium", "high"
+    # Préférences
+    preferred_tone: str  # "formal", "casual", "enthusiastic"
+    interests: list[str]
+    lifecycle_stage: str  # "new", "active", "at_risk", "dormant", "vip"
+
+class RecipientSegmenter:
+    def __init__(self):
+        self.cluster_model = None
+
+    def build_profile(self, email: str) -> RecipientProfile:
+        """Construit le profil complet d'un destinataire."""
+        # Données CRM
+        contact = supabase.table("contacts").select("*").eq("email", email).single().execute().data
+        # Historique d'achats
+        orders = supabase.table("orders").select("*").eq("customer_email", email).order(
+            "created_at", desc=True
+        ).limit(50).execute().data
+        # Historique email
+        email_events = supabase.table("email_events").select("*").eq("recipient", email).order(
+            "sent_at", desc=True
+        ).limit(100).execute().data
+        # Calcul des métriques
+        total_purchases = len(orders)
+        avg_order = np.mean([o["total"] for o in orders]) if orders else 0
+        from datetime import datetime, timedelta
+        last_purchase = (datetime.utcnow() - datetime.fromisoformat(
+            orders[0]["created_at"]
+        )).days if orders else 999
+
+        # Taux d'ouverture et de clic
+        opens = sum(1 for e in email_events if e.get("opened"))
+        clicks = sum(1 for e in email_events if e.get("clicked"))
+        total_sent = max(len(email_events), 1)
+
+        # Catégories favorites
+        categories = [item["category"] for o in orders for item in o.get("items", [])]
+        from collections import Counter
+        fav_cats = [c for c, _ in Counter(categories).most_common(3)]
+
+        # Déterminer l'heure préférée d'ouverture
+        open_hours = [datetime.fromisoformat(e["opened_at"]).hour
+                      for e in email_events if e.get("opened_at")]
+        preferred_time = "morning" if np.median(open_hours or [10]) < 12 else (
+            "afternoon" if np.median(open_hours or [14]) < 17 else "evening"
+        )
+
+        # Score d'engagement (RFM simplifié)
+        recency = max(0, 100 - last_purchase * 2)
+        frequency = min(total_purchases * 10, 100)
+        monetary = min(avg_order / 5, 100)
+        engagement = (recency * 0.4 + frequency * 0.3 + monetary * 0.3)
+
+        # Lifecycle stage
+        if total_purchases == 0:
+            stage = "new"
+        elif last_purchase > 180:
+            stage = "dormant"
+        elif last_purchase > 60:
+            stage = "at_risk"
+        elif total_purchases > 10 and avg_order > 100:
+            stage = "vip"
+        else:
+            stage = "active"
+
+        return RecipientProfile(
+            email=email,
+            first_name=contact.get("first_name", ""),
+            segment=self._determine_segment(engagement, stage),
+            total_purchases=total_purchases,
+            avg_order_value=round(avg_order, 2),
+            last_purchase_days_ago=last_purchase,
+            favorite_categories=fav_cats,
+            avg_open_rate=round(opens / total_sent, 3),
+            avg_click_rate=round(clicks / total_sent, 3),
+            preferred_send_time=preferred_time,
+            last_open_days_ago=0,
+            engagement_score=round(engagement, 1),
+            churn_risk="high" if stage == "at_risk" else ("medium" if stage == "dormant" else "low"),
+            preferred_tone="formal" if avg_order > 200 else "casual",
+            interests=fav_cats,
+            lifecycle_stage=stage,
+        )
+
+    def _determine_segment(self, engagement: float, stage: str) -> str:
+        if stage == "vip":
+            return "vip_fidele"
+        elif stage == "new":
+            return "nouveau_client"
+        elif engagement > 70:
+            return "engage_actif"
+        elif stage == "at_risk":
+            return "risque_churn"
+        elif stage == "dormant":
+            return "dormant_reactiver"
+        else:
+            return "standard"`,
+            filename: "segmenter.py",
+          },
+        ],
+      },
+      {
+        title: "Moteur de recommandation produits contextualisé",
+        content:
+          "Implémentez le moteur de recommandation qui sélectionne les produits les plus pertinents pour chaque destinataire. Il combine le filtrage collaboratif (clients similaires) et le filtrage basé sur le contenu (préférences déclarées et historique) pour proposer 3-5 produits par email.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from anthropic import Anthropic
+import json
+
+client = Anthropic()
+
+RECOMMENDATION_PROMPT = """Tu es un expert en merchandising e-commerce pour le marché français.
+
+Sélectionne les 4 produits les plus pertinents pour ce client parmi le catalogue.
+
+## Profil client:
+- Prénom: {first_name}
+- Segment: {segment}
+- Catégories favorites: {favorite_categories}
+- Panier moyen: {avg_order_value} EUR
+- Dernier achat il y a: {last_purchase_days} jours
+- Score engagement: {engagement}/100
+- Stade lifecycle: {lifecycle_stage}
+
+## Historique achats récents:
+{recent_purchases}
+
+## Produits disponibles (catalogue):
+{catalog_excerpt}
+
+## Consignes:
+1. Sélectionne 4 produits cohérents avec le profil et l'historique
+2. Inclus au moins 1 produit de cross-sell (catégorie complémentaire)
+3. Respecte la gamme de prix habituelle du client (+/- 30%)
+4. Ne recommande JAMAIS un produit déjà acheté
+5. Pour les clients "at_risk", privilégie les best-sellers ou promotions
+6. Pour les VIP, privilégie les nouveautés et éditions limitées
+
+Retourne un JSON: products (array de {{sku, name, price, reason}})"""
+
+class ProductRecommender:
+    def __init__(self):
+        pass
+
+    def get_recommendations(self, profile: dict, recent_orders: list,
+                            catalog: list) -> list[dict]:
+        """Génère des recommandations personnalisées."""
+        # Filtrer le catalogue pour exclure les produits déjà achetés
+        purchased_skus = set()
+        for order in recent_orders:
+            for item in order.get("items", []):
+                purchased_skus.add(item.get("sku"))
+
+        available = [p for p in catalog if p["sku"] not in purchased_skus]
+
+        # Pré-filtrer par gamme de prix compatible
+        price_range = (profile["avg_order_value"] * 0.3, profile["avg_order_value"] * 2)
+        price_filtered = [p for p in available
+                          if price_range[0] <= p["price"] <= price_range[1]]
+
+        # Si pas assez de produits dans la gamme, élargir
+        candidates = price_filtered if len(price_filtered) >= 20 else available
+
+        # Limiter à 30 candidats pour le prompt LLM
+        candidates = candidates[:30]
+
+        response = client.messages.create(
+            model="claude-sonnet-4-5-20250514",
+            max_tokens=800,
+            messages=[{
+                "role": "user",
+                "content": RECOMMENDATION_PROMPT.format(
+                    first_name=profile.get("first_name", ""),
+                    segment=profile.get("segment", ""),
+                    favorite_categories=", ".join(profile.get("favorite_categories", [])),
+                    avg_order_value=profile.get("avg_order_value", 0),
+                    last_purchase_days=profile.get("last_purchase_days_ago", 0),
+                    engagement=profile.get("engagement_score", 0),
+                    lifecycle_stage=profile.get("lifecycle_stage", ""),
+                    recent_purchases=json.dumps(recent_orders[:5], ensure_ascii=False, default=str),
+                    catalog_excerpt=json.dumps(
+                        [{"sku": p["sku"], "name": p["name"], "price": p["price"],
+                          "category": p["category"]} for p in candidates],
+                        ensure_ascii=False
+                    ),
+                ),
+            }],
+        )
+        return json.loads(response.content[0].text)["products"]`,
+            filename: "recommender.py",
+          },
+        ],
+      },
+      {
+        title: "Génération du contenu email personnalisé",
+        content:
+          "Le coeur de l'agent : le LLM rédige un email complet et unique pour chaque destinataire, adapté à son profil, son historique et les recommandations produits. L'email respecte la charte éditoriale et s'adapte au ton préféré du destinataire. Un système de cache par micro-segment réduit les coûts.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import hashlib
+import json
+
+EMAIL_GENERATION_PROMPT = """Tu es un rédacteur email marketing expert pour une marque e-commerce française.
+
+Rédige un email marketing personnalisé pour ce destinataire.
+
+## Destinataire:
+- Prénom: {first_name}
+- Segment: {segment}
+- Lifecycle: {lifecycle_stage}
+- Engagement: {engagement_score}/100
+- Ton préféré: {preferred_tone}
+
+## Produits à mettre en avant:
+{products_json}
+
+## Objectif de la campagne: {campaign_objective}
+## Charte éditoriale: {brand_guidelines}
+
+## Consignes:
+1. Objet email: max 50 caractères, personnalisé, incitant à l'ouverture
+2. Pré-header: 80-100 caractères complémentant l'objet
+3. Introduction: 1-2 phrases personnalisées selon le lifecycle stage
+4. Corps: présente les produits recommandés avec bénéfices (pas juste features)
+5. CTA principal: un seul call-to-action clair et urgent
+6. Ton {preferred_tone}: adapte le niveau de langage
+7. Pour les VIP: ton exclusif, accès privilégié
+8. Pour les at_risk: offre de rétention, rappel de la valeur
+9. Pour les nouveaux: message de bienvenue, guide d'achat
+10. Utilise le vouvoiement sauf si le ton est "casual"
+
+Retourne un JSON: subject, preheader, html_body, plain_text, cta_text, cta_url"""
+
+class EmailContentGenerator:
+    def __init__(self):
+        self.cache = {}
+
+    def generate_email(self, profile: dict, products: list[dict],
+                       campaign: dict) -> dict:
+        """Génère un email personnalisé pour un destinataire."""
+        # Vérifier le cache par micro-segment + produits
+        cache_key = self._compute_cache_key(profile, products, campaign)
+        if cache_key in self.cache:
+            # Personnaliser seulement le prénom sur le template caché
+            cached = self.cache[cache_key].copy()
+            cached["subject"] = cached["subject"].replace("[PRENOM]", profile.get("first_name", ""))
+            cached["html_body"] = cached["html_body"].replace("[PRENOM]", profile.get("first_name", ""))
+            return cached
+
+        response = client.messages.create(
+            model="claude-sonnet-4-5-20250514",
+            max_tokens=1500,
+            messages=[{
+                "role": "user",
+                "content": EMAIL_GENERATION_PROMPT.format(
+                    first_name=profile.get("first_name", "Cher client"),
+                    segment=profile.get("segment", "standard"),
+                    lifecycle_stage=profile.get("lifecycle_stage", "active"),
+                    engagement_score=profile.get("engagement_score", 50),
+                    preferred_tone=profile.get("preferred_tone", "casual"),
+                    products_json=json.dumps(products, ensure_ascii=False),
+                    campaign_objective=campaign.get("objective", ""),
+                    brand_guidelines=campaign.get("brand_guidelines", ""),
+                ),
+            }],
+        )
+        email_content = json.loads(response.content[0].text)
+
+        # Mettre en cache avec le prénom générique
+        cache_version = email_content.copy()
+        cache_version["subject"] = cache_version["subject"].replace(
+            profile.get("first_name", ""), "[PRENOM]"
+        )
+        cache_version["html_body"] = cache_version["html_body"].replace(
+            profile.get("first_name", ""), "[PRENOM]"
+        )
+        self.cache[cache_key] = cache_version
+
+        return email_content
+
+    def _compute_cache_key(self, profile, products, campaign):
+        """Clé de cache basée sur segment + produits + campagne."""
+        key_data = {
+            "segment": profile.get("segment"),
+            "lifecycle": profile.get("lifecycle_stage"),
+            "tone": profile.get("preferred_tone"),
+            "products": [p.get("sku") for p in products],
+            "campaign_id": campaign.get("id"),
+        }
+        return hashlib.md5(json.dumps(key_data, sort_keys=True).encode()).hexdigest()`,
+            filename: "email_generator.py",
+          },
+        ],
+      },
+      {
+        title: "Optimisation du timing d'envoi et pipeline de distribution",
+        content:
+          "Chaque email est envoyé au moment optimal pour chaque destinataire, calculé à partir de ses habitudes d'ouverture historiques. Le pipeline de distribution gère les batches, respecte les limites de taux, et assure le suivi de délivrabilité.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import resend
+from datetime import datetime, timedelta
+from collections import defaultdict
+import asyncio
+
+resend.api_key = os.getenv("RESEND_API_KEY")
+
+class SendTimeOptimizer:
+    def __init__(self):
+        pass
+
+    def get_optimal_send_time(self, profile: dict) -> datetime:
+        """Calcule l'heure d'envoi optimale pour un destinataire."""
+        # Récupérer les heures d'ouverture historiques
+        events = supabase.table("email_events").select("opened_at").eq(
+            "recipient", profile["email"]
+        ).not_.is_("opened_at", "null").limit(50).execute()
+
+        if not events.data:
+            # Défaut selon le segment
+            defaults = {
+                "vip_fidele": 9,
+                "engage_actif": 10,
+                "nouveau_client": 11,
+                "risque_churn": 8,
+                "dormant_reactiver": 12,
+                "standard": 10,
+            }
+            hour = defaults.get(profile.get("segment", "standard"), 10)
+            return datetime.utcnow().replace(hour=hour, minute=0)
+
+        # Calculer l'heure médiane d'ouverture
+        hours = [datetime.fromisoformat(e["opened_at"]).hour for e in events.data]
+        optimal_hour = int(np.median(hours))
+        optimal_minute = int(np.mean(
+            [datetime.fromisoformat(e["opened_at"]).minute for e in events.data]
+        ))
+
+        # Programmer pour demain à l'heure optimale si déjà passé
+        now = datetime.utcnow()
+        send_time = now.replace(hour=optimal_hour, minute=optimal_minute, second=0)
+        if send_time <= now:
+            send_time += timedelta(days=1)
+
+        return send_time
+
+class CampaignDistributor:
+    def __init__(self):
+        self.time_optimizer = SendTimeOptimizer()
+        self.email_generator = EmailContentGenerator()
+        self.recommender = ProductRecommender()
+        self.segmenter = RecipientSegmenter()
+
+    async def distribute_campaign(self, campaign: dict, recipient_emails: list[str]):
+        """Distribue une campagne personnalisée à tous les destinataires."""
+        # Charger le catalogue
+        catalog = supabase.table("products").select("*").eq("active", True).execute().data
+
+        send_queue = defaultdict(list)  # {datetime_bucket: [emails]}
+        results = {"generated": 0, "scheduled": 0, "errors": 0}
+
+        for email in recipient_emails:
+            try:
+                # 1. Profil destinataire
+                profile = self.segmenter.build_profile(email)
+
+                # 2. Recommandations produits
+                recent_orders = supabase.table("orders").select("*").eq(
+                    "customer_email", email
+                ).order("created_at", desc=True).limit(5).execute().data
+                products = self.recommender.get_recommendations(
+                    profile.__dict__, recent_orders, catalog
+                )
+
+                # 3. Générer l'email
+                email_content = self.email_generator.generate_email(
+                    profile.__dict__, products, campaign
+                )
+
+                # 4. Calculer le timing optimal
+                send_time = self.time_optimizer.get_optimal_send_time(profile.__dict__)
+
+                # 5. Mettre en file d'envoi
+                supabase.table("email_queue").insert({
+                    "campaign_id": campaign["id"],
+                    "recipient": email,
+                    "subject": email_content["subject"],
+                    "html_body": email_content["html_body"],
+                    "plain_text": email_content["plain_text"],
+                    "scheduled_at": send_time.isoformat(),
+                    "status": "queued",
+                    "profile_segment": profile.segment,
+                }).execute()
+
+                results["generated"] += 1
+                results["scheduled"] += 1
+            except Exception as e:
+                results["errors"] += 1
+                print(f"Erreur pour {email}: {e}")
+
+        return results
+
+    def process_send_queue(self):
+        """Traite la file d'envoi (appelé par cron toutes les 5 min)."""
+        now = datetime.utcnow().isoformat()
+        pending = supabase.table("email_queue").select("*").eq(
+            "status", "queued"
+        ).lte("scheduled_at", now).limit(100).execute()
+
+        for entry in pending.data:
+            try:
+                result = resend.Emails.send({
+                    "from": "marketing@votreentreprise.fr",
+                    "to": entry["recipient"],
+                    "subject": entry["subject"],
+                    "html": entry["html_body"],
+                    "text": entry["plain_text"],
+                })
+                supabase.table("email_queue").update({
+                    "status": "sent",
+                    "sent_at": datetime.utcnow().isoformat(),
+                    "provider_id": result.get("id"),
+                }).eq("id", entry["id"]).execute()
+            except Exception as e:
+                supabase.table("email_queue").update({
+                    "status": "error",
+                    "error": str(e),
+                }).eq("id", entry["id"]).execute()`,
+            filename: "distributor.py",
+          },
+        ],
+      },
+      {
+        title: "Tracking, analytics et optimisation continue",
+        content:
+          "Mettez en place le suivi complet des performances : taux d'ouverture, taux de clic, conversions et revenus attribués. Le système apprend des résultats pour améliorer en continu les recommandations, le contenu et le timing. Un rapport automatique mesure le ROI de la personnalisation par rapport aux campagnes classiques.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from datetime import datetime, timedelta
+
+class CampaignAnalytics:
+    def __init__(self):
+        pass
+
+    def process_webhook_event(self, event: dict):
+        """Traite les webhooks Resend (ouverture, clic, bounce, etc.)."""
+        event_type = event.get("type")
+        email_id = event.get("email_id")
+
+        # Récupérer l'entrée de la file d'envoi
+        queue_entry = supabase.table("email_queue").select("*").eq(
+            "provider_id", email_id
+        ).single().execute()
+
+        if not queue_entry.data:
+            return
+
+        entry = queue_entry.data
+        now = datetime.utcnow().isoformat()
+
+        if event_type == "email.opened":
+            supabase.table("email_events").insert({
+                "campaign_id": entry["campaign_id"],
+                "recipient": entry["recipient"],
+                "event_type": "open",
+                "opened_at": now,
+                "sent_at": entry["sent_at"],
+            }).execute()
+
+        elif event_type == "email.clicked":
+            supabase.table("email_events").insert({
+                "campaign_id": entry["campaign_id"],
+                "recipient": entry["recipient"],
+                "event_type": "click",
+                "clicked_at": now,
+                "clicked_url": event.get("url", ""),
+            }).execute()
+
+        elif event_type == "email.bounced":
+            supabase.table("email_events").insert({
+                "campaign_id": entry["campaign_id"],
+                "recipient": entry["recipient"],
+                "event_type": "bounce",
+                "bounce_type": event.get("bounce_type", "hard"),
+            }).execute()
+            # Désactiver le contact en cas de hard bounce
+            if event.get("bounce_type") == "hard":
+                supabase.table("contacts").update(
+                    {"email_active": False}
+                ).eq("email", entry["recipient"]).execute()
+
+    def generate_campaign_report(self, campaign_id: str) -> dict:
+        """Génère le rapport de performance d'une campagne."""
+        # Métriques d'envoi
+        sent = supabase.table("email_queue").select("*", count="exact").eq(
+            "campaign_id", campaign_id
+        ).eq("status", "sent").execute()
+
+        # Métriques d'engagement
+        events = supabase.table("email_events").select("*").eq(
+            "campaign_id", campaign_id
+        ).execute()
+
+        opens = sum(1 for e in events.data if e["event_type"] == "open")
+        clicks = sum(1 for e in events.data if e["event_type"] == "click")
+        bounces = sum(1 for e in events.data if e["event_type"] == "bounce")
+        unsubscribes = sum(1 for e in events.data if e["event_type"] == "unsubscribe")
+
+        total_sent = sent.count or 1
+
+        # Conversions attribuées (dans les 7 jours post-clic)
+        conversions = supabase.rpc("count_attributed_conversions", {
+            "p_campaign_id": campaign_id,
+            "p_attribution_window_days": 7,
+        }).execute()
+
+        # Métriques par segment
+        segment_metrics = {}
+        queue_entries = supabase.table("email_queue").select("recipient, profile_segment").eq(
+            "campaign_id", campaign_id
+        ).execute()
+
+        for entry in queue_entries.data:
+            seg = entry["profile_segment"]
+            if seg not in segment_metrics:
+                segment_metrics[seg] = {"sent": 0, "opens": 0, "clicks": 0}
+            segment_metrics[seg]["sent"] += 1
+
+        report = {
+            "campaign_id": campaign_id,
+            "total_sent": total_sent,
+            "open_rate": round(opens / total_sent * 100, 2),
+            "click_rate": round(clicks / total_sent * 100, 2),
+            "bounce_rate": round(bounces / total_sent * 100, 2),
+            "unsubscribe_rate": round(unsubscribes / total_sent * 100, 3),
+            "conversions": conversions.data if conversions.data else 0,
+            "segment_performance": segment_metrics,
+            "generated_at": datetime.utcnow().isoformat(),
+        }
+
+        # Sauvegarder le rapport
+        supabase.table("campaign_reports").insert(report).execute()
+        return report`,
+            filename: "analytics.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données de profilage comportemental (achats, navigation, préférences) sont des données personnelles soumises au RGPD. Base légale : consentement explicite pour le profilage marketing (art. 6.1.a) ou intérêt légitime avec opt-out facile (art. 6.1.f). Les profils ne sont jamais envoyés bruts au LLM : seules les métriques agrégées et anonymisées (segment, score, catégories) sont transmises. Lien de désinscription obligatoire dans chaque email. Respect strict des préférences de fréquence.",
+      auditLog: "Chaque email généré est loggué avec : horodatage de génération, profil utilisé (version agrégée), produits recommandés, prompt LLM complet, contenu généré, heure d'envoi programmée, métriques de performance post-envoi. Rétention 24 mois. Export automatique pour audit CNIL si requis. Traçabilité complète du consentement marketing.",
+      humanInTheLoop: "Les emails générés pour les segments VIP (> 10K EUR de CA annuel) sont systématiquement revus par le responsable CRM avant envoi. Les campagnes dépassant 50K destinataires nécessitent une validation du directeur marketing. Un échantillon aléatoire de 2% des emails est relu par l'équipe éditoriale pour contrôle qualité.",
+      monitoring: "Dashboard Langfuse et Supabase : taux d'ouverture par segment et par campagne, taux de clic, taux de conversion attribué, revenu par email envoyé, coût LLM par email, taux de désabonnement, score de délivrabilité (réputation IP), temps de génération par email. Alertes si le taux de bounce dépasse 2%, si le taux de désabonnement dépasse 0.5%, ou si le coût LLM par email dépasse 0.05 EUR.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (déclenchement campagne) -> Node Supabase (récupération liste destinataires) -> Node Loop (pour chaque destinataire) -> Node Supabase (profil comportemental) -> Node HTTP Request (Claude - recommandations produits) -> Node HTTP Request (Claude - génération email) -> Node Code (calcul timing optimal) -> Node Supabase (mise en file d'envoi) -> Cron (toutes les 5 min) : Node Supabase (emails à envoyer maintenant) -> Node HTTP Request (Resend - envoi) -> Node Supabase (mise à jour statut). Webhook tracking : Node Webhook (événements Resend) -> Node Supabase (log événement) -> Node Code (mise à jour métriques).",
+      nodes: ["Webhook (lancement campagne)", "Supabase (destinataires)", "Loop (chaque contact)", "Supabase (profil)", "HTTP Request (Claude recommandations)", "HTTP Request (Claude email)", "Code (timing optimal)", "Supabase (file envoi)", "Cron (5 min)", "HTTP Request (Resend)", "Webhook (tracking events)", "Supabase (analytics)"],
+      triggerType: "Webhook (déclenchement campagne par le responsable marketing) + Cron (traitement file d'envoi toutes les 5 minutes)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["E-commerce", "Retail", "SaaS", "Services"],
+    metiers: ["Marketing Digital", "CRM", "Growth"],
+    functions: ["Marketing", "CRM"],
+    metaTitle: "Agent IA de Personnalisation Email Marketing — Guide Complet",
+    metaDescription:
+      "Générez des emails marketing hyper-personnalisés à grande échelle avec un agent IA. Segmentation comportementale, recommandations produits et timing d'envoi optimal. Tutoriel complet.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+
 ];
