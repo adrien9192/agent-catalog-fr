@@ -83,10 +83,26 @@ export default async function UseCasePage({ params }: PageProps) {
         </div>
       </header>
 
+      {/* Mobile TOC */}
+      <div className="lg:hidden mb-8 rounded-xl border bg-muted/30 p-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sommaire</h2>
+        <nav className="flex flex-wrap gap-2">
+          <a href="#presentation" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Présentation</a>
+          <a href="#stack" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Stack</a>
+          <a href="#tutoriel" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Tutoriel</a>
+          {uc.n8nWorkflow && (
+            <a href="#workflow-n8n" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Workflow n8n</a>
+          )}
+          {uc.enterprise && (
+            <a href="#enterprise" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Enterprise</a>
+          )}
+        </nav>
+      </div>
+
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="reading-width space-y-10 lg:mx-0 lg:max-w-none">
           {/* 1. Présentation */}
-          <section>
+          <section id="presentation">
             <h2 className="text-2xl font-bold mb-4">Présentation du cas d&apos;usage</h2>
 
             <div className="space-y-6">
@@ -185,7 +201,7 @@ export default async function UseCasePage({ params }: PageProps) {
           <Separator />
 
           {/* 2. Stack recommandée */}
-          <section>
+          <section id="stack">
             <h2 className="text-2xl font-bold mb-4">Stack recommandée</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <Card>
@@ -239,7 +255,7 @@ export default async function UseCasePage({ params }: PageProps) {
           <Separator />
 
           {/* 3. Tutoriel */}
-          <section>
+          <section id="tutoriel">
             <h2 className="text-2xl font-bold mb-6">Tutoriel d&apos;implémentation</h2>
             <div className="space-y-8">
               {uc.tutorial.map((section, i) => (
@@ -296,7 +312,7 @@ export default async function UseCasePage({ params }: PageProps) {
 
           {/* 4. Workflow n8n / Automatisation */}
           {uc.n8nWorkflow && (
-            <section>
+            <section id="workflow-n8n">
               <h2 className="text-2xl font-bold mb-4">Workflow n8n / Automatisation</h2>
               <Card>
                 <CardContent className="pt-6">
@@ -328,7 +344,7 @@ export default async function UseCasePage({ params }: PageProps) {
 
           {/* 5. Enterprise */}
           {uc.enterprise && (
-            <section>
+            <section id="enterprise">
               <h2 className="text-2xl font-bold mb-4">Considérations Enterprise</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Card>
@@ -403,11 +419,15 @@ export default async function UseCasePage({ params }: PageProps) {
               </CardHeader>
               <CardContent>
                 <nav className="space-y-1 text-sm">
-                  <p className="text-muted-foreground hover:text-foreground cursor-pointer">Présentation</p>
-                  <p className="text-muted-foreground hover:text-foreground cursor-pointer">Stack recommandée</p>
-                  <p className="text-muted-foreground hover:text-foreground cursor-pointer">Tutoriel</p>
-                  <p className="text-muted-foreground hover:text-foreground cursor-pointer">Workflow n8n</p>
-                  <p className="text-muted-foreground hover:text-foreground cursor-pointer">Enterprise</p>
+                  <a href="#presentation" className="block text-muted-foreground hover:text-foreground transition-colors">Présentation</a>
+                  <a href="#stack" className="block text-muted-foreground hover:text-foreground transition-colors">Stack recommandée</a>
+                  <a href="#tutoriel" className="block text-muted-foreground hover:text-foreground transition-colors">Tutoriel</a>
+                  {uc.n8nWorkflow && (
+                    <a href="#workflow-n8n" className="block text-muted-foreground hover:text-foreground transition-colors">Workflow n8n</a>
+                  )}
+                  {uc.enterprise && (
+                    <a href="#enterprise" className="block text-muted-foreground hover:text-foreground transition-colors">Enterprise</a>
+                  )}
                 </nav>
               </CardContent>
             </Card>
