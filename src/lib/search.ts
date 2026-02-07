@@ -3,15 +3,17 @@ import type { UseCase } from "@/data/types";
 
 // Table de synonymes FR → terme canonique indexé
 const FR_SYNONYMS: Record<string, string[]> = {
-  support: ["SAV", "service client", "helpdesk", "assistance", "ticket", "réclamation"],
-  sales: ["vente", "commercial", "prospection", "relance", "CRM", "lead", "prospect"],
-  rh: ["ressources humaines", "recrutement", "embauche", "onboarding", "CV", "candidat", "talent"],
-  marketing: ["contenu", "SEO", "rédaction", "campagne", "emailing", "réseaux sociaux", "brand"],
-  finance: ["comptabilité", "compta", "facture", "rapport financier", "budget", "trésorerie", "audit"],
-  it: ["DSI", "informatique", "incident", "DevOps", "monitoring", "infrastructure", "système"],
+  support: ["SAV", "service client", "helpdesk", "assistance", "ticket", "réclamation", "FAQ", "self-service"],
+  sales: ["vente", "commercial", "prospection", "relance", "CRM", "lead", "prospect", "qualification", "rendez-vous", "appel"],
+  rh: ["ressources humaines", "recrutement", "embauche", "onboarding", "CV", "candidat", "talent", "engagement", "collaborateur"],
+  marketing: ["contenu", "SEO", "rédaction", "campagne", "emailing", "réseaux sociaux", "brand", "avis", "traduction", "localisation"],
+  finance: ["comptabilité", "compta", "facture", "rapport financier", "budget", "trésorerie", "audit", "notes de frais", "crédit", "scoring", "risque crédit"],
+  it: ["DSI", "informatique", "incident", "DevOps", "monitoring", "infrastructure", "système", "maintenance", "panne", "prédictive"],
   "supply chain": ["achats", "approvisionnement", "fournisseur", "logistique", "stock", "commande"],
   fraude: ["anti-fraude", "détection", "conformité", "KYC", "LCB-FT", "risque"],
   veille: ["concurrentiel", "benchmark", "intelligence économique", "surveillance", "marché"],
+  email: ["courrier", "mail", "courriel", "messagerie", "tri", "automatisation email"],
+  rapport: ["reporting", "dashboard", "tableau de bord", "KPI", "indicateur"],
 };
 
 /** Get synonym-expanded search terms as an array of individual terms */

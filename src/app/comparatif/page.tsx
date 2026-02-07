@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { comparisons } from "@/data/comparisons";
 
 export const metadata: Metadata = {
@@ -13,6 +15,12 @@ export const metadata: Metadata = {
 export default function ComparatifIndexPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
+          { name: "Comparatifs", url: "https://agent-catalog-fr.vercel.app/comparatif" },
+        ]}
+      />
       <div className="text-center mb-12">
         <Badge variant="secondary" className="mb-4 text-xs">
           Guides de choix
@@ -53,6 +61,32 @@ export default function ComparatifIndexPage() {
         ))}
       </div>
 
+      {/* Cross-links */}
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 max-w-3xl mx-auto">
+        <Link
+          href="/calculateur-roi"
+          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Calculez votre ROI
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Estimez les gains de temps et d&apos;argent avec notre calculateur gratuit.
+          </p>
+        </Link>
+        <Link
+          href="/catalogue"
+          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Voir les 50 workflows
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Tutoriels, stack technique et ROI. Gratuit.
+          </p>
+        </Link>
+      </div>
+
       <div className="mt-16 text-center">
         <p className="text-muted-foreground mb-4">
           Vous ne trouvez pas le comparatif que vous cherchez ?
@@ -60,6 +94,11 @@ export default function ComparatifIndexPage() {
         <Button variant="outline" asChild>
           <Link href="/demande">Suggérer un comparatif</Link>
         </Button>
+      </div>
+
+      {/* Newsletter */}
+      <div className="mt-12">
+        <NewsletterSignup variant="inline" />
       </div>
     </div>
   );
