@@ -54,6 +54,10 @@ function buildWelcomeHtml(): string {
       <p style="margin:0;color:#9ca3af;font-size:12px;">
         AgentCatalog — Cas d'usage d'Agents IA en entreprise
       </p>
+      <p style="margin:6px 0 0;color:#9ca3af;font-size:11px;">
+        Vous recevez cet email car vous vous êtes inscrit(e) sur AgentCatalog.
+        <a href="{{ unsubscribe }}" style="color:#6d28d9;text-decoration:underline;">Se désinscrire</a>
+      </p>
     </div>
   </div>
 </div>

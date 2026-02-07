@@ -10,6 +10,7 @@ const footerLinks = [
       { href: "/pricing", label: "Tarifs" },
       { href: "/demande", label: "Workflow sur mesure" },
       { href: "/a-propos", label: "À propos" },
+      { href: "/mentions-legales", label: "Mentions légales" },
       { href: "/plan-du-site", label: "Plan du site" },
     ],
   },
@@ -80,7 +81,7 @@ export function Footer() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
-              Conforme RGPD
+              <Link href="/mentions-legales" className="hover:text-foreground transition-colors">Conforme RGPD</Link>
             </span>
             <span className="hidden sm:inline">|</span>
             <span>Données hébergées en Europe</span>

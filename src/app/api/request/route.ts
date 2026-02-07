@@ -12,7 +12,22 @@ interface RequestBody {
   searchQuery?: string;
 }
 
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
 function buildAdminNotificationHtml(data: RequestBody): string {
+  const name = escapeHtml(data.name);
+  const email = escapeHtml(data.email);
+  const description = escapeHtml(data.description);
+  const searchQuery = data.searchQuery ? escapeHtml(data.searchQuery) : "";
   return `<!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"></head>
@@ -26,19 +41,19 @@ function buildAdminNotificationHtml(data: RequestBody): string {
       <table style="width:100%;border-collapse:collapse;">
         <tr>
           <td style="padding:8px 12px;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Nom</td>
-          <td style="padding:8px 12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">${data.name}</td>
+          <td style="padding:8px 12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">${name}</td>
         </tr>
         <tr>
           <td style="padding:8px 12px;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Email</td>
-          <td style="padding:8px 12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">${data.email}</td>
+          <td style="padding:8px 12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">${email}</td>
         </tr>
-        ${data.searchQuery ? `<tr>
+        ${searchQuery ? `<tr>
           <td style="padding:8px 12px;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb;">Recherche initiale</td>
-          <td style="padding:8px 12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">${data.searchQuery}</td>
+          <td style="padding:8px 12px;color:#6b7280;border-bottom:1px solid #e5e7eb;">${searchQuery}</td>
         </tr>` : ""}
         <tr>
           <td style="padding:8px 12px;font-weight:600;color:#374151;vertical-align:top;">Description</td>
-          <td style="padding:8px 12px;color:#6b7280;white-space:pre-wrap;">${data.description}</td>
+          <td style="padding:8px 12px;color:#6b7280;white-space:pre-wrap;">${description}</td>
         </tr>
       </table>
     </div>
@@ -48,7 +63,8 @@ function buildAdminNotificationHtml(data: RequestBody): string {
 </html>`;
 }
 
-function buildUserConfirmationHtml(name: string): string {
+function buildUserConfirmationHtml(rawName: string): string {
+  const safeName = escapeHtml(rawName);
   return `<!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"></head>
@@ -60,7 +76,7 @@ function buildUserConfirmationHtml(name: string): string {
     </div>
     <div style="padding:24px;">
       <p style="margin:0 0 16px;color:#374151;line-height:1.6;font-size:15px;">
-        Bonjour ${name},
+        Bonjour ${safeName},
       </p>
       <p style="margin:0 0 16px;color:#374151;line-height:1.6;font-size:15px;">
         Nous avons bien reçu votre demande de workflow. Notre équipe va l'analyser
