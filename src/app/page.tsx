@@ -408,8 +408,8 @@ export default function HomePage() {
             Des comparatifs objectifs pour prendre les bonnes décisions technologiques.
           </p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-3 max-w-4xl mx-auto">
-          {comparisons.map((c) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 max-w-5xl mx-auto">
+          {comparisons.slice(0, 4).map((c) => (
             <Link
               key={c.slug}
               href={`/comparatif/${c.slug}`}
@@ -430,6 +430,11 @@ export default function HomePage() {
               </p>
             </Link>
           ))}
+        </div>
+        <div className="mt-4 text-center">
+          <Link href="/comparatif" className="text-sm text-primary font-medium hover:underline">
+            Voir tous les comparatifs ({comparisons.length}) &rarr;
+          </Link>
         </div>
       </section>
 

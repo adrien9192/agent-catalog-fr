@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { comparisons } from "@/data/comparisons";
 
 export const metadata: Metadata = {
-  title: "Comparatifs — Agent IA, Chatbot, n8n, Make, Zapier",
+  title: "Comparatifs — Agent IA, Chatbot, Claude vs ChatGPT, n8n vs Make",
   description:
-    "Comparez les solutions d'IA et d'automatisation pour votre entreprise. Agent IA vs Chatbot, n8n vs Make vs Zapier, Agent IA vs Consultant. Guides objectifs.",
+    "Comparez les solutions d'IA pour votre entreprise. Claude vs ChatGPT, Agent IA vs Chatbot, n8n vs Make vs Zapier, IA interne vs SaaS. 5 comparatifs détaillés.",
 };
 
 export default function ComparatifIndexPage() {

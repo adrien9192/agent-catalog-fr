@@ -30,6 +30,7 @@ const footerLinks = [
       { href: "/comparatif", label: "Comparatifs" },
       { href: "/comparatif/agent-ia-vs-chatbot", label: "Agent IA vs Chatbot" },
       { href: "/comparatif/n8n-vs-make-vs-zapier", label: "n8n vs Make vs Zapier" },
+      { href: "/comparatif/claude-vs-chatgpt-entreprise", label: "Claude vs ChatGPT" },
       { href: "/catalogue?diff=Facile", label: "Workflows faciles" },
     ],
   },
