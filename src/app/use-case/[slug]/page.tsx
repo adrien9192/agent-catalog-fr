@@ -67,8 +67,8 @@ export default async function UseCasePage({ params }: PageProps) {
             <Badge key={fn} variant="secondary">{fn}</Badge>
           ))}
         </div>
-        <h1 className="text-3xl font-bold sm:text-4xl lg:text-5xl">{uc.title}</h1>
-        <p className="mt-3 text-lg text-muted-foreground max-w-3xl">{uc.subtitle}</p>
+        <h1 className="text-2xl font-bold sm:text-4xl lg:text-5xl">{uc.title}</h1>
+        <p className="mt-3 text-base sm:text-lg text-muted-foreground max-w-3xl">{uc.subtitle}</p>
         <div className="mt-4 flex flex-wrap gap-1.5">
           {uc.sectors.map((s) => (
             <Link key={s} href={`/secteur/${s.toLowerCase().replace(/\s+/g, "-")}`}>

@@ -158,7 +158,7 @@ function CatalogueContent() {
               )}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed p-12 text-center space-y-6">
+            <div className="rounded-xl border border-dashed p-6 sm:p-12 text-center space-y-6">
               <div className="space-y-2">
                 <p className="text-lg font-medium">
                   Aucun workflow ne correspond à &quot;{searchQuery}&quot;

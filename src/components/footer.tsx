@@ -35,7 +35,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border/60 bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {footerLinks.map((section) => (
             <div key={section.title}>
               <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
@@ -58,17 +58,17 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-10 border-t border-border/60 pt-6 space-y-4">
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
               Conforme RGPD
             </span>
-            <span>|</span>
+            <span className="hidden sm:inline">|</span>
             <span>Données hébergées en Europe</span>
-            <span>|</span>
-            <a href="mailto:adrienlaine91@gmail.com" className="hover:text-foreground transition-colors">
+            <span className="hidden sm:inline">|</span>
+            <a href="mailto:adrienlaine91@gmail.com" className="hover:text-foreground transition-colors break-all">
               Contact : adrienlaine91@gmail.com
             </a>
           </div>

@@ -48,13 +48,13 @@ export default function HomePage() {
             <Badge variant="secondary" className="mb-4 text-xs">
               Gratuit et open-source
             </Badge>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="text-3xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
               Déployez un Agent IA{" "}
               <span className="gradient-text">en quelques heures,</span>
               <br className="hidden sm:block" />
               pas en 6 mois
             </h1>
-            <p className="mt-4 text-lg text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-4 text-base text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
               20+ workflows IA documentés avec tutoriel pas-à-pas, stack technique
               et estimation de ROI. Prêts à copier et déployer. Gratuit.
             </p>
@@ -84,7 +84,7 @@ export default function HomePage() {
       {/* Social proof / stats */}
       <section className="border-y bg-muted/20">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-4">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
                 <p className="text-3xl font-bold text-primary">{stat.value}</p>
@@ -97,7 +97,7 @@ export default function HomePage() {
 
       {/* Trust signals */}
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs sm:text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -196,7 +196,7 @@ export default function HomePage() {
         <p className="text-muted-foreground mb-8">
           Des solutions adaptées à chaque industrie, de la banque au retail.
         </p>
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-2 sm:gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {sectors.slice(0, 8).map((sector) => (
             <Link
               key={sector.slug}

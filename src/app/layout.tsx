@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   description:
     "Automatisez votre entreprise avec des workflows d'Agents IA documentés. Tutoriels, stack technique et ROI pour chaque solution. Gratuit.",
   metadataBase: new URL("https://agent-catalog-fr.vercel.app"),
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    viewportFit: "cover",
+  },
   openGraph: {
     locale: "fr_FR",
     type: "website",

@@ -57,7 +57,7 @@ export default async function SectorPage({ params }: PageProps) {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed p-12 text-center">
+        <div className="rounded-xl border border-dashed p-6 sm:p-12 text-center">
           <p className="text-muted-foreground">
             Aucun cas d&apos;usage disponible pour ce secteur pour le moment.
           </p>

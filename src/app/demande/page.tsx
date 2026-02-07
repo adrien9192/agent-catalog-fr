@@ -59,7 +59,7 @@ function DemandeContent() {
   if (status === "success") {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 text-center">
-        <div className="rounded-2xl border bg-primary/5 p-12 space-y-4">
+        <div className="rounded-2xl border bg-primary/5 p-6 sm:p-12 space-y-4">
           <div className="text-5xl">&#10003;</div>
           <h1 className="text-2xl font-bold">Demande envoyée !</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
@@ -147,7 +147,7 @@ function DemandeContent() {
               <textarea
                 id="description"
                 required
-                rows={6}
+                rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Ex: J'aimerais un agent IA qui analyse automatiquement les contrats fournisseurs et détecte les clauses à risque..."
@@ -199,7 +199,7 @@ function DemandeContent() {
       {/* What's included */}
       <div className="mt-6 rounded-xl border p-6">
         <h3 className="font-semibold mb-3">Chaque workflow sur mesure inclut :</h3>
-        <ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+        <ul className="grid gap-2 text-sm text-muted-foreground grid-cols-1 sm:grid-cols-2">
           {[
             "Tutoriel pas-à-pas complet",
             "Stack technique recommandée",
@@ -221,7 +221,7 @@ function DemandeContent() {
       </div>
 
       {/* Trust */}
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>

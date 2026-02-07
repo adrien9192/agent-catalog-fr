@@ -141,7 +141,7 @@ export default function PricingPage() {
             key={tier.name}
             className={`relative flex flex-col ${
               tier.highlighted
-                ? "border-primary shadow-lg scale-[1.02] lg:scale-105"
+                ? "border-primary shadow-lg lg:scale-105"
                 : ""
             }`}
           >
@@ -195,7 +195,7 @@ export default function PricingPage() {
       </div>
 
       {/* Trust / Guarantee */}
-      <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+      <div className="mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs sm:text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -218,50 +218,52 @@ export default function PricingPage() {
       </div>
 
       {/* Comparison table */}
-      <div className="mt-20 max-w-4xl mx-auto overflow-x-auto">
+      <div className="mt-20 max-w-4xl mx-auto">
         <h2 className="text-2xl font-bold text-center mb-8">Comparatif détaillé</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="py-3 px-4 text-left font-medium text-muted-foreground">Fonctionnalité</th>
-              <th className="py-3 px-4 text-center font-medium">Découverte</th>
-              <th className="py-3 px-4 text-center font-medium text-primary">Pro</th>
-              <th className="py-3 px-4 text-center font-medium">Équipe</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {[
-              { feature: "Workflows documentés", free: "20+", pro: "20+", team: "20+" },
-              { feature: "Tutoriels pas-à-pas", free: "check", pro: "check", team: "check" },
-              { feature: "Estimation de ROI", free: "check", pro: "check", team: "check" },
-              { feature: "Newsletter quotidienne", free: "check", pro: "check", team: "check" },
-              { feature: "Workflows sur mesure", free: "cross", pro: "1/mois", team: "3/mois" },
-              { feature: "Templates n8n/Make", free: "cross", pro: "check", team: "check" },
-              { feature: "Support prioritaire", free: "cross", pro: "Email", team: "Slack dédié" },
-              { feature: "Accès anticipé", free: "cross", pro: "check", team: "check" },
-              { feature: "Audit processus", free: "cross", pro: "cross", team: "check" },
-              { feature: "Formation équipe", free: "cross", pro: "cross", team: "check" },
-              { feature: "Accompagnement RGPD", free: "cross", pro: "cross", team: "check" },
-            ].map((row) => (
-              <tr key={row.feature}>
-                <td className="py-3 px-4 font-medium">{row.feature}</td>
-                {[row.free, row.pro, row.team].map((val, i) => (
-                  <td key={i} className="py-3 px-4 text-center">
-                    {val === "check" ? (
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="inline text-primary">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : val === "cross" ? (
-                      <span className="text-muted-foreground/40">—</span>
-                    ) : (
-                      <span className={i === 1 ? "font-medium text-primary" : ""}>{val}</span>
-                    )}
-                  </td>
-                ))}
+        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full text-sm min-w-[500px]">
+            <thead>
+              <tr className="border-b">
+                <th className="py-3 px-2 sm:px-4 text-left font-medium text-muted-foreground text-xs sm:text-sm">Fonctionnalité</th>
+                <th className="py-3 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm">Découverte</th>
+                <th className="py-3 px-2 sm:px-4 text-center font-medium text-primary text-xs sm:text-sm">Pro</th>
+                <th className="py-3 px-2 sm:px-4 text-center font-medium text-xs sm:text-sm">Équipe</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y">
+              {[
+                { feature: "Workflows documentés", free: "20+", pro: "20+", team: "20+" },
+                { feature: "Tutoriels pas-à-pas", free: "check", pro: "check", team: "check" },
+                { feature: "Estimation de ROI", free: "check", pro: "check", team: "check" },
+                { feature: "Newsletter quotidienne", free: "check", pro: "check", team: "check" },
+                { feature: "Workflows sur mesure", free: "cross", pro: "1/mois", team: "3/mois" },
+                { feature: "Templates n8n/Make", free: "cross", pro: "check", team: "check" },
+                { feature: "Support prioritaire", free: "cross", pro: "Email", team: "Slack dédié" },
+                { feature: "Accès anticipé", free: "cross", pro: "check", team: "check" },
+                { feature: "Audit processus", free: "cross", pro: "cross", team: "check" },
+                { feature: "Formation équipe", free: "cross", pro: "cross", team: "check" },
+                { feature: "Accompagnement RGPD", free: "cross", pro: "cross", team: "check" },
+              ].map((row) => (
+                <tr key={row.feature}>
+                  <td className="py-3 px-2 sm:px-4 font-medium text-xs sm:text-sm">{row.feature}</td>
+                  {[row.free, row.pro, row.team].map((val, i) => (
+                    <td key={i} className="py-3 px-2 sm:px-4 text-center text-xs sm:text-sm">
+                      {val === "check" ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="inline text-primary">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : val === "cross" ? (
+                        <span className="text-muted-foreground/40">—</span>
+                      ) : (
+                        <span className={i === 1 ? "font-medium text-primary" : ""}>{val}</span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* FAQ */}
@@ -269,7 +271,7 @@ export default function PricingPage() {
         <h2 className="text-2xl font-bold text-center mb-10">Questions fréquentes</h2>
         <div className="space-y-6">
           {faqs.map((faq) => (
-            <div key={faq.q} className="rounded-xl border p-6">
+            <div key={faq.q} className="rounded-xl border p-4 sm:p-6">
               <h3 className="font-semibold mb-2">{faq.q}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
             </div>

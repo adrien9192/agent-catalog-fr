@@ -45,7 +45,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
         {status === "success" ? (
           <p className="text-sm text-emerald-600 font-medium text-center">{message}</p>
         ) : (
-          <form onSubmit={handleSubmit} className="flex gap-2">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
             <input
               type="email"
               value={email}
@@ -54,7 +54,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
               required
               className="flex-1 rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <Button type="submit" disabled={status === "loading"} size="default">
+            <Button type="submit" disabled={status === "loading"} size="default" className="w-full sm:w-auto">
               {status === "loading" ? "..." : "Recevoir mon workflow"}
             </Button>
           </form>
@@ -113,7 +113,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
         {status === "success" ? (
           <p className="mt-4 text-sm text-emerald-600 font-medium">{message}</p>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+          <form onSubmit={handleSubmit} className="mt-4 flex flex-col sm:flex-row gap-2">
             <input
               type="email"
               value={email}
@@ -122,8 +122,8 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
               required
               className="flex-1 min-w-0 rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <Button type="submit" disabled={status === "loading"}>
-              {status === "loading" ? "Inscription..." : "Recevoir 1 workflow/jour — gratuit"}
+            <Button type="submit" disabled={status === "loading"} className="w-full sm:w-auto whitespace-nowrap">
+              {status === "loading" ? "Inscription..." : "S\u2019inscrire gratuitement"}
             </Button>
           </form>
         )}

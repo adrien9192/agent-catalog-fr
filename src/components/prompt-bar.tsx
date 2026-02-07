@@ -17,36 +17,38 @@ export function PromptBar() {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
       <div
-        className="flex items-center gap-3 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-lg border"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 shadow-lg border"
         style={{
           backgroundColor: "var(--prompt-bar-bg)",
           borderColor: "var(--prompt-bar-border)",
         }}
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className="shrink-0 opacity-50"
-          style={{ color: "var(--prompt-bar-text)" }}
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Quel processus voulez-vous automatiser ? ex: triage support, qualification leads..."
-          className="flex-1 bg-transparent text-base outline-none placeholder:opacity-40"
-          style={{ color: "var(--prompt-bar-text)" }}
-        />
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="shrink-0 opacity-50"
+            style={{ color: "var(--prompt-bar-text)" }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Ex: triage support, qualification leads..."
+            className="flex-1 min-w-0 bg-transparent text-sm sm:text-base outline-none placeholder:opacity-40"
+            style={{ color: "var(--prompt-bar-text)" }}
+          />
+        </div>
         <button
           type="submit"
-          className="shrink-0 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          className="shrink-0 rounded-xl bg-primary px-4 py-2.5 sm:py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
         >
           Trouver mon workflow
         </button>

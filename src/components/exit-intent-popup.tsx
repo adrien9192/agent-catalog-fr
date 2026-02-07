@@ -67,7 +67,7 @@ export function ExitIntentPopup() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative mx-4 w-full max-w-md rounded-2xl border bg-background p-8 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+      <div className="relative mx-3 sm:mx-4 w-full max-w-md rounded-2xl border bg-background p-5 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
         <button
           onClick={handleDismiss}
           className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground hover:text-foreground transition-colors"
