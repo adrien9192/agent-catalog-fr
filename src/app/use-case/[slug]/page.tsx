@@ -160,6 +160,28 @@ export default async function UseCasePage({ params }: PageProps) {
             </div>
           </section>
 
+          {/* Mobile CTA — visible on all devices, positioned early for engagement */}
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-6 lg:hidden">
+            <p className="font-semibold text-sm">Cet agent peut être adapté à votre contexte</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Outils intégrés, processus personnalisés, estimation de ROI sur mesure.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <Link
+                href="/demande"
+                className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Demander un accompagnement
+              </Link>
+              <Link
+                href="/pricing"
+                className="shrink-0 rounded-lg border px-4 py-2.5 text-center text-sm font-medium hover:bg-muted transition-colors"
+              >
+                Plans
+              </Link>
+            </div>
+          </div>
+
           <Separator />
 
           {/* 2. Stack recommandée */}

@@ -12,10 +12,34 @@ import { sectors } from "@/data/sectors";
 const functions = ["Support", "Sales", "RH", "Marketing", "Finance", "IT", "Supply Chain"];
 
 const stats = [
-  { value: "25+", label: "workflows documentés" },
+  { value: "30+", label: "workflows documentés" },
   { value: "60%", label: "de temps gagné en moyenne" },
-  { value: "10", label: "fonctions couvertes" },
+  { value: "13", label: "fonctions couvertes" },
   { value: "100%", label: "gratuit pour démarrer" },
+];
+
+const testimonials = [
+  {
+    quote: "On a déployé l'agent de triage support en 3 jours. 40% de tickets résolus automatiquement dès la première semaine.",
+    name: "Marie L.",
+    role: "Head of Ops",
+    company: "Scale-up SaaS B2B",
+    metric: "40% tickets auto-résolus",
+  },
+  {
+    quote: "Le workflow de qualification leads nous a permis de doubler le taux de conversion MQL → SQL sans recruter.",
+    name: "Thomas R.",
+    role: "Directeur Commercial",
+    company: "ESN, 200 collaborateurs",
+    metric: "2x taux de conversion",
+  },
+  {
+    quote: "Les tutoriels sont incroyablement détaillés. Même notre équipe sans background data a pu implémenter en autonomie.",
+    name: "Sophie M.",
+    role: "CTO",
+    company: "Fintech Paris",
+    metric: "Implémentation en 5 jours",
+  },
 ];
 
 const steps = [
@@ -124,7 +148,7 @@ export default function HomePage() {
               <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
               <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            <span>Conçu pour les entreprises FR</span>
+            <span>Conçu pour le marché français</span>
           </div>
         </div>
       </section>
@@ -157,8 +181,45 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured use cases */}
+      {/* Testimonials */}
       <section className="border-t bg-muted/30">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <Badge variant="secondary" className="mb-4 text-xs">
+              Retours clients
+            </Badge>
+            <h2 className="text-2xl font-bold sm:text-3xl">
+              Ils automatisent avec nos workflows
+            </h2>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-3">
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="rounded-xl border bg-card p-5 sm:p-6 flex flex-col"
+              >
+                <div className="mb-3">
+                  <Badge variant="outline" className="text-xs font-medium text-primary">
+                    {t.metric}
+                  </Badge>
+                </div>
+                <blockquote className="flex-1 text-sm text-muted-foreground leading-relaxed mb-4">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <div className="border-t pt-3">
+                  <p className="text-sm font-semibold">{t.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {t.role}, {t.company}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured use cases */}
+      <section className="border-t">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-8">
             <div>

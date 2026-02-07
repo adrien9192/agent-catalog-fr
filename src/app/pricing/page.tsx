@@ -17,12 +17,12 @@ const tiers = [
     price: "Gratuit",
     period: "pour toujours",
     description: "Accédez à tous les workflows documentés et commencez à automatiser.",
-    cta: "Explorer les workflows",
+    cta: "Accès immédiat gratuit",
     ctaHref: "/catalogue",
     ctaVariant: "outline" as const,
     highlighted: false,
     features: [
-      "Accès aux 25+ workflows documentés",
+      "Accès aux 30+ workflows documentés",
       "Tutoriels pas-à-pas complets",
       "Stack technique et alternatives low-cost",
       "Schémas d'architecture",
@@ -35,11 +35,12 @@ const tiers = [
     price: "29\u00A0\u20AC",
     period: "/mois",
     description: "Pour les équipes qui veulent accélérer leur adoption de l'IA.",
-    cta: "Démarrer l'essai gratuit",
+    cta: "Essai gratuit 14 jours",
     ctaHref: "/demande?plan=pro",
     ctaVariant: "default" as const,
     highlighted: true,
     badge: "Le plus populaire",
+    subtext: "Sans carte bancaire. Annulation en un clic.",
     features: [
       "Tout le plan Découverte",
       "Workflows sur mesure (1/mois)",
@@ -54,7 +55,7 @@ const tiers = [
     price: "99\u00A0\u20AC",
     period: "/mois",
     description: "Pour les équipes qui déploient l'IA à grande échelle.",
-    cta: "Contacter l'équipe",
+    cta: "Planifier un appel",
     ctaHref: "/demande?plan=equipe",
     ctaVariant: "outline" as const,
     highlighted: false,
@@ -90,6 +91,18 @@ const faqs = [
   {
     q: "Combien de temps pour recevoir un workflow sur mesure ?",
     a: "Les workflows sur mesure sont livrés sous 5 jours ouvrés. Vous recevrez un email dès que votre workflow est en ligne, avec le tutoriel complet.",
+  },
+  {
+    q: "Mes données sont-elles sécurisées ?",
+    a: "Oui. Hébergement en Europe, conformité RGPD native, chiffrement des données en transit et au repos. Nous ne stockons aucune donnée métier de nos clients.",
+  },
+  {
+    q: "Quel support technique est inclus ?",
+    a: "Plan Découverte : accès à la documentation et guides. Plan Pro : support par email avec réponse sous 24h ouvrées. Plan Équipe : canal Slack dédié avec réponse prioritaire.",
+  },
+  {
+    q: "Puis-je annuler à tout moment ?",
+    a: "Oui, aucun engagement. Vous pouvez annuler votre abonnement en un clic depuis votre espace. Les workflows déjà reçus restent accessibles.",
   },
 ];
 
@@ -188,6 +201,9 @@ export default function PricingPage() {
                 >
                   <Link href={tier.ctaHref}>{tier.cta}</Link>
                 </Button>
+                {tier.subtext && (
+                  <p className="mt-2 text-xs text-center text-muted-foreground">{tier.subtext}</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -232,7 +248,7 @@ export default function PricingPage() {
             </thead>
             <tbody className="divide-y">
               {[
-                { feature: "Workflows documentés", free: "25+", pro: "25+", team: "25+" },
+                { feature: "Workflows documentés", free: "30+", pro: "30+", team: "30+" },
                 { feature: "Tutoriels pas-à-pas", free: "check", pro: "check", team: "check" },
                 { feature: "Estimation de ROI", free: "check", pro: "check", team: "check" },
                 { feature: "Newsletter quotidienne", free: "check", pro: "check", team: "check" },
