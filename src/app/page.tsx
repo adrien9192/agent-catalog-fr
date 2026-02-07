@@ -80,7 +80,7 @@ export default function HomePage() {
               pas en 6 mois
             </h1>
             <p className="mt-4 text-base text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
-              25+ workflows IA documentés avec tutoriel pas-à-pas, stack technique
+              30+ workflows IA documentés avec tutoriel pas-à-pas, stack technique
               et estimation de ROI. Prêts à copier et déployer. Gratuit.
             </p>
 
