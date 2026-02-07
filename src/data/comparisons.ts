@@ -158,4 +158,61 @@ export const comparisons: Comparison[] = [
       "L'IA SaaS est le choix rationnel pour la majorité des entreprises qui débutent avec l'IA ou qui ont besoin de résultats rapides. Le rapport coût/performance est imbattable : en quelques semaines, vous déployez des agents IA performants sans recruter d'équipe ML. C'est l'approche recommandée pour valider vos cas d'usage avant d'investir davantage.\n\nL'IA interne se justifie dans trois cas précis : données hautement sensibles (santé, défense, finance réglementée), besoin de personnalisation profonde du modèle (fine-tuning spécialisé), ou volume d'inférences si élevé que le coût API devient prohibitif (généralement au-delà de 50 000 €/mois d'API).\n\nL'approche hybride gagne en popularité : utiliser des API SaaS pour les tâches générales et héberger un modèle spécialisé en interne pour les données les plus sensibles. Cette stratégie combine le meilleur des deux mondes tout en maîtrisant les coûts et les risques.",
     relatedUseCases: ["agent-knowledge-management", "agent-triage-support-client", "agent-gestion-incidents-it"],
   },
+  {
+    slug: "gpt4-vs-claude-vs-mistral",
+    title: "GPT-4 vs Claude vs Mistral : quel LLM pour votre entreprise ?",
+    metaTitle: "GPT-4 vs Claude vs Mistral — Comparatif LLM Entreprise 2026",
+    metaDescription:
+      "Comparatif objectif GPT-4, Claude et Mistral pour l'entreprise. Prix, performances en français, conformité RGPD, API, cas d'usage. Guide de choix complet.",
+    intro:
+      "Le choix du LLM (Large Language Model) est une décision stratégique pour toute entreprise qui déploie des agents IA. En 2026, trois acteurs dominent le marché : OpenAI (GPT-4), Anthropic (Claude) et Mistral (champion français). Ce comparatif vous aide à choisir le meilleur LLM pour vos besoins spécifiques.",
+    options: [
+      { name: "GPT-4 (OpenAI)", description: "Le pionnier du marché avec l'écosystème le plus large. Excellent polyvalent, fort en code et en raisonnement complexe." },
+      { name: "Claude (Anthropic)", description: "Le modèle le plus fiable et le plus sûr. Excellent en analyse de documents longs, rédaction en français et respect des consignes." },
+      { name: "Mistral (France)", description: "Le champion européen. Modèles performants, hébergement en Europe, excellent rapport qualité/prix. Open-source disponible." },
+    ],
+    rows: [
+      { feature: "Qualité du français", values: ["Très bonne", "Excellente (meilleur en rédaction longue)", "Excellente (modèle natif multilingue)"] },
+      { feature: "Prix API (1M tokens)", values: ["~30 $ (GPT-4o)", "~15 $ (Sonnet 4.5)", "~2-8 $ (Large/Medium)"] },
+      { feature: "Fenêtre de contexte", values: ["128K tokens", "200K tokens", "128K tokens"] },
+      { feature: "Conformité RGPD", values: ["DPA disponible, données US", "DPA disponible, données US/EU", "Hébergement UE natif, DPA intégré"] },
+      { feature: "Modèles open-source", values: ["Non", "Non", "Oui (Mistral 7B, Mixtral, etc.)"] },
+      { feature: "Analyse de documents", values: ["Bonne (vision + texte)", "Excellente (200K contexte)", "Bonne (vision + texte)"] },
+      { feature: "Génération de code", values: ["Excellent", "Très bon", "Très bon"] },
+      { feature: "Écosystème / Intégrations", values: ["Le plus large (ChatGPT, Copilot)", "En croissance rapide", "Croissant, fort en France"] },
+      { feature: "Fiabilité des réponses", values: ["Bonne, hallucinations possibles", "Très bonne, moins d'hallucinations", "Bonne, hallucinations possibles"] },
+      { feature: "Souveraineté numérique", values: ["Entreprise américaine", "Entreprise américaine", "Entreprise française, soutien de l'État"] },
+    ],
+    verdict:
+      "Pour une entreprise française en 2026, le choix dépend de trois critères : le budget, la sensibilité des données et le cas d'usage principal.\n\n**Claude** est le choix recommandé pour la majorité des cas d'usage B2B : analyse de documents, rédaction, support client et agents conversationnels. Sa fiabilité et sa compréhension du contexte en font le partenaire idéal pour les workflows critiques. Son rapport qualité/prix avec Sonnet 4.5 est excellent.\n\n**Mistral** est incontournable si la souveraineté numérique est prioritaire (secteur public, défense, santé réglementée). L'hébergement natif en Europe, la disponibilité de modèles open-source pour un déploiement on-premise, et les prix agressifs en font un choix stratégique pour les entreprises soumises à des contraintes réglementaires fortes.\n\n**GPT-4** reste pertinent pour les entreprises déjà investies dans l'écosystème Microsoft (Azure, Copilot, Teams) ou pour des cas d'usage nécessitant un écosystème d'intégrations très large. Son excellence en génération de code le rend attractif pour les équipes techniques.\n\nNotre recommandation : commencez avec Claude Sonnet 4.5 pour un excellent rapport qualité/prix, et évaluez Mistral si vous avez des contraintes de souveraineté. Utilisez notre calculateur ROI pour estimer l'impact financier.",
+    relatedUseCases: ["agent-triage-support-client", "agent-qualification-leads", "agent-redaction-contenu-marketing", "agent-knowledge-management"],
+  },
+  {
+    slug: "no-code-vs-pro-code-ia",
+    title: "No-code vs Pro-code pour déployer l'IA en entreprise",
+    metaTitle: "No-code vs Pro-code IA — Quel Approche Choisir ? Comparatif 2026",
+    metaDescription:
+      "No-code (n8n, Make) ou code custom (Python, LangChain) pour vos agents IA ? Comparatif détaillé : coûts, flexibilité, maintenance, cas d'usage. Guide de choix.",
+    intro:
+      "Déployer un agent IA en entreprise : faut-il utiliser des plateformes no-code comme n8n et Make, ou développer en code avec Python et LangChain ? Ce comparatif analyse les deux approches selon vos besoins, votre équipe et vos contraintes techniques.",
+    options: [
+      { name: "No-code (n8n / Make)", description: "Plateformes visuelles permettant de construire des workflows IA par glisser-déposer. Pas de code requis, déploiement rapide." },
+      { name: "Pro-code (Python / LangChain)", description: "Développement sur mesure avec contrôle total. Nécessite des compétences techniques mais offre une flexibilité maximale." },
+    ],
+    rows: [
+      { feature: "Temps de déploiement", values: ["2-4 heures pour un workflow simple", "2-5 jours pour un agent équivalent"] },
+      { feature: "Compétences requises", values: ["Aucune compétence code, formation 1-2 jours", "Python, API, architecture — développeur confirmé"] },
+      { feature: "Coût initial", values: ["0-50 $/mois (n8n self-hosted gratuit)", "5 000-15 000 $ (développement initial)"] },
+      { feature: "Flexibilité", values: ["Limitée aux connecteurs disponibles (~400+)", "Illimitée — tout est personnalisable"] },
+      { feature: "Maintenance", values: ["Faible — mises à jour automatiques", "Élevée — monitoring, tests, mises à jour manuelles"] },
+      { feature: "Scalabilité", values: ["Bonne jusqu'à ~10 000 exécutions/jour", "Illimitée avec architecture adaptée"] },
+      { feature: "Debugging", values: ["Interface visuelle, logs intégrés", "Complexe — logs, monitoring, alertes à configurer"] },
+      { feature: "Intégrations", values: ["400+ connecteurs natifs", "Toute API, toute base de données, tout service"] },
+      { feature: "Vendor lock-in", values: ["Modéré (n8n open-source = faible)", "Aucun — code portable"] },
+      { feature: "Adapté pour", values: ["PME, MVP, 80% des cas d'usage B2B", "Cas complexes, volumes élevés, entreprises tech"] },
+    ],
+    verdict:
+      "Le no-code est le choix optimal pour 80% des entreprises françaises qui débutent avec l'IA. Avec n8n (open-source, hébergeable en Europe) ou Make, vous déployez un agent IA fonctionnel en quelques heures pour moins de 50 $/mois. C'est l'approche que nous recommandons dans la majorité de nos workflows documentés.\n\nLe pro-code se justifie dans trois cas : (1) votre cas d'usage nécessite une logique métier très spécifique que les connecteurs no-code ne couvrent pas, (2) vous traitez des volumes massifs (>10 000 requêtes/jour) qui nécessitent une architecture distribuée, ou (3) vous disposez d'une équipe technique et souhaitez un contrôle total.\n\nL'approche hybride est souvent la plus efficace : démarrez en no-code pour valider le concept et mesurer le ROI, puis migrez les workflows les plus critiques vers du code custom une fois le business case prouvé. Nos tutoriels incluent les deux approches (n8n + Python) pour vous permettre cette transition progressive.",
+    relatedUseCases: ["agent-triage-support-client", "agent-qualification-leads", "agent-gestion-incidents-it", "agent-veille-concurrentielle"],
+  },
 ];

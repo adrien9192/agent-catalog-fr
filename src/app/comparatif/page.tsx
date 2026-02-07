@@ -7,9 +7,9 @@ import { NewsletterSignup } from "@/components/newsletter-signup";
 import { comparisons } from "@/data/comparisons";
 
 export const metadata: Metadata = {
-  title: "Comparatifs — Agent IA, Chatbot, Claude vs ChatGPT, n8n vs Make",
+  title: "Comparatifs — Agent IA, LLM, Claude vs ChatGPT vs Mistral, n8n vs Make",
   description:
-    "Comparez les solutions d'IA pour votre entreprise. Claude vs ChatGPT, Agent IA vs Chatbot, n8n vs Make vs Zapier, IA interne vs SaaS. 5 comparatifs détaillés.",
+    "Comparez les solutions d'IA pour votre entreprise. GPT-4 vs Claude vs Mistral, Agent IA vs Chatbot, n8n vs Make, No-code vs Pro-code. 7 comparatifs détaillés.",
 };
 
 export default function ComparatifIndexPage() {
