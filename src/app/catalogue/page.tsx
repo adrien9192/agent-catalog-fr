@@ -30,16 +30,26 @@ function CatalogueContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const initialFn = searchParams.get("fn");
-  const initialDiff = searchParams.get("diff") as Difficulty | null;
-  const initialQ = searchParams.get("q") || "";
+  // Read URL params
+  const urlQ = searchParams.get("q") || "";
+  const urlFn = searchParams.get("fn");
+  const urlDiff = searchParams.get("diff") as Difficulty | null;
+  const urlSector = searchParams.get("sector");
 
-  const [activeFunction, setActiveFunction] = useState<string | null>(initialFn);
-  const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(initialDiff);
-  const [activeSector, setActiveSector] = useState<string | null>(searchParams.get("sector"));
-  const [searchQuery, setSearchQuery] = useState(initialQ);
+  const [activeFunction, setActiveFunction] = useState<string | null>(urlFn);
+  const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(urlDiff);
+  const [activeSector, setActiveSector] = useState<string | null>(urlSector);
+  const [searchQuery, setSearchQuery] = useState(urlQ);
 
-  // Sync filters → URL
+  // Sync URL → state (handles external navigations like PromptBar, back/forward)
+  useEffect(() => {
+    setSearchQuery(urlQ);
+    setActiveFunction(urlFn);
+    setActiveDifficulty(urlDiff);
+    setActiveSector(urlSector);
+  }, [urlQ, urlFn, urlDiff, urlSector]);
+
+  // Sync state → URL (debounced, for user typing in filter bar)
   const syncUrl = useCallback(
     (q: string, fn: string | null, diff: Difficulty | null, sector: string | null) => {
       const params = new URLSearchParams();
@@ -53,7 +63,6 @@ function CatalogueContent() {
     [router]
   );
 
-  // Debounced URL sync for search query
   useEffect(() => {
     const t = setTimeout(() => {
       syncUrl(searchQuery, activeFunction, activeDifficulty, activeSector);
