@@ -9,6 +9,7 @@ import { ExitIntentPopup } from "@/components/exit-intent-popup";
 import { useCases } from "@/data/use-cases";
 import { sectors } from "@/data/sectors";
 import { guides } from "@/data/guides";
+import { comparisons } from "@/data/comparisons";
 
 const functions = ["Support", "Sales", "RH", "Marketing", "Finance", "IT", "Supply Chain"];
 
@@ -277,6 +278,26 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ROI Calculator CTA */}
+      <section className="border-t bg-primary/5">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
+            <div className="flex-1 text-center sm:text-left">
+              <h2 className="text-xl font-bold sm:text-2xl">
+                Combien pourriez-vous économiser avec l&apos;IA ?
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground max-w-lg">
+                Utilisez notre calculateur gratuit pour estimer le ROI d&apos;un agent IA
+                sur votre équipe : support, ventes, RH ou finance.
+              </p>
+            </div>
+            <Button size="lg" asChild>
+              <Link href="/calculateur-roi">Calculer mon ROI</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Recently added */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-8">
@@ -341,6 +362,44 @@ export default function HomePage() {
           <Button variant="outline" asChild>
             <Link href="/guide">Voir tous les guides</Link>
           </Button>
+        </div>
+      </section>
+
+      {/* Comparisons */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="text-center mb-8">
+          <Badge variant="secondary" className="mb-2 text-xs">
+            Guides de choix
+          </Badge>
+          <h2 className="text-2xl font-bold sm:text-3xl">
+            Choisissez la bonne solution
+          </h2>
+          <p className="mt-2 text-muted-foreground max-w-lg mx-auto">
+            Des comparatifs objectifs pour prendre les bonnes décisions technologiques.
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3 max-w-4xl mx-auto">
+          {comparisons.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/comparatif/${c.slug}`}
+              className="group rounded-xl border bg-card p-5 transition-all hover:shadow-sm hover:border-primary/30"
+            >
+              <div className="flex flex-wrap gap-1 mb-3">
+                {c.options.map((o) => (
+                  <Badge key={o.name} variant="outline" className="text-xs">
+                    {o.name}
+                  </Badge>
+                ))}
+              </div>
+              <h3 className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors">
+                {c.title}
+              </h3>
+              <p className="mt-2 text-xs text-primary font-medium">
+                Lire le comparatif &rarr;
+              </p>
+            </Link>
+          ))}
         </div>
       </section>
 

@@ -456,8 +456,34 @@ export default async function UseCasePage({ params }: PageProps) {
         </aside>
       </div>
 
+      {/* Cross-links: ROI + Comparisons */}
+      <div className="mt-12 grid gap-4 sm:grid-cols-2">
+        <Link
+          href="/calculateur-roi"
+          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Calculez le ROI de cet agent
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Estimez les gains de temps et d&apos;argent avec notre calculateur gratuit.
+          </p>
+        </Link>
+        <Link
+          href="/comparatif/agent-ia-vs-chatbot"
+          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Agent IA vs Chatbot : le comparatif
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Comprenez les différences et choisissez la bonne solution.
+          </p>
+        </Link>
+      </div>
+
       {/* Newsletter CTA */}
-      <div className="mt-12">
+      <div className="mt-8">
         <NewsletterSignup variant="inline" />
       </div>
 

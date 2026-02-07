@@ -184,8 +184,45 @@ export default async function GuidePage({ params }: PageProps) {
         </div>
       )}
 
+      {/* Cross-links */}
+      <div className="mt-12 grid gap-4 sm:grid-cols-3">
+        <Link
+          href="/calculateur-roi"
+          className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Calculateur ROI
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Estimez vos gains avec un agent IA.
+          </p>
+        </Link>
+        <Link
+          href="/comparatif/n8n-vs-make-vs-zapier"
+          className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+            n8n vs Make vs Zapier
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Quel orchestrateur pour vos agents ?
+          </p>
+        </Link>
+        <Link
+          href="/comparatif/agent-ia-vs-chatbot"
+          className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Agent IA vs Chatbot
+          </h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Comprendre les différences clés.
+          </p>
+        </Link>
+      </div>
+
       {/* Newsletter */}
-      <div className="mt-12">
+      <div className="mt-8">
         <NewsletterSignup variant="inline" />
       </div>
 
