@@ -1901,4 +1901,2376 @@ Génère une analyse avec tendances et recommandations."""
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
+  {
+    slug: "agent-analyse-contrats",
+    title: "Agent d'Analyse de Contrats",
+    subtitle: "Analysez automatiquement vos contrats, détectez les clauses à risque et générez des redlines",
+    problem:
+      "Les juristes passent des heures à relire chaque contrat ligne par ligne pour identifier les clauses à risque, les écarts par rapport aux standards et les obligations cachées. Ce processus est lent, coûteux et sujet aux oublis humains, surtout lors de pics d'activité.",
+    value:
+      "Un agent IA scanne l'intégralité du contrat en quelques minutes, détecte les clauses problématiques en les comparant à vos standards internes, génère des redlines avec suggestions de reformulation, et produit un rapport de risque synthétique pour accélérer la négociation.",
+    inputs: [
+      "Document contractuel (PDF, DOCX)",
+      "Bibliothèque de clauses standards internes",
+      "Grille de risque juridique par type de clause",
+      "Historique des négociations précédentes",
+    ],
+    outputs: [
+      "Rapport d'analyse clause par clause avec niveau de risque",
+      "Redlines générées avec suggestions de reformulation",
+      "Score de risque global du contrat (0-100)",
+      "Liste des obligations et échéances extraites",
+      "Comparaison avec les standards internes",
+    ],
+    risks: [
+      "Hallucination sur l'interprétation juridique d'une clause ambiguë",
+      "Omission de clauses à risque dans des formulations inhabituelles",
+      "Confidentialité des contrats envoyés à un LLM cloud",
+    ],
+    roiIndicatif:
+      "Réduction de 70% du temps de revue contractuelle. Détection de 40% de clauses à risque supplémentaires par rapport à la relecture manuelle.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Pinecone", category: "Database" },
+      { name: "AWS Lambda", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Contrat    │────▶│  Extraction  │────▶│  Agent LLM  │
+│  (PDF/DOCX) │     │  de clauses  │     │  (Analyse)  │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Rapport    │◀────│  Générateur  │◀────│  Vector DB  │
+│  + Redlines │     │  de redlines │     │  (Standards)│
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances nécessaires pour l'extraction de texte depuis des PDF/DOCX et la connexion au LLM Anthropic. Configurez vos clés API.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain pinecone-client pymupdf python-docx python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_INDEX = "clauses-standards"`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Indexation des clauses standards",
+        content:
+          "Créez un index vectoriel de vos clauses standards internes. Chaque clause est associée à un type (limitation de responsabilité, confidentialité, résiliation, etc.) et un niveau de risque accepté.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Pinecone
+from langchain.document_loaders import DirectoryLoader
+import json
+
+# Charger les clauses standards
+with open("clauses_standards.json", "r") as f:
+    clauses = json.load(f)
+
+docs = []
+for clause in clauses:
+    docs.append({
+        "page_content": clause["texte"],
+        "metadata": {
+            "type": clause["type"],
+            "risque_max": clause["risque_max"],
+            "version": clause["version"]
+        }
+    })
+
+embeddings = OpenAIEmbeddings()
+vectorstore = Pinecone.from_documents(
+    docs, embeddings, index_name="clauses-standards"
+)
+print(f"{len(docs)} clauses standards indexées.")`,
+            filename: "index_clauses.py",
+          },
+        ],
+      },
+      {
+        title: "Agent d'analyse et génération de redlines",
+        content:
+          "Construisez l'agent principal qui extrait les clauses du contrat, les compare aux standards internes via la base vectorielle, et génère un rapport d'analyse avec des redlines pour chaque clause à risque.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import fitz  # PyMuPDF
+from pydantic import BaseModel, Field
+from typing import List
+
+class ClauseAnalysis(BaseModel):
+    clause_text: str = Field(description="Texte original de la clause")
+    risk_level: str = Field(description="Risque: faible, moyen, élevé, critique")
+    issues: List[str] = Field(description="Problèmes identifiés")
+    redline_suggestion: str = Field(description="Reformulation suggérée")
+
+class ContractReport(BaseModel):
+    overall_risk_score: int = Field(ge=0, le=100)
+    clauses_analyzed: int
+    high_risk_clauses: List[ClauseAnalysis]
+    obligations: List[str]
+    key_dates: List[str]
+
+client = anthropic.Anthropic()
+
+def extract_text_from_pdf(path: str) -> str:
+    doc = fitz.open(path)
+    return "\\n".join([page.get_text() for page in doc])
+
+def analyze_contract(contract_text: str, standards_context: str) -> str:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Analyse ce contrat clause par clause.
+Compare chaque clause aux standards internes fournis.
+Pour chaque clause à risque, génère une redline.
+
+Standards internes:
+{standards_context}
+
+Contrat à analyser:
+{contract_text}
+
+Retourne un JSON structuré avec le rapport complet."""
+        }]
+    )
+    return response.content[0].text`,
+            filename: "agent_contrats.py",
+          },
+        ],
+      },
+      {
+        title: "API et intégration",
+        content:
+          "Exposez l'agent via une API REST pour l'intégrer à votre workflow juridique. Le juriste upload un contrat et reçoit le rapport d'analyse en retour.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, UploadFile, File
+import tempfile
+
+app = FastAPI()
+
+@app.post("/api/analyze-contract")
+async def analyze(file: UploadFile = File(...)):
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+
+    contract_text = extract_text_from_pdf(tmp_path)
+    standards = vectorstore.similarity_search(contract_text, k=10)
+    context = "\\n".join([s.page_content for s in standards])
+    report = analyze_contract(contract_text, context)
+    return {"report": report}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les contrats contiennent des données commerciales sensibles. Utiliser un LLM on-premise ou un accord de traitement des données (DPA) avec le fournisseur cloud. Chiffrement AES-256 au repos et en transit.",
+      auditLog: "Chaque analyse tracée : contrat analysé (hash SHA-256), clauses détectées, scores de risque, redlines générées, juriste destinataire, horodatage complet.",
+      humanInTheLoop: "Toute redline générée doit être validée par un juriste avant envoi au cocontractant. Les contrats avec un score de risque > 80 nécessitent une revue senior.",
+      monitoring: "Temps moyen d'analyse par contrat, taux de clauses à risque détectées vs manquées (feedback juristes), volume de contrats traités/semaine, taux d'adoption par les équipes.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (upload contrat) → Code Node (extraction texte PDF) → HTTP Request LLM (analyse clause par clause) → Google Sheets (rapport structuré) → Email au juriste avec le rapport.",
+      nodes: ["Webhook Trigger (upload)", "Code Node (extraction PDF)", "HTTP Request (LLM analyse)", "Google Sheets (rapport)", "Send Email (juriste)"],
+      triggerType: "Webhook (upload de contrat)",
+    },
+    estimatedTime: "12-18h",
+    difficulty: "Expert",
+    sectors: ["Banque", "Assurance", "B2B SaaS", "Services"],
+    metiers: ["Juridique", "Direction Générale"],
+    functions: ["Legal"],
+    metaTitle: "Agent IA d'Analyse de Contrats — Guide Juridique Complet",
+    metaDescription:
+      "Automatisez l'analyse de vos contrats avec un agent IA. Détection de clauses à risque, génération de redlines et rapport de conformité.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-prevision-demande",
+    title: "Agent de Prévision de Demande",
+    subtitle: "Anticipez la demande grâce à l'IA combinant données historiques et signaux externes",
+    problem:
+      "Les prévisions de demande traditionnelles reposent sur des modèles statistiques rigides qui ignorent les signaux faibles (météo, événements, réseaux sociaux). Les ruptures de stock et les surstocks coûtent des millions chaque année.",
+    value:
+      "Un agent IA combine vos données de vente historiques avec des signaux externes (météo, tendances Google, événements locaux, réseaux sociaux) pour produire des prévisions de demande granulaires et ajustées en temps réel. Les réapprovisionnements sont optimisés automatiquement.",
+    inputs: [
+      "Historique de ventes (ERP, POS)",
+      "Données météorologiques par zone",
+      "Calendrier événementiel et promotionnel",
+      "Tendances Google Trends et réseaux sociaux",
+    ],
+    outputs: [
+      "Prévision de demande à 7/30/90 jours par produit et zone",
+      "Intervalle de confiance et scénarios (optimiste, pessimiste, médian)",
+      "Alertes de rupture de stock anticipées",
+      "Recommandations de réapprovisionnement automatiques",
+      "Rapport d'impact des signaux externes détectés",
+    ],
+    risks: [
+      "Données historiques incomplètes faussant les prédictions",
+      "Événements exceptionnels (crise, pandémie) non modélisables",
+      "Sur-confiance dans les prédictions IA sans validation terrain",
+    ],
+    roiIndicatif:
+      "Réduction de 30% des ruptures de stock. Diminution de 20% des surstocks. Amélioration de 25% de la précision des prévisions vs méthodes traditionnelles.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL + TimescaleDB", category: "Database" },
+      { name: "AWS EC2", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "DuckDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  ERP/POS    │────▶│  Pipeline    │────▶│  Agent LLM  │
+│  (ventes)   │     │  ETL + ML    │     │  (Analyse)  │
+└─────────────┘     └──────┬───────┘     └──────┬──────┘
+                           │                     │
+┌─────────────┐     ┌──────▼───────┐     ┌──────▼──────┐
+│  Signaux    │────▶│  TimescaleDB │     │  Dashboard  │
+│  externes   │     │  (historique)│     │  + Alertes  │
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour le traitement de séries temporelles, l'accès aux APIs de données externes et la connexion au LLM. Configurez votre base TimescaleDB.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain pandas prophet requests psycopg2-binary python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+WEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte et enrichissement des données",
+        content:
+          "Construisez le pipeline de collecte qui récupère les ventes historiques et les enrichit avec les signaux externes (météo, événements, tendances).",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pandas as pd
+import requests
+from datetime import datetime, timedelta
+
+def get_sales_history(product_id: str, days: int = 365) -> pd.DataFrame:
+    query = f"""
+    SELECT date, quantity, revenue, zone
+    FROM sales
+    WHERE product_id = '{product_id}'
+    AND date >= NOW() - INTERVAL '{days} days'
+    ORDER BY date
+    """
+    return pd.read_sql(query, DB_URL)
+
+def get_weather_forecast(zone: str, days: int = 30) -> pd.DataFrame:
+    resp = requests.get(
+        f"https://api.openweathermap.org/data/2.5/forecast",
+        params={"q": zone, "appid": WEATHER_API_KEY, "units": "metric"}
+    )
+    data = resp.json()
+    records = [{"date": item["dt_txt"], "temp": item["main"]["temp"],
+                "weather": item["weather"][0]["main"]} for item in data["list"]]
+    return pd.DataFrame(records)
+
+def enrich_with_signals(sales_df: pd.DataFrame, zone: str) -> pd.DataFrame:
+    weather = get_weather_forecast(zone)
+    merged = sales_df.merge(weather, on="date", how="left")
+    return merged`,
+            filename: "data_pipeline.py",
+          },
+        ],
+      },
+      {
+        title: "Modèle de prévision hybride",
+        content:
+          "Combinez Prophet pour les prévisions statistiques de base avec un agent LLM qui ajuste les prédictions en tenant compte des signaux qualitatifs externes.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from prophet import Prophet
+from openai import OpenAI
+
+client = OpenAI()
+
+def statistical_forecast(df: pd.DataFrame, periods: int = 30) -> pd.DataFrame:
+    prophet_df = df.rename(columns={"date": "ds", "quantity": "y"})
+    model = Prophet(yearly_seasonality=True, weekly_seasonality=True)
+    model.fit(prophet_df)
+    future = model.make_future_dataframe(periods=periods)
+    forecast = model.predict(future)
+    return forecast[["ds", "yhat", "yhat_lower", "yhat_upper"]]
+
+def llm_adjust_forecast(forecast_data: str, signals: str) -> str:
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[{
+            "role": "system",
+            "content": """Tu es un expert en prévision de demande.
+Ajuste les prévisions statistiques en tenant compte des signaux externes.
+Retourne un JSON avec les ajustements par date."""
+        }, {
+            "role": "user",
+            "content": f"""Prévisions statistiques:
+{forecast_data}
+
+Signaux externes détectés:
+{signals}
+
+Ajuste les prévisions et explique chaque ajustement."""
+        }]
+    )
+    return response.choices[0].message.content`,
+            filename: "forecast_engine.py",
+          },
+        ],
+      },
+      {
+        title: "API et alertes automatiques",
+        content:
+          "Exposez les prévisions via une API et configurez des alertes automatiques en cas de risque de rupture de stock.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
+
+app = FastAPI()
+
+class ForecastRequest(BaseModel):
+    product_id: str
+    zone: str
+    horizon_days: int = 30
+
+@app.post("/api/forecast")
+async def forecast(req: ForecastRequest):
+    sales = get_sales_history(req.product_id)
+    enriched = enrich_with_signals(sales, req.zone)
+    stat_forecast = statistical_forecast(enriched, req.horizon_days)
+    signals = get_external_signals(req.zone, req.horizon_days)
+    adjusted = llm_adjust_forecast(stat_forecast.to_json(), signals)
+
+    stock_level = get_current_stock(req.product_id, req.zone)
+    if stock_level < stat_forecast["yhat"].sum() * 0.8:
+        send_restock_alert(req.product_id, req.zone, stock_level)
+
+    return {"forecast": adjusted, "stock_alert": stock_level < stat_forecast["yhat"].sum() * 0.8}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Aucune donnée personnelle traitée directement. Les données de ventes sont agrégées par produit et zone. Conformité RGPD assurée par l'anonymisation des transactions individuelles.",
+      auditLog: "Chaque prévision tracée : données d'entrée (hash), signaux externes utilisés, prévision statistique brute, ajustements LLM, prévision finale, date de génération.",
+      humanInTheLoop: "Les prévisions sont proposées au supply chain manager qui valide avant déclenchement des commandes. Alertes de rupture transmises pour décision humaine.",
+      monitoring: "MAPE (Mean Absolute Percentage Error) par produit/zone, taux de rupture de stock, taux de surstock, précision des signaux externes, temps de génération des prévisions.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (quotidien) → HTTP Request (API ERP ventes) → HTTP Request (API météo) → Code Node (agrégation) → HTTP Request LLM (ajustement prévisions) → Google Sheets (tableau prévisionnel) → Slack alerte si rupture.",
+      nodes: ["Cron Trigger (daily 6h)", "HTTP Request (ERP ventes)", "HTTP Request (API météo)", "Code Node (agrégation)", "HTTP Request (LLM ajustement)", "Google Sheets", "IF Node (seuil rupture)", "Slack Notification"],
+      triggerType: "Cron (quotidien à 6h)",
+    },
+    estimatedTime: "16-24h",
+    difficulty: "Expert",
+    sectors: ["Retail", "E-commerce", "Distribution", "Industrie"],
+    metiers: ["Supply Chain", "Logistique", "Direction des Opérations"],
+    functions: ["Supply Chain"],
+    metaTitle: "Agent IA de Prévision de Demande — Guide Supply Chain",
+    metaDescription:
+      "Optimisez vos prévisions de demande avec un agent IA combinant données historiques et signaux externes. Réduction des ruptures et surstocks.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-analyse-retours-clients",
+    title: "Agent d'Analyse des Retours Clients",
+    subtitle: "Agrégez et analysez automatiquement les retours clients pour guider vos décisions produit",
+    problem:
+      "Les retours clients sont éparpillés entre les avis en ligne, les tickets support, les enquêtes NPS et les réseaux sociaux. Les équipes produit n'ont pas le temps de tout lire et passent à côté de signaux critiques sur l'expérience utilisateur.",
+    value:
+      "Un agent IA collecte et agrège les retours clients de toutes les sources, effectue une analyse de sentiment fine, identifie les thèmes récurrents et génère des recommandations produit priorisées par impact business.",
+    inputs: [
+      "Avis clients (App Store, Google, Trustpilot)",
+      "Tickets support et conversations chat",
+      "Réponses aux enquêtes NPS/CSAT",
+      "Mentions sur les réseaux sociaux",
+    ],
+    outputs: [
+      "Dashboard de sentiment par thème et par période",
+      "Top 10 des irritants clients classés par fréquence et impact",
+      "Recommandations produit priorisées avec justification",
+      "Alertes en temps réel sur les baisses de sentiment",
+      "Rapport hebdomadaire synthétique pour le comité produit",
+    ],
+    risks: [
+      "Biais d'échantillonnage (clients mécontents surreprésentés)",
+      "Mauvaise détection du sarcasme ou de l'ironie dans les avis",
+      "Recommandations produit basées sur une minorité vocale",
+    ],
+    roiIndicatif:
+      "Réduction de 80% du temps d'analyse des retours clients. Amélioration de 15% du NPS grâce à des actions produit ciblées en 6 mois.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Avis /     │────▶│  Collecteur  │────▶│  Agent LLM  │
+│  Tickets    │     │  multi-source│     │  (Sentiment) │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Dashboard  │◀────│  Agrégateur  │◀────│  PostgreSQL │
+│  + Alertes  │     │  de thèmes   │     │  (stockage) │
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour la collecte multi-source, l'analyse de sentiment et le stockage. Configurez vos accès API aux plateformes d'avis.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary requests beautifulsoup4 python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+TRUSTPILOT_API_KEY = os.getenv("TRUSTPILOT_API_KEY")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte multi-source des retours",
+        content:
+          "Construisez les connecteurs pour récupérer les retours clients depuis les différentes sources : avis en ligne, tickets support, enquêtes NPS.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+from bs4 import BeautifulSoup
+from datetime import datetime
+import psycopg2
+
+def collect_trustpilot_reviews(domain: str, pages: int = 5) -> list:
+    reviews = []
+    for page in range(1, pages + 1):
+        resp = requests.get(
+            f"https://api.trustpilot.com/v1/business-units/find",
+            params={"name": domain},
+            headers={"apikey": TRUSTPILOT_API_KEY}
+        )
+        for review in resp.json().get("reviews", []):
+            reviews.append({
+                "source": "trustpilot",
+                "text": review["text"],
+                "rating": review["stars"],
+                "date": review["createdAt"],
+            })
+    return reviews
+
+def collect_support_tickets(days: int = 30) -> list:
+    query = f"""
+    SELECT id, content, satisfaction_score, created_at
+    FROM tickets WHERE created_at >= NOW() - INTERVAL '{days} days'
+    AND status = 'resolved'
+    """
+    conn = psycopg2.connect(DB_URL)
+    cur = conn.cursor()
+    cur.execute(query)
+    return [{"source": "support", "text": row[1], "rating": row[2],
+             "date": str(row[3])} for row in cur.fetchall()]`,
+            filename: "collectors.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse de sentiment et extraction de thèmes",
+        content:
+          "Utilisez l'agent LLM pour effectuer une analyse de sentiment fine et extraire les thèmes récurrents à partir de l'ensemble des retours collectés.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from pydantic import BaseModel, Field
+from typing import List
+
+class FeedbackAnalysis(BaseModel):
+    sentiment: str = Field(description="positif, neutre, négatif")
+    score: float = Field(ge=-1, le=1, description="Score de sentiment -1 à 1")
+    themes: List[str] = Field(description="Thèmes identifiés")
+    pain_points: List[str] = Field(description="Irritants détectés")
+    suggestions: List[str] = Field(description="Suggestions d'amélioration")
+
+client = anthropic.Anthropic()
+
+def analyze_feedback_batch(feedbacks: list) -> list:
+    batch_text = "\\n---\\n".join([f"[{f['source']}] {f['text']}" for f in feedbacks])
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Analyse ces retours clients. Pour chaque retour :
+1. Détermine le sentiment (positif/neutre/négatif) et un score (-1 à 1)
+2. Extrais les thèmes principaux
+3. Identifie les irritants concrets
+4. Propose des suggestions d'amélioration produit
+
+Retours clients:
+{batch_text}
+
+Retourne un JSON structuré avec l'analyse de chaque retour."""
+        }]
+    )
+    return response.content[0].text`,
+            filename: "sentiment_analyzer.py",
+          },
+        ],
+      },
+      {
+        title: "Génération de recommandations et dashboard",
+        content:
+          "Agrégez les analyses individuelles en un rapport synthétique avec des recommandations produit priorisées. Exposez les résultats via une API pour le dashboard.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from collections import Counter
+
+app = FastAPI()
+
+def generate_product_recommendations(analyses: list) -> str:
+    all_themes = []
+    all_pain_points = []
+    for a in analyses:
+        all_themes.extend(a.get("themes", []))
+        all_pain_points.extend(a.get("pain_points", []))
+
+    theme_counts = Counter(all_themes).most_common(10)
+    pain_counts = Counter(all_pain_points).most_common(10)
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""En tant que Product Manager, génère des recommandations produit priorisées.
+
+Top thèmes: {theme_counts}
+Top irritants: {pain_counts}
+Nombre total de retours analysés: {len(analyses)}
+
+Priorise par impact business et fréquence. Format: tableau priorisé."""
+        }]
+    )
+    return response.content[0].text
+
+@app.get("/api/feedback-report")
+async def get_report(days: int = 30):
+    feedbacks = collect_all_sources(days)
+    analyses = analyze_feedback_batch(feedbacks)
+    recommendations = generate_product_recommendations(analyses)
+    return {"total_feedbacks": len(feedbacks), "recommendations": recommendations}`,
+            filename: "report_api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les retours clients peuvent contenir des données personnelles (noms, emails). Anonymisation automatique via regex et NER avant analyse par le LLM. Conformité RGPD avec droit à l'oubli.",
+      auditLog: "Sources collectées, nombre de retours analysés, distribution de sentiment, thèmes extraits, recommandations générées, date d'exécution, destinataires du rapport.",
+      humanInTheLoop: "Les recommandations produit sont soumises au Product Manager pour validation. Aucune action automatique sur le produit sans validation humaine.",
+      monitoring: "Volume de retours collectés/jour par source, distribution de sentiment (tendance), précision du sentiment (échantillon validé manuellement), adoption des recommandations.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (hebdomadaire) → HTTP Request (API Trustpilot) → HTTP Request (API support) → Merge Node → HTTP Request LLM (analyse sentiment) → Code Node (agrégation) → Google Sheets (rapport) → Slack notification.",
+      nodes: ["Cron Trigger (weekly)", "HTTP Request (Trustpilot)", "HTTP Request (Support API)", "Merge Node", "HTTP Request (LLM sentiment)", "Code Node (agrégation)", "Google Sheets", "Slack Notification"],
+      triggerType: "Cron (hebdomadaire lundi 9h)",
+    },
+    estimatedTime: "6-10h",
+    difficulty: "Moyen",
+    sectors: ["E-commerce", "B2B SaaS", "Retail", "Services"],
+    metiers: ["Product Management", "Expérience Client"],
+    functions: ["Product"],
+    metaTitle: "Agent IA d'Analyse des Retours Clients — Guide Produit",
+    metaDescription:
+      "Analysez automatiquement vos retours clients avec un agent IA. Sentiment, thèmes récurrents et recommandations produit priorisées.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-veille-reglementaire",
+    title: "Agent de Veille Réglementaire",
+    subtitle: "Surveillez les évolutions réglementaires et évaluez leur impact sur votre organisation",
+    problem:
+      "Le paysage réglementaire évolue en permanence (EU AI Act, RGPD, DORA, NIS2). Les équipes juridiques et conformité peinent à suivre toutes les publications officielles, à interpréter leur impact et à identifier les écarts de conformité à temps.",
+    value:
+      "Un agent IA surveille en continu les sources réglementaires officielles (Journal Officiel, EUR-Lex, CNIL), détecte les nouvelles obligations pertinentes pour votre secteur, effectue une analyse de gap par rapport à vos pratiques actuelles et génère un plan d'action priorisé.",
+    inputs: [
+      "Sources réglementaires officielles (EUR-Lex, JOUE, CNIL)",
+      "Registre de conformité actuel de l'entreprise",
+      "Cartographie des processus métier impactés",
+      "Secteur d'activité et périmètre géographique",
+    ],
+    outputs: [
+      "Alertes en temps réel sur les nouvelles réglementations pertinentes",
+      "Synthèse vulgarisée de chaque nouveau texte avec impacts identifiés",
+      "Analyse de gap : écarts entre pratiques actuelles et nouvelles obligations",
+      "Plan d'action priorisé avec échéances de mise en conformité",
+      "Tableau de bord de conformité global avec score par domaine",
+    ],
+    risks: [
+      "Mauvaise interprétation d'un texte juridique par le LLM",
+      "Omission d'une réglementation sectorielle spécifique",
+      "Faux sentiment de conformité basé sur une analyse IA incomplète",
+    ],
+    roiIndicatif:
+      "Réduction de 60% du temps de veille réglementaire. Détection 3x plus rapide des nouvelles obligations. Économie estimée de 50K-200K€/an en évitant les sanctions pour non-conformité.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Pinecone", category: "Database" },
+      { name: "AWS Lambda", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  EUR-Lex /  │────▶│  Scraper +   │────▶│  Agent LLM  │
+│  CNIL / JO  │     │  Détection   │     │  (Analyse)  │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Plan       │◀────│  Gap         │◀────│  Vector DB  │
+│  d'action   │     │  Analysis    │     │  (Registre) │
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour le scraping des sources réglementaires, l'indexation vectorielle de votre registre de conformité et la connexion au LLM Anthropic.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain pinecone-client requests beautifulsoup4 feedparser python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+SECTORS = ["banque", "assurance", "fintech"]
+MONITORED_SOURCES = [
+    "https://eur-lex.europa.eu/collection/eu-law.html",
+    "https://www.cnil.fr/fr/les-textes-officiels",
+    "https://www.legifrance.gouv.fr/eli/jo",
+]`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte et détection de nouvelles réglementations",
+        content:
+          "Construisez le système de surveillance qui scrape les sources réglementaires officielles, détecte les nouveaux textes et filtre ceux pertinents pour votre secteur.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import feedparser
+import requests
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+import hashlib
+
+def monitor_eurlex_feed(sector_keywords: list) -> list:
+    feed = feedparser.parse(
+        "https://eur-lex.europa.eu/collection/eu-law/rss.xml"
+    )
+    new_texts = []
+    for entry in feed.entries:
+        published = datetime(*entry.published_parsed[:6])
+        if published > datetime.now() - timedelta(days=1):
+            content = entry.summary.lower()
+            if any(kw in content for kw in sector_keywords):
+                new_texts.append({
+                    "title": entry.title,
+                    "url": entry.link,
+                    "summary": entry.summary,
+                    "date": str(published),
+                    "source": "EUR-Lex",
+                    "hash": hashlib.sha256(entry.link.encode()).hexdigest()
+                })
+    return new_texts
+
+def monitor_cnil_publications() -> list:
+    resp = requests.get("https://www.cnil.fr/fr/les-textes-officiels")
+    soup = BeautifulSoup(resp.text, "html.parser")
+    articles = soup.select(".article-item")
+    return [{"title": a.select_one("h3").text.strip(),
+             "url": "https://www.cnil.fr" + a.select_one("a")["href"],
+             "source": "CNIL"} for a in articles[:10]]`,
+            filename: "regulatory_monitor.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse de gap et génération du plan d'action",
+        content:
+          "Utilisez l'agent LLM pour comparer chaque nouveau texte réglementaire au registre de conformité actuel, identifier les écarts et générer un plan d'action priorisé avec des échéances.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+
+client = anthropic.Anthropic()
+
+def analyze_regulatory_gap(new_regulation: dict, current_practices: str) -> str:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert en conformité réglementaire.
+
+Nouveau texte réglementaire:
+Titre: {new_regulation['title']}
+Contenu: {new_regulation['summary']}
+Source: {new_regulation['source']}
+
+Pratiques actuelles de l'entreprise:
+{current_practices}
+
+Effectue une analyse de gap complète:
+1. Résumé vulgarisé du texte (3-5 phrases)
+2. Obligations nouvelles identifiées
+3. Écarts par rapport aux pratiques actuelles
+4. Impact (faible/moyen/élevé/critique)
+5. Plan d'action avec échéances recommandées
+6. Estimation du coût de mise en conformité
+
+Retourne un JSON structuré."""
+        }]
+    )
+    return response.content[0].text
+
+def generate_compliance_dashboard(gap_analyses: list) -> dict:
+    total = len(gap_analyses)
+    critical = sum(1 for g in gap_analyses if g.get("impact") == "critique")
+    high = sum(1 for g in gap_analyses if g.get("impact") == "élevé")
+    return {
+        "total_regulations_tracked": total,
+        "critical_gaps": critical,
+        "high_impact_gaps": high,
+        "compliance_score": round((1 - (critical + high) / max(total, 1)) * 100),
+        "next_deadlines": sorted(
+            [g["deadline"] for g in gap_analyses if g.get("deadline")],
+            key=lambda x: x
+        )[:5]
+    }`,
+            filename: "gap_analyzer.py",
+          },
+        ],
+      },
+      {
+        title: "API et alertes automatiques",
+        content:
+          "Exposez le système de veille via une API REST et configurez des alertes email automatiques pour les nouvelles réglementations à impact élevé ou critique.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+import resend
+
+app = FastAPI()
+
+@app.get("/api/compliance-dashboard")
+async def dashboard():
+    return generate_compliance_dashboard(get_all_gap_analyses())
+
+@app.post("/api/scan-regulations")
+async def scan():
+    new_regs = monitor_eurlex_feed(SECTORS)
+    new_regs += monitor_cnil_publications()
+    results = []
+    for reg in new_regs:
+        practices = vectorstore.similarity_search(reg["summary"], k=5)
+        context = "\\n".join([p.page_content for p in practices])
+        analysis = analyze_regulatory_gap(reg, context)
+        results.append(analysis)
+        if analysis.get("impact") in ["critique", "élevé"]:
+            resend.Emails.send({
+                "from": "compliance@entreprise.com",
+                "to": ["legal@entreprise.com"],
+                "subject": f"[ALERTE] Nouvelle réglementation: {reg['title']}",
+                "html": format_alert_email(analysis)
+            })
+    return {"scanned": len(new_regs), "alerts_sent": len(results)}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Aucune donnée personnelle traitée. Les sources sont des textes réglementaires publics. Le registre de conformité interne reste sur l'infrastructure de l'entreprise.",
+      auditLog: "Chaque scan tracé : sources consultées, textes détectés, analyses de gap générées, alertes envoyées, actions de mise en conformité déclenchées, horodatage complet.",
+      humanInTheLoop: "Chaque analyse de gap est validée par le responsable conformité avant communication aux équipes. Les plans d'action nécessitent une approbation de la direction juridique.",
+      monitoring: "Nombre de sources surveillées, délai de détection (publication vs alerte), taux de faux positifs, avancement des plans d'action, score de conformité global.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (quotidien 7h) → HTTP Request (EUR-Lex RSS) → HTTP Request (CNIL scrape) → Merge → HTTP Request LLM (analyse de gap) → Notion (fiche réglementaire) → IF Node (impact critique) → Email alerte → Slack notification.",
+      nodes: ["Cron Trigger (daily 7h)", "HTTP Request (EUR-Lex)", "HTTP Request (CNIL)", "Merge Node", "HTTP Request (LLM analyse)", "Notion Create Page", "IF Node (impact critique)", "Send Email (alerte)", "Slack Notification"],
+      triggerType: "Cron (quotidien à 7h)",
+    },
+    estimatedTime: "14-20h",
+    difficulty: "Expert",
+    sectors: ["Banque", "Assurance", "B2B SaaS", "Santé", "Telecom"],
+    metiers: ["Conformité", "Juridique"],
+    functions: ["Legal"],
+    metaTitle: "Agent IA de Veille Réglementaire — Guide Conformité",
+    metaDescription:
+      "Automatisez votre veille réglementaire avec un agent IA. Surveillance EU AI Act, RGPD, DORA et analyse de gap automatique.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-compte-rendu-reunion",
+    title: "Agent de Compte-Rendu de Réunion",
+    subtitle: "Transcrivez vos réunions, extrayez les décisions et assignez les actions automatiquement",
+    problem:
+      "Les comptes-rendus de réunion sont rarement rédigés, souvent incomplets et publiés trop tard. Les décisions prises et les actions assignées se perdent, entraînant des suivis inefficaces et des responsabilités floues.",
+    value:
+      "Un agent IA transcrit automatiquement vos réunions (audio/vidéo), identifie les décisions clés, extrait les actions avec leurs responsables et échéances, et distribue un compte-rendu structuré dans les 5 minutes suivant la fin de la réunion.",
+    inputs: [
+      "Enregistrement audio/vidéo de la réunion",
+      "Liste des participants et leurs rôles",
+      "Ordre du jour préparé en amont",
+      "Comptes-rendus précédents (suivi des actions)",
+    ],
+    outputs: [
+      "Transcription complète horodatée par intervenant",
+      "Synthèse structurée de la réunion (5-10 points clés)",
+      "Liste des décisions prises avec contexte",
+      "Actions assignées avec responsable, échéance et priorité",
+      "Email de diffusion automatique aux participants",
+    ],
+    risks: [
+      "Erreurs de transcription sur les noms propres et termes techniques",
+      "Mauvaise attribution des propos à un participant",
+      "Confidentialité des discussions envoyées à un service de transcription cloud",
+    ],
+    roiIndicatif:
+      "Gain de 30 minutes par réunion sur la rédaction. 100% des réunions documentées vs 30% avant. Suivi des actions amélioré de 50%.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "OpenAI Whisper", category: "Other" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "Whisper.cpp (local)", category: "Other", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Audio /    │────▶│  Whisper     │────▶│  Agent LLM  │
+│  Vidéo      │     │  (Transcr.)  │     │  (Synthèse) │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Email      │◀────│  Formatteur  │◀────│  Extraction │
+│  diffusion  │     │  CR structuré│     │  décisions  │
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez Whisper pour la transcription audio et les dépendances pour l'analyse par LLM. Configurez vos clés API OpenAI.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain psycopg2-binary python-dotenv pydub resend`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Transcription audio avec Whisper",
+        content:
+          "Utilisez l'API Whisper d'OpenAI pour transcrire l'enregistrement audio en texte horodaté. Le modèle détecte automatiquement la langue et fournit des timestamps.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+from pydub import AudioSegment
+import os
+
+client = OpenAI()
+
+def transcribe_meeting(audio_path: str) -> dict:
+    # Découper en segments de 25MB max (limite API)
+    audio = AudioSegment.from_file(audio_path)
+    chunk_ms = 10 * 60 * 1000  # 10 minutes
+    chunks = [audio[i:i+chunk_ms] for i in range(0, len(audio), chunk_ms)]
+
+    full_transcript = []
+    for i, chunk in enumerate(chunks):
+        chunk_path = f"/tmp/chunk_{i}.mp3"
+        chunk.export(chunk_path, format="mp3")
+        with open(chunk_path, "rb") as f:
+            result = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=f,
+                response_format="verbose_json",
+                timestamp_granularities=["segment"]
+            )
+        for segment in result.segments:
+            full_transcript.append({
+                "start": segment["start"] + i * 600,
+                "end": segment["end"] + i * 600,
+                "text": segment["text"]
+            })
+        os.remove(chunk_path)
+    return {"segments": full_transcript, "full_text": " ".join([s["text"] for s in full_transcript])}`,
+            filename: "transcriber.py",
+          },
+        ],
+      },
+      {
+        title: "Extraction des décisions et actions",
+        content:
+          "Utilisez le LLM pour analyser la transcription, identifier les décisions prises et extraire les actions avec responsables et échéances.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `def extract_meeting_insights(transcript: str, participants: list, agenda: str) -> str:
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[{
+            "role": "system",
+            "content": """Tu es un assistant de réunion expert.
+Analyse la transcription et produis un compte-rendu structuré en JSON."""
+        }, {
+            "role": "user",
+            "content": f"""Transcription de la réunion:
+{transcript}
+
+Participants: {', '.join(participants)}
+Ordre du jour: {agenda}
+
+Extrais:
+1. Synthèse en 5-10 points clés
+2. Décisions prises (avec contexte et votants)
+3. Actions: pour chaque action, indique le responsable, l'échéance et la priorité (haute/moyenne/basse)
+4. Points en suspens à traiter lors de la prochaine réunion
+5. Prochaine réunion suggérée (date, sujets)
+
+Retourne un JSON structuré."""
+        }]
+    )
+    return response.choices[0].message.content`,
+            filename: "meeting_analyzer.py",
+          },
+        ],
+      },
+      {
+        title: "Diffusion automatique du compte-rendu",
+        content:
+          "Formatez le compte-rendu et envoyez-le automatiquement par email à tous les participants dans les minutes suivant la fin de la réunion.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, UploadFile, File, Form
+import resend
+import json
+
+app = FastAPI()
+resend.api_key = RESEND_API_KEY
+
+@app.post("/api/process-meeting")
+async def process_meeting(
+    audio: UploadFile = File(...),
+    participants: str = Form(...),
+    agenda: str = Form("")
+):
+    audio_path = f"/tmp/{audio.filename}"
+    with open(audio_path, "wb") as f:
+        f.write(await audio.read())
+
+    transcript = transcribe_meeting(audio_path)
+    participant_list = json.loads(participants)
+    insights = extract_meeting_insights(
+        transcript["full_text"], [p["name"] for p in participant_list], agenda
+    )
+
+    # Envoi du CR par email
+    for p in participant_list:
+        resend.Emails.send({
+            "from": "reunions@entreprise.com",
+            "to": [p["email"]],
+            "subject": f"CR Réunion - {agenda[:50]}",
+            "html": format_meeting_report(insights, p["name"])
+        })
+
+    return {"status": "sent", "participants": len(participant_list)}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les enregistrements audio contiennent des voix identifiables. Consentement RGPD de tous les participants requis avant enregistrement. Suppression automatique de l'audio après transcription. Stockage des CR sur infrastructure interne uniquement.",
+      auditLog: "Chaque réunion traitée : participants, durée, date, nombre de décisions extraites, actions assignées, emails envoyés, horodatage de chaque étape.",
+      humanInTheLoop: "Le compte-rendu peut être relu et corrigé par l'organisateur avant diffusion (mode brouillon optionnel). Les actions critiques nécessitent une confirmation du responsable assigné.",
+      monitoring: "Temps de traitement par réunion, précision de la transcription (feedback utilisateurs), taux de complétion des actions assignées, satisfaction des participants sur la qualité des CR.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (fin de réunion Zoom/Teams) → HTTP Request (download audio) → HTTP Request (Whisper transcription) → HTTP Request LLM (extraction décisions) → Google Docs (CR formaté) → Send Email (participants) → Notion (suivi actions).",
+      nodes: ["Webhook Trigger (fin réunion)", "HTTP Request (download audio)", "HTTP Request (Whisper API)", "HTTP Request (LLM extraction)", "Google Docs (CR)", "Send Email (tous participants)", "Notion Create (actions)"],
+      triggerType: "Webhook (événement fin de réunion Zoom/Teams)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Facile",
+    sectors: ["Tous secteurs"],
+    metiers: ["Management", "Chef de Projet", "Direction"],
+    functions: ["Operations"],
+    metaTitle: "Agent IA de Compte-Rendu de Réunion — Guide Opérationnel",
+    metaDescription:
+      "Automatisez vos comptes-rendus de réunion avec un agent IA. Transcription, extraction de décisions et suivi des actions en temps réel.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-surveillance-sla",
+    title: "Agent de Surveillance des SLA",
+    subtitle: "Surveillez vos SLA en temps réel, prédisez les dépassements et déclenchez des escalades automatiques",
+    problem:
+      "Les équipes IT et support découvrent souvent les violations de SLA après coup. Le suivi manuel des dizaines de métriques contractuelles est fastidieux et les escalades arrivent trop tard, entraînant des pénalités et une insatisfaction client.",
+    value:
+      "Un agent IA surveille en continu les métriques de performance liées à vos SLA, prédit les risques de dépassement avant qu'ils ne surviennent, et déclenche automatiquement des escalades graduées pour prévenir les violations.",
+    inputs: [
+      "Métriques de performance en temps réel (API monitoring)",
+      "Contrats SLA avec seuils et pénalités",
+      "Historique des incidents et résolutions",
+      "Planning des équipes et disponibilités",
+    ],
+    outputs: [
+      "Dashboard temps réel du statut de chaque SLA",
+      "Prédiction de risque de dépassement (score 0-100)",
+      "Alertes graduées (warning, critical, breach)",
+      "Escalades automatiques vers les bons interlocuteurs",
+      "Rapport mensuel de performance SLA avec tendances",
+    ],
+    risks: [
+      "Faux positifs générant une fatigue d'alerte",
+      "Données de monitoring incomplètes faussant les prédictions",
+      "Escalade automatique inadaptée au contexte réel de l'incident",
+    ],
+    roiIndicatif:
+      "Réduction de 45% des violations de SLA. Détection anticipée de 80% des dépassements 2h avant la breach. Économie de 30-100K€/an en pénalités évitées.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL + TimescaleDB", category: "Database" },
+      { name: "Grafana", category: "Other" },
+      { name: "AWS Lambda", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Monitoring │────▶│  Collecteur  │────▶│  Agent LLM  │
+│  (APIs)     │     │  métriques   │     │  (Prédiction)│
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Escalade   │◀────│  Moteur de   │◀────│  TimescaleDB│
+│  auto       │     │  règles SLA  │     │  (historique)│
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour la collecte de métriques, l'analyse prédictive et les notifications. Configurez vos connexions aux systèmes de monitoring.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain psycopg2-binary requests schedule python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+DB_URL = os.getenv("TIMESCALEDB_URL")
+PAGERDUTY_API_KEY = os.getenv("PAGERDUTY_API_KEY")
+SLACK_WEBHOOK = os.getenv("SLACK_WEBHOOK_URL")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte des métriques et définition des SLA",
+        content:
+          "Définissez vos SLA sous forme de données structurées et construisez le système de collecte des métriques en temps réel depuis vos outils de monitoring.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+import psycopg2
+from datetime import datetime
+from pydantic import BaseModel, Field
+from typing import List
+
+class SLADefinition(BaseModel):
+    name: str
+    metric: str
+    threshold: float
+    unit: str
+    penalty_per_breach: float
+    escalation_contacts: List[str]
+
+SLA_DEFINITIONS = [
+    SLADefinition(name="Uptime API", metric="availability_pct",
+                  threshold=99.9, unit="%", penalty_per_breach=5000,
+                  escalation_contacts=["cto@entreprise.com"]),
+    SLADefinition(name="Temps de réponse P1", metric="p1_resolution_hours",
+                  threshold=4, unit="heures", penalty_per_breach=2000,
+                  escalation_contacts=["support-lead@entreprise.com"]),
+]
+
+def collect_metrics() -> dict:
+    # Exemple: collecte depuis Datadog / Prometheus
+    resp = requests.get("http://prometheus:9090/api/v1/query",
+                        params={"query": "up{job='api'}"})
+    metrics = resp.json()
+    return {
+        "availability_pct": calculate_availability(metrics),
+        "p1_resolution_hours": get_avg_p1_resolution(),
+        "timestamp": datetime.now().isoformat()
+    }`,
+            filename: "sla_monitor.py",
+          },
+        ],
+      },
+      {
+        title: "Prédiction de dépassement et analyse LLM",
+        content:
+          "Utilisez le LLM pour analyser les tendances des métriques, prédire les risques de dépassement SLA et recommander des actions préventives.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+import json
+
+client = OpenAI()
+
+def predict_sla_breach(sla: SLADefinition, metrics_history: list) -> dict:
+    history_str = json.dumps(metrics_history[-48:])  # 48 dernières heures
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[{
+            "role": "system",
+            "content": """Tu es un expert SLA/SRE.
+Analyse l'historique des métriques et prédit le risque de dépassement SLA.
+Retourne un JSON avec: risk_score (0-100), predicted_breach_time, root_cause_hypothesis, recommended_actions."""
+        }, {
+            "role": "user",
+            "content": f"""SLA: {sla.name}
+Seuil: {sla.threshold} {sla.unit}
+Historique des métriques (48h):
+{history_str}
+
+Prédit le risque de dépassement dans les 4 prochaines heures."""
+        }]
+    )
+    return json.loads(response.choices[0].message.content)
+
+def escalation_engine(risk: dict, sla: SLADefinition):
+    if risk["risk_score"] >= 90:
+        trigger_pagerduty(sla.escalation_contacts, "CRITICAL", risk)
+        send_slack_alert(f"🚨 SLA CRITICAL: {sla.name} - Breach imminente")
+    elif risk["risk_score"] >= 70:
+        send_slack_alert(f"⚠️ SLA WARNING: {sla.name} - Risque élevé ({risk['risk_score']}%)")`,
+            filename: "breach_predictor.py",
+          },
+        ],
+      },
+      {
+        title: "API et boucle de surveillance continue",
+        content:
+          "Mettez en place la boucle de surveillance continue qui collecte les métriques, analyse les risques et déclenche les escalades automatiquement toutes les 5 minutes.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+import schedule
+import threading
+
+app = FastAPI()
+
+def monitoring_loop():
+    metrics = collect_metrics()
+    store_metrics(metrics)
+    for sla in SLA_DEFINITIONS:
+        history = get_metrics_history(sla.metric, hours=48)
+        risk = predict_sla_breach(sla, history)
+        store_prediction(sla.name, risk)
+        escalation_engine(risk, sla)
+
+schedule.every(5).minutes.do(monitoring_loop)
+
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+
+threading.Thread(target=run_scheduler, daemon=True).start()
+
+@app.get("/api/sla-dashboard")
+async def sla_dashboard():
+    return {
+        "slas": [{
+            "name": sla.name,
+            "current_value": get_latest_metric(sla.metric),
+            "threshold": sla.threshold,
+            "risk_score": get_latest_prediction(sla.name),
+            "status": get_sla_status(sla)
+        } for sla in SLA_DEFINITIONS]
+    }`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les métriques SLA sont des données techniques sans PII. Les contacts d'escalade sont des emails professionnels internes. Stockage sur infrastructure interne uniquement.",
+      auditLog: "Chaque cycle de monitoring tracé : métriques collectées, prédictions générées, scores de risque, escalades déclenchées, temps de résolution, résultat final (breach ou non).",
+      humanInTheLoop: "Les escalades critiques (risk > 90) notifient un humain qui décide de l'action. L'agent ne modifie jamais l'infrastructure directement. Les SLA sont configurés manuellement par le responsable IT.",
+      monitoring: "Précision des prédictions (breach prédite vs réelle), taux de faux positifs, délai moyen entre alerte et résolution, nombre de breaches évitées/mois, coût des pénalités évitées.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (toutes les 5 min) → HTTP Request (API monitoring) → Code Node (calcul métriques) → HTTP Request LLM (prédiction risque) → IF Node (seuil dépassé) → PagerDuty / Slack (escalade) → Google Sheets (log).",
+      nodes: ["Cron Trigger (5 min)", "HTTP Request (Prometheus/Datadog)", "Code Node (calcul)", "HTTP Request (LLM prédiction)", "IF Node (risk > 70)", "PagerDuty Node", "Slack Notification", "Google Sheets (log)"],
+      triggerType: "Cron (toutes les 5 minutes)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["B2B SaaS", "Telecom", "Services", "Banque"],
+    metiers: ["SRE", "Support IT", "Infrastructure"],
+    functions: ["IT"],
+    metaTitle: "Agent IA de Surveillance des SLA — Guide IT/Support",
+    metaDescription:
+      "Surveillez vos SLA en temps réel avec un agent IA. Prédiction de dépassement, escalade automatique et reporting de performance.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-generation-propositions-commerciales",
+    title: "Agent de Génération de Propositions Commerciales",
+    subtitle: "Générez automatiquement des propositions commerciales personnalisées et des devis sur mesure",
+    problem:
+      "Les commerciaux passent 3 à 5 heures par proposition commerciale, assemblant manuellement des contenus depuis différentes sources. Les propositions manquent de personnalisation, les prix sont parfois incohérents et les délais de réponse aux appels d'offres sont trop longs.",
+    value:
+      "Un agent IA génère des propositions commerciales complètes et personnalisées en 30 minutes. Il adapte le contenu au contexte du prospect (secteur, taille, enjeux), calcule le pricing optimal et produit un document professionnel prêt à envoyer.",
+    inputs: [
+      "Fiche prospect (CRM, secteur, taille, enjeux)",
+      "Catalogue produits/services avec grille tarifaire",
+      "Historique des propositions gagnées/perdues",
+      "Template de proposition commerciale",
+    ],
+    outputs: [
+      "Proposition commerciale personnalisée (PDF)",
+      "Devis détaillé avec pricing optimisé",
+      "Arguments de vente adaptés au contexte du prospect",
+      "Analyse concurrentielle ciblée",
+      "Email d'accompagnement personnalisé",
+    ],
+    risks: [
+      "Pricing incorrect ou incohérent avec la politique commerciale",
+      "Promesses ou engagements non validés par la direction",
+      "Données prospect obsolètes menant à une personnalisation erronée",
+    ],
+    roiIndicatif:
+      "Réduction de 70% du temps de rédaction des propositions. Augmentation de 20% du taux de conversion grâce à une meilleure personnalisation. Capacité de réponse x3 sur les appels d'offres.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "WeasyPrint", category: "Other" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  CRM /      │────▶│  Agent LLM   │────▶│  Générateur │
+│  Prospect   │     │  (Rédaction) │     │  PDF/DOCX   │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+┌─────────────┐     ┌──────▼───────┐
+│  Catalogue  │────▶│  Moteur de   │
+│  Produits   │     │  pricing     │
+└─────────────┘     └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour la génération de documents, l'accès au CRM et la connexion au LLM Anthropic. Préparez vos templates de proposition.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary weasyprint jinja2 python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+CRM_API_KEY = os.getenv("HUBSPOT_API_KEY")
+TEMPLATE_DIR = "./templates/proposals"`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte des données prospect et catalogue",
+        content:
+          "Récupérez les informations du prospect depuis le CRM et les produits/services pertinents depuis le catalogue. L'agent utilisera ces données pour personnaliser la proposition.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+import psycopg2
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
+class ProspectInfo(BaseModel):
+    company: str
+    sector: str
+    size: str
+    revenue: Optional[str]
+    pain_points: List[str]
+    decision_makers: List[str]
+    budget_range: Optional[str]
+
+class Product(BaseModel):
+    name: str
+    description: str
+    base_price: float
+    discount_rules: dict
+
+def get_prospect_from_crm(deal_id: str) -> ProspectInfo:
+    resp = requests.get(
+        f"https://api.hubapi.com/crm/v3/objects/deals/{deal_id}",
+        headers={"Authorization": f"Bearer {CRM_API_KEY}"},
+        params={"associations": "companies,contacts"}
+    )
+    data = resp.json()
+    return ProspectInfo(
+        company=data["properties"]["dealname"],
+        sector=data["properties"].get("industry", ""),
+        size=data["properties"].get("company_size", ""),
+        pain_points=data["properties"].get("pain_points", "").split(";"),
+        decision_makers=[c["id"] for c in data.get("associations", {}).get("contacts", [])]
+    )
+
+def get_relevant_products(sector: str, pain_points: list) -> List[Product]:
+    conn = psycopg2.connect(DB_URL)
+    cur = conn.cursor()
+    cur.execute("""SELECT name, description, base_price, discount_rules
+                   FROM products WHERE active = true""")
+    return [Product(name=r[0], description=r[1], base_price=r[2],
+                    discount_rules=r[3]) for r in cur.fetchall()]`,
+            filename: "data_collector.py",
+          },
+        ],
+      },
+      {
+        title: "Génération de la proposition et du pricing",
+        content:
+          "Utilisez l'agent LLM pour rédiger le contenu personnalisé de la proposition, calculer le pricing optimal et assembler le document final.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+
+client = anthropic.Anthropic()
+
+def generate_proposal_content(prospect: ProspectInfo, products: list) -> dict:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert commercial.
+Génère une proposition commerciale personnalisée.
+
+Prospect:
+- Entreprise: {prospect.company}
+- Secteur: {prospect.sector}
+- Taille: {prospect.size}
+- Pain points: {', '.join(prospect.pain_points)}
+
+Produits disponibles: {json.dumps([p.model_dump() for p in products])}
+
+Génère en JSON:
+1. executive_summary: résumé exécutif personnalisé (3-4 paragraphes)
+2. pain_point_analysis: analyse des enjeux du prospect
+3. proposed_solution: solution recommandée avec justification
+4. pricing: tableau de prix avec options (standard, premium, enterprise)
+5. roi_projection: projection de ROI sur 12 mois
+6. next_steps: prochaines étapes proposées
+7. cover_email: email d'accompagnement personnalisé"""
+        }]
+    )
+    return json.loads(response.content[0].text)
+
+def calculate_optimal_pricing(products: list, prospect: ProspectInfo) -> dict:
+    base_total = sum(p.base_price for p in products)
+    discount = 0.1 if prospect.size == "enterprise" else 0.05
+    return {
+        "standard": base_total * (1 - discount),
+        "premium": base_total * 1.3 * (1 - discount),
+        "enterprise": base_total * 1.8 * (1 - discount),
+    }`,
+            filename: "proposal_generator.py",
+          },
+        ],
+      },
+      {
+        title: "Génération PDF et API",
+        content:
+          "Assemblez le contenu dans un template HTML/CSS professionnel et convertissez-le en PDF via WeasyPrint. Exposez le tout via une API REST.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from weasyprint import HTML
+from jinja2 import Environment, FileSystemLoader
+import tempfile
+
+app = FastAPI()
+jinja_env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+
+@app.post("/api/generate-proposal")
+async def generate_proposal(deal_id: str):
+    prospect = get_prospect_from_crm(deal_id)
+    products = get_relevant_products(prospect.sector, prospect.pain_points)
+    content = generate_proposal_content(prospect, products)
+    pricing = calculate_optimal_pricing(products, prospect)
+
+    template = jinja_env.get_template("proposal_template.html")
+    html_content = template.render(
+        prospect=prospect.model_dump(),
+        content=content,
+        pricing=pricing,
+        date=datetime.now().strftime("%d/%m/%Y")
+    )
+
+    pdf_path = tempfile.mktemp(suffix=".pdf")
+    HTML(string=html_content).write_pdf(pdf_path)
+
+    return FileResponse(pdf_path, media_type="application/pdf",
+                        filename=f"proposition_{prospect.company}.pdf")`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données prospect proviennent du CRM interne. Les prix et conditions commerciales sont confidentiels. Aucune donnée de pricing ne doit être stockée dans les logs du LLM. Accès restreint aux commerciaux autorisés.",
+      auditLog: "Chaque proposition tracée : prospect, produits sélectionnés, pricing généré, contenu produit, version PDF, commercial demandeur, horodatage, statut (envoyée, gagnée, perdue).",
+      humanInTheLoop: "Le commercial relit et valide chaque proposition avant envoi. Les remises > 15% nécessitent une approbation du directeur commercial. Le pricing est vérifié automatiquement contre la politique commerciale.",
+      monitoring: "Nombre de propositions générées/semaine, temps moyen de génération, taux de conversion des propositions IA vs manuelles, feedback des commerciaux sur la qualité, revenus générés.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (nouvelle opportunité CRM) → HTTP Request (données prospect HubSpot) → HTTP Request (catalogue produits) → HTTP Request LLM (génération contenu) → Code Node (pricing) → HTTP Request (génération PDF) → Email au commercial.",
+      nodes: ["Webhook Trigger (opportunité CRM)", "HTTP Request (HubSpot API)", "HTTP Request (catalogue)", "HTTP Request (LLM contenu)", "Code Node (pricing)", "HTTP Request (PDF API)", "Send Email (commercial)"],
+      triggerType: "Webhook (nouvelle opportunité dans le CRM)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["B2B SaaS", "Services", "Industrie", "Telecom"],
+    metiers: ["Commercial", "Avant-Vente", "Business Development"],
+    functions: ["Sales"],
+    metaTitle: "Agent IA de Génération de Propositions Commerciales — Guide Sales",
+    metaDescription:
+      "Automatisez vos propositions commerciales avec un agent IA. Personnalisation, pricing optimal et génération PDF en 30 minutes.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-engagement-collaborateur",
+    title: "Agent d'Analyse de l'Engagement Collaborateur",
+    subtitle: "Mesurez l'engagement de vos équipes, détectez les signaux faibles et anticipez l'attrition",
+    problem:
+      "Les enquêtes d'engagement annuelles arrivent trop tard pour agir. Les RH manquent de visibilité sur le moral des équipes au quotidien et découvrent les départs après la démission. Les signaux faibles de désengagement passent inaperçus.",
+    value:
+      "Un agent IA analyse en continu les signaux d'engagement collaborateur (pulse surveys, données RH, patterns de communication) pour détecter les tendances de désengagement, prédire les risques d'attrition et recommander des actions RH ciblées en temps réel.",
+    inputs: [
+      "Réponses aux pulse surveys hebdomadaires (anonymisées)",
+      "Données RH (ancienneté, évolution, formation, absences)",
+      "Métriques de collaboration (participation réunions, activité outils)",
+      "Entretiens annuels et feedbacks 360 (anonymisés)",
+    ],
+    outputs: [
+      "Score d'engagement par équipe et département (tendance mensuelle)",
+      "Détection de signaux faibles de désengagement",
+      "Prédiction de risque d'attrition par segment (0-100)",
+      "Recommandations RH personnalisées par manager",
+      "Rapport mensuel d'engagement avec benchmarks sectoriels",
+    ],
+    risks: [
+      "Biais algorithmique dans la prédiction d'attrition (âge, genre)",
+      "Surveillance perçue comme intrusive par les collaborateurs",
+      "Faux positifs générant des interventions RH non justifiées",
+    ],
+    roiIndicatif:
+      "Réduction de 25% du turnover volontaire. Détection anticipée de 70% des départs dans les 3 mois précédents. Économie de 15-30K€ par départ évité (coût de remplacement).",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Pulse      │────▶│  Collecteur  │────▶│  Agent LLM  │
+│  Surveys    │     │  + Anonymis. │     │  (Analyse)  │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Dashboard  │◀────│  Moteur de   │◀────│  PostgreSQL │
+│  RH         │     │  prédiction  │     │  (historique)│
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour l'analyse de sentiment, la prédiction d'attrition et le stockage des données anonymisées. Configurez les accès aux sources de données RH.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary scikit-learn pandas python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+SURVEY_TOOL_API = os.getenv("TYPEFORM_API_KEY")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte et anonymisation des données",
+        content:
+          "Collectez les réponses aux pulse surveys et les données RH en les anonymisant rigoureusement. Le système ne doit jamais permettre d'identifier un collaborateur individuel.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pandas as pd
+import hashlib
+import psycopg2
+
+def anonymize_employee_id(emp_id: str, salt: str) -> str:
+    return hashlib.sha256(f"{emp_id}{salt}".encode()).hexdigest()[:16]
+
+def collect_pulse_surveys(period_days: int = 7) -> pd.DataFrame:
+    conn = psycopg2.connect(DB_URL)
+    query = f"""
+    SELECT anonymized_id, department, team, tenure_months,
+           survey_date, engagement_score, workload_score,
+           manager_score, growth_score, open_comment
+    FROM pulse_surveys
+    WHERE survey_date >= NOW() - INTERVAL '{period_days} days'
+    """
+    return pd.read_sql(query, conn)
+
+def collect_hr_signals(department: str = None) -> pd.DataFrame:
+    conn = psycopg2.connect(DB_URL)
+    query = """
+    SELECT department, team, avg_tenure_months,
+           absence_rate_30d, training_hours_90d,
+           internal_mobility_rate, avg_meeting_participation
+    FROM hr_aggregated_metrics
+    WHERE aggregation_level = 'team'
+    """
+    if department:
+        query += f" AND department = '{department}'"
+    return pd.read_sql(query, conn)`,
+            filename: "data_collector.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse de sentiment et prédiction d'attrition",
+        content:
+          "Utilisez le LLM pour analyser le sentiment des commentaires anonymisés et un modèle ML pour prédire les risques d'attrition par équipe.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from sklearn.ensemble import GradientBoostingClassifier
+import numpy as np
+import json
+
+client = anthropic.Anthropic()
+
+def analyze_survey_sentiment(comments: list) -> list:
+    batch = "\\n---\\n".join(comments)
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Analyse ces commentaires anonymisés de pulse survey.
+Pour chaque commentaire, identifie:
+1. Le sentiment (positif/neutre/négatif)
+2. Les thèmes (management, charge de travail, évolution, rémunération, ambiance)
+3. Les signaux faibles de désengagement
+4. Urgence d'action (faible/moyenne/haute)
+
+Commentaires:
+{batch}
+
+Retourne un JSON structuré avec l'analyse de chaque commentaire."""
+        }]
+    )
+    return json.loads(response.content[0].text)
+
+def predict_attrition_risk(team_metrics: pd.DataFrame) -> dict:
+    features = team_metrics[["avg_tenure_months", "absence_rate_30d",
+                             "training_hours_90d", "avg_meeting_participation"]].values
+    # Modèle pré-entraîné sur données historiques
+    model = load_attrition_model()
+    risk_scores = model.predict_proba(features)[:, 1]
+    return {
+        "team_risks": dict(zip(team_metrics["team"].tolist(),
+                               (risk_scores * 100).round(1).tolist())),
+        "high_risk_teams": team_metrics[risk_scores > 0.7]["team"].tolist()
+    }`,
+            filename: "engagement_analyzer.py",
+          },
+        ],
+      },
+      {
+        title: "Dashboard et recommandations pour les managers",
+        content:
+          "Exposez les résultats via une API qui alimente le dashboard RH. Générez des recommandations personnalisées pour chaque manager dont l'équipe présente des signaux de désengagement.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+
+app = FastAPI()
+
+def generate_manager_recommendations(team: str, metrics: dict, sentiment: dict) -> str:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""En tant que coach RH, génère des recommandations pour le manager.
+
+Équipe: {team}
+Métriques d'engagement: {json.dumps(metrics)}
+Analyse de sentiment: {json.dumps(sentiment)}
+
+Génère 3-5 actions concrètes et réalisables cette semaine.
+Priorise par impact sur l'engagement. Sois spécifique et actionnable."""
+        }]
+    )
+    return response.content[0].text
+
+@app.get("/api/engagement-dashboard")
+async def engagement_dashboard(department: str = None):
+    surveys = collect_pulse_surveys()
+    hr_data = collect_hr_signals(department)
+    sentiments = analyze_survey_sentiment(surveys["open_comment"].tolist())
+    attrition = predict_attrition_risk(hr_data)
+    return {
+        "overall_engagement_score": surveys["engagement_score"].mean(),
+        "trend": calculate_trend(surveys),
+        "sentiment_distribution": summarize_sentiments(sentiments),
+        "attrition_risks": attrition,
+        "alerts": get_high_risk_alerts(attrition, sentiments)
+    }`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Anonymisation stricte obligatoire : aucune donnée nominative ne transite par le LLM. Les pulse surveys sont anonymisés à la source. Agrégation minimale par équipe de 5+ personnes pour empêcher la ré-identification. Conformité RGPD et accord du CSE requis.",
+      auditLog: "Chaque analyse tracée : période couverte, nombre de réponses analysées, scores d'engagement par département, alertes générées, recommandations produites, sans aucune donnée individuelle.",
+      humanInTheLoop: "Les recommandations sont transmises aux RH qui décident des actions. Les alertes d'attrition élevée sont traitées par le HRBP en entretien confidentiel. Aucune décision automatisée impactant un collaborateur.",
+      monitoring: "Taux de participation aux pulse surveys, évolution du score d'engagement, précision des prédictions d'attrition (validation à 6 mois), satisfaction des managers sur les recommandations, turnover réel vs prédit.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (hebdomadaire lundi 8h) → HTTP Request (API surveys Typeform) → HTTP Request (données RH) → Code Node (anonymisation) → HTTP Request LLM (analyse sentiment) → Google Sheets (dashboard) → Slack notification HRBP si alerte.",
+      nodes: ["Cron Trigger (weekly lundi 8h)", "HTTP Request (Typeform API)", "HTTP Request (API RH)", "Code Node (anonymisation)", "HTTP Request (LLM sentiment)", "Google Sheets (dashboard)", "IF Node (alerte)", "Slack Notification (HRBP)"],
+      triggerType: "Cron (hebdomadaire lundi 8h)",
+    },
+    estimatedTime: "10-14h",
+    difficulty: "Moyen",
+    sectors: ["Tous secteurs"],
+    metiers: ["Ressources Humaines", "HRBP", "Direction RH"],
+    functions: ["RH"],
+    metaTitle: "Agent IA d'Analyse de l'Engagement Collaborateur — Guide RH",
+    metaDescription:
+      "Mesurez l'engagement collaborateur en continu avec un agent IA. Pulse surveys, prédiction d'attrition et recommandations RH ciblées.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-evaluation-fournisseurs",
+    title: "Agent d'Évaluation des Fournisseurs",
+    subtitle: "Évaluez vos fournisseurs automatiquement avec des scorecards, une détection de risques et des notations ESG",
+    problem:
+      "L'évaluation des fournisseurs est manuelle, chronophage et souvent incomplète. Les acheteurs jonglent entre des dizaines de critères (qualité, délais, prix, conformité, ESG) sans vision consolidée. Les risques supply chain sont détectés trop tard.",
+    value:
+      "Un agent IA génère des scorecards fournisseurs automatiques en agrégeant les données de performance, les audits qualité, les actualités et les notations ESG. Il détecte les risques supply chain en temps réel et recommande des actions correctives.",
+    inputs: [
+      "Données de performance fournisseur (ERP, qualité, délais)",
+      "Rapports d'audit et certifications",
+      "Actualités et presse économique du fournisseur",
+      "Bases de données ESG et conformité (EcoVadis, CDP)",
+    ],
+    outputs: [
+      "Scorecard fournisseur consolidé (qualité, coût, délai, ESG)",
+      "Détection de risques supply chain avec niveau de sévérité",
+      "Notation ESG actualisée avec sources vérifiées",
+      "Recommandations d'action par fournisseur (reconduire, surveiller, remplacer)",
+      "Rapport comparatif multi-fournisseurs par catégorie d'achat",
+    ],
+    risks: [
+      "Données ESG incomplètes ou obsolètes faussant les notations",
+      "Biais géographique dans l'évaluation des fournisseurs internationaux",
+      "Mauvaise interprétation d'une actualité négative sans contexte",
+    ],
+    roiIndicatif:
+      "Réduction de 50% du temps d'évaluation fournisseur. Détection anticipée de 60% des risques supply chain. Amélioration de 15% du score qualité moyen du panel fournisseurs en 12 mois.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Pinecone", category: "Database" },
+      { name: "AWS Lambda", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  ERP /      │────▶│  Agrégateur  │────▶│  Agent LLM  │
+│  Qualité    │     │  multi-source│     │  (Scoring)  │
+└─────────────┘     └──────┬───────┘     └──────┬──────┘
+                           │                     │
+┌─────────────┐     ┌──────▼───────┐     ┌──────▼──────┐
+│  ESG /      │────▶│  Vector DB   │     │  Scorecard  │
+│  Actualités │     │  (historique)│     │  + Alertes  │
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour la collecte de données fournisseur multi-sources, l'analyse par LLM et le stockage des scorecards. Configurez vos accès aux APIs de données ESG et presse.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain pinecone-client psycopg2-binary requests beautifulsoup4 python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+NEWS_API_KEY = os.getenv("NEWSAPI_KEY")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte des données fournisseur multi-sources",
+        content:
+          "Construisez les connecteurs pour récupérer les données de performance depuis l'ERP, les résultats d'audit qualité, les actualités du fournisseur et les scores ESG disponibles.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+import psycopg2
+import pandas as pd
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
+class SupplierData(BaseModel):
+    name: str
+    siret: Optional[str]
+    category: str
+    quality_score: float
+    delivery_on_time_pct: float
+    avg_lead_time_days: float
+    defect_rate_pct: float
+    certifications: List[str]
+    audit_results: List[dict]
+
+def get_supplier_performance(supplier_id: str) -> SupplierData:
+    conn = psycopg2.connect(DB_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT s.name, s.siret, s.category,
+               AVG(p.quality_score) as quality_score,
+               AVG(p.on_time_delivery_pct) as delivery_pct,
+               AVG(p.lead_time_days) as avg_lead_time,
+               AVG(p.defect_rate) as defect_rate
+        FROM suppliers s
+        JOIN supplier_performance p ON s.id = p.supplier_id
+        WHERE s.id = %s AND p.date >= NOW() - INTERVAL '12 months'
+        GROUP BY s.name, s.siret, s.category
+    """, (supplier_id,))
+    row = cur.fetchone()
+    return SupplierData(name=row[0], siret=row[1], category=row[2],
+                        quality_score=row[3], delivery_on_time_pct=row[4],
+                        avg_lead_time_days=row[5], defect_rate_pct=row[6],
+                        certifications=get_certifications(supplier_id),
+                        audit_results=get_audit_results(supplier_id))
+
+def get_supplier_news(company_name: str, days: int = 30) -> list:
+    resp = requests.get("https://newsapi.org/v2/everything",
+        params={"q": company_name, "from": get_date_n_days_ago(days),
+                "sortBy": "relevancy", "apiKey": NEWS_API_KEY})
+    return [{"title": a["title"], "description": a["description"],
+             "source": a["source"]["name"], "date": a["publishedAt"]}
+            for a in resp.json().get("articles", [])[:10]]`,
+            filename: "data_collector.py",
+          },
+        ],
+      },
+      {
+        title: "Scoring et analyse ESG par l'agent LLM",
+        content:
+          "Utilisez le LLM pour analyser l'ensemble des données collectées, générer un scorecard consolidé et évaluer les risques ESG du fournisseur.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+import json
+
+client = OpenAI()
+
+def generate_supplier_scorecard(supplier: SupplierData, news: list, esg_data: dict) -> dict:
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[{
+            "role": "system",
+            "content": """Tu es un expert en évaluation fournisseurs et achats responsables.
+Génère un scorecard complet et objectif basé sur les données fournies."""
+        }, {
+            "role": "user",
+            "content": f"""Fournisseur: {supplier.name}
+Catégorie: {supplier.category}
+
+Données de performance (12 mois):
+- Qualité: {supplier.quality_score}/100
+- Livraison à temps: {supplier.delivery_on_time_pct}%
+- Délai moyen: {supplier.avg_lead_time_days} jours
+- Taux de défaut: {supplier.defect_rate_pct}%
+- Certifications: {', '.join(supplier.certifications)}
+- Audits: {json.dumps(supplier.audit_results)}
+
+Actualités récentes: {json.dumps(news)}
+Données ESG disponibles: {json.dumps(esg_data)}
+
+Génère un scorecard JSON avec:
+1. overall_score (0-100)
+2. quality_score, delivery_score, cost_score, esg_score (0-100 chacun)
+3. risk_level (faible/moyen/élevé/critique)
+4. detected_risks avec sévérité et source
+5. esg_rating (A/B/C/D/E) avec justification
+6. recommendation (reconduire/surveiller/remplacer)
+7. action_items priorisés"""
+        }]
+    )
+    return json.loads(response.choices[0].message.content)
+
+def detect_supply_risks(supplier: SupplierData, news: list) -> list:
+    risk_keywords = ["faillite", "liquidation", "grève", "rappel produit",
+                     "sanction", "pollution", "cyberattaque", "pénurie"]
+    risks = []
+    for article in news:
+        text = f"{article['title']} {article['description']}".lower()
+        matched = [kw for kw in risk_keywords if kw in text]
+        if matched:
+            risks.append({
+                "source": article["source"],
+                "title": article["title"],
+                "risk_type": matched,
+                "date": article["date"]
+            })
+    return risks`,
+            filename: "supplier_scorer.py",
+          },
+        ],
+      },
+      {
+        title: "API et rapport comparatif",
+        content:
+          "Exposez les scorecards via une API REST et générez des rapports comparatifs multi-fournisseurs pour faciliter les décisions d'achat.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from typing import List
+
+app = FastAPI()
+
+@app.get("/api/supplier-scorecard/{supplier_id}")
+async def get_scorecard(supplier_id: str):
+    supplier = get_supplier_performance(supplier_id)
+    news = get_supplier_news(supplier.name)
+    esg_data = get_esg_data(supplier.siret)
+    scorecard = generate_supplier_scorecard(supplier, news, esg_data)
+    risks = detect_supply_risks(supplier, news)
+    return {"scorecard": scorecard, "risks": risks}
+
+@app.post("/api/supplier-comparison")
+async def compare_suppliers(supplier_ids: List[str], category: str):
+    scorecards = []
+    for sid in supplier_ids:
+        supplier = get_supplier_performance(sid)
+        news = get_supplier_news(supplier.name)
+        esg = get_esg_data(supplier.siret)
+        sc = generate_supplier_scorecard(supplier, news, esg)
+        scorecards.append({"supplier": supplier.name, **sc})
+
+    ranked = sorted(scorecards, key=lambda x: x["overall_score"], reverse=True)
+    return {
+        "category": category,
+        "comparison": ranked,
+        "recommended": ranked[0]["supplier"],
+        "total_evaluated": len(ranked)
+    }`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données fournisseurs sont des données commerciales confidentielles. Accès restreint aux acheteurs autorisés par catégorie. Les scores ESG peuvent provenir de sources publiques mais les prix et conditions restent internes. Accord NDA avec le fournisseur LLM.",
+      auditLog: "Chaque évaluation tracée : fournisseur évalué, sources consultées, scores calculés, risques détectés, recommandation émise, acheteur responsable, date d'évaluation, décision finale.",
+      humanInTheLoop: "Les scorecards sont validés par l'acheteur catégorie avant diffusion. Les recommandations de remplacement de fournisseur nécessitent une validation du directeur achats. Les alertes risques critiques sont traitées en comité.",
+      monitoring: "Nombre de fournisseurs évalués/mois, corrélation entre scores IA et performance réelle, détection de risques confirmés vs faux positifs, évolution du score qualité moyen du panel, temps gagné par évaluation.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (mensuel) → HTTP Request (ERP données fournisseurs) → HTTP Request (NewsAPI actualités) → HTTP Request (API ESG) → HTTP Request LLM (génération scorecard) → Google Sheets (tableau comparatif) → Email aux acheteurs.",
+      nodes: ["Cron Trigger (monthly)", "HTTP Request (ERP fournisseurs)", "HTTP Request (NewsAPI)", "HTTP Request (API ESG)", "HTTP Request (LLM scorecard)", "Google Sheets (comparatif)", "Send Email (acheteurs)"],
+      triggerType: "Cron (mensuel, 1er du mois)",
+    },
+    estimatedTime: "10-14h",
+    difficulty: "Moyen",
+    sectors: ["Industrie", "Retail", "Distribution", "Audit"],
+    metiers: ["Achats", "Supply Chain", "RSE"],
+    functions: ["Operations"],
+    metaTitle: "Agent IA d'Évaluation des Fournisseurs — Guide Achats",
+    metaDescription:
+      "Automatisez l'évaluation de vos fournisseurs avec un agent IA. Scorecards, détection de risques supply chain et notation ESG automatique.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-surveillance-reputation",
+    title: "Agent de Surveillance de Réputation",
+    subtitle: "Surveillez votre réputation de marque en temps réel, détectez les crises et préparez des réponses",
+    problem:
+      "Les mentions de marque sur le web et les réseaux sociaux sont impossibles à suivre manuellement. Les crises réputationnelles se propagent en quelques heures et les équipes marketing réagissent souvent trop tard, amplifiant les dégâts d'image.",
+    value:
+      "Un agent IA surveille en continu les mentions de votre marque sur le web, les réseaux sociaux, les forums et les sites d'avis. Il détecte les signaux de crise en temps réel, évalue la tonalité globale et génère des templates de réponse adaptés au contexte.",
+    inputs: [
+      "Mentions de marque (réseaux sociaux, presse, forums, avis)",
+      "Mots-clés et hashtags de surveillance configurés",
+      "Historique des crises et réponses passées",
+      "Charte de communication et tone of voice de la marque",
+    ],
+    outputs: [
+      "Dashboard en temps réel des mentions avec tonalité",
+      "Score de réputation global avec tendance (quotidien/hebdomadaire)",
+      "Alertes de crise détectées avec niveau de sévérité",
+      "Templates de réponse pré-générés adaptés au contexte",
+      "Rapport hebdomadaire de veille réputationnelle",
+    ],
+    risks: [
+      "Fausse alerte de crise sur un sujet sans impact réel",
+      "Réponse automatique inadaptée au contexte émotionnel",
+      "Non-détection d'une crise sur un canal non surveillé",
+    ],
+    roiIndicatif:
+      "Détection des crises 4x plus rapide (30 min vs 2h en moyenne). Réduction de 40% de l'impact négatif grâce à une réponse rapide. Couverture de surveillance x10 vs monitoring manuel.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Réseaux    │────▶│  Collecteur  │────▶│  Agent LLM  │
+│  sociaux    │     │  multi-canal │     │  (Analyse)  │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Templates  │◀────│  Détecteur   │◀────│  PostgreSQL │
+│  de réponse │     │  de crise    │     │  (historique)│
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour la collecte de mentions multi-plateformes, l'analyse de sentiment et les notifications d'alerte. Configurez vos accès aux APIs des réseaux sociaux.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary requests tweepy python-dotenv schedule`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
+NEWS_API_KEY = os.getenv("NEWSAPI_KEY")
+SLACK_WEBHOOK = os.getenv("SLACK_WEBHOOK_URL")
+
+BRAND_KEYWORDS = ["MaMarque", "@mamarque", "#mamarque"]
+CRISIS_THRESHOLD = -0.5  # Score de sentiment déclenchant une alerte`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte des mentions multi-plateformes",
+        content:
+          "Construisez les connecteurs pour surveiller les mentions de votre marque sur Twitter/X, les sites d'actualités, les forums et les plateformes d'avis en temps quasi-réel.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import tweepy
+import requests
+from datetime import datetime, timedelta
+
+def collect_twitter_mentions(keywords: list, hours: int = 1) -> list:
+    client = tweepy.Client(bearer_token=TWITTER_BEARER_TOKEN)
+    query = " OR ".join(keywords) + " -is:retweet lang:fr"
+    tweets = client.search_recent_tweets(
+        query=query,
+        max_results=100,
+        tweet_fields=["created_at", "public_metrics", "author_id"],
+        start_time=datetime.utcnow() - timedelta(hours=hours)
+    )
+    return [{
+        "platform": "twitter",
+        "text": tweet.text,
+        "date": str(tweet.created_at),
+        "engagement": tweet.public_metrics["like_count"] + tweet.public_metrics["retweet_count"],
+        "author_id": tweet.author_id
+    } for tweet in (tweets.data or [])]
+
+def collect_news_mentions(brand: str, hours: int = 24) -> list:
+    resp = requests.get("https://newsapi.org/v2/everything",
+        params={"q": brand, "language": "fr", "sortBy": "publishedAt",
+                "from": (datetime.now() - timedelta(hours=hours)).isoformat(),
+                "apiKey": NEWS_API_KEY})
+    return [{
+        "platform": "news",
+        "text": f"{a['title']}. {a['description']}",
+        "date": a["publishedAt"],
+        "source": a["source"]["name"],
+        "url": a["url"]
+    } for a in resp.json().get("articles", [])]
+
+def collect_all_mentions(keywords: list) -> list:
+    mentions = []
+    mentions.extend(collect_twitter_mentions(keywords))
+    mentions.extend(collect_news_mentions(keywords[0]))
+    return sorted(mentions, key=lambda x: x["date"], reverse=True)`,
+            filename: "mention_collector.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse de sentiment et détection de crise",
+        content:
+          "Utilisez l'agent LLM pour analyser le sentiment de chaque mention, détecter les patterns de crise et évaluer le niveau de risque réputationnel en temps réel.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+
+client = anthropic.Anthropic()
+
+def analyze_mentions_sentiment(mentions: list) -> dict:
+    mentions_text = "\\n---\\n".join([f"[{m['platform']}] {m['text']}" for m in mentions])
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Analyse ces mentions de marque pour la veille réputationnelle.
+
+Mentions:
+{mentions_text}
+
+Pour chaque mention, évalue:
+1. sentiment (-1 à 1)
+2. thème (produit, service, prix, communication, RSE, autre)
+3. reach_impact (faible/moyen/élevé) basé sur l'engagement
+4. requires_response (true/false)
+
+Puis synthétise:
+- overall_sentiment_score (-1 à 1)
+- crisis_detected (true/false)
+- crisis_level (null/faible/moyen/élevé/critique)
+- trending_topics (top 5 sujets)
+- volume_negative_pct (% de mentions négatives)
+
+Retourne un JSON structuré."""
+        }]
+    )
+    return json.loads(response.content[0].text)
+
+def detect_crisis(analysis: dict, threshold: float = -0.3) -> dict:
+    is_crisis = (
+        analysis.get("crisis_detected", False) or
+        analysis.get("overall_sentiment_score", 0) < threshold or
+        analysis.get("volume_negative_pct", 0) > 40
+    )
+    return {
+        "is_crisis": is_crisis,
+        "level": analysis.get("crisis_level", "aucun"),
+        "trigger_topics": analysis.get("trending_topics", []),
+        "recommended_urgency": "immédiate" if analysis.get("crisis_level") in ["élevé", "critique"] else "standard"
+    }`,
+            filename: "sentiment_crisis.py",
+          },
+        ],
+      },
+      {
+        title: "Génération de réponses et alertes automatiques",
+        content:
+          "Générez des templates de réponse adaptés au contexte de la crise ou de la mention, et mettez en place les alertes automatiques vers l'équipe communication.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+import requests as http_requests
+import schedule
+import threading
+
+app = FastAPI()
+
+def generate_response_templates(crisis_context: dict, brand_voice: str) -> list:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""Génère des templates de réponse de crise pour notre marque.
+
+Contexte de crise: {json.dumps(crisis_context)}
+Tone of voice de la marque: {brand_voice}
+
+Génère 3 templates de réponse adaptés:
+1. Réponse réseaux sociaux (court, empathique, 280 caractères max)
+2. Communiqué de presse (formel, factuel, 3 paragraphes)
+3. Réponse FAQ client (rassurante, solution-oriented)
+
+Chaque template doit être personnalisable (placeholders entre crochets)."""
+        }]
+    )
+    return json.loads(response.content[0].text)
+
+def send_crisis_alert(crisis: dict, templates: list):
+    http_requests.post(SLACK_WEBHOOK, json={
+        "text": f"ALERTE REPUTATION - Niveau: {crisis['level']}\\n"
+                f"Sujets: {', '.join(crisis['trigger_topics'])}\\n"
+                f"Urgence: {crisis['recommended_urgency']}\\n"
+                f"Templates de réponse disponibles dans le dashboard."
+    })
+
+def monitoring_loop():
+    mentions = collect_all_mentions(BRAND_KEYWORDS)
+    if not mentions:
+        return
+    analysis = analyze_mentions_sentiment(mentions)
+    store_analysis(analysis)
+    crisis = detect_crisis(analysis)
+    if crisis["is_crisis"]:
+        templates = generate_response_templates(crisis, get_brand_voice())
+        store_templates(templates)
+        send_crisis_alert(crisis, templates)
+
+schedule.every(15).minutes.do(monitoring_loop)
+threading.Thread(target=lambda: [schedule.run_pending() or __import__('time').sleep(60) for _ in iter(int, 1)], daemon=True).start()
+
+@app.get("/api/reputation-dashboard")
+async def reputation_dashboard(days: int = 7):
+    return {
+        "reputation_score": get_avg_sentiment(days),
+        "mentions_count": get_mention_count(days),
+        "sentiment_trend": get_sentiment_trend(days),
+        "top_topics": get_trending_topics(days),
+        "active_crisis": get_active_crises(),
+        "response_templates": get_latest_templates()
+    }`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les mentions publiques sur les réseaux sociaux ne contiennent pas de PII traité par l'entreprise. Les auteurs des mentions ne sont pas stockés nominativement sauf pour les réponses directes. Conformité avec les CGU de chaque plateforme.",
+      auditLog: "Chaque cycle de surveillance tracé : plateformes scannées, nombre de mentions collectées, score de sentiment, crises détectées, templates générés, alertes envoyées, réponses publiées, horodatage complet.",
+      humanInTheLoop: "Les templates de réponse sont proposés à l'équipe communication qui les adapte et les valide avant publication. Aucune réponse publiée automatiquement sans validation humaine. Les alertes de crise sont traitées par le directeur communication.",
+      monitoring: "Temps de détection de crise (mention -> alerte), volume de mentions/jour par plateforme, évolution du score de réputation, taux d'utilisation des templates générés, NPS de l'équipe communication sur l'outil.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (toutes les 15 min) → HTTP Request (Twitter API) → HTTP Request (NewsAPI) → Merge Node → HTTP Request LLM (analyse sentiment) → IF Node (crise détectée) → HTTP Request LLM (templates réponse) → Slack alerte → Google Sheets (log).",
+      nodes: ["Cron Trigger (15 min)", "HTTP Request (Twitter API)", "HTTP Request (NewsAPI)", "Merge Node", "HTTP Request (LLM sentiment)", "IF Node (crise détectée)", "HTTP Request (LLM templates)", "Slack Notification", "Google Sheets (log)"],
+      triggerType: "Cron (toutes les 15 minutes)",
+    },
+    estimatedTime: "4-8h",
+    difficulty: "Facile",
+    sectors: ["Retail", "E-commerce", "Média", "B2B SaaS", "Tous secteurs"],
+    metiers: ["Communication", "Marketing Digital", "Relations Publiques"],
+    functions: ["Marketing"],
+    metaTitle: "Agent IA de Surveillance de Réputation — Guide Marketing",
+    metaDescription:
+      "Surveillez votre réputation de marque en temps réel avec un agent IA. Détection de crise, analyse de sentiment et templates de réponse automatiques.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
 ];
