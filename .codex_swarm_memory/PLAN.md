@@ -1,57 +1,45 @@
-# PLAN.md — Plan d'Exécution AgentCatalog FR
+# PLAN.md — Plan d'Exécution AgentCatalog FR — Itération 2
 
-## Phase A : Fondations
-- [x] Créer CLAUDE.md
-- [x] Créer .codex_swarm_memory/ (SPEC, PLAN, DECISIONS, STATUS)
-- [x] Importer subagents GitHub → .claude/agents/
+## Itération 1 (DONE)
+- [x] Bootstrap Next.js + Tailwind + shadcn
+- [x] 10 use cases FR, 41 pages statiques
+- [x] 36/36 Playwright tests, build OK
+- [x] Déployé Vercel + GitHub
 
-## Phase B : Bootstrap Technique
-- [x] Init Next.js 16 App Router + TypeScript
-- [x] Configurer Tailwind CSS + design tokens (globals.css)
-- [x] Installer shadcn/ui (Button, Card, Badge, Input, Sheet, Dialog, Tabs, Separator, ScrollArea)
-- [x] Configurer next/font (Inter) + next/image
-- [x] Configurer ESLint + Prettier
-- [x] Installer Playwright + config initiale
-- [x] Installer Framer Motion
+## Itération 2 — Search + Newsletter + Tutorials + SEO
 
-## Phase C : Design System + Layout
-- [x] Créer layout racine (header, footer, mobile nav)
-- [x] Implémenter dotted grid background
-- [x] Implémenter hero section (H1 + sous-titre + CTA pills)
-- [x] Implémenter dark prompt bar (recherche IA-style)
-- [x] Composants réutilisables : UseCaseCard, DifficultyBadge, FilterBar
-- [x] Responsive : valider 360 → 1440px, zéro scroll horizontal
+### 2A. Recherche FR intelligente
+- [ ] Installer Fuse.js
+- [ ] Créer table de synonymes FR (SAV/support, DSI/IT, compta/finance, etc.)
+- [ ] Implémenter index Fuse.js avec poids par champ
+- [ ] Améliorer UX : highlight résultats, compteur, zero-results avec suggestions
+- [ ] Synchroniser filtres ↔ URL (partage de liens filtrés)
 
-## Phase D : Pages + Routing
-- [x] Page Accueil (/) : hero + prompt bar + use cases vedettes
-- [x] Page Catalogue (/catalogue) : grille + filtres (secteur, métier, difficulté, stack)
-- [x] Page Use Case (/use-case/[slug]) : détail complet (5 sections)
-- [x] Pages Secteur (/secteur/[slug]) : agrégation par secteur
-- [x] Pages Métier (/metier/[slug]) : agrégation par métier
+### 2B. Newsletter Brevo
+- [ ] Créer API route `/api/newsletter/subscribe` (POST)
+- [ ] Implémenter upsert contact Brevo + gestion consentement
+- [ ] Créer composant NewsletterSignup (hero + footer + pages use case)
+- [ ] Créer API route `/api/cron/daily-email` (Vercel Cron)
+- [ ] Implémenter logique round-robin "use case du jour"
+- [ ] Configurer vercel.json avec cron schedule
 
-## Phase E : Contenu MVP
-- [x] Écrire les 10 use cases structurés (données TypeScript)
-- [x] Remplir chaque use case : présentation, stack, tutoriel, metadata
-- [x] Valider couverture : 7 fonctions, 3 niveaux
+### 2C. Tutoriels mis à jour
+- [ ] Mettre à jour références modèles (Claude Sonnet 4.5, GPT-4.1)
+- [ ] Ajouter workflows n8n concrets pour chaque use case
+- [ ] Ajouter sections enterprise : PII, audit logs, monitoring
+- [ ] Standardiser template tutoriel par niveau de difficulté
 
-## Phase F : SEO + Meta
-- [x] Metadata FR par page (title, description)
-- [ ] JSON-LD structured data pour use cases (post-MVP)
-- [ ] Sitemap.xml (post-MVP)
-- [ ] Open Graph images (post-MVP)
+### 2D. SEO
+- [ ] Ajouter JSON-LD HowTo schema sur pages use case
+- [ ] Installer + configurer next-sitemap
+- [ ] Ajouter OG image dynamique (next/og)
+- [ ] Ajouter section "Cas d'usage similaires" (internal linking)
 
-## Phase G : Tests + QA
-- [x] Tests Playwright : navigation principale (36/36 pass)
-- [x] Tests Playwright : responsive screenshots (360, 390, 768, 1024, 1280, 1440)
-- [x] Tests Playwright : zéro scroll horizontal (all breakpoints pass)
-- [x] Validation build production (next build — 41 pages, 0 erreurs)
-- [ ] Validation Lighthouse (post-deploy)
-
-## Phase H : Déploiement
-- [x] Provisioning Pack (scripts + docs)
-- [x] Git init + premier commit
-- [x] Push GitHub (gh CLI authenticated)
-- [ ] Deploy Vercel (Vercel CLI non authentifié — instructions fournies)
+### 2E. Tests + QA
+- [ ] Tests Playwright : recherche fuzzy
+- [ ] Tests Playwright : inscription newsletter
+- [ ] Validation build production
+- [ ] Push + redeploy Vercel
 
 ---
-*Mis à jour : 2025-02-07*
+*Mis à jour : 2026-02-07*

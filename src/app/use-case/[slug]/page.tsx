@@ -5,6 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { DifficultyBadge } from "@/components/difficulty-badge";
+import { UseCaseJsonLd } from "@/components/json-ld";
+import { RelatedUseCases } from "@/components/related-use-cases";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useCases } from "@/data/use-cases";
 
 interface PageProps {
@@ -36,6 +39,7 @@ export default async function UseCasePage({ params }: PageProps) {
 
   return (
     <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <UseCaseJsonLd useCase={uc} />
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground">Accueil</Link>
@@ -275,6 +279,18 @@ export default async function UseCasePage({ params }: PageProps) {
           </div>
         </aside>
       </div>
+
+      {/* Newsletter CTA */}
+      <div className="mt-12">
+        <NewsletterSignup variant="inline" />
+      </div>
+
+      {/* Related use cases */}
+      <RelatedUseCases
+        currentSlug={uc.slug}
+        functions={uc.functions}
+        sectors={uc.sectors}
+      />
     </article>
   );
 }

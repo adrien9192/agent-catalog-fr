@@ -11,6 +11,7 @@ interface FilterBarProps {
   activeDifficulty: Difficulty | null;
   activeSector: string | null;
   searchQuery: string;
+  resultCount: number;
   onFunctionChange: (fn: string | null) => void;
   onDifficultyChange: (d: Difficulty | null) => void;
   onSectorChange: (s: string | null) => void;
@@ -25,11 +26,14 @@ export function FilterBar({
   activeDifficulty,
   activeSector,
   searchQuery,
+  resultCount,
   onFunctionChange,
   onDifficultyChange,
   onSectorChange,
   onSearchChange,
 }: FilterBarProps) {
+  const hasActiveFilters = activeFunction || activeDifficulty || activeSector || searchQuery;
+
   return (
     <div className="space-y-4">
       {/* Search */}
@@ -50,10 +54,40 @@ export function FilterBar({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Rechercher un cas d'usage..."
+          placeholder="Rechercher... (ex: SAV, compta, lead)"
           className="w-full rounded-lg border border-input bg-background px-9 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
+        {searchQuery && (
+          <button
+            onClick={() => onSearchChange("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Effacer la recherche"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
+
+      {/* Result count + clear */}
+      {hasActiveFilters && (
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{resultCount} résultat{resultCount !== 1 ? "s" : ""}</span>
+          <button
+            onClick={() => {
+              onFunctionChange(null);
+              onDifficultyChange(null);
+              onSectorChange(null);
+              onSearchChange("");
+            }}
+            className="text-primary hover:underline"
+          >
+            Réinitialiser
+          </button>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="space-y-3">

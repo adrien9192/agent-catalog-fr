@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PromptBar } from "@/components/prompt-bar";
 import { UseCaseCard } from "@/components/use-case-card";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useCases } from "@/data/use-cases";
 import { sectors } from "@/data/sectors";
 
@@ -108,20 +109,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Newsletter */}
       <section className="dotted-grid">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-bold sm:text-3xl">
-              Prêt à implanter un Agent IA ?
+              Un cas d&apos;usage par jour dans votre boîte mail
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Chaque cas d&apos;usage inclut un tutoriel complet avec code, stack
-              recommandée et alternatives low-cost.
+              Recevez chaque matin un nouveau cas d&apos;usage d&apos;Agent IA avec
+              tutoriel complet, stack recommandée et estimation de ROI.
             </p>
-            <Button className="mt-6" size="lg" asChild>
-              <Link href="/catalogue">Explorer le catalogue</Link>
-            </Button>
+            <NewsletterSignup variant="hero" />
           </div>
         </div>
       </section>

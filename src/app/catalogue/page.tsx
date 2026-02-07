@@ -1,23 +1,64 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { UseCaseCard } from "@/components/use-case-card";
 import { FilterBar } from "@/components/filter-bar";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useCases } from "@/data/use-cases";
+import { createSearchIndex, expandQuery } from "@/lib/search";
 import type { Difficulty } from "@/data/types";
+
+const fuseIndex = createSearchIndex(useCases);
+
+const SUGGESTIONS = [
+  "support client",
+  "qualification leads",
+  "recrutement CV",
+  "veille concurrentielle",
+  "rapports financiers",
+  "incidents IT",
+  "contenu marketing",
+  "onboarding RH",
+  "détection fraude",
+  "achats fournisseurs",
+];
 
 function CatalogueContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+
   const initialFn = searchParams.get("fn");
   const initialDiff = searchParams.get("diff") as Difficulty | null;
   const initialQ = searchParams.get("q") || "";
 
   const [activeFunction, setActiveFunction] = useState<string | null>(initialFn);
   const [activeDifficulty, setActiveDifficulty] = useState<Difficulty | null>(initialDiff);
-  const [activeSector, setActiveSector] = useState<string | null>(null);
+  const [activeSector, setActiveSector] = useState<string | null>(searchParams.get("sector"));
   const [searchQuery, setSearchQuery] = useState(initialQ);
+
+  // Sync filters → URL
+  const syncUrl = useCallback(
+    (q: string, fn: string | null, diff: Difficulty | null, sector: string | null) => {
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (fn) params.set("fn", fn);
+      if (diff) params.set("diff", diff);
+      if (sector) params.set("sector", sector);
+      const qs = params.toString();
+      router.replace(`/catalogue${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [router]
+  );
+
+  // Debounced URL sync for search query
+  useEffect(() => {
+    const t = setTimeout(() => {
+      syncUrl(searchQuery, activeFunction, activeDifficulty, activeSector);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchQuery, activeFunction, activeDifficulty, activeSector, syncUrl]);
 
   const allFunctions = useMemo(
     () => [...new Set(useCases.flatMap((uc) => uc.functions))].sort(),
@@ -30,15 +71,20 @@ function CatalogueContent() {
   );
 
   const filtered = useMemo(() => {
-    return useCases.filter((uc) => {
+    let results = useCases;
+
+    // Fuse.js search if query present
+    if (searchQuery.trim()) {
+      const expanded = expandQuery(searchQuery);
+      const fuseResults = fuseIndex.search(expanded);
+      results = fuseResults.map((r) => r.item);
+    }
+
+    // Apply tag filters on top
+    return results.filter((uc) => {
       if (activeFunction && !uc.functions.includes(activeFunction)) return false;
       if (activeDifficulty && uc.difficulty !== activeDifficulty) return false;
       if (activeSector && !uc.sectors.includes(activeSector)) return false;
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const haystack = `${uc.title} ${uc.subtitle} ${uc.problem} ${uc.functions.join(" ")} ${uc.sectors.join(" ")} ${uc.metiers.join(" ")}`.toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
       return true;
     });
   }, [activeFunction, activeDifficulty, activeSector, searchQuery]);
@@ -54,7 +100,7 @@ function CatalogueContent() {
 
       <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
         {/* Sidebar filters */}
-        <aside className="lg:sticky lg:top-20 lg:self-start">
+        <aside className="lg:sticky lg:top-20 lg:self-start space-y-6">
           <FilterBar
             functions={allFunctions}
             difficulties={allDifficulties}
@@ -63,6 +109,7 @@ function CatalogueContent() {
             activeDifficulty={activeDifficulty}
             activeSector={activeSector}
             searchQuery={searchQuery}
+            resultCount={filtered.length}
             onFunctionChange={setActiveFunction}
             onDifficultyChange={setActiveDifficulty}
             onSectorChange={setActiveSector}
@@ -82,12 +129,31 @@ function CatalogueContent() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed p-12 text-center">
+            <div className="rounded-xl border border-dashed p-12 text-center space-y-4">
               <p className="text-muted-foreground">
-                Aucun cas d&apos;usage ne correspond à vos filtres.
+                Aucun cas d&apos;usage ne correspond à votre recherche.
               </p>
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Suggestions :</p>
+                <div className="flex flex-wrap justify-center gap-1.5">
+                  {SUGGESTIONS.slice(0, 5).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setSearchQuery(s)}
+                      className="rounded-full border px-3 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
+
+          {/* Newsletter CTA after results */}
+          <div className="mt-12">
+            <NewsletterSignup variant="inline" />
+          </div>
         </div>
       </div>
     </div>

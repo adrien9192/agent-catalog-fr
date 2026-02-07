@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 
 const footerLinks = [
   {
@@ -31,7 +32,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border/60 bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {footerLinks.map((section) => (
             <div key={section.title}>
               <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
@@ -49,6 +50,9 @@ export function Footer() {
               </ul>
             </div>
           ))}
+          <div>
+            <NewsletterSignup variant="footer" />
+          </div>
         </div>
         <div className="mt-10 border-t border-border/60 pt-6">
           <p className="text-center text-sm text-muted-foreground">

@@ -1,0 +1,10 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# Host
+Host: https://agent-catalog-fr.vercel.app
+
+# Sitemaps
+Sitemap: https://agent-catalog-fr.vercel.app/sitemap.xml
