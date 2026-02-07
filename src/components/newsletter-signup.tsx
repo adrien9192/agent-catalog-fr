@@ -63,7 +63,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
           <p className="mt-2 text-sm text-destructive text-center">{message}</p>
         )}
         <p className="mt-2 text-xs text-muted-foreground text-center">
-          Rejoignez 500+ pros. Désinscription en un clic.
+          Gratuit. Désinscription en un clic. Pas de spam, promis.
         </p>
       </div>
     );

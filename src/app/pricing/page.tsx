@@ -22,7 +22,7 @@ const tiers = [
     ctaVariant: "outline" as const,
     highlighted: false,
     features: [
-      "Accès aux 10+ workflows documentés",
+      "Accès aux 20+ workflows documentés",
       "Tutoriels pas-à-pas complets",
       "Stack technique et alternatives low-cost",
       "Schémas d'architecture",
@@ -215,6 +215,53 @@ export default function PricingPage() {
           </svg>
           <span>Paiement sécurisé</span>
         </div>
+      </div>
+
+      {/* Comparison table */}
+      <div className="mt-20 max-w-4xl mx-auto overflow-x-auto">
+        <h2 className="text-2xl font-bold text-center mb-8">Comparatif détaillé</h2>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b">
+              <th className="py-3 px-4 text-left font-medium text-muted-foreground">Fonctionnalité</th>
+              <th className="py-3 px-4 text-center font-medium">Découverte</th>
+              <th className="py-3 px-4 text-center font-medium text-primary">Pro</th>
+              <th className="py-3 px-4 text-center font-medium">Équipe</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {[
+              { feature: "Workflows documentés", free: "20+", pro: "20+", team: "20+" },
+              { feature: "Tutoriels pas-à-pas", free: "check", pro: "check", team: "check" },
+              { feature: "Estimation de ROI", free: "check", pro: "check", team: "check" },
+              { feature: "Newsletter quotidienne", free: "check", pro: "check", team: "check" },
+              { feature: "Workflows sur mesure", free: "cross", pro: "1/mois", team: "3/mois" },
+              { feature: "Templates n8n/Make", free: "cross", pro: "check", team: "check" },
+              { feature: "Support prioritaire", free: "cross", pro: "Email", team: "Slack dédié" },
+              { feature: "Accès anticipé", free: "cross", pro: "check", team: "check" },
+              { feature: "Audit processus", free: "cross", pro: "cross", team: "check" },
+              { feature: "Formation équipe", free: "cross", pro: "cross", team: "check" },
+              { feature: "Accompagnement RGPD", free: "cross", pro: "cross", team: "check" },
+            ].map((row) => (
+              <tr key={row.feature}>
+                <td className="py-3 px-4 font-medium">{row.feature}</td>
+                {[row.free, row.pro, row.team].map((val, i) => (
+                  <td key={i} className="py-3 px-4 text-center">
+                    {val === "check" ? (
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="inline text-primary">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : val === "cross" ? (
+                      <span className="text-muted-foreground/40">—</span>
+                    ) : (
+                      <span className={i === 1 ? "font-medium text-primary" : ""}>{val}</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* FAQ */}

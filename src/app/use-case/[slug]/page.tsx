@@ -389,6 +389,27 @@ export default async function UseCasePage({ params }: PageProps) {
                 </nav>
               </CardContent>
             </Card>
+
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="pt-6 space-y-3">
+                <p className="text-sm font-semibold">Besoin d&apos;un workflow adapté ?</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Notre équipe adapte ce workflow à votre contexte : outils, processus et contraintes spécifiques.
+                </p>
+                <Link
+                  href="/demande"
+                  className="block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  Demander un accompagnement
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="block text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Voir les plans &rarr;
+                </Link>
+              </CardContent>
+            </Card>
           </div>
         </aside>
       </div>
