@@ -24,7 +24,22 @@ export const metadata: Metadata = {
   },
   description:
     "Automatisez votre entreprise avec des workflows d'Agents IA documentés. Tutoriels, stack technique et ROI pour chaque solution. Gratuit.",
+  keywords: [
+    "agent IA",
+    "workflow IA",
+    "automatisation entreprise",
+    "intelligence artificielle",
+    "n8n",
+    "Make",
+    "support client IA",
+    "qualification leads IA",
+    "RGPD",
+    "tutoriel IA",
+  ],
   metadataBase: new URL("https://agent-catalog-fr.vercel.app"),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     locale: "fr_FR",
     type: "website",
@@ -45,12 +60,22 @@ function OrganizationJsonLd() {
     name: "AgentCatalog",
     url: "https://agent-catalog-fr.vercel.app",
     description:
-      "Workflows d'Agents IA documentés pour l'entreprise. Tutoriels, stack technique et ROI.",
+      "Workflows d'Agents IA documentés pour l'entreprise française. Tutoriels, stack technique et ROI.",
+    foundingDate: "2025",
+    areaServed: "FR",
+    knowsLanguage: "fr",
+    sameAs: ["https://github.com/adrien9192/agent-catalog-fr"],
     contactPoint: {
       "@type": "ContactPoint",
       email: "adrienlaine91@gmail.com",
       contactType: "customer service",
       availableLanguage: "French",
+    },
+    offers: {
+      "@type": "Offer",
+      description: "Workflows IA documentés gratuits avec tutoriels et ROI",
+      price: "0",
+      priceCurrency: "EUR",
     },
   };
 
