@@ -63,9 +63,15 @@ export default async function GuidePage({ params }: PageProps) {
             datePublished: guide.publishedAt,
             dateModified: guide.updatedAt,
             author: {
-              "@type": "Organization",
-              name: "AgentCatalog",
-              url: "https://agent-catalog-fr.vercel.app",
+              "@type": "Person",
+              name: "Adrien Laine",
+              jobTitle: "Expert IA & Automatisation",
+              url: "https://agent-catalog-fr.vercel.app/a-propos",
+              worksFor: {
+                "@type": "Organization",
+                name: "AgentCatalog",
+                url: "https://agent-catalog-fr.vercel.app",
+              },
             },
             publisher: {
               "@type": "Organization",
@@ -93,7 +99,7 @@ export default async function GuidePage({ params }: PageProps) {
 
       {/* Header */}
       <header className="mb-10">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
           <Badge variant="secondary">{guide.category}</Badge>
           <span className="text-sm text-muted-foreground">{guide.readTime} de lecture</span>
           <span className="text-sm text-muted-foreground">
@@ -103,6 +109,18 @@ export default async function GuidePage({ params }: PageProps) {
               year: "numeric",
             })}
           </span>
+        </div>
+        {/* Author byline for E-E-A-T */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+            AL
+          </div>
+          <div>
+            <Link href="/a-propos" className="text-sm font-medium hover:text-primary transition-colors">
+              Adrien Laine
+            </Link>
+            <p className="text-xs text-muted-foreground">Expert IA & Automatisation | AgentCatalog</p>
+          </div>
         </div>
         <h1 className="text-2xl font-bold sm:text-4xl lg:text-5xl leading-tight">
           {guide.title}

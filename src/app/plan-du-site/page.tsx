@@ -29,6 +29,7 @@ export default function PlanDuSitePage() {
             <li><Link href="/calculateur-roi" className="text-muted-foreground hover:text-foreground transition-colors">Calculateur ROI</Link></li>
             <li><Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Tarifs</Link></li>
             <li><Link href="/demande" className="text-muted-foreground hover:text-foreground transition-colors">Demande sur mesure</Link></li>
+            <li><Link href="/a-propos" className="text-muted-foreground hover:text-foreground transition-colors">À propos</Link></li>
           </ul>
         </div>
 
