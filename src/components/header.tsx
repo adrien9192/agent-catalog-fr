@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 const navItems = [
-  { href: "/", label: "Accueil" },
-  { href: "/catalogue", label: "Catalogue" },
-  { href: "/catalogue?fn=Support", label: "Fonctions" },
+  { href: "/catalogue", label: "Workflows" },
+  { href: "/pricing", label: "Tarifs" },
+  { href: "/demande", label: "Sur mesure" },
 ];
 
 export function Header() {
@@ -29,10 +29,7 @@ export function Header() {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => {
-            const isActive =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href.split("?")[0]);
+            const isActive = pathname.startsWith(item.href.split("?")[0]);
 
             return (
               <Link
@@ -51,8 +48,8 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
-          <Button size="sm" variant="outline" asChild>
-            <Link href="/catalogue">Explorer le catalogue</Link>
+          <Button size="sm" asChild>
+            <Link href="/catalogue">Voir les workflows</Link>
           </Button>
         </div>
 
@@ -68,13 +65,21 @@ export function Header() {
             </Button>
           </SheetTrigger>
           <SheetContent side="right" className="w-72">
-            <SheetTitle className="text-lg font-bold mb-4">Navigation</SheetTitle>
+            <SheetTitle className="text-lg font-bold mb-4">Menu</SheetTitle>
             <nav className="flex flex-col gap-1">
+              <Link
+                href="/"
+                onClick={() => setOpen(false)}
+                className={`rounded-md px-3 py-3 text-base font-medium transition-colors ${
+                  pathname === "/"
+                    ? "text-foreground bg-accent"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                }`}
+              >
+                Accueil
+              </Link>
               {navItems.map((item) => {
-                const isActive =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href.split("?")[0]);
+                const isActive = pathname.startsWith(item.href.split("?")[0]);
 
                 return (
                   <Link
@@ -94,7 +99,7 @@ export function Header() {
               <div className="mt-4 border-t pt-4">
                 <Button className="w-full" asChild>
                   <Link href="/catalogue" onClick={() => setOpen(false)}>
-                    Explorer le catalogue
+                    Voir les workflows
                   </Link>
                 </Button>
               </div>

@@ -12,11 +12,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "AgentCatalog — Cas d'usage d'Agents IA en entreprise",
+    default: "AgentCatalog — Workflows d'Agents IA prêts à déployer",
     template: "%s | AgentCatalog",
   },
   description:
-    "Découvrez des cas d'usage concrets d'Agents IA implantables en entreprise. Stack technique, tutoriels pas-à-pas, et ROI pour chaque solution.",
+    "Automatisez votre entreprise avec des workflows d'Agents IA documentés. Tutoriels, stack technique et ROI pour chaque solution. Gratuit.",
   metadataBase: new URL("https://agent-catalog-fr.vercel.app"),
   openGraph: {
     locale: "fr_FR",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: "AgentCatalog",
     url: "https://agent-catalog-fr.vercel.app",
     description:
-      "Découvrez des cas d'usage concrets d'Agents IA implantables en entreprise. Stack technique, tutoriels pas-à-pas, et ROI pour chaque solution.",
+      "Automatisez votre entreprise avec des workflows d'Agents IA documentés. Tutoriels, stack technique et ROI pour chaque solution. Gratuit.",
   },
   twitter: {
     card: "summary_large_image",

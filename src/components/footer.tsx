@@ -3,27 +3,29 @@ import { NewsletterSignup } from "@/components/newsletter-signup";
 
 const footerLinks = [
   {
-    title: "Navigation",
+    title: "Produit",
     links: [
-      { href: "/", label: "Accueil" },
-      { href: "/catalogue", label: "Catalogue" },
+      { href: "/catalogue", label: "Tous les workflows" },
+      { href: "/pricing", label: "Tarifs" },
+      { href: "/demande", label: "Workflow sur mesure" },
     ],
   },
   {
-    title: "Fonctions",
+    title: "Par fonction",
     links: [
-      { href: "/catalogue?fn=Support", label: "Support" },
-      { href: "/catalogue?fn=Sales", label: "Sales" },
-      { href: "/catalogue?fn=RH", label: "RH" },
+      { href: "/catalogue?fn=Support", label: "Support client" },
+      { href: "/catalogue?fn=Sales", label: "Sales & CRM" },
+      { href: "/catalogue?fn=RH", label: "Ressources humaines" },
       { href: "/catalogue?fn=Finance", label: "Finance" },
-      { href: "/catalogue?fn=IT", label: "IT" },
+      { href: "/catalogue?fn=Marketing", label: "Marketing" },
+      { href: "/catalogue?fn=IT", label: "IT & DevOps" },
     ],
   },
   {
     title: "Ressources",
     links: [
-      { href: "/catalogue?diff=Facile", label: "Guides Faciles" },
-      { href: "/catalogue?diff=Expert", label: "Cas Experts" },
+      { href: "/catalogue?diff=Facile", label: "Workflows faciles" },
+      { href: "/catalogue?diff=Expert", label: "Workflows experts" },
     ],
   },
 ];
@@ -38,7 +40,7 @@ export function Footer() {
               <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
               <ul className="mt-3 space-y-2">
                 {section.links.map((link) => (
-                  <li key={link.href}>
+                  <li key={link.href + link.label}>
                     <Link
                       href={link.href}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -54,9 +56,12 @@ export function Footer() {
             <NewsletterSignup variant="footer" />
           </div>
         </div>
-        <div className="mt-10 border-t border-border/60 pt-6">
-          <p className="text-center text-sm text-muted-foreground">
-            AgentCatalog — Catalogue de cas d&apos;usage d&apos;Agents IA en entreprise.
+        <div className="mt-10 border-t border-border/60 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">
+            AgentCatalog — Workflows d&apos;Agents IA pour l&apos;entreprise.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            &copy; {new Date().getFullYear()} AgentCatalog. Tous droits réservés.
           </p>
         </div>
       </div>

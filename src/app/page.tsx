@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { PromptBar } from "@/components/prompt-bar";
 import { UseCaseCard } from "@/components/use-case-card";
 import { NewsletterSignup } from "@/components/newsletter-signup";
@@ -8,6 +9,31 @@ import { useCases } from "@/data/use-cases";
 import { sectors } from "@/data/sectors";
 
 const functions = ["Support", "Sales", "RH", "Marketing", "Finance", "IT", "Supply Chain"];
+
+const stats = [
+  { value: "10+", label: "workflows documentés" },
+  { value: "60%", label: "de temps gagné en moyenne" },
+  { value: "7", label: "fonctions couvertes" },
+  { value: "100%", label: "open-source & gratuit" },
+];
+
+const steps = [
+  {
+    step: "1",
+    title: "Trouvez votre workflow",
+    description: "Parcourez le catalogue ou décrivez votre besoin. Chaque workflow est classé par fonction, secteur et difficulté.",
+  },
+  {
+    step: "2",
+    title: "Suivez le tutoriel",
+    description: "Stack technique, code prêt à copier, schéma d'architecture. Tout est documenté étape par étape.",
+  },
+  {
+    step: "3",
+    title: "Déployez en production",
+    description: "Estimez le ROI, gérez les risques, et mettez en production avec les bonnes pratiques enterprise.",
+  },
+];
 
 export default function HomePage() {
   const featured = useCases.slice(0, 6);
@@ -19,17 +45,15 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <Badge variant="secondary" className="mb-4 text-xs">
-              10+ cas d&apos;usage documentés
+              Gratuit et open-source
             </Badge>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Agents IA{" "}
-              <span className="gradient-text">implantables</span>
-              <br />
-              en entreprise
+              Automatisez votre entreprise{" "}
+              <span className="gradient-text">avec des Agents IA</span>
             </h1>
             <p className="mt-4 text-lg text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
-              Découvrez des cas d&apos;usage concrets, avec stack technique,
-              tutoriels pas-à-pas et estimation de ROI. Prêts à déployer.
+              Des workflows IA prêts à déployer avec tutoriel complet, stack technique
+              et estimation de ROI. Gagnez du temps dès la première semaine.
             </p>
 
             {/* CTA pills */}
@@ -54,57 +78,122 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured use cases */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-bold sm:text-3xl">
-              Cas d&apos;usage populaires
-            </h2>
-            <p className="mt-1 text-muted-foreground">
-              Les solutions IA les plus demandées par les entreprises.
-            </p>
+      {/* Social proof / stats */}
+      <section className="border-y bg-muted/20">
+        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+            {stats.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-3xl font-bold text-primary">{stat.value}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
           </div>
-          <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
-            <Link href="/catalogue">Voir tout</Link>
-          </Button>
         </div>
+      </section>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((uc) => (
-            <UseCaseCard key={uc.slug} useCase={uc} />
+      {/* How it works */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl font-bold sm:text-3xl">
+            De l&apos;idée au déploiement en 3 étapes
+          </h2>
+          <p className="mt-2 text-muted-foreground max-w-xl mx-auto">
+            Chaque workflow est conçu pour être opérationnel rapidement, sans équipe data dédiée.
+          </p>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-3">
+          {steps.map((s) => (
+            <Card key={s.step} className="relative overflow-hidden">
+              <CardContent className="pt-6">
+                <span className="absolute -top-2 -right-2 text-7xl font-black text-primary/5">
+                  {s.step}
+                </span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm mb-4">
+                  {s.step}
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{s.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{s.description}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
+      </section>
 
-        <div className="mt-6 text-center sm:hidden">
-          <Button variant="outline" asChild>
-            <Link href="/catalogue">Voir tous les cas d&apos;usage</Link>
-          </Button>
+      {/* Featured use cases */}
+      <section className="border-t bg-muted/30">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold sm:text-3xl">
+                Workflows les plus demandés
+              </h2>
+              <p className="mt-1 text-muted-foreground">
+                Choisis par les équipes ops, support et sales des entreprises françaises.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
+              <Link href="/catalogue">Voir tout</Link>
+            </Button>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((uc) => (
+              <UseCaseCard key={uc.slug} useCase={uc} />
+            ))}
+          </div>
+
+          <div className="mt-6 text-center sm:hidden">
+            <Button variant="outline" asChild>
+              <Link href="/catalogue">Voir tous les workflows</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Sectors */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <h2 className="text-2xl font-bold sm:text-3xl mb-2">
+          Votre secteur, nos workflows
+        </h2>
+        <p className="text-muted-foreground mb-8">
+          Des solutions adaptées à chaque industrie, de la banque au retail.
+        </p>
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+          {sectors.slice(0, 8).map((sector) => (
+            <Link
+              key={sector.slug}
+              href={`/secteur/${sector.slug}`}
+              className="group rounded-xl border bg-card p-4 transition-all hover:shadow-sm hover:border-primary/30"
+            >
+              <span className="text-2xl">{sector.icon}</span>
+              <h3 className="mt-2 font-semibold text-sm group-hover:text-primary transition-colors">
+                {sector.name}
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                {sector.description}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA: custom request */}
       <section className="border-t bg-muted/30">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold sm:text-3xl mb-8">
-            Explorer par secteur
-          </h2>
-          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-            {sectors.slice(0, 8).map((sector) => (
-              <Link
-                key={sector.slug}
-                href={`/secteur/${sector.slug}`}
-                className="group rounded-xl border bg-card p-4 transition-all hover:shadow-sm hover:border-primary/30"
-              >
-                <span className="text-2xl">{sector.icon}</span>
-                <h3 className="mt-2 font-semibold text-sm group-hover:text-primary transition-colors">
-                  {sector.name}
-                </h3>
-                <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                  {sector.description}
-                </p>
-              </Link>
-            ))}
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl font-bold sm:text-3xl">
+              Votre workflow n&apos;existe pas encore ?
+            </h2>
+            <p className="mt-3 text-muted-foreground max-w-lg mx-auto">
+              Décrivez votre besoin d&apos;automatisation et notre équipe développera
+              un workflow sur mesure avec tutoriel complet et estimation de ROI.
+            </p>
+            <div className="mt-6">
+              <Button size="lg" asChild>
+                <Link href="/demande">Demander un workflow sur mesure</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -114,11 +203,11 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-bold sm:text-3xl">
-              Un cas d&apos;usage par jour dans votre boîte mail
+              Un nouveau workflow chaque matin
             </h2>
             <p className="mt-3 text-muted-foreground">
-              Recevez chaque matin un nouveau cas d&apos;usage d&apos;Agent IA avec
-              tutoriel complet, stack recommandée et estimation de ROI.
+              Rejoignez les professionnels qui reçoivent chaque jour un nouveau
+              cas d&apos;usage d&apos;Agent IA avec tutoriel et ROI. Gratuit.
             </p>
             <NewsletterSignup variant="hero" />
           </div>

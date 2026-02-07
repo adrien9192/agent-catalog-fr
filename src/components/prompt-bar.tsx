@@ -40,7 +40,7 @@ export function PromptBar() {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Décrivez votre besoin métier... ex: automatiser le support client"
+          placeholder="Quel processus voulez-vous automatiser ? ex: triage support, qualification leads..."
           className="flex-1 bg-transparent text-base outline-none placeholder:opacity-40"
           style={{ color: "var(--prompt-bar-text)" }}
         />
@@ -48,7 +48,7 @@ export function PromptBar() {
           type="submit"
           className="shrink-0 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
         >
-          Rechercher
+          Trouver mon workflow
         </button>
       </div>
     </form>

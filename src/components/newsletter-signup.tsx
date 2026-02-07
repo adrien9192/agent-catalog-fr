@@ -55,7 +55,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
               className="flex-1 rounded-lg border border-input bg-background px-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <Button type="submit" disabled={status === "loading"} size="default">
-              {status === "loading" ? "..." : "S'inscrire"}
+              {status === "loading" ? "..." : "C'est gratuit"}
             </Button>
           </form>
         )}
@@ -63,7 +63,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
           <p className="mt-2 text-sm text-destructive text-center">{message}</p>
         )}
         <p className="mt-2 text-xs text-muted-foreground text-center">
-          Recevez un cas d&apos;usage par jour. Désinscription en un clic.
+          Rejoignez 500+ pros. Désinscription en un clic.
         </p>
       </div>
     );
@@ -94,7 +94,7 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
           <p className="mt-1 text-xs text-destructive">{message}</p>
         )}
         <p className="mt-1.5 text-xs text-muted-foreground">
-          1 cas d&apos;usage/jour. Désinscription facile.
+          1 workflow/jour. Gratuit. Désinscription facile.
         </p>
       </div>
     );

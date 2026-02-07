@@ -3,11 +3,12 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
+import Link from "next/link";
 import { UseCaseCard } from "@/components/use-case-card";
 import { FilterBar } from "@/components/filter-bar";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useCases } from "@/data/use-cases";
-import { createSearchIndex, expandQuery } from "@/lib/search";
+import { createSearchIndex, searchUseCases } from "@/lib/search";
 import type { Difficulty } from "@/data/types";
 
 const fuseIndex = createSearchIndex(useCases);
@@ -73,11 +74,9 @@ function CatalogueContent() {
   const filtered = useMemo(() => {
     let results = useCases;
 
-    // Fuse.js search if query present
+    // Per-word search with synonym expansion
     if (searchQuery.trim()) {
-      const expanded = expandQuery(searchQuery);
-      const fuseResults = fuseIndex.search(expanded);
-      results = fuseResults.map((r) => r.item);
+      results = searchUseCases(fuseIndex, searchQuery);
     }
 
     // Apply tag filters on top
@@ -92,9 +91,9 @@ function CatalogueContent() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold sm:text-4xl">Catalogue</h1>
+        <h1 className="text-3xl font-bold sm:text-4xl">Workflows IA</h1>
         <p className="mt-2 text-muted-foreground">
-          {useCases.length} cas d&apos;usage d&apos;Agents IA documentés et prêts à implanter.
+          {useCases.length} workflows d&apos;Agents IA documentés, avec tutoriel et ROI. Prêts à déployer.
         </p>
       </div>
 
@@ -129,12 +128,23 @@ function CatalogueContent() {
               ))}
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed p-12 text-center space-y-4">
-              <p className="text-muted-foreground">
-                Aucun cas d&apos;usage ne correspond à votre recherche.
-              </p>
+            <div className="rounded-xl border border-dashed p-12 text-center space-y-6">
+              <div className="space-y-2">
+                <p className="text-lg font-medium">
+                  Aucun workflow ne correspond à &quot;{searchQuery}&quot;
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Pas encore disponible ? Décrivez votre besoin et nous le développerons pour vous.
+                </p>
+              </div>
+              <Link
+                href={`/demande?q=${encodeURIComponent(searchQuery)}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Demander ce workflow
+              </Link>
               <div>
-                <p className="text-sm text-muted-foreground mb-2">Suggestions :</p>
+                <p className="text-sm text-muted-foreground mb-2">Ou essayez :</p>
                 <div className="flex flex-wrap justify-center gap-1.5">
                   {SUGGESTIONS.slice(0, 5).map((s) => (
                     <button

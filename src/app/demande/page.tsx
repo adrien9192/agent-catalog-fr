@@ -1,0 +1,211 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import Link from "next/link";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+
+function DemandeContent() {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") || "";
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [description, setDescription] = useState(
+    initialQuery ? `Je cherche un workflow pour : ${initialQuery}\n\n` : ""
+  );
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    if (initialQuery && !description.includes(initialQuery)) {
+      setDescription(`Je cherche un workflow pour : ${initialQuery}\n\n`);
+    }
+  }, [initialQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("loading");
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("/api/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          description,
+          searchQuery: initialQuery || undefined,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.error || "Une erreur est survenue.");
+        setStatus("error");
+        return;
+      }
+
+      setStatus("success");
+    } catch {
+      setErrorMsg("Erreur de connexion. Réessayez.");
+      setStatus("error");
+    }
+  }
+
+  if (status === "success") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 text-center">
+        <div className="rounded-2xl border bg-primary/5 p-12 space-y-4">
+          <div className="text-5xl">&#10003;</div>
+          <h1 className="text-2xl font-bold">Demande envoyée !</h1>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Nous avons bien reçu votre demande. Vous recevrez un email de confirmation
+            et serez notifié dès que votre workflow sera disponible.
+          </p>
+          <div className="pt-4 flex gap-3 justify-center">
+            <Link
+              href="/catalogue"
+              className="rounded-lg border px-5 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              Retour au catalogue
+            </Link>
+            <Link
+              href="/"
+              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Page d&apos;accueil
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+      <nav className="mb-6 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground">Accueil</Link>
+        {" / "}
+        <Link href="/catalogue" className="hover:text-foreground">Catalogue</Link>
+        {" / "}
+        <span className="text-foreground">Demander un workflow</span>
+      </nav>
+
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold sm:text-4xl">Demander un workflow</h1>
+        <p className="mt-3 text-muted-foreground max-w-xl">
+          Vous n&apos;avez pas trouvé le cas d&apos;usage que vous cherchez ?
+          Décrivez votre besoin et nous développerons un workflow sur mesure avec
+          tutoriel complet, stack recommandée et estimation de ROI.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <h2 className="font-semibold">Décrivez votre besoin</h2>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium mb-1.5">
+                Votre nom
+              </label>
+              <input
+                id="name"
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Jean Dupont"
+                className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-1.5">
+                Votre email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jean@entreprise.com"
+                className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium mb-1.5">
+                Décrivez le workflow que vous souhaitez
+              </label>
+              <textarea
+                id="description"
+                required
+                rows={6}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Ex: J'aimerais un agent IA qui analyse automatiquement les contrats fournisseurs et détecte les clauses à risque..."
+                className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y"
+              />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Soyez le plus précis possible : secteur, outils utilisés, volume, résultat attendu...
+              </p>
+            </div>
+
+            {status === "error" && (
+              <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {errorMsg}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {status === "loading" ? "Envoi en cours..." : "Envoyer ma demande"}
+            </button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <div className="mt-8 rounded-xl border bg-muted/30 p-6">
+        <h3 className="font-semibold mb-3">Comment ça marche ?</h3>
+        <ol className="space-y-3 text-sm text-muted-foreground">
+          <li className="flex gap-3">
+            <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">1</span>
+            <span>Vous décrivez votre besoin d&apos;automatisation</span>
+          </li>
+          <li className="flex gap-3">
+            <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span>
+            <span>Notre équipe analyse et développe le workflow complet</span>
+          </li>
+          <li className="flex gap-3">
+            <span className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
+            <span>Vous recevez un email dès que le cas d&apos;usage est en ligne</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+export default function DemandePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      }
+    >
+      <DemandeContent />
+    </Suspense>
+  );
+}
