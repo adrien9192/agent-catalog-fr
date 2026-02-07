@@ -142,8 +142,10 @@ export default async function UseCasePage({ params }: PageProps) {
         <nav className="flex flex-wrap gap-2">
           <a href="#presentation" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Présentation</a>
           <a href="#stack" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Stack</a>
-          <a href="#tutoriel" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Tutoriel</a>
-          {uc.n8nWorkflow && (
+          <a href="#tutoriel" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">
+            {uc.n8nTutorial ? "Tutoriel n8n" : "Tutoriel"}
+          </a>
+          {!uc.n8nTutorial && uc.n8nWorkflow && (
             <a href="#workflow-n8n" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Workflow n8n</a>
           )}
           {uc.enterprise && (
@@ -317,38 +319,177 @@ export default async function UseCasePage({ params }: PageProps) {
 
           <Separator />
 
-          {/* 3. Tutoriel */}
+          {/* 3. Tutoriel n8n (primary) or code tutorial (fallback) */}
           <section id="tutoriel">
-            <h2 className="text-2xl font-bold mb-6">Tutoriel d&apos;implémentation</h2>
-            <div className="space-y-8">
-              {uc.tutorial.map((section, i) => (
-                <div key={i}>
-                  <h3 className="text-xl font-semibold mb-3">
-                    <span className="text-primary mr-2">{i + 1}.</span>
-                    {section.title}
-                  </h3>
-                  <div className="prose prose-sm max-w-none text-muted-foreground mb-4">
-                    {section.content.split("\n").map((paragraph, pi) => (
-                      <p key={pi} className="leading-relaxed mb-2">{paragraph}</p>
-                    ))}
-                  </div>
-                  {section.codeSnippets?.map((snippet, si) => (
-                    <div key={si} className="mb-4">
-                      {snippet.filename && (
-                        <div className="rounded-t-lg border border-b-0 bg-muted px-3 py-1.5 text-xs font-mono text-muted-foreground">
-                          {snippet.filename}
+            {uc.n8nTutorial && uc.n8nTutorial.length > 0 ? (
+              <>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold mb-2">Tutoriel n8n — pas à pas</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Suivez ce guide nœud par nœud pour construire le workflow dans n8n.
+                    Chaque étape inclut les instructions de configuration, les adaptations possibles et la gestion des erreurs.
+                  </p>
+                </div>
+
+                {/* Workflow overview */}
+                {uc.n8nWorkflow && (
+                  <div className="mb-8 rounded-xl border bg-muted/30 p-4 sm:p-6">
+                    <h3 className="font-semibold text-sm mb-3">Vue d&apos;ensemble du workflow</h3>
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                      {uc.n8nWorkflow.nodes.map((node, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                          {i > 0 && <span className="text-muted-foreground text-xs">→</span>}
+                          <Badge variant="outline" className="text-xs font-mono">
+                            {node}
+                          </Badge>
                         </div>
-                      )}
-                      <div className={`overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4 ${snippet.filename ? "rounded-t-none" : ""}`}>
-                        <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
-                          {snippet.code}
-                        </pre>
+                      ))}
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      Trigger : {uc.n8nWorkflow.triggerType}
+                    </Badge>
+                  </div>
+                )}
+
+                {/* N8n tutorial steps */}
+                <div className="space-y-6">
+                  {uc.n8nTutorial.map((step, i) => (
+                    <div key={i} className="rounded-xl border overflow-hidden">
+                      {/* Step header */}
+                      <div className="flex items-center gap-3 border-b bg-muted/40 px-4 py-3 sm:px-6">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
+                          {i + 1}
+                        </span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-lg" aria-hidden="true">{step.nodeIcon}</span>
+                          <h3 className="font-semibold truncate">{step.nodeLabel}</h3>
+                          <Badge variant="secondary" className="text-[10px] shrink-0 hidden sm:inline-flex">{step.nodeType}</Badge>
+                        </div>
+                      </div>
+
+                      <div className="p-4 sm:p-6 space-y-4">
+                        {/* Description */}
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {step.description}
+                        </p>
+
+                        {/* Configuration */}
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                            <span className="text-primary">&#9655;</span> Configuration
+                          </h4>
+                          <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
+                            <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
+                              {step.configuration}
+                            </pre>
+                          </div>
+                        </div>
+
+                        {/* Customization */}
+                        <div>
+                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                            <span className="text-primary">&#9881;</span> Adapter à votre contexte
+                          </h4>
+                          <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground leading-relaxed">
+                            {step.customization.split("\n").map((line, li) => (
+                              <p key={li} className="mb-1 last:mb-0">{line}</p>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Error handling */}
+                        {step.errorHandling && (
+                          <details className="group">
+                            <summary className="cursor-pointer text-sm font-semibold flex items-center gap-1.5 select-none">
+                              <span className="text-destructive">&#9888;</span> Erreurs fréquentes et solutions
+                              <span className="ml-auto text-xs text-muted-foreground group-open:hidden">Afficher</span>
+                              <span className="ml-auto text-xs text-muted-foreground hidden group-open:inline">Masquer</span>
+                            </summary>
+                            <div className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground leading-relaxed">
+                              {step.errorHandling.split("\n").map((line, li) => (
+                                <p key={li} className="mb-1 last:mb-0">{line}</p>
+                              ))}
+                            </div>
+                          </details>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
-              ))}
-            </div>
+
+                {/* Collapsible code tutorial */}
+                {uc.tutorial.length > 0 && (
+                  <details className="mt-8 rounded-xl border">
+                    <summary className="cursor-pointer px-4 py-3 sm:px-6 font-semibold text-sm flex items-center gap-2 select-none hover:bg-muted/40 transition-colors">
+                      <span>&#128187;</span> Alternative : implémentation code (Python)
+                      <span className="ml-auto text-xs text-muted-foreground">Cliquez pour déplier</span>
+                    </summary>
+                    <div className="px-4 pb-4 sm:px-6 sm:pb-6 space-y-8 border-t pt-6">
+                      {uc.tutorial.map((section, i) => (
+                        <div key={i}>
+                          <h3 className="text-lg font-semibold mb-3">
+                            <span className="text-primary mr-2">{i + 1}.</span>
+                            {section.title}
+                          </h3>
+                          <div className="prose prose-sm max-w-none text-muted-foreground mb-4">
+                            {section.content.split("\n").map((paragraph, pi) => (
+                              <p key={pi} className="leading-relaxed mb-2">{paragraph}</p>
+                            ))}
+                          </div>
+                          {section.codeSnippets?.map((snippet, si) => (
+                            <div key={si} className="mb-4">
+                              {snippet.filename && (
+                                <div className="rounded-t-lg border border-b-0 bg-muted px-3 py-1.5 text-xs font-mono text-muted-foreground">
+                                  {snippet.filename}
+                                </div>
+                              )}
+                              <div className={`overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4 ${snippet.filename ? "rounded-t-none" : ""}`}>
+                                <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
+                                  {snippet.code}
+                                </pre>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold mb-6">Tutoriel d&apos;implémentation</h2>
+                <div className="space-y-8">
+                  {uc.tutorial.map((section, i) => (
+                    <div key={i}>
+                      <h3 className="text-xl font-semibold mb-3">
+                        <span className="text-primary mr-2">{i + 1}.</span>
+                        {section.title}
+                      </h3>
+                      <div className="prose prose-sm max-w-none text-muted-foreground mb-4">
+                        {section.content.split("\n").map((paragraph, pi) => (
+                          <p key={pi} className="leading-relaxed mb-2">{paragraph}</p>
+                        ))}
+                      </div>
+                      {section.codeSnippets?.map((snippet, si) => (
+                        <div key={si} className="mb-4">
+                          {snippet.filename && (
+                            <div className="rounded-t-lg border border-b-0 bg-muted px-3 py-1.5 text-xs font-mono text-muted-foreground">
+                              {snippet.filename}
+                            </div>
+                          )}
+                          <div className={`overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4 ${snippet.filename ? "rounded-t-none" : ""}`}>
+                            <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
+                              {snippet.code}
+                            </pre>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </section>
 
           {/* Mid-page CTA */}
@@ -373,8 +514,8 @@ export default async function UseCasePage({ params }: PageProps) {
 
           <Separator />
 
-          {/* 4. Workflow n8n / Automatisation */}
-          {uc.n8nWorkflow && (
+          {/* 4. Workflow n8n summary (only when no n8n tutorial — otherwise it's shown inline above) */}
+          {!uc.n8nTutorial && uc.n8nWorkflow && (
             <section id="workflow-n8n">
               <h2 className="text-2xl font-bold mb-4">Workflow n8n / Automatisation</h2>
               <Card>
@@ -484,8 +625,10 @@ export default async function UseCasePage({ params }: PageProps) {
                 <nav className="space-y-1 text-sm">
                   <a href="#presentation" className="block text-muted-foreground hover:text-foreground transition-colors">Présentation</a>
                   <a href="#stack" className="block text-muted-foreground hover:text-foreground transition-colors">Stack recommandée</a>
-                  <a href="#tutoriel" className="block text-muted-foreground hover:text-foreground transition-colors">Tutoriel</a>
-                  {uc.n8nWorkflow && (
+                  <a href="#tutoriel" className="block text-muted-foreground hover:text-foreground transition-colors">
+                    {uc.n8nTutorial ? "Tutoriel n8n" : "Tutoriel"}
+                  </a>
+                  {!uc.n8nTutorial && uc.n8nWorkflow && (
                     <a href="#workflow-n8n" className="block text-muted-foreground hover:text-foreground transition-colors">Workflow n8n</a>
                   )}
                   {uc.enterprise && (

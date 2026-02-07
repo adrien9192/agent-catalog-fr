@@ -32,6 +32,16 @@ export interface N8nWorkflow {
   triggerType: string;
 }
 
+export interface N8nTutorialStep {
+  nodeLabel: string;
+  nodeType: string;
+  nodeIcon: string;
+  description: string;
+  configuration: string;
+  customization: string;
+  errorHandling?: string;
+}
+
 export interface UseCase {
   slug: string;
   title: string;
@@ -46,6 +56,7 @@ export interface UseCase {
   lowCostAlternatives: StackItem[];
   architectureDiagram: string;
   tutorial: TutorialSection[];
+  n8nTutorial?: N8nTutorialStep[];
   enterprise: EnterpriseSection;
   n8nWorkflow: N8nWorkflow;
   estimatedTime: string;
