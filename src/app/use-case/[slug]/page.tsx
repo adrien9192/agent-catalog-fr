@@ -373,44 +373,103 @@ export default async function UseCasePage({ params }: PageProps) {
                           {step.description}
                         </p>
 
-                        {/* Configuration */}
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                            <span className="text-primary">&#9655;</span> Configuration
-                          </h4>
-                          <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
-                            <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
-                              {step.configuration}
-                            </pre>
-                          </div>
-                        </div>
-
-                        {/* Customization */}
-                        <div>
-                          <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                            <span className="text-primary">&#9881;</span> Adapter à votre contexte
-                          </h4>
-                          <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground leading-relaxed">
-                            {step.customization.split("\n").map((line, li) => (
-                              <p key={li} className="mb-1 last:mb-0">{line}</p>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Error handling */}
-                        {step.errorHandling && (
-                          <details className="group">
-                            <summary className="cursor-pointer text-sm font-semibold flex items-center gap-1.5 select-none">
-                              <span className="text-destructive">&#9888;</span> Erreurs fréquentes et solutions
-                              <span className="ml-auto text-xs text-muted-foreground group-open:hidden">Afficher</span>
-                              <span className="ml-auto text-xs text-muted-foreground hidden group-open:inline">Masquer</span>
-                            </summary>
-                            <div className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground leading-relaxed">
-                              {step.errorHandling.split("\n").map((line, li) => (
-                                <p key={li} className="mb-1 last:mb-0">{line}</p>
+                        {/* Variants (when available) or single configuration */}
+                        {step.variants && step.variants.length > 0 ? (
+                          <div className="space-y-3">
+                            <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                              <span className="text-primary">&#9655;</span> Choisissez votre outil
+                            </h4>
+                            <p className="text-xs text-muted-foreground">{step.configuration}</p>
+                            <div className="space-y-2">
+                              {step.variants.map((variant, vi) => (
+                                <details key={vi} className="group/variant rounded-lg border overflow-hidden">
+                                  <summary className="cursor-pointer flex items-center gap-2 px-4 py-2.5 hover:bg-muted/40 transition-colors select-none">
+                                    <span className="text-base" aria-hidden="true">{variant.toolIcon}</span>
+                                    <span className="text-sm font-medium">{variant.toolName}</span>
+                                    {variant.isFree && (
+                                      <Badge variant="secondary" className="text-[10px] ml-1">Gratuit</Badge>
+                                    )}
+                                    <span className="ml-auto text-xs text-muted-foreground group-open/variant:hidden">Voir la config</span>
+                                    <span className="ml-auto text-xs text-muted-foreground hidden group-open/variant:inline">Masquer</span>
+                                  </summary>
+                                  <div className="border-t px-4 py-3 space-y-3">
+                                    <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
+                                      <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
+                                        {variant.configuration}
+                                      </pre>
+                                    </div>
+                                    {variant.errorHandling && (
+                                      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-muted-foreground leading-relaxed">
+                                        <p className="font-semibold text-foreground mb-1">Erreurs fréquentes :</p>
+                                        {variant.errorHandling.split("\n").map((line, li) => (
+                                          <p key={li} className="mb-0.5 last:mb-0">{line}</p>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                </details>
                               ))}
                             </div>
-                          </details>
+                            {/* General error handling for the step */}
+                            {step.errorHandling && (
+                              <details className="group">
+                                <summary className="cursor-pointer text-sm font-semibold flex items-center gap-1.5 select-none">
+                                  <span className="text-destructive">&#9888;</span> Erreurs générales
+                                  <span className="ml-auto text-xs text-muted-foreground group-open:hidden">Afficher</span>
+                                  <span className="ml-auto text-xs text-muted-foreground hidden group-open:inline">Masquer</span>
+                                </summary>
+                                <div className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground leading-relaxed">
+                                  {step.errorHandling.split("\n").map((line, li) => (
+                                    <p key={li} className="mb-1 last:mb-0">{line}</p>
+                                  ))}
+                                </div>
+                              </details>
+                            )}
+                          </div>
+                        ) : (
+                          <>
+                            {/* Single configuration (no variants) */}
+                            <div>
+                              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                                <span className="text-primary">&#9655;</span> Configuration
+                              </h4>
+                              <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
+                                <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
+                                  {step.configuration}
+                                </pre>
+                              </div>
+                            </div>
+
+                            {/* Customization */}
+                            {step.customization && (
+                              <div>
+                                <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                                  <span className="text-primary">&#9881;</span> Adapter à votre contexte
+                                </h4>
+                                <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground leading-relaxed">
+                                  {step.customization.split("\n").map((line, li) => (
+                                    <p key={li} className="mb-1 last:mb-0">{line}</p>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Error handling */}
+                            {step.errorHandling && (
+                              <details className="group">
+                                <summary className="cursor-pointer text-sm font-semibold flex items-center gap-1.5 select-none">
+                                  <span className="text-destructive">&#9888;</span> Erreurs fréquentes et solutions
+                                  <span className="ml-auto text-xs text-muted-foreground group-open:hidden">Afficher</span>
+                                  <span className="ml-auto text-xs text-muted-foreground hidden group-open:inline">Masquer</span>
+                                </summary>
+                                <div className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground leading-relaxed">
+                                  {step.errorHandling.split("\n").map((line, li) => (
+                                    <p key={li} className="mb-1 last:mb-0">{line}</p>
+                                  ))}
+                                </div>
+                              </details>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>

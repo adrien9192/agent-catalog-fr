@@ -32,14 +32,23 @@ export interface N8nWorkflow {
   triggerType: string;
 }
 
+export interface N8nToolVariant {
+  toolName: string;
+  toolIcon: string;
+  isFree?: boolean;
+  configuration: string;
+  errorHandling?: string;
+}
+
 export interface N8nTutorialStep {
   nodeLabel: string;
   nodeType: string;
   nodeIcon: string;
   description: string;
   configuration: string;
-  customization: string;
+  customization?: string;
   errorHandling?: string;
+  variants?: N8nToolVariant[];
 }
 
 export interface UseCase {
