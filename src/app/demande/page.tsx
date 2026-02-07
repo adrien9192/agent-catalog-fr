@@ -195,6 +195,44 @@ function DemandeContent() {
           </li>
         </ol>
       </div>
+
+      {/* What's included */}
+      <div className="mt-6 rounded-xl border p-6">
+        <h3 className="font-semibold mb-3">Chaque workflow sur mesure inclut :</h3>
+        <ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+          {[
+            "Tutoriel pas-à-pas complet",
+            "Stack technique recommandée",
+            "Alternatives low-cost gratuites",
+            "Schéma d'architecture",
+            "Code Python fonctionnel",
+            "Estimation de ROI chiffrée",
+            "Considérations enterprise (RGPD)",
+            "Workflow n8n automatisé",
+          ].map((item) => (
+            <li key={item} className="flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-primary">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Trust */}
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Conforme RGPD
+        </span>
+        <span>|</span>
+        <span>Réponse sous 48h</span>
+        <span>|</span>
+        <span>Livraison sous 5 jours ouvrés</span>
+      </div>
     </div>
   );
 }
