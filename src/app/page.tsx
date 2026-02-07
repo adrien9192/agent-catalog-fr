@@ -364,6 +364,80 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-2xl font-bold sm:text-3xl text-center mb-10">
+            Questions fréquentes
+          </h2>
+          <div className="space-y-4">
+            {[
+              {
+                q: "Qu'est-ce qu'un Agent IA ?",
+                a: "Un Agent IA est un programme autonome qui exécute des tâches complexes en utilisant l'intelligence artificielle. Contrairement à un chatbot classique, il peut prendre des décisions, interagir avec vos outils (CRM, email, ERP) et s'améliorer au fil du temps.",
+              },
+              {
+                q: "Les workflows sont-ils vraiment gratuits ?",
+                a: "Oui, tous les workflows documentés (tutoriels, stack technique, schémas d'architecture, estimation de ROI) sont accessibles gratuitement et sans limite. Les plans payants ajoutent l'accompagnement et les workflows sur mesure.",
+              },
+              {
+                q: "Faut-il une équipe technique pour implémenter ?",
+                a: "Pas nécessairement. Chaque workflow propose des alternatives low-code (n8n, Make) accessibles sans développeur. Les workflows plus avancés nécessitent des compétences Python de base.",
+              },
+              {
+                q: "Est-ce compatible avec mes outils existants ?",
+                a: "Oui. Chaque workflow liste les intégrations (Salesforce, HubSpot, Zendesk, Slack, Gmail, etc.) et propose des alternatives. Les schémas d'architecture montrent comment connecter vos outils.",
+              },
+              {
+                q: "Mes données sont-elles en sécurité ?",
+                a: "Chaque workflow intègre les bonnes pratiques RGPD : anonymisation des données personnelles, hébergement en Europe, audit trail et human-in-the-loop pour les décisions critiques.",
+              },
+            ].map((faq) => (
+              <div key={faq.q} className="rounded-xl border p-4 sm:p-5">
+                <h3 className="font-semibold text-sm sm:text-base">{faq.q}</h3>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: [
+                {
+                  "@type": "Question",
+                  name: "Qu'est-ce qu'un Agent IA ?",
+                  acceptedAnswer: { "@type": "Answer", text: "Un Agent IA est un programme autonome qui exécute des tâches complexes en utilisant l'intelligence artificielle. Il peut prendre des décisions, interagir avec vos outils et s'améliorer au fil du temps." },
+                },
+                {
+                  "@type": "Question",
+                  name: "Les workflows sont-ils vraiment gratuits ?",
+                  acceptedAnswer: { "@type": "Answer", text: "Oui, tous les workflows documentés sont accessibles gratuitement et sans limite. Les plans payants ajoutent l'accompagnement et les workflows sur mesure." },
+                },
+                {
+                  "@type": "Question",
+                  name: "Faut-il une équipe technique pour implémenter ?",
+                  acceptedAnswer: { "@type": "Answer", text: "Pas nécessairement. Chaque workflow propose des alternatives low-code (n8n, Make) accessibles sans développeur." },
+                },
+                {
+                  "@type": "Question",
+                  name: "Est-ce compatible avec mes outils existants ?",
+                  acceptedAnswer: { "@type": "Answer", text: "Oui. Chaque workflow liste les intégrations et propose des alternatives. Les schémas d'architecture montrent comment connecter vos outils." },
+                },
+                {
+                  "@type": "Question",
+                  name: "Mes données sont-elles en sécurité ?",
+                  acceptedAnswer: { "@type": "Answer", text: "Chaque workflow intègre les bonnes pratiques RGPD : anonymisation, hébergement en Europe, audit trail et human-in-the-loop." },
+                },
+              ],
+            }),
+          }}
+        />
+      </section>
+
       {/* Newsletter */}
       <section className="dotted-grid">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">

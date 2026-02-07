@@ -11,9 +11,32 @@ export const metadata: Metadata = {
     "Guides pratiques pour déployer des agents IA dans votre entreprise. Support client, sales, RH, finance. Stack technique, ROI et conformité RGPD.",
 };
 
+function GuidesCollectionJsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Guides pratiques IA pour l'entreprise",
+    description: "Guides pour déployer des agents IA. Support client, sales, RH, finance.",
+    url: "https://agent-catalog-fr.vercel.app/guide",
+    hasPart: guides.map((g) => ({
+      "@type": "Article",
+      headline: g.title,
+      url: `https://agent-catalog-fr.vercel.app/guide/${g.slug}`,
+      datePublished: g.publishedAt,
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 export default function GuidesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <GuidesCollectionJsonLd />
       <div className="mb-10">
         <Badge variant="secondary" className="mb-3 text-xs">
           Ressources gratuites
@@ -22,7 +45,7 @@ export default function GuidesPage() {
           Guides pratiques IA
         </h1>
         <p className="mt-3 text-muted-foreground max-w-2xl">
-          Tout ce qu&apos;il faut savoir pour déployer des agents IA dans votre
+          {guides.length} guides pour déployer des agents IA dans votre
           entreprise. Stack technique, ROI, conformité RGPD et étapes
           d&apos;implémentation.
         </p>
