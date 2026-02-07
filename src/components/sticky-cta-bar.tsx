@@ -11,6 +11,7 @@ interface StickyCTABarProps {
 
 export function StickyCTABar({ title, difficulty }: StickyCTABarProps) {
   const [visible, setVisible] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,7 +22,7 @@ export function StickyCTABar({ title, difficulty }: StickyCTABarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  if (!visible) return null;
+  if (!visible || dismissed) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom duration-300 pb-[env(safe-area-inset-bottom)]">
@@ -39,6 +40,16 @@ export function StickyCTABar({ title, difficulty }: StickyCTABarProps) {
           <Button size="sm" asChild className="flex-1 sm:flex-none">
             <Link href="/pricing">Essai gratuit</Link>
           </Button>
+          <button
+            onClick={() => setDismissed(true)}
+            className="ml-1 shrink-0 rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Fermer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

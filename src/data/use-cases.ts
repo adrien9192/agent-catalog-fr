@@ -213,7 +213,7 @@ def test_billing_ticket():
     functions: ["Support"],
     metaTitle: "Agent IA de Triage Support Client — Guide complet",
     metaDescription:
-      "Implémentez un agent IA de triage automatique pour votre support client. Stack, tutoriel pas-à-pas et ROI détaillé.",
+      "Implémentez un agent IA de triage automatique pour votre support client. Classification, routage intelligent, stack technique et tutoriel pas-à-pas avec ROI détaillé.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -380,7 +380,7 @@ async def process_lead(lead: dict):
     functions: ["Sales"],
     metaTitle: "Agent IA de Qualification de Leads — Guide Sales",
     metaDescription:
-      "Automatisez la qualification de vos leads avec un agent IA. Scoring BANT, enrichissement et intégration CRM.",
+      "Automatisez la qualification de vos leads avec un agent IA. Scoring BANT/MEDDIC, enrichissement firmographique et intégration CRM. Tutoriel complet avec code.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -558,7 +558,7 @@ def delete_candidate_data(candidate_id: str):
     functions: ["RH"],
     metaTitle: "Agent IA d'Analyse de CVs — Recrutement automatisé",
     metaDescription:
-      "Automatisez le tri des CVs avec un agent IA. Extraction de compétences, scoring objectif et conformité RGPD.",
+      "Automatisez le tri des CVs avec un agent IA. Extraction de compétences, scoring objectif, conformité RGPD et intégration ATS. Guide complet avec tutoriel.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -738,7 +738,7 @@ schedule.every().day.at("07:00").do(daily_scan)`,
     functions: ["Marketing"],
     metaTitle: "Agent IA de Veille Concurrentielle — Guide Marketing",
     metaDescription:
-      "Automatisez votre veille concurrentielle avec un agent IA. Monitoring continu, alertes et synthèses automatiques.",
+      "Automatisez votre veille concurrentielle avec un agent IA. Monitoring continu des prix, produits et actualités. Alertes et synthèses hebdomadaires automatiques.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -937,7 +937,7 @@ def generate_report_pdf(data: dict, commentary: str, period: str):
     functions: ["Finance"],
     metaTitle: "Agent IA de Rapports Financiers — Guide Expert",
     metaDescription:
-      "Automatisez vos rapports financiers avec un agent IA. Analyse, détection d'anomalies et commentaires automatiques.",
+      "Automatisez vos rapports financiers avec un agent IA. Collecte de données ERP, détection d'anomalies et commentaires automatiques. Stack et tutoriel inclus.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -1115,7 +1115,7 @@ def execute_runbook(runbook_id: str, params: dict) -> dict:
     functions: ["IT"],
     metaTitle: "Agent IA de Gestion des Incidents IT — Guide DevOps",
     metaDescription:
-      "Automatisez le diagnostic et la résolution des incidents IT avec un agent IA. Corrélation de logs et runbooks automatiques.",
+      "Automatisez le diagnostic et la résolution des incidents IT avec un agent IA. Corrélation de logs, runbooks automatiques et escalade intelligente. Guide DevOps.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -1300,7 +1300,7 @@ Article: {article[:2000]}"""
     functions: ["Marketing"],
     metaTitle: "Agent IA de Rédaction Marketing — Guide Content",
     metaDescription:
-      "Générez du contenu marketing de qualité avec un agent IA. Articles, posts sociaux et newsletters automatisés.",
+      "Générez du contenu marketing de qualité avec un agent IA. Articles SEO, posts réseaux sociaux et newsletters automatisés. Tutoriel complet avec stack technique.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -1485,7 +1485,7 @@ def create_onboarding_checklist(department: str, name: str) -> dict:
     functions: ["RH"],
     metaTitle: "Agent IA d'Onboarding — Guide RH",
     metaDescription:
-      "Créez un assistant IA d'onboarding pour vos nouveaux collaborateurs. Chatbot RAG, Slack et checklist automatique.",
+      "Créez un assistant IA d'onboarding pour vos nouveaux collaborateurs. Chatbot RAG sur Slack, parcours personnalisé et checklist automatique. Guide RH complet.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -1897,7 +1897,7 @@ Génère une analyse avec tendances et recommandations."""
     functions: ["Supply Chain"],
     metaTitle: "Agent IA d'Automatisation des Achats — Guide Supply Chain",
     metaDescription:
-      "Automatisez vos processus achats avec un agent IA. Comparaison de devis, validation workflow et suivi fournisseurs.",
+      "Automatisez vos processus achats avec un agent IA. Comparaison de devis, validation workflow, suivi fournisseurs et optimisation des coûts. Guide Supply Chain.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },

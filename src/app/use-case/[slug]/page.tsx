@@ -35,6 +35,40 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+function PersonaCard({ functions, sectors, metiers }: { functions: string[]; sectors: string[]; metiers: string[] }) {
+  const personaMap: Record<string, { name: string; role: string; emoji: string }> = {
+    "Support": { name: "Sarah", role: "Responsable Support Client", emoji: "🎧" },
+    "Sales": { name: "Thomas", role: "Directeur Commercial", emoji: "📈" },
+    "Marketing": { name: "Julie", role: "Responsable Marketing Digital", emoji: "🎯" },
+    "RH": { name: "Nadia", role: "DRH", emoji: "👥" },
+    "Finance": { name: "Marc", role: "Directeur Financier", emoji: "💰" },
+    "IT": { name: "Alexandre", role: "CTO / Responsable IT", emoji: "💻" },
+    "Conformite": { name: "Camille", role: "Responsable Conformité", emoji: "⚖️" },
+    "Supply Chain": { name: "Pierre", role: "Directeur Supply Chain", emoji: "📦" },
+    "Commercial": { name: "Thomas", role: "Directeur Commercial", emoji: "📈" },
+    "CRM": { name: "Léa", role: "Responsable CRM", emoji: "🤝" },
+  };
+
+  const fn = functions[0] || "IT";
+  const persona = personaMap[fn] || { name: "Alex", role: "Responsable opérationnel", emoji: "👤" };
+  const sector = sectors[0] || "Services";
+
+  return (
+    <div className="rounded-xl border-l-4 border-l-primary bg-muted/30 p-4 sm:p-5 mb-6">
+      <div className="flex items-start gap-3">
+        <span className="text-2xl">{persona.emoji}</span>
+        <div>
+          <p className="font-semibold text-sm">{persona.name}, {persona.role}</p>
+          <p className="text-xs text-muted-foreground">Secteur : {sector} · Métier : {metiers[0] || fn}</p>
+          <p className="mt-2 text-sm text-muted-foreground italic leading-relaxed">
+            &laquo; Je cherche à automatiser ce processus pour libérer mon équipe des tâches répétitives et me concentrer sur les décisions à forte valeur ajoutée. &raquo;
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default async function UseCasePage({ params }: PageProps) {
   const { slug } = await params;
   const uc = useCases.find((u) => u.slug === slug);
@@ -64,6 +98,11 @@ export default async function UseCasePage({ params }: PageProps) {
       <header className="mb-10">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <DifficultyBadge difficulty={uc.difficulty} />
+          {uc.estimatedTime && (
+            <Badge variant="outline" className="text-xs">
+              ⏱ {uc.estimatedTime}
+            </Badge>
+          )}
           {uc.functions.map((fn) => (
             <Badge key={fn} variant="secondary">{fn}</Badge>
           ))}
@@ -105,6 +144,8 @@ export default async function UseCasePage({ params }: PageProps) {
           {/* 1. Présentation */}
           <section id="presentation">
             <h2 className="text-2xl font-bold mb-4">Présentation du cas d&apos;usage</h2>
+
+            <PersonaCard functions={uc.functions} sectors={uc.sectors} metiers={uc.metiers} />
 
             <div className="space-y-6">
               <div>
@@ -170,7 +211,15 @@ export default async function UseCasePage({ params }: PageProps) {
                     <h3 className="font-semibold">ROI indicatif</h3>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm font-medium">{uc.roiIndicatif}</p>
+                    <p className="text-sm font-medium leading-relaxed">{uc.roiIndicatif}</p>
+                    <div className="mt-3 flex gap-2">
+                      <Link
+                        href="/calculateur-roi"
+                        className="text-xs text-primary font-medium hover:underline"
+                      >
+                        Calculer votre ROI personnalisé &rarr;
+                      </Link>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -278,7 +327,7 @@ export default async function UseCasePage({ params }: PageProps) {
                         </div>
                       )}
                       <div className={`overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4 ${snippet.filename ? "rounded-t-none" : ""}`}>
-                        <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre">
+                        <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
                           {snippet.code}
                         </pre>
                       </div>

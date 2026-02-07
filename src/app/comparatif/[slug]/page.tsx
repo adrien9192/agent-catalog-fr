@@ -141,10 +141,10 @@ export default function ComparatifPage({
       <div className="mb-12">
         <h2 className="text-xl font-bold mb-4">Comparatif détaillé</h2>
         <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-          <table className="w-full text-sm min-w-[500px]">
+          <table className="w-full text-sm min-w-[400px]">
             <thead>
               <tr className="border-b">
-                <th className="py-3 px-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider">
+                <th className="py-3 px-3 text-left font-medium text-muted-foreground text-xs uppercase tracking-wider sticky left-0 bg-card z-10">
                   Critère
                 </th>
                 {comparison.options.map((o) => (
@@ -160,9 +160,9 @@ export default function ComparatifPage({
             <tbody className="divide-y">
               {comparison.rows.map((row) => (
                 <tr key={row.feature} className="hover:bg-muted/30 transition-colors">
-                  <td className="py-3 px-3 font-medium text-sm">{row.feature}</td>
+                  <td className="py-3 px-3 font-medium text-xs sm:text-sm sticky left-0 bg-card z-10">{row.feature}</td>
                   {row.values.map((val, i) => (
-                    <td key={i} className="py-3 px-3 text-sm text-muted-foreground">
+                    <td key={i} className="py-3 px-3 text-xs sm:text-sm text-muted-foreground">
                       {val}
                     </td>
                   ))}

@@ -52,7 +52,7 @@ export const guides: Guide[] = [
     ],
     relatedUseCases: [
       "agent-triage-support-client",
-      "agent-traitement-reclamations",
+      "agent-triage-support-client",
       "agent-knowledge-management",
     ],
   },
@@ -98,7 +98,7 @@ export const guides: Guide[] = [
     relatedUseCases: [
       "agent-triage-support-client",
       "agent-qualification-leads",
-      "agent-contenu-marketing",
+      "agent-redaction-contenu-marketing",
     ],
   },
   {
@@ -176,8 +176,8 @@ export const guides: Guide[] = [
       },
     ],
     relatedUseCases: [
-      "agent-screening-cv-recrutement",
-      "agent-onboarding-rh",
+      "agent-analyse-cv-preselection",
+      "agent-onboarding-collaborateurs",
       "agent-knowledge-management",
     ],
   },
@@ -218,7 +218,7 @@ export const guides: Guide[] = [
     relatedUseCases: [
       "agent-rapports-financiers",
       "agent-detection-fraude",
-      "agent-relance-paiements",
+      "agent-automatisation-emails",
     ],
   },
   {
@@ -298,7 +298,7 @@ export const guides: Guide[] = [
     relatedUseCases: [
       "agent-triage-support-client",
       "agent-qualification-leads",
-      "agent-contenu-marketing",
+      "agent-redaction-contenu-marketing",
     ],
   },
   {
@@ -336,7 +336,7 @@ export const guides: Guide[] = [
       },
     ],
     relatedUseCases: [
-      "agent-screening-cv-recrutement",
+      "agent-analyse-cv-preselection",
       "agent-detection-fraude",
       "agent-analyse-contrats",
     ],
