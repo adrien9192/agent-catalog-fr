@@ -9,6 +9,7 @@ const footerLinks = [
       { href: "/calculateur-roi", label: "Calculateur ROI" },
       { href: "/pricing", label: "Tarifs" },
       { href: "/demande", label: "Workflow sur mesure" },
+      { href: "/plan-du-site", label: "Plan du site" },
     ],
   },
   {
