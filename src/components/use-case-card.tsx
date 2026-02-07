@@ -6,26 +6,46 @@ import type { UseCase } from "@/data/types";
 
 interface UseCaseCardProps {
   useCase: UseCase;
+  searchQuery?: string;
 }
 
-export function UseCaseCard({ useCase }: UseCaseCardProps) {
+function highlightText(text: string, query: string) {
+  if (!query || query.length < 2) return text;
+  const words = query.toLowerCase().split(/\s+/).filter((w) => w.length >= 2);
+  if (words.length === 0) return text;
+
+  const pattern = new RegExp(`(${words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`, "gi");
+  const parts = text.split(pattern);
+
+  return parts.map((part, i) =>
+    words.some((w) => part.toLowerCase() === w) ? (
+      <mark key={i} className="bg-primary/20 text-foreground rounded-sm px-0.5">
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
+export function UseCaseCard({ useCase, searchQuery }: UseCaseCardProps) {
   return (
     <Link href={`/use-case/${useCase.slug}`} className="group block">
       <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/30 group-hover:-translate-y-0.5">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <h3 className="text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
-              {useCase.title}
+              {searchQuery ? highlightText(useCase.title, searchQuery) : useCase.title}
             </h3>
             <DifficultyBadge difficulty={useCase.difficulty} />
           </div>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            {useCase.subtitle}
+            {searchQuery ? highlightText(useCase.subtitle, searchQuery) : useCase.subtitle}
           </p>
         </CardHeader>
         <CardContent className="pt-0">
           <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-            {useCase.problem}
+            {searchQuery ? highlightText(useCase.problem, searchQuery) : useCase.problem}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {useCase.functions.map((fn) => (
@@ -38,6 +58,11 @@ export function UseCaseCard({ useCase }: UseCaseCardProps) {
                 {s}
               </Badge>
             ))}
+            {useCase.estimatedTime && (
+              <Badge variant="outline" className="text-xs text-muted-foreground">
+                {useCase.estimatedTime}
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>

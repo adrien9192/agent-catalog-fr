@@ -19,6 +19,19 @@ export interface TutorialSection {
 
 export type Difficulty = "Facile" | "Moyen" | "Expert";
 
+export interface EnterpriseSection {
+  piiHandling: string;
+  auditLog: string;
+  humanInTheLoop: string;
+  monitoring: string;
+}
+
+export interface N8nWorkflow {
+  description: string;
+  nodes: string[];
+  triggerType: string;
+}
+
 export interface UseCase {
   slug: string;
   title: string;
@@ -33,6 +46,9 @@ export interface UseCase {
   lowCostAlternatives: StackItem[];
   architectureDiagram: string;
   tutorial: TutorialSection[];
+  enterprise: EnterpriseSection;
+  n8nWorkflow: N8nWorkflow;
+  estimatedTime: string;
   difficulty: Difficulty;
   sectors: string[];
   metiers: string[];

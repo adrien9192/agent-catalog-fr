@@ -239,6 +239,81 @@ export default async function UseCasePage({ params }: PageProps) {
               ))}
             </div>
           </section>
+
+          <Separator />
+
+          {/* 4. Workflow n8n / Automatisation */}
+          {uc.n8nWorkflow && (
+            <section>
+              <h2 className="text-2xl font-bold mb-4">Workflow n8n / Automatisation</h2>
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                    {uc.n8nWorkflow.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <Badge variant="secondary" className="text-xs">
+                      Trigger : {uc.n8nWorkflow.triggerType}
+                    </Badge>
+                  </div>
+                  <h4 className="font-semibold text-sm mb-2">Nodes du workflow :</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {uc.n8nWorkflow.nodes.map((node, i) => (
+                      <div key={i} className="flex items-center gap-1">
+                        {i > 0 && <span className="text-muted-foreground text-xs">→</span>}
+                        <Badge variant="outline" className="text-xs font-mono">
+                          {node}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+
+          <Separator />
+
+          {/* 5. Enterprise */}
+          {uc.enterprise && (
+            <section>
+              <h2 className="text-2xl font-bold mb-4">Considérations Enterprise</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <h3 className="font-semibold text-sm">Données personnelles (PII/RGPD)</h3>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{uc.enterprise.piiHandling}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <h3 className="font-semibold text-sm">Audit & Traçabilité</h3>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{uc.enterprise.auditLog}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <h3 className="font-semibold text-sm">Human-in-the-Loop</h3>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{uc.enterprise.humanInTheLoop}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <h3 className="font-semibold text-sm">Monitoring & Alertes</h3>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{uc.enterprise.monitoring}</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -261,6 +336,12 @@ export default async function UseCasePage({ params }: PageProps) {
                   <span className="text-muted-foreground">Mis à jour</span>
                   <span>{uc.updatedAt}</span>
                 </div>
+                {uc.estimatedTime && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Temps estimé</span>
+                    <span className="font-medium">{uc.estimatedTime}</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -273,6 +354,8 @@ export default async function UseCasePage({ params }: PageProps) {
                   <p className="text-muted-foreground hover:text-foreground cursor-pointer">Présentation</p>
                   <p className="text-muted-foreground hover:text-foreground cursor-pointer">Stack recommandée</p>
                   <p className="text-muted-foreground hover:text-foreground cursor-pointer">Tutoriel</p>
+                  <p className="text-muted-foreground hover:text-foreground cursor-pointer">Workflow n8n</p>
+                  <p className="text-muted-foreground hover:text-foreground cursor-pointer">Enterprise</p>
                 </nav>
               </CardContent>
             </Card>

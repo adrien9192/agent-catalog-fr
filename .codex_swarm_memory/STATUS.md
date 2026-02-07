@@ -1,35 +1,37 @@
-# STATUS.md — Handoffs & État Courant
+# STATUS.md — État Courant
 
 ## État actuel
-- **Phase** : H (Déploiement)
-- **Agent actif** : BUILDER
-- **Blocages** : Vercel CLI non authentifié
+- **Phase** : Itération 3 — QMD Améliorations continues
+- **Conformité 22 questions** : 16/22 DONE, 5 PARTIAL, 1 MISSING
+- **Site live** : https://agent-catalog-fr.vercel.app
+- **GitHub** : https://github.com/adrien9192/agent-catalog-fr
 
-## Résumé d'avancement
-| Phase | Statut | Détails |
-|-------|--------|---------|
-| A. Fondations | DONE | CLAUDE.md + mémoire projet + subagents importés |
-| B. Bootstrap | DONE | Next.js 16 + Tailwind + shadcn + Playwright + Framer Motion |
-| C. Design System | DONE | Dotted grid, hero, prompt bar, composants, responsive validé |
-| D. Pages + Routing | DONE | 5 routes, 41 pages statiques générées |
-| E. Contenu MVP | DONE | 10 use cases FR, 7 fonctions, 3 niveaux |
-| F. SEO | PARTIAL | Metadata FR OK. JSON-LD + sitemap = post-MVP |
-| G. Tests + QA | DONE | 36/36 Playwright tests pass, 0 erreurs build |
-| H. Déploiement | IN PROGRESS | GitHub OK, Vercel pending |
+## Résumé Itérations
 
-## Tests Playwright — Résultats
-- Mobile 360: 6/6 pass
-- Mobile 390: 6/6 pass
-- Tablet 768: 6/6 pass
-- Desktop 1024: 6/6 pass
-- Desktop 1280: 6/6 pass
-- Desktop 1440: 6/6 pass
-- **Total: 36/36 pass**
+| Itération | Statut | Livraisons clés |
+|-----------|--------|----------------|
+| 1. MVP | ✅ DONE | 10 use cases, 41 pages, Playwright 36/36, Vercel |
+| 2. Search+Newsletter+SEO | ✅ DONE | Fuse.js, Brevo, JSON-LD, OG images, sitemap |
+| 3. QMD Améliorations | 🔄 EN COURS | Gaps Q6, Q13, Q14, Q16, Q17, Q22 |
 
-## Handoff
-- **De** : REVIEWER → BUILDER
-- **Action** : Push GitHub + préparer déploiement Vercel
-- **Note** : Vercel CLI non auth → fournir instructions manuelles
+## Gaps restants (Itération 3)
+
+| Priorité | Item | Ref |
+|----------|------|-----|
+| 🔴 HIGH | Workflows n8n/Make concrets dans tutoriels | Q16 |
+| 🔴 HIGH | Sections enterprise systématiques (10/10 UC) | Q17 |
+| 🟡 MED | Séquence onboarding 5 emails Brevo | Q13 |
+| 🟡 MED | Search highlights dans résultats | Q6 |
+| 🟡 MED | Template visuel différencié par difficulté | Q14 |
+| 🟡 MED | Playwright tests search/filters/signup | Q22 |
+| 🟢 LOW | Images visuelles (hero, cards, illustrations) | Design |
+
+## Newsletter Brevo — Vérifié
+- Welcome email : ✅ delivered (12:18 UTC)
+- Daily campaign #14 : ✅ sent, 2 delivered
+- List ID : 3 ("Newsletter — L'usine à Agents IA")
+- Sender : adrienlaine91@gmail.com (vérifié)
+- Cron : 7h UTC daily via vercel.json
 
 ---
-*Mis à jour : 2025-02-07*
+*Mis à jour : 2026-02-07*

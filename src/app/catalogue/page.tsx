@@ -125,7 +125,7 @@ function CatalogueContent() {
           {filtered.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2">
               {filtered.map((uc) => (
-                <UseCaseCard key={uc.slug} useCase={uc} />
+                <UseCaseCard key={uc.slug} useCase={uc} searchQuery={searchQuery} />
               ))}
             </div>
           ) : (
