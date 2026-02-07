@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Badge } from "@/components/ui/badge";
 import { UseCaseCard } from "@/components/use-case-card";
+import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useCases } from "@/data/use-cases";
 import { sectors } from "@/data/sectors";
+import { guides } from "@/data/guides";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -34,8 +37,23 @@ export default async function SectorPage({ params }: PageProps) {
     uc.sectors.some((s) => s.toLowerCase().replace(/\s+/g, "-") === slug || s === sectorName)
   );
 
+  // Find related guides (match category to sector keywords)
+  const sectorKeywords = sector.name.toLowerCase().split(/[\s/]+/);
+  const relatedGuides = guides.filter((g) =>
+    sectorKeywords.some((kw) =>
+      g.title.toLowerCase().includes(kw) ||
+      g.metaDescription.toLowerCase().includes(kw)
+    )
+  ).slice(0, 3);
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
+          { name: `Secteur ${sector.name}`, url: `https://agent-catalog-fr.vercel.app/secteur/${sector.slug}` },
+        ]}
+      />
       <nav className="mb-6 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground">Accueil</Link>
         {" / "}
@@ -89,6 +107,31 @@ export default async function SectorPage({ params }: PageProps) {
       <div className="mt-8">
         <NewsletterSignup variant="inline" />
       </div>
+
+      {/* Related guides */}
+      {relatedGuides.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-xl font-bold mb-4">Guides pratiques associés</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {relatedGuides.map((g) => (
+              <Link
+                key={g.slug}
+                href={`/guide/${g.slug}`}
+                className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">{g.category}</Badge>
+                  <span className="text-xs text-muted-foreground">{g.readTime}</span>
+                </div>
+                <h3 className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors">
+                  {g.title}
+                </h3>
+                <p className="mt-1 text-xs text-primary font-medium">Lire le guide &rarr;</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Other sectors */}
       <div className="mt-16 border-t pt-8">
