@@ -7,6 +7,7 @@ import Link from "next/link";
 import { UseCaseCard } from "@/components/use-case-card";
 import { FilterBar } from "@/components/filter-bar";
 import { NewsletterSignup } from "@/components/newsletter-signup";
+import { ExitIntentPopup } from "@/components/exit-intent-popup";
 import { useCases } from "@/data/use-cases";
 import { createSearchIndex, searchUseCases } from "@/lib/search";
 import type { Difficulty } from "@/data/types";
@@ -189,6 +190,7 @@ export default function CataloguePage() {
       }
     >
       <CatalogueContent />
+      <ExitIntentPopup />
     </Suspense>
   );
 }

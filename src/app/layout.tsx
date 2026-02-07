@@ -31,6 +31,30 @@ export const metadata: Metadata = {
   },
 };
 
+function OrganizationJsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "AgentCatalog",
+    url: "https://agent-catalog-fr.vercel.app",
+    description:
+      "Workflows d'Agents IA documentés pour l'entreprise. Tutoriels, stack technique et ROI.",
+    contactPoint: {
+      "@type": "ContactPoint",
+      email: "adrienlaine91@gmail.com",
+      contactType: "customer service",
+      availableLanguage: "French",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,6 +63,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${inter.variable} font-sans antialiased`}>
+        <OrganizationJsonLd />
         <div className="flex min-h-svh flex-col">
           <Header />
           <main className="flex-1">{children}</main>

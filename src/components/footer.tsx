@@ -25,6 +25,7 @@ const footerLinks = [
     title: "Ressources",
     links: [
       { href: "/catalogue?diff=Facile", label: "Workflows faciles" },
+      { href: "/catalogue?diff=Moyen", label: "Workflows intermédiaires" },
       { href: "/catalogue?diff=Expert", label: "Workflows experts" },
     ],
   },
@@ -56,13 +57,29 @@ export function Footer() {
             <NewsletterSignup variant="footer" />
           </div>
         </div>
-        <div className="mt-10 border-t border-border/60 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">
-            AgentCatalog — Workflows d&apos;Agents IA pour l&apos;entreprise.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} AgentCatalog. Tous droits réservés.
-          </p>
+        <div className="mt-10 border-t border-border/60 pt-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              Conforme RGPD
+            </span>
+            <span>|</span>
+            <span>Données hébergées en Europe</span>
+            <span>|</span>
+            <a href="mailto:adrienlaine91@gmail.com" className="hover:text-foreground transition-colors">
+              Contact : adrienlaine91@gmail.com
+            </a>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">
+              AgentCatalog — Workflows d&apos;Agents IA pour l&apos;entreprise.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              &copy; {new Date().getFullYear()} AgentCatalog. Tous droits réservés.
+            </p>
+          </div>
         </div>
       </div>
     </footer>

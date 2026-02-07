@@ -5,16 +5,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PromptBar } from "@/components/prompt-bar";
 import { UseCaseCard } from "@/components/use-case-card";
 import { NewsletterSignup } from "@/components/newsletter-signup";
+import { ExitIntentPopup } from "@/components/exit-intent-popup";
 import { useCases } from "@/data/use-cases";
 import { sectors } from "@/data/sectors";
 
 const functions = ["Support", "Sales", "RH", "Marketing", "Finance", "IT", "Supply Chain"];
 
 const stats = [
-  { value: "10+", label: "workflows documentés" },
+  { value: "20+", label: "workflows documentés" },
   { value: "60%", label: "de temps gagné en moyenne" },
-  { value: "7", label: "fonctions couvertes" },
-  { value: "100%", label: "open-source & gratuit" },
+  { value: "10", label: "fonctions couvertes" },
+  { value: "100%", label: "gratuit pour démarrer" },
 ];
 
 const steps = [
@@ -54,7 +55,7 @@ export default function HomePage() {
               pas en 6 mois
             </h1>
             <p className="mt-4 text-lg text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
-              10 workflows IA documentés avec tutoriel pas-à-pas, stack technique
+              20+ workflows IA documentés avec tutoriel pas-à-pas, stack technique
               et estimation de ROI. Prêts à copier et déployer. Gratuit.
             </p>
 
@@ -90,6 +91,40 @@ export default function HomePage() {
                 <p className="mt-1 text-sm text-muted-foreground">{stat.label}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust signals */}
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Conforme RGPD</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Code open-source</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>Mis à jour quotidiennement</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <span>Conçu pour les entreprises FR</span>
           </div>
         </div>
       </section>
@@ -215,6 +250,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <ExitIntentPopup />
     </>
   );
 }

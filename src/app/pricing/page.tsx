@@ -93,9 +93,32 @@ const faqs = [
   },
 ];
 
+function PricingFaqJsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.a,
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 export default function PricingPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <PricingFaqJsonLd />
       {/* Header */}
       <div className="text-center mb-16">
         <Badge variant="secondary" className="mb-4 text-xs">
@@ -169,6 +192,29 @@ export default function PricingPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Trust / Guarantee */}
+      <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>Satisfait ou remboursé 14 jours</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>Sans engagement</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary">
+            <rect x="1" y="4" width="22" height="16" rx="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+          <span>Paiement sécurisé</span>
+        </div>
       </div>
 
       {/* FAQ */}

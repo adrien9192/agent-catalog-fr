@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { UseCaseJsonLd } from "@/components/json-ld";
+import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { RelatedUseCases } from "@/components/related-use-cases";
 import { NewsletterSignup } from "@/components/newsletter-signup";
+import { StickyCTABar } from "@/components/sticky-cta-bar";
 import { useCases } from "@/data/use-cases";
 
 interface PageProps {
@@ -38,8 +40,16 @@ export default async function UseCasePage({ params }: PageProps) {
   if (!uc) notFound();
 
   return (
-    <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
       <UseCaseJsonLd useCase={uc} />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
+          { name: "Catalogue", url: "https://agent-catalog-fr.vercel.app/catalogue" },
+          { name: uc.title, url: `https://agent-catalog-fr.vercel.app/use-case/${uc.slug}` },
+        ]}
+      />
+      <StickyCTABar title={uc.title} difficulty={uc.difficulty} />
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground">Accueil</Link>
@@ -239,6 +249,26 @@ export default async function UseCasePage({ params }: PageProps) {
               ))}
             </div>
           </section>
+
+          {/* Mid-page CTA */}
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex-1">
+                <p className="font-semibold">Besoin d&apos;aide pour implémenter ce workflow ?</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Notre équipe peut adapter ce workflow à votre contexte spécifique.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Link
+                  href="/demande"
+                  className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  Demander un accompagnement
+                </Link>
+              </div>
+            </div>
+          </div>
 
           <Separator />
 
