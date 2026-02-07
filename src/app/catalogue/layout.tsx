@@ -4,6 +4,9 @@ export const metadata: Metadata = {
   title: "Catalogue — Workflows IA pour l'entreprise",
   description:
     "Parcourez nos 50 workflows d'Agents IA documentés. Filtrez par fonction, secteur et difficulté. Tutoriels, stack technique et ROI inclus. Gratuit.",
+  alternates: {
+    canonical: "/catalogue",
+  },
   openGraph: {
     title: "Catalogue — Workflows IA pour l'entreprise",
     description:
