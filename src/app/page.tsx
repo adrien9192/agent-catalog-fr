@@ -8,6 +8,7 @@ import { NewsletterSignup } from "@/components/newsletter-signup";
 import { ExitIntentPopup } from "@/components/exit-intent-popup";
 import { useCases } from "@/data/use-cases";
 import { sectors } from "@/data/sectors";
+import { guides } from "@/data/guides";
 
 const functions = ["Support", "Sales", "RH", "Marketing", "Finance", "IT", "Supply Chain"];
 
@@ -317,11 +318,7 @@ export default function HomePage() {
           </Button>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { slug: "comment-automatiser-support-client-ia", title: "Automatiser le support client avec l\u2019IA", category: "Support", time: "8 min" },
-            { slug: "agent-ia-entreprise-guide-complet", title: "Agent IA en entreprise : le guide complet", category: "G\u00e9n\u00e9ral", time: "12 min" },
-            { slug: "automatiser-qualification-leads-ia", title: "Automatiser la qualification des leads", category: "Sales", time: "7 min" },
-          ].map((g) => (
+          {guides.slice(0, 3).map((g) => (
             <Link
               key={g.slug}
               href={`/guide/${g.slug}`}
@@ -329,7 +326,7 @@ export default function HomePage() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <Badge variant="secondary" className="text-xs">{g.category}</Badge>
-                <span className="text-xs text-muted-foreground">{g.time}</span>
+                <span className="text-xs text-muted-foreground">{g.readTime}</span>
               </div>
               <h3 className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors">
                 {g.title}
