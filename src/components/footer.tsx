@@ -6,6 +6,7 @@ const footerLinks = [
     title: "Produit",
     links: [
       { href: "/catalogue", label: "Tous les workflows" },
+      { href: "/calculateur-roi", label: "Calculateur ROI" },
       { href: "/pricing", label: "Tarifs" },
       { href: "/demande", label: "Workflow sur mesure" },
     ],
@@ -25,10 +26,10 @@ const footerLinks = [
     title: "Ressources",
     links: [
       { href: "/guide", label: "Tous les guides" },
-      { href: "/guide/agent-ia-entreprise-guide-complet", label: "Guide : Agent IA en entreprise" },
-      { href: "/guide/automatisation-no-code-pme-n8n-make", label: "Guide : No-code pour PME" },
+      { href: "/comparatif", label: "Comparatifs" },
+      { href: "/comparatif/agent-ia-vs-chatbot", label: "Agent IA vs Chatbot" },
+      { href: "/comparatif/n8n-vs-make-vs-zapier", label: "n8n vs Make vs Zapier" },
       { href: "/catalogue?diff=Facile", label: "Workflows faciles" },
-      { href: "/catalogue?diff=Expert", label: "Workflows experts" },
     ],
   },
   {

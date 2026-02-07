@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 const navItems = [
   { href: "/catalogue", label: "Workflows" },
   { href: "/guide", label: "Guides" },
+  { href: "/calculateur-roi", label: "Calculateur ROI" },
   { href: "/pricing", label: "Tarifs" },
   { href: "/demande", label: "Sur mesure" },
 ];

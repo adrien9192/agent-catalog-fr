@@ -13,9 +13,9 @@ import { guides } from "@/data/guides";
 const functions = ["Support", "Sales", "RH", "Marketing", "Finance", "IT", "Supply Chain"];
 
 const stats = [
-  { value: "30+", label: "workflows documentés" },
+  { value: "40+", label: "workflows documentés" },
   { value: "60%", label: "de temps gagné en moyenne" },
-  { value: "13", label: "fonctions couvertes" },
+  { value: "16", label: "guides pratiques" },
   { value: "100%", label: "gratuit pour démarrer" },
 ];
 
@@ -80,7 +80,7 @@ export default function HomePage() {
               pas en 6 mois
             </h1>
             <p className="mt-4 text-base text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
-              30+ workflows IA documentés avec tutoriel pas-à-pas, stack technique
+              40+ workflows IA documentés avec tutoriel pas-à-pas, stack technique
               et estimation de ROI. Prêts à copier et déployer. Gratuit.
             </p>
 
