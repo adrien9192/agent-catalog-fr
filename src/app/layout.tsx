@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -99,16 +100,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <OrganizationJsonLd />
-        <div className="flex min-h-svh flex-col">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
-        <Analytics />
-        <SpeedInsights />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <OrganizationJsonLd />
+          <div className="flex min-h-svh flex-col">
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+          <Analytics />
+          <SpeedInsights />
+        </ThemeProvider>
       </body>
     </html>
   );

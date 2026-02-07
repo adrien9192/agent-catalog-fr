@@ -44,9 +44,22 @@ function PersonaCard({ functions, sectors, metiers }: { functions: string[]; sec
     "Finance": { name: "Marc", role: "Directeur Financier", emoji: "💰" },
     "IT": { name: "Alexandre", role: "CTO / Responsable IT", emoji: "💻" },
     "Conformite": { name: "Camille", role: "Responsable Conformité", emoji: "⚖️" },
+    "Compliance": { name: "Camille", role: "Responsable Conformité", emoji: "⚖️" },
     "Supply Chain": { name: "Pierre", role: "Directeur Supply Chain", emoji: "📦" },
     "Commercial": { name: "Thomas", role: "Directeur Commercial", emoji: "📈" },
     "CRM": { name: "Léa", role: "Responsable CRM", emoji: "🤝" },
+    "Legal": { name: "Isabelle", role: "Directrice Juridique", emoji: "📜" },
+    "Juridique": { name: "Isabelle", role: "Directrice Juridique", emoji: "📜" },
+    "Product": { name: "Romain", role: "Product Manager", emoji: "🧩" },
+    "Operations": { name: "Laurent", role: "Directeur des Opérations", emoji: "⚙️" },
+    "RSE": { name: "Elise", role: "Responsable RSE", emoji: "🌱" },
+    "Risk": { name: "Philippe", role: "Directeur des Risques", emoji: "🛡️" },
+    "Comptabilité": { name: "Marc", role: "Directeur Comptable", emoji: "💰" },
+    "Stratégie": { name: "Antoine", role: "Directeur Stratégie", emoji: "🧭" },
+    "Sécurité": { name: "Alexandre", role: "RSSI", emoji: "🔒" },
+    "Data": { name: "Sophie", role: "Chief Data Officer", emoji: "📊" },
+    "Organisation": { name: "Laurent", role: "Directeur Organisation", emoji: "⚙️" },
+    "Productivité": { name: "Marie", role: "Responsable Efficacité", emoji: "⚡" },
   };
 
   const fn = functions[0] || "IT";

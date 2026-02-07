@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/catalogue", label: "Workflows" },
@@ -50,6 +51,7 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
           <Button size="sm" variant="outline" asChild>
             <Link href="/catalogue">Workflows</Link>
           </Button>
@@ -59,8 +61,10 @@ export function Header() {
         </div>
 
         {/* Mobile nav */}
+        <div className="flex md:hidden items-center gap-1">
+          <ThemeToggle />
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild className="md:hidden">
+          <SheetTrigger asChild>
             <Button variant="ghost" size="sm" aria-label="Menu">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="3" y1="6" x2="21" y2="6" />
@@ -116,6 +120,7 @@ export function Header() {
             </nav>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
     </header>
   );
