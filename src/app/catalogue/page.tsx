@@ -195,8 +195,26 @@ function CatalogueContent() {
             </div>
           )}
 
+          {/* Pricing CTA */}
+          <div className="mt-8 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex-1">
+                <p className="font-semibold text-sm">Besoin d&apos;un workflow adapté à votre contexte ?</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Essai gratuit 14 jours. Workflow sur mesure livré en 5 jours.
+                </p>
+              </div>
+              <Link
+                href="/pricing"
+                className="shrink-0 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Voir les plans
+              </Link>
+            </div>
+          </div>
+
           {/* Newsletter CTA after results */}
-          <div className="mt-12">
+          <div className="mt-8">
             <NewsletterSignup variant="inline" />
           </div>
         </div>
