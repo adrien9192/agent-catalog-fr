@@ -21,9 +21,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const sector = sectors.find((s) => s.slug === slug);
   if (!sector) return {};
+  const count = useCases.filter((uc) =>
+    uc.sectors.some((s) => s.toLowerCase().replace(/\s+/g, "-") === slug || s === sector.name)
+  ).length;
   return {
-    title: `Agents IA pour le secteur ${sector.name}`,
-    description: sector.description,
+    title: `Agents IA pour le secteur ${sector.name} — ${count} workflows`,
+    description: `${sector.description} ${count} workflows documentés avec tutoriel et ROI.`,
+    alternates: { canonical: `/secteur/${slug}` },
+    openGraph: {
+      title: `Agents IA — ${sector.name}`,
+      description: `${count} workflows IA pour le secteur ${sector.name}. Tutoriels, stack technique et ROI inclus.`,
+    },
   };
 }
 
@@ -46,8 +54,26 @@ export default async function SectorPage({ params }: PageProps) {
     )
   ).slice(0, 3);
 
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `Agents IA — ${sector.name}`,
+    description: sector.description,
+    url: `https://agent-catalog-fr.vercel.app/secteur/${sector.slug}`,
+    numberOfItems: filtered.length,
+    provider: {
+      "@type": "Organization",
+      name: "AgentCatalog",
+      url: "https://agent-catalog-fr.vercel.app",
+    },
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
       <BreadcrumbJsonLd
         items={[
           { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },

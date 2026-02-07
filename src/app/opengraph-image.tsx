@@ -70,7 +70,7 @@ export default function OgImage() {
             marginTop: "16px",
           }}
         >
-          30+ workflows IA documentés avec tutoriel, stack et ROI. Gratuit.
+          50 workflows IA documentés avec tutoriel, stack et ROI. Gratuit.
         </p>
       </div>
     ),

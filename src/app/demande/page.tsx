@@ -71,7 +71,7 @@ function DemandeContent() {
               href="/catalogue"
               className="rounded-lg border px-5 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
             >
-              Explorer les 30+ workflows
+              Explorer les 50 workflows
             </Link>
             <Link
               href="/guide"

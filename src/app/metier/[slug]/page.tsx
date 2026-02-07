@@ -21,9 +21,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const metier = metiers.find((m) => m.slug === slug);
   if (!metier) return {};
+  const count = useCases.filter((uc) =>
+    uc.metiers.some((m) => m.toLowerCase().replace(/\s+/g, "-") === slug || m === metier.name)
+  ).length;
   return {
-    title: `Agents IA pour le métier ${metier.name}`,
-    description: metier.description,
+    title: `Agents IA pour le métier ${metier.name} — ${count} workflows`,
+    description: `${metier.description} ${count} workflows documentés avec tutoriel et ROI.`,
+    alternates: { canonical: `/metier/${slug}` },
+    openGraph: {
+      title: `Agents IA — ${metier.name}`,
+      description: `${count} workflows IA pour le métier ${metier.name}. Tutoriels, stack technique et ROI inclus.`,
+    },
   };
 }
 
@@ -46,8 +54,26 @@ export default async function MetierPage({ params }: PageProps) {
     )
   ).slice(0, 3);
 
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `Agents IA — ${metier.name}`,
+    description: metier.description,
+    url: `https://agent-catalog-fr.vercel.app/metier/${metier.slug}`,
+    numberOfItems: filtered.length,
+    provider: {
+      "@type": "Organization",
+      name: "AgentCatalog",
+      url: "https://agent-catalog-fr.vercel.app",
+    },
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
       <BreadcrumbJsonLd
         items={[
           { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
