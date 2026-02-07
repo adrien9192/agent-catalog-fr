@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Catalogue — Workflows IA pour l'entreprise",
   description:
-    "Parcourez nos 45+ workflows d'Agents IA documentés. Filtrez par fonction, secteur et difficulté. Tutoriels, stack technique et ROI inclus. Gratuit.",
+    "Parcourez nos 50 workflows d'Agents IA documentés. Filtrez par fonction, secteur et difficulté. Tutoriels, stack technique et ROI inclus. Gratuit.",
   openGraph: {
     title: "Catalogue — Workflows IA pour l'entreprise",
     description:
-      "Parcourez nos 45+ workflows d'Agents IA documentés. Filtrez par fonction, secteur et difficulté.",
+      "Parcourez nos 50 workflows d'Agents IA documentés. Filtrez par fonction, secteur et difficulté.",
   },
 };
 

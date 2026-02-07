@@ -12282,4 +12282,772 @@ def test_detection_doublon():
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
+  {
+    slug: "agent-automatisation-emails",
+    title: "Agent d'Automatisation et Tri Intelligent des Emails",
+    subtitle: "Catégorisez, priorisez et rédigez des réponses automatiques à vos emails entrants grâce à l'IA",
+    problem:
+      "Les équipes support et commerciales reçoivent des centaines d'emails par jour. Le tri manuel est chronophage, des messages urgents passent inaperçus, et la qualité des réponses varie selon les agents. Le temps moyen de première réponse dépasse souvent les 24 heures.",
+    value:
+      "Un agent IA analyse chaque email entrant, le catégorise automatiquement (demande technique, réclamation, demande commerciale, spam), attribue un niveau de priorité, et génère un brouillon de réponse personnalisé. Les emails critiques sont escaladés instantanément.",
+    inputs: [
+      "Contenu de l'email (sujet, corps, pièces jointes)",
+      "Historique de correspondance avec l'expéditeur",
+      "Base de connaissances interne (FAQ, procédures)",
+      "Règles de routage et de priorité métier",
+      "Modèles de réponses existants",
+    ],
+    outputs: [
+      "Catégorie de l'email (support, commercial, administratif, spam)",
+      "Niveau de priorité (urgent, normal, faible)",
+      "Brouillon de réponse personnalisé",
+      "Résumé de l'email en une ligne",
+      "Suggestions d'actions (escalade, transfert, archivage)",
+    ],
+    risks: [
+      "Mauvaise catégorisation entraînant la perte d'emails critiques",
+      "Réponses automatiques inappropriées envoyées sans validation",
+      "Non-respect du RGPD lors de l'analyse des pièces jointes",
+      "Dépendance excessive à l'automatisation pour des sujets sensibles",
+    ],
+    roiIndicatif:
+      "Réduction de 70% du temps de tri des emails. Temps de première réponse divisé par 4. Augmentation de 40% de la satisfaction client sur le canal email.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Mistral Small", category: "LLM", isFree: false },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: "+-----------------+     +------------------+     +----------------+\n|   Boite Email   |---->|   Agent LLM      |---->|   CRM / Help   |\n|   (IMAP/API)    |     |   (Tri + Rédac.) |     |   Desk         |\n+-----------------+     +--------+---------+     +----------------+\n                                 |\n                        +--------v---------+\n                        |  Base de         |\n                        |  Connaissances   |\n                        +------------------+",
+    tutorial: [
+      {
+        title: "Prérequis et installation",
+        content:
+          "Installez les dépendances nécessaires et configurez les accès à l'API Anthropic ainsi qu'à votre serveur de messagerie IMAP ou API Gmail/Outlook.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install anthropic langchain imapclient pydantic fastapi",
+            filename: "terminal",
+          },
+        ],
+      },
+      {
+        title: "Modèle de données pour la classification",
+        content:
+          "Définissez les structures de données pour la catégorisation et la priorisation des emails. Le modèle inclut la catégorie, la priorité, le résumé et le brouillon de réponse.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from pydantic import BaseModel, Field\nfrom enum import Enum\nfrom typing import Optional\n\nclass EmailCategory(str, Enum):\n    SUPPORT = \"support_technique\"\n    COMMERCIAL = \"demande_commerciale\"\n    RECLAMATION = \"reclamation\"\n    ADMINISTRATIF = \"administratif\"\n    SPAM = \"spam\"\n\nclass Priority(str, Enum):\n    URGENT = \"urgent\"\n    NORMAL = \"normal\"\n    LOW = \"faible\"\n\nclass EmailAnalysis(BaseModel):\n    category: EmailCategory\n    priority: Priority\n    summary: str = Field(max_length=200)\n    draft_response: str\n    suggested_action: str\n    confidence: float = Field(ge=0.0, le=1.0)\n    needs_human_review: bool = False",
+            filename: "models.py",
+          },
+        ],
+      },
+      {
+        title: "Récupération des emails via IMAP",
+        content:
+          "Connectez-vous au serveur de messagerie pour récupérer les emails non lus. Cette étape utilise imapclient pour un accès IMAP sécurisé.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from imapclient import IMAPClient\nimport email\nfrom email.header import decode_header\n\ndef fetch_unread_emails(host: str, user: str, password: str) -> list[dict]:\n    with IMAPClient(host, ssl=True) as client:\n        client.login(user, password)\n        client.select_folder(\"INBOX\")\n        messages = client.search([\"UNSEEN\"])\n        emails = []\n        for uid, data in client.fetch(messages, [\"RFC822\"]).items():\n            msg = email.message_from_bytes(data[b\"RFC822\"])\n            subject = decode_header(msg[\"Subject\"])[0][0]\n            if isinstance(subject, bytes):\n                subject = subject.decode(\"utf-8\", errors=\"replace\")\n            body = \"\"\n            if msg.is_multipart():\n                for part in msg.walk():\n                    if part.get_content_type() == \"text/plain\":\n                        body = part.get_payload(decode=True).decode(\"utf-8\", errors=\"replace\")\n            else:\n                body = msg.get_payload(decode=True).decode(\"utf-8\", errors=\"replace\")\n            emails.append({\"uid\": uid, \"from\": msg[\"From\"], \"subject\": subject, \"body\": body})\n        return emails",
+            filename: "email_fetcher.py",
+          },
+        ],
+      },
+      {
+        title: "Agent de classification et rédaction",
+        content:
+          "Construisez l'agent IA qui analyse chaque email, le catégorise, lui attribue une priorité et génère un brouillon de réponse. L'agent utilise le contexte de votre base de connaissances.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import anthropic\nimport json\n\nclient = anthropic.Anthropic()\n\ndef analyze_email(email_data: dict, knowledge_base: str) -> EmailAnalysis:\n    prompt = (\n        \"Tu es un agent de tri d'emails professionnel. \"\n        \"Analyse l'email suivant et retourne un JSON structuré.\\n\\n\"\n        \"Base de connaissances:\\n{kb}\\n\\n\"\n        \"Email:\\nDe: {sender}\\nSujet: {subject}\\nCorps: {body}\\n\\n\"\n        \"Retourne un JSON avec: category, priority, summary, \"\n        \"draft_response, suggested_action, confidence, needs_human_review\"\n    ).format(\n        kb=knowledge_base,\n        sender=email_data[\"from\"],\n        subject=email_data[\"subject\"],\n        body=email_data[\"body\"][:3000]\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=2048,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return EmailAnalysis.model_validate_json(message.content[0].text)",
+            filename: "classifier.py",
+          },
+        ],
+      },
+      {
+        title: "Pipeline de traitement automatisé",
+        content:
+          "Créez le pipeline complet qui orchestre la récupération, l'analyse et le routage des emails. Le pipeline tourne en boucle et traite les nouveaux messages toutes les minutes.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import time\nimport logging\n\nlogger = logging.getLogger(__name__)\n\ndef process_email_pipeline(config: dict):\n    emails = fetch_unread_emails(\n        config[\"imap_host\"], config[\"imap_user\"], config[\"imap_pass\"]\n    )\n    knowledge_base = load_knowledge_base(config[\"kb_path\"])\n    for email_data in emails:\n        try:\n            analysis = analyze_email(email_data, knowledge_base)\n            save_analysis(email_data[\"uid\"], analysis)\n            if analysis.priority == Priority.URGENT:\n                send_slack_alert(email_data, analysis)\n            if analysis.category == EmailCategory.SPAM:\n                move_to_spam(email_data[\"uid\"])\n                continue\n            if not analysis.needs_human_review and analysis.confidence > 0.85:\n                send_draft_response(email_data, analysis.draft_response)\n            else:\n                assign_to_agent(email_data, analysis)\n            logger.info(\"Email %s traite: %s / %s\", email_data[\"uid\"], analysis.category, analysis.priority)\n        except Exception as e:\n            logger.error(\"Erreur traitement email %s: %s\", email_data[\"uid\"], e)\n\ndef run_continuous(config: dict, interval: int = 60):\n    while True:\n        process_email_pipeline(config)\n        time.sleep(interval)",
+            filename: "pipeline.py",
+          },
+        ],
+      },
+      {
+        title: "API REST pour le dashboard",
+        content:
+          "Exposez une API FastAPI pour consulter les statistiques de tri, rechercher des emails analysés et ajuster les règles de classification en temps réel.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, Query\nfrom typing import Optional\n\napp = FastAPI(title=\"Email Automation Agent\")\n\n@app.get(\"/api/stats\")\nasync def get_stats():\n    return {\n        \"total_processed\": await count_processed_today(),\n        \"by_category\": await count_by_category(),\n        \"by_priority\": await count_by_priority(),\n        \"auto_responded\": await count_auto_responded(),\n        \"avg_confidence\": await avg_confidence_score()\n    }\n\n@app.get(\"/api/emails\")\nasync def list_emails(\n    category: Optional[str] = Query(None),\n    priority: Optional[str] = Query(None),\n    limit: int = Query(50, le=200)\n):\n    filters = {}\n    if category:\n        filters[\"category\"] = category\n    if priority:\n        filters[\"priority\"] = priority\n    return await fetch_analyzed_emails(filters, limit)",
+            filename: "api.py",
+          },
+        ],
+      },
+      {
+        title: "Tests unitaires",
+        content:
+          "Validez le bon fonctionnement de l'agent avec des tests couvrant chaque catégorie d'email et les cas limites (emails vides, pièces jointes, emails multilingues).",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pytest\nfrom models import EmailAnalysis, EmailCategory, Priority\nfrom classifier import analyze_email\n\ndef test_support_email_classification():\n    email = {\n        \"from\": \"client@example.com\",\n        \"subject\": \"Bug sur la page de paiement\",\n        \"body\": \"Bonjour, je n'arrive plus a finaliser mon achat. L'erreur 500 apparait.\"\n    }\n    result = analyze_email(email, \"FAQ: Les erreurs 500 sont liees au service de paiement.\")\n    assert result.category == EmailCategory.SUPPORT\n    assert result.priority in [Priority.URGENT, Priority.NORMAL]\n    assert result.confidence >= 0.7\n\ndef test_spam_detection():\n    email = {\n        \"from\": \"promo@spam.xyz\",\n        \"subject\": \"GAGNEZ 10000 EUR MAINTENANT\",\n        \"body\": \"Cliquez ici pour recevoir votre prix. Offre limitee.\"\n    }\n    result = analyze_email(email, \"\")\n    assert result.category == EmailCategory.SPAM\n\ndef test_urgent_email_flagged():\n    email = {\n        \"from\": \"directeur@enterprise.fr\",\n        \"subject\": \"URGENT - Systeme en panne\",\n        \"body\": \"Le systeme de production est hors service depuis 2 heures.\"\n    }\n    result = analyze_email(email, \"\")\n    assert result.priority == Priority.URGENT\n    assert result.needs_human_review is True",
+            filename: "test_classifier.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les emails contiennent souvent des données personnelles (noms, adresses, numéros de téléphone). Le contenu est pseudonymisé avant envoi au LLM : les emails, numéros de téléphone et adresses sont remplacés par des tokens. Les pièces jointes ne sont jamais envoyées au modèle. Les données sont chiffrées au repos (AES-256) et en transit (TLS 1.3).",
+      auditLog: "Chaque email traité génère une entrée d'audit : identifiant unique, horodatage de réception, catégorie attribuée, priorité, score de confiance, action prise (réponse auto, escalade, archivage), identifiant de l'agent humain si intervention. Conservation des logs pendant 3 ans.",
+      humanInTheLoop: "Les emails classés comme réclamation ou avec un score de confiance inférieur à 0.85 sont systématiquement soumis à un agent humain pour validation avant envoi de la réponse. Les emails marqués urgents déclenchent une notification immédiate au responsable d'équipe. Un bouton de correction permet de réajuster la classification.",
+      monitoring: "Dashboard temps réel : volume d'emails traités par heure, taux de classification automatique, taux de réponse automatique, temps moyen de traitement, distribution par catégorie, score de confiance moyen, taux de correction humaine, emails en attente de validation.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Trigger Email (IMAP/Gmail) toutes les minutes → Node Code (extraction contenu et métadonnées) → Node HTTP Request (API Claude pour classification) → Node Switch (catégorie) → Branch support: Node HTTP Request (recherche base de connaissances) → Node HTTP Request (génération réponse) → Branch urgent: Node Slack (alerte équipe) → Branch spam: Node Email (déplacement dossier spam) → Node PostgreSQL (sauvegarde analyse et audit).",
+      nodes: ["Email Trigger (IMAP)", "Code (extraction)", "HTTP Request (classification LLM)", "Switch (catégorie)", "HTTP Request (KB search)", "HTTP Request (réponse LLM)", "Slack (alerte urgent)", "Email (move spam)", "PostgreSQL (audit)"],
+      triggerType: "Email Trigger (IMAP polling toutes les 60 secondes)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Facile",
+    sectors: ["Services", "E-commerce", "B2B SaaS", "Technologie"],
+    metiers: ["Support Client", "Commercial", "Administration"],
+    functions: ["Support"],
+    metaTitle: "Agent IA d'Automatisation des Emails — Guide Complet",
+    metaDescription:
+      "Automatisez le tri et la réponse à vos emails avec un agent IA. Classification intelligente, priorisation automatique et brouillons de réponse personnalisés. Tutoriel pas-à-pas.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-analyse-appels-telephoniques",
+    title: "Agent d'Analyse des Appels Téléphoniques",
+    subtitle: "Transcrivez et analysez vos appels commerciaux et support avec Whisper et un LLM",
+    problem:
+      "Les entreprises perdent des insights précieux contenus dans leurs appels téléphoniques. Les managers n'ont pas le temps d'écouter des heures d'enregistrements, les bonnes pratiques ne sont pas partagées, et les signaux faibles (insatisfaction client, objections récurrentes) passent inaperçus.",
+    value:
+      "Un agent IA transcrit automatiquement chaque appel via Whisper, puis analyse la transcription avec un LLM pour extraire les points clés, le sentiment, les objections, les engagements pris et un score de qualité. Les managers obtiennent un tableau de bord synthétique de chaque conversation.",
+    inputs: [
+      "Enregistrement audio de l'appel (WAV, MP3, M4A)",
+      "Métadonnées de l'appel (date, durée, participants)",
+      "Fiche client CRM associée",
+      "Grille d'évaluation qualité (critères métier)",
+      "Historique des interactions précédentes",
+    ],
+    outputs: [
+      "Transcription complète horodatée",
+      "Résumé structuré de l'appel (3-5 points clés)",
+      "Analyse de sentiment par segment",
+      "Liste des objections et réponses apportées",
+      "Score de qualité de l'appel (0-100)",
+      "Engagements et prochaines étapes identifiées",
+    ],
+    risks: [
+      "Erreurs de transcription sur les termes techniques ou noms propres",
+      "Non-conformité RGPD si les participants n'ont pas consenti à l'enregistrement",
+      "Biais dans l'analyse de sentiment selon l'accent ou la langue",
+      "Utilisation abusive pour la surveillance excessive des employés",
+    ],
+    roiIndicatif:
+      "Réduction de 80% du temps de revue des appels par les managers. Amélioration de 25% du taux de conversion grâce au coaching ciblé. Détection 3x plus rapide des clients à risque de churn.",
+    recommendedStack: [
+      { name: "OpenAI Whisper Large V3", category: "Other" },
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "AWS S3", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Whisper.cpp (local)", category: "Other", isFree: true },
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "MinIO (S3 self-hosted)", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: "+-----------------+     +------------------+     +------------------+\n|  Enregistrement |---->|   Whisper        |---->|   Agent LLM      |\n|  Audio (S3)     |     |   (Transcription)|     |   (Analyse)      |\n+-----------------+     +------------------+     +--------+---------+\n                                                          |\n                        +------------------+     +--------v---------+\n                        |   Dashboard      |<----|   PostgreSQL     |\n                        |   (Résultats)    |     |   (Stockage)     |\n                        +------------------+     +------------------+",
+    tutorial: [
+      {
+        title: "Prérequis et installation",
+        content:
+          "Installez Whisper pour la transcription audio et les bibliothèques nécessaires pour l'analyse LLM. Vous aurez besoin de ffmpeg pour le traitement audio.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install openai-whisper anthropic langchain pydantic fastapi pydub psycopg2-binary\nbrew install ffmpeg  # macOS\n# apt install ffmpeg  # Linux",
+            filename: "terminal",
+          },
+        ],
+      },
+      {
+        title: "Modèles de données",
+        content:
+          "Définissez les structures pour la transcription, l'analyse et le score de qualité. Ces modèles garantissent une sortie structurée et validée.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from pydantic import BaseModel, Field\nfrom enum import Enum\nfrom typing import Optional\n\nclass Sentiment(str, Enum):\n    POSITIF = \"positif\"\n    NEUTRE = \"neutre\"\n    NEGATIF = \"negatif\"\n\nclass TranscriptSegment(BaseModel):\n    start_time: float\n    end_time: float\n    speaker: str\n    text: str\n    sentiment: Optional[Sentiment] = None\n\nclass Objection(BaseModel):\n    text: str\n    response_given: str\n    was_handled: bool\n\nclass CallAnalysis(BaseModel):\n    summary: str = Field(max_length=500)\n    key_points: list[str] = Field(min_length=1, max_length=5)\n    overall_sentiment: Sentiment\n    objections: list[Objection]\n    commitments: list[str]\n    next_steps: list[str]\n    quality_score: int = Field(ge=0, le=100)\n    coaching_tips: list[str]\n    churn_risk: bool = False",
+            filename: "models.py",
+          },
+        ],
+      },
+      {
+        title: "Transcription audio avec Whisper",
+        content:
+          "Utilisez Whisper pour transcrire l'audio en texte avec horodatage. Le modèle large-v3 offre la meilleure précision pour le français.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import whisper\nfrom models import TranscriptSegment\n\ndef transcribe_audio(audio_path: str, model_size: str = \"large-v3\") -> list[TranscriptSegment]:\n    model = whisper.load_model(model_size)\n    result = model.transcribe(\n        audio_path,\n        language=\"fr\",\n        task=\"transcribe\",\n        verbose=False\n    )\n    segments = []\n    for seg in result[\"segments\"]:\n        segments.append(TranscriptSegment(\n            start_time=seg[\"start\"],\n            end_time=seg[\"end\"],\n            speaker=\"inconnu\",  # diarisation separee\n            text=seg[\"text\"].strip()\n        ))\n    return segments\n\ndef format_transcript(segments: list[TranscriptSegment]) -> str:\n    lines = []\n    for seg in segments:\n        minutes = int(seg.start_time // 60)\n        seconds = int(seg.start_time % 60)\n        timestamp = \"{:02d}:{:02d}\".format(minutes, seconds)\n        lines.append(\"[{}] {}: {}\".format(timestamp, seg.speaker, seg.text))\n    return \"\\n\".join(lines)",
+            filename: "transcriber.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse de l'appel par le LLM",
+        content:
+          "Envoyez la transcription au LLM avec votre grille d'évaluation pour obtenir une analyse structurée : résumé, sentiment, objections, score de qualité et conseils de coaching.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import anthropic\nfrom models import CallAnalysis\n\nclient = anthropic.Anthropic()\n\ndef analyze_call(transcript: str, evaluation_grid: str, client_context: str) -> CallAnalysis:\n    prompt = (\n        \"Tu es un expert en analyse d'appels commerciaux et support.\\n\"\n        \"Analyse cette transcription et retourne un JSON structure.\\n\\n\"\n        \"Grille d'evaluation:\\n{grid}\\n\\n\"\n        \"Contexte client:\\n{ctx}\\n\\n\"\n        \"Transcription:\\n{transcript}\\n\\n\"\n        \"Retourne un JSON avec: summary, key_points (3-5), \"\n        \"overall_sentiment, objections (avec text, response_given, was_handled), \"\n        \"commitments, next_steps, quality_score (0-100), \"\n        \"coaching_tips, churn_risk\"\n    ).format(\n        grid=evaluation_grid,\n        ctx=client_context,\n        transcript=transcript[:8000]\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return CallAnalysis.model_validate_json(message.content[0].text)",
+            filename: "analyzer.py",
+          },
+        ],
+      },
+      {
+        title: "Pipeline complet de traitement",
+        content:
+          "Orchestrez le pipeline complet : récupération de l'audio depuis S3, transcription, analyse, et sauvegarde des résultats en base de données.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import boto3\nimport tempfile\nimport logging\nfrom pathlib import Path\n\nlogger = logging.getLogger(__name__)\ns3 = boto3.client(\"s3\")\n\ndef process_call(bucket: str, audio_key: str, call_metadata: dict) -> dict:\n    # Telecharger l'audio depuis S3\n    with tempfile.NamedTemporaryFile(suffix=\".wav\", delete=False) as tmp:\n        s3.download_file(bucket, audio_key, tmp.name)\n        audio_path = tmp.name\n    try:\n        # Etape 1 : Transcription\n        logger.info(\"Transcription de %s\", audio_key)\n        segments = transcribe_audio(audio_path)\n        transcript_text = format_transcript(segments)\n        # Etape 2 : Recuperer contexte CRM\n        client_context = get_crm_context(call_metadata[\"client_id\"])\n        evaluation_grid = load_evaluation_grid(call_metadata.get(\"type\", \"commercial\"))\n        # Etape 3 : Analyse LLM\n        logger.info(\"Analyse LLM de l'appel\")\n        analysis = analyze_call(transcript_text, evaluation_grid, client_context)\n        # Etape 4 : Sauvegarde\n        result = {\n            \"call_id\": call_metadata[\"call_id\"],\n            \"transcript\": transcript_text,\n            \"segments\": [s.model_dump() for s in segments],\n            \"analysis\": analysis.model_dump()\n        }\n        save_to_database(result)\n        # Etape 5 : Alertes\n        if analysis.churn_risk:\n            send_churn_alert(call_metadata, analysis)\n        if analysis.quality_score < 40:\n            notify_manager(call_metadata, analysis)\n        return result\n    finally:\n        Path(audio_path).unlink(missing_ok=True)",
+            filename: "pipeline.py",
+          },
+        ],
+      },
+      {
+        title: "API et dashboard",
+        content:
+          "Créez une API REST pour accéder aux analyses et alimenter le dashboard des managers. L'API permet de filtrer par commercial, période et score de qualité.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, Query, BackgroundTasks\nfrom typing import Optional\nfrom datetime import date\n\napp = FastAPI(title=\"Call Analysis Agent\")\n\n@app.post(\"/api/calls/analyze\")\nasync def submit_call(call: dict, bg: BackgroundTasks):\n    bg.add_task(process_call, call[\"bucket\"], call[\"audio_key\"], call[\"metadata\"])\n    return {\"status\": \"processing\", \"call_id\": call[\"metadata\"][\"call_id\"]}\n\n@app.get(\"/api/calls\")\nasync def list_calls(\n    agent: Optional[str] = None,\n    date_from: Optional[date] = None,\n    date_to: Optional[date] = None,\n    min_score: Optional[int] = Query(None, ge=0, le=100)\n):\n    filters = {}\n    if agent:\n        filters[\"agent\"] = agent\n    if date_from:\n        filters[\"date_from\"] = date_from\n    if date_to:\n        filters[\"date_to\"] = date_to\n    if min_score is not None:\n        filters[\"min_score\"] = min_score\n    return await fetch_call_analyses(filters)\n\n@app.get(\"/api/calls/{call_id}\")\nasync def get_call(call_id: str):\n    return await fetch_call_analysis(call_id)\n\n@app.get(\"/api/stats/coaching\")\nasync def coaching_stats(agent: Optional[str] = None):\n    return {\n        \"avg_quality_score\": await avg_quality_by_agent(agent),\n        \"top_objections\": await top_objections(agent),\n        \"sentiment_distribution\": await sentiment_dist(agent),\n        \"improvement_trend\": await quality_trend(agent)\n    }",
+            filename: "api.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et validation",
+        content:
+          "Testez le pipeline complet avec des enregistrements de test pour valider la qualité de transcription et la pertinence de l'analyse.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pytest\nfrom models import CallAnalysis, Sentiment\nfrom analyzer import analyze_call\n\nSAMPLE_TRANSCRIPT = (\n    \"[00:00] Commercial: Bonjour, merci d'avoir accepte cet appel.\\n\"\n    \"[00:05] Client: Bonjour, j'aimerais en savoir plus sur votre offre Enterprise.\\n\"\n    \"[00:15] Commercial: Bien sur. Quel est votre budget pour ce projet ?\\n\"\n    \"[00:22] Client: Nous avons un budget de 50000 euros annuels.\\n\"\n    \"[00:30] Commercial: Parfait, notre offre Enterprise est a 45000 par an.\\n\"\n    \"[00:40] Client: C'est interessant mais j'ai une objection sur le delai de mise en place.\\n\"\n    \"[00:50] Commercial: Nous garantissons un deploiement en 4 semaines.\"\n)\n\nEVAL_GRID = \"Criteres: accueil, decouverte des besoins, traitement des objections, closing\"\n\ndef test_call_analysis_structure():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"Client Enterprise, secteur Finance\")\n    assert isinstance(result, CallAnalysis)\n    assert 0 <= result.quality_score <= 100\n    assert len(result.key_points) >= 1\n    assert result.overall_sentiment in list(Sentiment)\n\ndef test_objection_detection():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"\")\n    assert len(result.objections) >= 1\n    assert any(\"delai\" in obj.text.lower() or \"mise en place\" in obj.text.lower() for obj in result.objections)\n\ndef test_commitment_extraction():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"\")\n    assert len(result.commitments) >= 0  # Peut ne pas y avoir d'engagement formel\n    assert len(result.next_steps) >= 1",
+            filename: "test_analyzer.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les enregistrements audio contiennent des données personnelles sensibles. Les fichiers sont stockés chiffrés sur S3 (SSE-KMS). La transcription est traitée en mémoire et seuls les résumés anonymisés sont envoyés au LLM. Les noms et numéros de compte sont masqués avant l'analyse. Consentement obligatoire des deux parties avant enregistrement (conformité RGPD et CNIL).",
+      auditLog: "Traçabilité complète : horodatage de l'appel, durée, participants, hash de l'enregistrement audio, résultat de transcription, résultat d'analyse, score de qualité, actions déclenchées (alertes, notifications). Conservation des enregistrements selon la politique interne (6 mois par défaut). Logs d'accès aux transcriptions.",
+      humanInTheLoop: "Les appels avec un score de qualité inférieur à 50 sont escaladés au manager pour revue manuelle. Les alertes churn déclenchent une action du responsable compte. Les commerciaux peuvent contester le score et demander une ré-évaluation. Le manager valide les coaching tips avant partage avec l'agent.",
+      monitoring: "Dashboard temps réel : nombre d'appels analysés par jour, score de qualité moyen par agent, tendance de qualité sur 30 jours, top 5 des objections récurrentes, répartition des sentiments, taux de détection de churn, durée moyenne des appels, corrélation score/conversion.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Trigger Webhook (nouvel enregistrement déposé sur S3) → Node AWS S3 (téléchargement audio) → Node HTTP Request (API Whisper transcription) → Node Code (formatage transcription) → Node HTTP Request (API Claude analyse) → Node PostgreSQL (sauvegarde résultats) → Node Switch (score qualité) → Branch score < 50: Node Slack (alerte manager) → Branch churn détecté: Node Email (alerte responsable compte) → Node HTTP Request (mise à jour CRM).",
+      nodes: ["Webhook (S3 event)", "AWS S3 (download)", "HTTP Request (Whisper)", "Code (formatage)", "HTTP Request (Claude analyse)", "PostgreSQL (sauvegarde)", "Switch (score)", "Slack (alerte manager)", "Email (alerte churn)", "HTTP Request (CRM update)"],
+      triggerType: "Webhook (événement S3 - nouvel enregistrement audio déposé)",
+    },
+    estimatedTime: "10-16h",
+    difficulty: "Expert",
+    sectors: ["B2B SaaS", "Assurance", "Banque", "Telecom", "Services"],
+    metiers: ["Commercial", "Support Client", "Direction Commerciale", "Formation"],
+    functions: ["Sales"],
+    metaTitle: "Agent IA d'Analyse des Appels Téléphoniques — Guide Expert",
+    metaDescription:
+      "Transcrivez et analysez vos appels commerciaux et support avec un agent IA. Whisper pour la transcription, Claude pour l'analyse de sentiment, détection d'objections et coaching. Tutoriel complet.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-generation-rapports",
+    title: "Agent de Génération Automatique de Rapports",
+    subtitle: "Générez automatiquement des rapports hebdomadaires et mensuels à partir de sources de données multiples",
+    problem:
+      "Les équipes finance et direction passent des heures chaque semaine à consolider des données provenant de multiples sources (ERP, CRM, comptabilité, RH) pour produire des rapports. Le processus est manuel, sujet aux erreurs de copier-coller, et les rapports arrivent souvent en retard.",
+    value:
+      "Un agent IA collecte automatiquement les données depuis vos sources, les consolide, détecte les anomalies et les tendances, puis génère un rapport structuré avec des visualisations et des commentaires analytiques en langage naturel. Les rapports sont livrés à l'heure, chaque semaine.",
+    inputs: [
+      "Données financières (ERP, comptabilité)",
+      "Données commerciales (CRM, pipeline)",
+      "Données RH (effectifs, absentéisme)",
+      "KPIs et objectifs définis par la direction",
+      "Modèle de rapport (template configurable)",
+      "Rapports précédents pour comparaison",
+    ],
+    outputs: [
+      "Rapport PDF/HTML structuré avec graphiques",
+      "Tableau de synthèse des KPIs avec évolution",
+      "Commentaires analytiques générés par IA",
+      "Alertes sur anomalies et écarts significatifs",
+      "Fichier Excel annexe avec données brutes",
+    ],
+    risks: [
+      "Erreurs de calcul ou d'agrégation des données",
+      "Interprétation erronée des tendances par le LLM",
+      "Indisponibilité d'une source de données bloquant le rapport",
+      "Diffusion de données confidentielles si le rapport est mal routé",
+    ],
+    roiIndicatif:
+      "Réduction de 90% du temps de préparation des rapports. Livraison systématique à l'heure (vs 60% avant). Détection automatique de 30% d'anomalies supplémentaires grâce à l'analyse IA.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "AWS Lambda", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+      { name: "WeasyPrint", category: "Other" },
+    ],
+    lowCostAlternatives: [
+      { name: "Mistral Large", category: "LLM", isFree: false },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+    ],
+    architectureDiagram: "+-----------+  +-----------+  +-----------+\n|   ERP     |  |   CRM     |  |   RH      |\n+-----+-----+  +-----+-----+  +-----+-----+\n      |              |              |\n      v              v              v\n+------------------------------------------+\n|        Agent LLM (Consolidation           |\n|        + Analyse + Rédaction)             |\n+---------------------+--------------------+\n                      |\n              +-------v--------+\n              |  Rapport PDF   |\n              |  + Email auto  |\n              +----------------+",
+    tutorial: [
+      {
+        title: "Prérequis et installation",
+        content:
+          "Installez les bibliothèques pour la connexion aux sources de données, la génération de graphiques et la création de PDF. Configurez les accès aux différentes APIs.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install anthropic langchain pandas matplotlib weasyprint jinja2 sqlalchemy psycopg2-binary requests schedule",
+            filename: "terminal",
+          },
+        ],
+      },
+      {
+        title: "Connecteurs de données",
+        content:
+          "Créez des connecteurs pour chaque source de données. Chaque connecteur implémente une interface commune et retourne un DataFrame pandas standardisé.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pandas as pd\nfrom abc import ABC, abstractmethod\nfrom sqlalchemy import create_engine\nimport requests\n\nclass DataConnector(ABC):\n    @abstractmethod\n    def fetch_data(self, date_from: str, date_to: str) -> pd.DataFrame:\n        pass\n\nclass ERPConnector(DataConnector):\n    def __init__(self, connection_string: str):\n        self.engine = create_engine(connection_string)\n\n    def fetch_data(self, date_from: str, date_to: str) -> pd.DataFrame:\n        query = (\n            \"SELECT date_comptable, compte, libelle, montant_debit, montant_credit \"\n            \"FROM ecritures_comptables \"\n            \"WHERE date_comptable BETWEEN '{}' AND '{}'\"\n        ).format(date_from, date_to)\n        return pd.read_sql(query, self.engine)\n\nclass CRMConnector(DataConnector):\n    def __init__(self, api_url: str, api_key: str):\n        self.api_url = api_url\n        self.headers = {\"Authorization\": \"Bearer \" + api_key}\n\n    def fetch_data(self, date_from: str, date_to: str) -> pd.DataFrame:\n        response = requests.get(\n            self.api_url + \"/deals\",\n            headers=self.headers,\n            params={\"date_from\": date_from, \"date_to\": date_to}\n        )\n        response.raise_for_status()\n        return pd.DataFrame(response.json()[\"deals\"])",
+            filename: "connectors.py",
+          },
+        ],
+      },
+      {
+        title: "Agrégation et calcul des KPIs",
+        content:
+          "Consolidez les données de toutes les sources et calculez les KPIs définis. Comparez avec la période précédente pour détecter les tendances et anomalies.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pandas as pd\nfrom dataclasses import dataclass\nfrom typing import Optional\n\n@dataclass\nclass KPI:\n    name: str\n    value: float\n    previous_value: Optional[float]\n    target: Optional[float]\n    unit: str\n\n    @property\n    def variation_pct(self) -> Optional[float]:\n        if self.previous_value and self.previous_value != 0:\n            return ((self.value - self.previous_value) / abs(self.previous_value)) * 100\n        return None\n\n    @property\n    def is_on_target(self) -> Optional[bool]:\n        if self.target:\n            return self.value >= self.target\n        return None\n\ndef compute_financial_kpis(erp_data: pd.DataFrame, previous_erp: pd.DataFrame, targets: dict) -> list[KPI]:\n    ca_current = erp_data[erp_data[\"compte\"].str.startswith(\"70\")][\"montant_credit\"].sum()\n    ca_previous = previous_erp[previous_erp[\"compte\"].str.startswith(\"70\")][\"montant_credit\"].sum()\n    charges_current = erp_data[erp_data[\"compte\"].str.startswith(\"6\")][\"montant_debit\"].sum()\n    charges_previous = previous_erp[previous_erp[\"compte\"].str.startswith(\"6\")][\"montant_debit\"].sum()\n    marge = ca_current - charges_current\n    return [\n        KPI(\"Chiffre d'affaires\", ca_current, ca_previous, targets.get(\"ca\"), \"EUR\"),\n        KPI(\"Charges totales\", charges_current, charges_previous, None, \"EUR\"),\n        KPI(\"Marge brute\", marge, ca_previous - charges_previous, targets.get(\"marge\"), \"EUR\"),\n        KPI(\"Taux de marge\", (marge / ca_current * 100) if ca_current else 0, None, targets.get(\"taux_marge\"), \"%\"),\n    ]",
+            filename: "kpis.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse et commentaires par le LLM",
+        content:
+          "Envoyez les KPIs calculés et les données agrégées au LLM pour générer des commentaires analytiques en langage naturel. L'agent identifie les tendances, les risques et les recommandations.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import anthropic\nimport json\n\nclient = anthropic.Anthropic()\n\ndef generate_analysis(kpis: list[KPI], raw_data_summary: str, previous_report_summary: str) -> dict:\n    kpi_text = \"\\n\".join(\n        \"{name}: {value} {unit} (variation: {var}%, cible: {target})\".format(\n            name=k.name, value=k.value, unit=k.unit,\n            var=round(k.variation_pct, 1) if k.variation_pct else \"N/A\",\n            target=k.target or \"N/A\"\n        )\n        for k in kpis\n    )\n    prompt = (\n        \"Tu es un analyste financier senior. Analyse ces KPIs et genere :\\n\"\n        \"1. Un commentaire executif (3-5 phrases)\\n\"\n        \"2. Les points positifs (max 3)\\n\"\n        \"3. Les points d'attention (max 3)\\n\"\n        \"4. Les recommandations (max 3)\\n\"\n        \"5. Les anomalies detectees\\n\\n\"\n        \"KPIs:\\n{kpis}\\n\\n\"\n        \"Resume des donnees:\\n{data}\\n\\n\"\n        \"Rapport precedent:\\n{previous}\\n\\n\"\n        \"Retourne un JSON structure.\"\n    ).format(kpis=kpi_text, data=raw_data_summary, previous=previous_report_summary)\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return json.loads(message.content[0].text)",
+            filename: "analysis.py",
+          },
+        ],
+      },
+      {
+        title: "Génération du rapport PDF",
+        content:
+          "Utilisez Jinja2 et WeasyPrint pour générer un rapport PDF professionnel intégrant les KPIs, graphiques et commentaires analytiques.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from jinja2 import Environment, FileSystemLoader\nfrom weasyprint import HTML\nimport matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nimport io\nimport base64\n\ndef create_kpi_chart(kpis: list[KPI]) -> str:\n    fig, ax = plt.subplots(figsize=(10, 4))\n    names = [k.name for k in kpis if k.unit == \"EUR\"]\n    values = [k.value for k in kpis if k.unit == \"EUR\"]\n    prev_values = [k.previous_value or 0 for k in kpis if k.unit == \"EUR\"]\n    x = range(len(names))\n    ax.bar([i - 0.2 for i in x], prev_values, 0.4, label=\"Precedent\", color=\"#94a3b8\")\n    ax.bar([i + 0.2 for i in x], values, 0.4, label=\"Actuel\", color=\"#3b82f6\")\n    ax.set_xticks(list(x))\n    ax.set_xticklabels(names, rotation=15)\n    ax.legend()\n    ax.set_title(\"Comparaison des KPIs financiers\")\n    buf = io.BytesIO()\n    fig.savefig(buf, format=\"png\", bbox_inches=\"tight\")\n    plt.close(fig)\n    return base64.b64encode(buf.getvalue()).decode()\n\ndef generate_pdf_report(kpis: list[KPI], analysis: dict, chart_b64: str, period: str) -> bytes:\n    env = Environment(loader=FileSystemLoader(\"templates\"))\n    template = env.get_template(\"report.html\")\n    html_content = template.render(\n        period=period, kpis=kpis, analysis=analysis, chart_image=chart_b64\n    )\n    return HTML(string=html_content).write_pdf()",
+            filename: "report_generator.py",
+          },
+        ],
+      },
+      {
+        title: "Orchestration et planification",
+        content:
+          "Planifiez la génération automatique des rapports avec un scheduler. Le pipeline complet s'exécute à heure fixe et envoie le rapport par email aux destinataires configurés.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import schedule\nimport time\nimport smtplib\nfrom email.mime.multipart import MIMEMultipart\nfrom email.mime.base import MIMEBase\nfrom email.mime.text import MIMEText\nfrom email import encoders\nfrom datetime import datetime, timedelta\n\ndef run_weekly_report(config: dict):\n    date_to = datetime.now().strftime(\"%Y-%m-%d\")\n    date_from = (datetime.now() - timedelta(days=7)).strftime(\"%Y-%m-%d\")\n    prev_from = (datetime.now() - timedelta(days=14)).strftime(\"%Y-%m-%d\")\n    prev_to = date_from\n    # Collecte des donnees\n    erp = ERPConnector(config[\"erp_dsn\"]).fetch_data(date_from, date_to)\n    prev_erp = ERPConnector(config[\"erp_dsn\"]).fetch_data(prev_from, prev_to)\n    crm = CRMConnector(config[\"crm_url\"], config[\"crm_key\"]).fetch_data(date_from, date_to)\n    # Calcul KPIs\n    kpis = compute_financial_kpis(erp, prev_erp, config[\"targets\"])\n    # Analyse LLM\n    analysis = generate_analysis(kpis, erp.describe().to_string(), \"\")\n    # Graphique\n    chart = create_kpi_chart(kpis)\n    # Generation PDF\n    pdf_bytes = generate_pdf_report(kpis, analysis, chart, date_from + \" au \" + date_to)\n    # Envoi email\n    send_report_email(config[\"recipients\"], pdf_bytes, date_from + \" au \" + date_to)\n\ndef send_report_email(recipients: list[str], pdf_bytes: bytes, period: str):\n    msg = MIMEMultipart()\n    msg[\"Subject\"] = \"Rapport hebdomadaire - \" + period\n    msg[\"From\"] = \"rapports@entreprise.fr\"\n    msg[\"To\"] = \", \".join(recipients)\n    msg.attach(MIMEText(\"Veuillez trouver ci-joint le rapport hebdomadaire.\", \"plain\"))\n    attachment = MIMEBase(\"application\", \"pdf\")\n    attachment.set_payload(pdf_bytes)\n    encoders.encode_base64(attachment)\n    attachment.add_header(\"Content-Disposition\", \"attachment\", filename=\"rapport.pdf\")\n    msg.attach(attachment)\n    with smtplib.SMTP_SSL(\"smtp.entreprise.fr\", 465) as server:\n        server.login(\"rapports@entreprise.fr\", \"password\")\n        server.send_message(msg)\n\nschedule.every().monday.at(\"08:00\").do(run_weekly_report, config=CONFIG)\n\nwhile True:\n    schedule.run_pending()\n    time.sleep(60)",
+            filename: "scheduler.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et validation",
+        content:
+          "Validez le pipeline de bout en bout avec des données de test. Vérifiez le calcul des KPIs, la qualité de l'analyse LLM et la génération correcte du PDF.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pytest\nimport pandas as pd\nfrom kpis import KPI, compute_financial_kpis\nfrom analysis import generate_analysis\n\ndef test_kpi_variation():\n    kpi = KPI(\"CA\", 120000, 100000, 110000, \"EUR\")\n    assert kpi.variation_pct == 20.0\n    assert kpi.is_on_target is True\n\ndef test_kpi_no_previous():\n    kpi = KPI(\"CA\", 120000, None, 110000, \"EUR\")\n    assert kpi.variation_pct is None\n\ndef test_financial_kpis_computation():\n    erp_current = pd.DataFrame({\n        \"compte\": [\"701000\", \"701000\", \"601000\", \"602000\"],\n        \"montant_credit\": [50000, 70000, 0, 0],\n        \"montant_debit\": [0, 0, 30000, 20000],\n        \"libelle\": [\"Vente A\", \"Vente B\", \"Achat X\", \"Achat Y\"],\n        \"date_comptable\": [\"2025-02-01\"] * 4\n    })\n    erp_previous = pd.DataFrame({\n        \"compte\": [\"701000\", \"601000\"],\n        \"montant_credit\": [90000, 0],\n        \"montant_debit\": [0, 40000],\n        \"libelle\": [\"Vente\", \"Achat\"],\n        \"date_comptable\": [\"2025-01-25\"] * 2\n    })\n    kpis = compute_financial_kpis(erp_current, erp_previous, {\"ca\": 100000})\n    assert kpis[0].name == \"Chiffre d'affaires\"\n    assert kpis[0].value == 120000\n    assert kpis[0].is_on_target is True\n\ndef test_llm_analysis_structure():\n    kpis = [\n        KPI(\"CA\", 120000, 100000, 110000, \"EUR\"),\n        KPI(\"Marge\", 70000, 60000, 65000, \"EUR\"),\n    ]\n    result = generate_analysis(kpis, \"Donnees resume test\", \"Rapport precedent OK\")\n    assert \"commentaire\" in result or \"executive_summary\" in result\n    assert isinstance(result, dict)",
+            filename: "test_reports.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données financières sont sensibles et confidentielles. Seules des données agrégées (KPIs, totaux par catégorie) sont envoyées au LLM, jamais les écritures comptables détaillées ni les noms de clients. Les rapports générés sont chiffrés et l'accès est contrôlé par rôle (RBAC). Les données transitent exclusivement via des canaux chiffrés (TLS 1.3).",
+      auditLog: "Chaque exécution du pipeline génère un log complet : horodatage, sources interrogées, nombre de lignes collectées, KPIs calculés, modèle LLM utilisé, tokens consommés, rapport généré (hash SHA-256), destinataires notifiés. Les logs sont conservés 5 ans pour conformité comptable.",
+      humanInTheLoop: "Le rapport est envoyé en mode brouillon au DAF ou contrôleur de gestion pour validation avant diffusion au comité de direction. Les anomalies détectées avec un score de confiance inférieur à 0.8 sont signalées pour vérification manuelle. Un workflow d'approbation permet de corriger et republier le rapport.",
+      monitoring: "Dashboard de suivi : taux de succès des exécutions, temps de génération, nombre de sources connectées, volume de données traitées, tokens LLM consommés, nombre de rapports générés par semaine, taux d'anomalies détectées, feedback des destinataires (utile/inutile).",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (lundi 8h) → Node PostgreSQL (données ERP) → Node HTTP Request (données CRM) → Node Code (calcul KPIs et agrégation) → Node HTTP Request (API Claude analyse) → Node Code (génération graphiques matplotlib) → Node Code (génération HTML Jinja2) → Node HTTP Request (WeasyPrint PDF) → Node Email (envoi rapport aux destinataires) → Node PostgreSQL (log d'audit).",
+      nodes: ["Cron Trigger (lundi 8h)", "PostgreSQL (ERP data)", "HTTP Request (CRM data)", "Code (calcul KPIs)", "HTTP Request (Claude analyse)", "Code (graphiques)", "Code (HTML Jinja2)", "HTTP Request (PDF)", "Email (envoi rapport)", "PostgreSQL (audit log)"],
+      triggerType: "Cron Trigger (planification hebdomadaire lundi 8h00)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["Finance", "Services", "Industrie", "Retail", "Technologie"],
+    metiers: ["Direction Financière", "Contrôle de Gestion", "Direction Générale", "Comptabilité"],
+    functions: ["Finance"],
+    metaTitle: "Agent IA de Génération Automatique de Rapports — Guide Complet",
+    metaDescription:
+      "Automatisez la génération de vos rapports financiers hebdomadaires et mensuels avec un agent IA. Consolidation multi-sources, analyse intelligente et PDF automatique. Tutoriel pas-à-pas.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-gestion-faq-dynamique",
+    title: "Agent de Gestion de FAQ Dynamique",
+    subtitle: "Mettez à jour automatiquement votre FAQ à partir des tickets de support et détectez les nouvelles questions émergentes",
+    problem:
+      "Les FAQ deviennent rapidement obsolètes car leur mise à jour est manuelle. Les nouvelles questions récurrentes ne sont pas détectées à temps, les clients ne trouvent pas de réponses à jour, et le volume de tickets augmente inutilement sur des sujets déjà documentés mais mal référencés.",
+    value:
+      "Un agent IA analyse en continu les tickets de support entrants, identifie les questions récurrentes non couvertes par la FAQ, génère automatiquement de nouvelles entrées, et propose la mise à jour des réponses existantes devenues obsolètes. Le taux de self-service augmente significativement.",
+    inputs: [
+      "Tickets de support résolus (texte question + réponse)",
+      "FAQ existante (questions, réponses, catégories)",
+      "Base de connaissances interne",
+      "Logs de recherche sur le site (requêtes sans résultat)",
+      "Feedback utilisateurs sur les articles FAQ",
+    ],
+    outputs: [
+      "Nouvelles entrées FAQ générées (question + réponse)",
+      "Mises à jour proposées pour les entrées existantes",
+      "Rapport de détection de questions émergentes",
+      "Score de couverture FAQ (% de sujets couverts)",
+      "Entrées FAQ à archiver (obsolètes)",
+    ],
+    risks: [
+      "Génération de réponses incorrectes ou imprécises dans la FAQ",
+      "Doublons de questions formulées différemment",
+      "Perte de cohérence de ton entre entrées manuelles et générées",
+      "Publication automatique d'informations erronées sans validation",
+    ],
+    roiIndicatif:
+      "Augmentation de 50% du taux de self-service. Réduction de 35% du volume de tickets de niveau 1. FAQ toujours à jour avec un effort de maintenance réduit de 80%.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL + pgvector", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Mistral Small", category: "LLM", isFree: false },
+      { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "Make.com", category: "Orchestration", isFree: false },
+    ],
+    architectureDiagram: "+------------------+     +------------------+     +------------------+\n|   Tickets        |---->|   Agent LLM      |---->|   FAQ CMS        |\n|   Support        |     |   (Analyse +     |     |   (Publication)  |\n+------------------+     |   Generation)    |     +------------------+\n                          +--------+---------+\n+------------------+               |\n|   Recherches     |------->-------+\n|   sans resultat  |\n+------------------+",
+    tutorial: [
+      {
+        title: "Prérequis et installation",
+        content:
+          "Installez les dépendances nécessaires pour l'analyse sémantique des tickets, la recherche vectorielle et la génération de contenu FAQ.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install anthropic langchain pgvector psycopg2-binary sentence-transformers pydantic fastapi numpy",
+            filename: "terminal",
+          },
+        ],
+      },
+      {
+        title: "Modèles de données",
+        content:
+          "Définissez les structures pour les entrées FAQ, les clusters de questions et les propositions de mises à jour. Le modèle inclut le statut de validation et le score de pertinence.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from pydantic import BaseModel, Field\nfrom enum import Enum\nfrom typing import Optional\nfrom datetime import datetime\n\nclass FAQStatus(str, Enum):\n    DRAFT = \"brouillon\"\n    PENDING_REVIEW = \"en_attente_validation\"\n    PUBLISHED = \"publie\"\n    ARCHIVED = \"archive\"\n\nclass FAQEntry(BaseModel):\n    id: Optional[str] = None\n    question: str\n    answer: str\n    category: str\n    tags: list[str]\n    status: FAQStatus = FAQStatus.DRAFT\n    relevance_score: float = Field(ge=0.0, le=1.0)\n    source_ticket_ids: list[str] = []\n    created_at: Optional[datetime] = None\n    updated_at: Optional[datetime] = None\n\nclass QuestionCluster(BaseModel):\n    representative_question: str\n    similar_questions: list[str]\n    ticket_count: int\n    existing_faq_match: Optional[str] = None\n    match_score: float = Field(ge=0.0, le=1.0, default=0.0)\n\nclass FAQUpdateProposal(BaseModel):\n    action: str  # \"create\", \"update\", \"archive\"\n    entry: FAQEntry\n    reason: str\n    confidence: float = Field(ge=0.0, le=1.0)",
+            filename: "models.py",
+          },
+        ],
+      },
+      {
+        title: "Détection de questions récurrentes",
+        content:
+          "Utilisez les embeddings pour regrouper les questions similaires provenant des tickets de support. Les clusters de questions permettent d'identifier les sujets récurrents non couverts par la FAQ.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import numpy as np\nfrom sentence_transformers import SentenceTransformer\nfrom sklearn.cluster import DBSCAN\n\nembedder = SentenceTransformer(\"paraphrase-multilingual-MiniLM-L12-v2\")\n\ndef cluster_questions(tickets: list[dict], eps: float = 0.3) -> list[QuestionCluster]:\n    questions = [t[\"subject\"] + \" \" + t[\"body\"][:200] for t in tickets]\n    embeddings = embedder.encode(questions, normalize_embeddings=True)\n    clustering = DBSCAN(eps=eps, min_samples=3, metric=\"cosine\").fit(embeddings)\n    clusters = []\n    for label in set(clustering.labels_):\n        if label == -1:\n            continue\n        indices = np.where(clustering.labels_ == label)[0]\n        cluster_questions_list = [questions[i] for i in indices]\n        # Choisir la question la plus representative (proche du centroide)\n        centroid = embeddings[indices].mean(axis=0)\n        distances = np.linalg.norm(embeddings[indices] - centroid, axis=1)\n        representative_idx = indices[np.argmin(distances)]\n        clusters.append(QuestionCluster(\n            representative_question=questions[representative_idx],\n            similar_questions=cluster_questions_list[:10],\n            ticket_count=len(indices)\n        ))\n    return sorted(clusters, key=lambda c: c.ticket_count, reverse=True)",
+            filename: "clustering.py",
+          },
+        ],
+      },
+      {
+        title: "Matching avec la FAQ existante",
+        content:
+          "Comparez chaque cluster de questions avec les entrées FAQ existantes pour identifier les lacunes (questions sans réponse) et les mises à jour nécessaires.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from pgvector.psycopg2 import register_vector\nimport psycopg2\n\ndef match_clusters_to_faq(clusters: list[QuestionCluster], db_config: dict) -> list[QuestionCluster]:\n    conn = psycopg2.connect(**db_config)\n    register_vector(conn)\n    cur = conn.cursor()\n    for cluster in clusters:\n        embedding = embedder.encode([cluster.representative_question], normalize_embeddings=True)[0]\n        cur.execute(\n            \"SELECT id, question, 1 - (embedding <=> %s::vector) as similarity \"\n            \"FROM faq_entries WHERE status = 'publie' \"\n            \"ORDER BY embedding <=> %s::vector LIMIT 1\",\n            (embedding.tolist(), embedding.tolist())\n        )\n        result = cur.fetchone()\n        if result and result[2] > 0.75:\n            cluster.existing_faq_match = result[1]\n            cluster.match_score = float(result[2])\n        else:\n            cluster.match_score = 0.0\n    conn.close()\n    return clusters\n\ndef identify_gaps(clusters: list[QuestionCluster]) -> list[QuestionCluster]:\n    return [c for c in clusters if c.match_score < 0.75 and c.ticket_count >= 5]",
+            filename: "matcher.py",
+          },
+        ],
+      },
+      {
+        title: "Génération de contenu FAQ par le LLM",
+        content:
+          "Pour chaque lacune identifiée, générez automatiquement une entrée FAQ avec question formatée, réponse complète, catégorie et tags. Le LLM utilise les tickets résolus comme source de vérité.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import anthropic\n\nclient = anthropic.Anthropic()\n\ndef generate_faq_entry(cluster: QuestionCluster, resolved_tickets: list[dict], existing_faq: list[dict]) -> FAQEntry:\n    tickets_text = \"\\n---\\n\".join(\n        \"Q: {q}\\nR: {r}\".format(q=t[\"subject\"], r=t[\"resolution\"][:500])\n        for t in resolved_tickets[:5]\n    )\n    faq_context = \"\\n\".join(\n        \"- {q}\".format(q=f[\"question\"]) for f in existing_faq[:20]\n    )\n    prompt = (\n        \"Tu es un redacteur de FAQ professionnel.\\n\"\n        \"A partir des tickets de support resolus ci-dessous, genere une entree FAQ.\\n\\n\"\n        \"Tickets resolus sur ce sujet:\\n{tickets}\\n\\n\"\n        \"FAQ existante (pour eviter les doublons):\\n{faq}\\n\\n\"\n        \"Question representative: {question}\\n\\n\"\n        \"Genere un JSON avec: question (reformulee clairement), \"\n        \"answer (reponse complete et structuree), category, tags (liste), \"\n        \"relevance_score (0-1 selon la pertinence)\"\n    ).format(\n        tickets=tickets_text,\n        faq=faq_context,\n        question=cluster.representative_question\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=2048,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    data = FAQEntry.model_validate_json(message.content[0].text)\n    data.source_ticket_ids = [t[\"id\"] for t in resolved_tickets[:5]]\n    data.status = FAQStatus.PENDING_REVIEW\n    return data",
+            filename: "generator.py",
+          },
+        ],
+      },
+      {
+        title: "Pipeline complet et API",
+        content:
+          "Orchestrez le pipeline complet de détection, matching et génération. Exposez une API pour consulter les propositions et les valider via un workflow d'approbation.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, Query\nfrom typing import Optional\n\napp = FastAPI(title=\"Dynamic FAQ Agent\")\n\ndef run_faq_pipeline(config: dict) -> list[FAQUpdateProposal]:\n    # Recuperer les tickets recents non traites\n    tickets = fetch_recent_tickets(config[\"helpdesk_api\"], days=7)\n    # Regrouper les questions similaires\n    clusters = cluster_questions(tickets)\n    # Comparer avec la FAQ existante\n    clusters = match_clusters_to_faq(clusters, config[\"db\"])\n    # Identifier les lacunes\n    gaps = identify_gaps(clusters)\n    proposals = []\n    for cluster in gaps:\n        resolved = get_resolved_tickets_for_cluster(cluster, tickets)\n        entry = generate_faq_entry(cluster, resolved, fetch_existing_faq(config[\"db\"]))\n        proposals.append(FAQUpdateProposal(\n            action=\"create\",\n            entry=entry,\n            reason=\"{count} tickets sur ce sujet sans entree FAQ correspondante\".format(count=cluster.ticket_count),\n            confidence=entry.relevance_score\n        ))\n    save_proposals(proposals, config[\"db\"])\n    return proposals\n\n@app.get(\"/api/faq/proposals\")\nasync def list_proposals(status: Optional[str] = Query(None)):\n    return await fetch_proposals(status)\n\n@app.post(\"/api/faq/proposals/{proposal_id}/approve\")\nasync def approve_proposal(proposal_id: str):\n    proposal = await get_proposal(proposal_id)\n    await publish_faq_entry(proposal.entry)\n    await update_proposal_status(proposal_id, \"approved\")\n    return {\"status\": \"published\"}\n\n@app.post(\"/api/faq/proposals/{proposal_id}/reject\")\nasync def reject_proposal(proposal_id: str, reason: str = \"\"):\n    await update_proposal_status(proposal_id, \"rejected\", reason)\n    return {\"status\": \"rejected\"}\n\n@app.get(\"/api/faq/coverage\")\nasync def faq_coverage():\n    return {\n        \"total_topics_detected\": await count_topic_clusters(),\n        \"topics_covered\": await count_covered_topics(),\n        \"coverage_rate\": await compute_coverage_rate(),\n        \"top_uncovered_topics\": await top_uncovered(limit=10)\n    }",
+            filename: "api.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et validation",
+        content:
+          "Testez le clustering de questions, le matching avec la FAQ existante et la qualité des entrées générées. Validez que les doublons sont correctement détectés.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pytest\nfrom models import QuestionCluster, FAQEntry, FAQStatus\nfrom clustering import cluster_questions\nfrom generator import generate_faq_entry\n\ndef test_question_clustering():\n    tickets = [\n        {\"subject\": \"Comment reinitialiser mon mot de passe ?\", \"body\": \"Je n'arrive plus a me connecter\"},\n        {\"subject\": \"Mot de passe oublie\", \"body\": \"J'ai oublie mon mot de passe\"},\n        {\"subject\": \"Reset password\", \"body\": \"Comment changer mon mot de passe\"},\n        {\"subject\": \"Probleme connexion mot de passe\", \"body\": \"Mon mot de passe ne fonctionne plus\"},\n        {\"subject\": \"Facture introuvable\", \"body\": \"Je ne trouve pas ma facture\"},\n    ]\n    clusters = cluster_questions(tickets, eps=0.4)\n    # Les questions sur le mot de passe doivent etre regroupees\n    password_cluster = [c for c in clusters if \"mot de passe\" in c.representative_question.lower() or \"password\" in c.representative_question.lower()]\n    assert len(password_cluster) >= 1\n    assert password_cluster[0].ticket_count >= 3\n\ndef test_faq_generation_quality():\n    cluster = QuestionCluster(\n        representative_question=\"Comment reinitialiser mon mot de passe ?\",\n        similar_questions=[\"Mot de passe oublie\", \"Reset password\"],\n        ticket_count=15\n    )\n    resolved = [\n        {\"id\": \"T001\", \"subject\": \"Mot de passe oublie\", \"resolution\": \"Allez sur la page de connexion, cliquez sur Mot de passe oublie, entrez votre email, suivez le lien recu.\"},\n        {\"id\": \"T002\", \"subject\": \"Reset password\", \"resolution\": \"Utilisez le lien de reinitialisation disponible sur la page login.\"},\n    ]\n    entry = generate_faq_entry(cluster, resolved, [])\n    assert isinstance(entry, FAQEntry)\n    assert entry.status == FAQStatus.PENDING_REVIEW\n    assert len(entry.answer) > 50\n    assert len(entry.tags) >= 1\n    assert entry.relevance_score >= 0.5",
+            filename: "test_faq.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les tickets de support peuvent contenir des données personnelles (noms, emails, numéros de commande). Le contenu est anonymisé avant envoi au LLM : les identifiants personnels sont remplacés par des placeholders. Les entrées FAQ générées ne contiennent jamais de données spécifiques à un client. Les embeddings vectoriels ne permettent pas de reconstituer le texte original.",
+      auditLog: "Traçabilité de chaque proposition : horodatage, tickets sources, cluster identifié, entrée FAQ générée, valideur, date de publication ou rejet, motif de rejet le cas échéant. Historique des modifications de chaque entrée FAQ. Conservation des logs pendant 2 ans.",
+      humanInTheLoop: "Toutes les entrées FAQ générées passent par un statut 'en attente de validation' avant publication. Un expert métier valide le contenu, corrige si nécessaire, et approuve la publication. Les mises à jour d'entrées existantes sont signalées au responsable documentation. Un workflow Slack/Email notifie les valideurs des nouvelles propositions.",
+      monitoring: "Dashboard de suivi : nombre de clusters détectés par semaine, taux de couverture FAQ, nombre de propositions générées/approuvées/rejetées, taux de self-service (tickets évités), top 10 des recherches sans résultat, score de pertinence moyen des entrées générées, feedback utilisateurs par article.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (quotidien 6h) → Node HTTP Request (API Helpdesk - tickets résolus) → Node Code (extraction questions et clustering) → Node HTTP Request (API pgvector - matching FAQ) → Node Switch (gap détecté ?) → Branch gap: Node HTTP Request (API Claude - génération FAQ) → Node PostgreSQL (sauvegarde proposition) → Node Slack (notification validateur) → Branch pas de gap: Node PostgreSQL (log audit) → Node HTTP Request (mise à jour score de couverture).",
+      nodes: ["Cron Trigger (quotidien)", "HTTP Request (Helpdesk API)", "Code (clustering)", "HTTP Request (pgvector matching)", "Switch (gap?)", "HTTP Request (Claude génération)", "PostgreSQL (propositions)", "Slack (notification)", "PostgreSQL (audit)", "HTTP Request (coverage update)"],
+      triggerType: "Cron Trigger (exécution quotidienne à 6h00)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Facile",
+    sectors: ["B2B SaaS", "E-commerce", "Services", "Technologie", "Telecom"],
+    metiers: ["Support Client", "Documentation", "Product Management"],
+    functions: ["Support"],
+    metaTitle: "Agent IA de Gestion de FAQ Dynamique — Guide Complet",
+    metaDescription:
+      "Automatisez la mise à jour de votre FAQ avec un agent IA. Détection de questions récurrentes, génération automatique d'entrées et workflow de validation. Tutoriel pas-à-pas.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-scoring-risque-credit",
+    title: "Agent de Scoring de Risque Crédit",
+    subtitle: "Évaluez automatiquement le risque crédit de vos clients avec une analyse IA multi-sources",
+    problem:
+      "L'évaluation du risque crédit repose sur des modèles statistiques rigides et des analyses manuelles chronophages. Les analystes crédit passent des heures à compiler des données provenant de multiples sources (bilans, flux bancaires, données sectorielles) et les décisions sont souvent retardées, ce qui impacte la relation commerciale.",
+    value:
+      "Un agent IA agrège automatiquement les données financières multi-sources, analyse les bilans et comptes de résultat, intègre les signaux faibles (actualités, contentieux, évolution sectorielle), et produit un score de risque argumenté avec des recommandations. Le temps de décision passe de plusieurs jours à quelques minutes.",
+    inputs: [
+      "Bilans et comptes de résultat (3 derniers exercices)",
+      "Données Banque de France (cotation, incidents de paiement)",
+      "Flux bancaires et relevés de compte",
+      "Données sectorielles et benchmarks",
+      "Informations légales (Kbis, dirigeants, contentieux)",
+      "Données internes (historique de paiement, encours)",
+    ],
+    outputs: [
+      "Score de risque crédit (0-1000) avec grade (A à E)",
+      "Analyse détaillée des ratios financiers",
+      "Synthèse des points forts et points de vigilance",
+      "Recommandation de limite de crédit",
+      "Plan de surveillance (fréquence de revue, alertes)",
+      "Rapport PDF conforme aux exigences réglementaires",
+    ],
+    risks: [
+      "Erreurs d'analyse pouvant mener à des pertes financières significatives",
+      "Biais algorithmique discriminant certaines catégories d'entreprises",
+      "Non-conformité avec les réglementations bancaires (Bâle III/IV, EBA)",
+      "Hallucination du LLM sur des données financières critiques",
+      "Dépendance à la qualité des données sources",
+    ],
+    roiIndicatif:
+      "Réduction de 75% du temps d'analyse par dossier. Diminution de 20% du taux de défaut grâce à la détection de signaux faibles. Augmentation de 30% du volume de dossiers traités sans recrutement.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "AWS (Lambda + S3)", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+      { name: "Evidently AI", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Mistral Large", category: "LLM", isFree: false },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "Ollama + Mixtral", category: "LLM", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+    ],
+    architectureDiagram: "+-----------+  +-----------+  +-----------+  +-----------+\n|  Bilans   |  |  Banque   |  |  Donnees  |  |  Donnees  |\n|  Comptes  |  |  de France|  |  Legales  |  |  Internes |\n+-----+-----+  +-----+-----+  +-----+-----+  +-----+-----+\n      |              |              |              |\n      v              v              v              v\n+------------------------------------------------------+\n|            Agent LLM (Analyse + Scoring)              |\n|         + Modele Statistique (XGBoost)                |\n+----------------------------+-------------------------+\n                             |\n                     +-------v--------+\n                     |  Score + Rapport|\n                     |  + Alerte       |\n                     +----------------+",
+    tutorial: [
+      {
+        title: "Prérequis et installation",
+        content:
+          "Installez les bibliothèques nécessaires pour l'analyse financière, le scoring statistique et la génération de rapports. Configurez les accès aux API de données financières.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install anthropic langchain pandas numpy scikit-learn xgboost pydantic fastapi weasyprint jinja2 psycopg2-binary requests",
+            filename: "terminal",
+          },
+        ],
+      },
+      {
+        title: "Modèles de données financières",
+        content:
+          "Définissez les structures pour les données financières, les ratios et le résultat du scoring. Ces modèles garantissent la cohérence et la traçabilité de chaque évaluation.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from pydantic import BaseModel, Field\nfrom enum import Enum\nfrom typing import Optional\nfrom datetime import date\n\nclass RiskGrade(str, Enum):\n    A = \"A\"  # Risque tres faible\n    B = \"B\"  # Risque faible\n    C = \"C\"  # Risque modere\n    D = \"D\"  # Risque eleve\n    E = \"E\"  # Risque tres eleve\n\nclass FinancialRatios(BaseModel):\n    ratio_endettement: float  # Dettes / Capitaux propres\n    ratio_liquidite: float  # Actifs circulants / Passifs circulants\n    ratio_solvabilite: float  # Capitaux propres / Total bilan\n    marge_nette: float  # Resultat net / CA\n    rotation_stocks: float  # CA / Stocks moyens\n    delai_paiement_clients: float  # (Creances clients / CA) * 365\n    delai_paiement_fournisseurs: float  # (Dettes fournisseurs / Achats) * 365\n    capacite_autofinancement: float\n    taux_croissance_ca: float\n\nclass CreditRiskScore(BaseModel):\n    score: int = Field(ge=0, le=1000)\n    grade: RiskGrade\n    financial_ratios: FinancialRatios\n    strengths: list[str] = Field(min_length=1, max_length=5)\n    warnings: list[str] = Field(max_length=5)\n    recommended_credit_limit: float\n    recommended_payment_terms: int  # en jours\n    review_frequency: str  # \"mensuel\", \"trimestriel\", \"annuel\"\n    detailed_analysis: str\n    confidence: float = Field(ge=0.0, le=1.0)\n    model_version: str = \"1.0\"",
+            filename: "models.py",
+          },
+        ],
+      },
+      {
+        title: "Calcul des ratios financiers",
+        content:
+          "Extrayez et calculez les ratios financiers clés à partir des bilans et comptes de résultat. Ces ratios alimentent à la fois le modèle statistique et l'analyse LLM.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pandas as pd\nfrom models import FinancialRatios\n\ndef compute_ratios(bilan: dict, compte_resultat: dict) -> FinancialRatios:\n    # Extraction des postes cles\n    capitaux_propres = bilan.get(\"capitaux_propres\", 0)\n    total_bilan = bilan.get(\"total_actif\", 1)\n    dettes_totales = bilan.get(\"dettes_totales\", 0)\n    actifs_circulants = bilan.get(\"actifs_circulants\", 0)\n    passifs_circulants = bilan.get(\"passifs_circulants\", 1)\n    creances_clients = bilan.get(\"creances_clients\", 0)\n    dettes_fournisseurs = bilan.get(\"dettes_fournisseurs\", 0)\n    stocks = bilan.get(\"stocks\", 1)\n    ca = compte_resultat.get(\"chiffre_affaires\", 1)\n    resultat_net = compte_resultat.get(\"resultat_net\", 0)\n    achats = compte_resultat.get(\"achats\", 1)\n    dotations = compte_resultat.get(\"dotations_amortissements\", 0)\n    ca_precedent = compte_resultat.get(\"ca_precedent\", ca)\n    return FinancialRatios(\n        ratio_endettement=dettes_totales / max(capitaux_propres, 1),\n        ratio_liquidite=actifs_circulants / max(passifs_circulants, 1),\n        ratio_solvabilite=capitaux_propres / max(total_bilan, 1),\n        marge_nette=resultat_net / max(ca, 1),\n        rotation_stocks=ca / max(stocks, 1),\n        delai_paiement_clients=(creances_clients / max(ca, 1)) * 365,\n        delai_paiement_fournisseurs=(dettes_fournisseurs / max(achats, 1)) * 365,\n        capacite_autofinancement=resultat_net + dotations,\n        taux_croissance_ca=((ca - ca_precedent) / max(abs(ca_precedent), 1)) * 100\n    )\n\ndef ratios_to_features(ratios: FinancialRatios) -> list[float]:\n    return [\n        ratios.ratio_endettement,\n        ratios.ratio_liquidite,\n        ratios.ratio_solvabilite,\n        ratios.marge_nette,\n        ratios.rotation_stocks,\n        ratios.delai_paiement_clients,\n        ratios.delai_paiement_fournisseurs,\n        ratios.capacite_autofinancement,\n        ratios.taux_croissance_ca,\n    ]",
+            filename: "ratios.py",
+          },
+        ],
+      },
+      {
+        title: "Modèle de scoring statistique",
+        content:
+          "Entraînez un modèle XGBoost sur vos données historiques pour produire un score quantitatif. Ce score est ensuite enrichi par l'analyse qualitative du LLM.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import xgboost as xgb\nimport numpy as np\nfrom sklearn.model_selection import cross_val_score\nimport joblib\n\ndef train_scoring_model(features: np.ndarray, labels: np.ndarray, model_path: str) -> xgb.XGBClassifier:\n    model = xgb.XGBClassifier(\n        n_estimators=200,\n        max_depth=6,\n        learning_rate=0.05,\n        objective=\"multi:softprob\",\n        num_class=5,  # Grades A a E\n        eval_metric=\"mlogloss\",\n        random_state=42\n    )\n    scores = cross_val_score(model, features, labels, cv=5, scoring=\"accuracy\")\n    print(\"Accuracy CV: {:.3f} (+/- {:.3f})\".format(scores.mean(), scores.std()))\n    model.fit(features, labels)\n    joblib.dump(model, model_path)\n    return model\n\ndef predict_risk(model: xgb.XGBClassifier, features: list[float]) -> tuple[int, str]:\n    features_array = np.array([features])\n    probas = model.predict_proba(features_array)[0]\n    # Score sur 1000 : moyenne ponderee des probabilites\n    grade_scores = {0: 900, 1: 700, 2: 500, 3: 300, 4: 100}\n    score = sum(probas[i] * grade_scores[i] for i in range(5))\n    predicted_grade = model.predict(features_array)[0]\n    grade_map = {0: \"A\", 1: \"B\", 2: \"C\", 3: \"D\", 4: \"E\"}\n    return int(score), grade_map[predicted_grade]",
+            filename: "scoring_model.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse qualitative par le LLM",
+        content:
+          "Le LLM enrichit le score quantitatif avec une analyse qualitative : interprétation des tendances, signaux faibles détectés dans les actualités, et recommandations argumentées.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import anthropic\nfrom models import CreditRiskScore, RiskGrade, FinancialRatios\n\nclient = anthropic.Anthropic()\n\ndef analyze_credit_risk(\n    ratios: FinancialRatios,\n    statistical_score: int,\n    statistical_grade: str,\n    company_info: dict,\n    sector_benchmarks: dict,\n    payment_history: dict,\n    legal_info: dict\n) -> CreditRiskScore:\n    ratios_text = \"\\n\".join(\n        \"- {}: {}\".format(k, round(v, 3)) for k, v in ratios.model_dump().items()\n    )\n    prompt = (\n        \"Tu es un analyste credit senior dans une institution financiere.\\n\"\n        \"Analyse ce dossier de risque credit et produis une evaluation detaillee.\\n\\n\"\n        \"Score statistique: {score}/1000 (grade {grade})\\n\\n\"\n        \"Ratios financiers:\\n{ratios}\\n\\n\"\n        \"Informations entreprise:\\n\"\n        \"- Raison sociale: {name}\\n\"\n        \"- SIREN: {siren}\\n\"\n        \"- Secteur: {sector}\\n\"\n        \"- Effectif: {employees}\\n\\n\"\n        \"Benchmarks sectoriels: {benchmarks}\\n\\n\"\n        \"Historique de paiement: {history}\\n\\n\"\n        \"Informations legales: {legal}\\n\\n\"\n        \"Retourne un JSON avec: score (0-1000), grade (A-E), \"\n        \"strengths (points forts), warnings (points de vigilance), \"\n        \"recommended_credit_limit, recommended_payment_terms (jours), \"\n        \"review_frequency, detailed_analysis, confidence\"\n    ).format(\n        score=statistical_score, grade=statistical_grade,\n        ratios=ratios_text,\n        name=company_info.get(\"name\", \"\"),\n        siren=company_info.get(\"siren\", \"\"),\n        sector=company_info.get(\"sector\", \"\"),\n        employees=company_info.get(\"employees\", \"\"),\n        benchmarks=str(sector_benchmarks),\n        history=str(payment_history),\n        legal=str(legal_info)\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    result = CreditRiskScore.model_validate_json(message.content[0].text)\n    result.financial_ratios = ratios\n    return result",
+            filename: "credit_analyzer.py",
+          },
+        ],
+      },
+      {
+        title: "API et pipeline complet",
+        content:
+          "Exposez le scoring via une API REST sécurisée. Le pipeline orchestre la collecte de données, le calcul des ratios, le scoring statistique, l'analyse LLM et la génération du rapport.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, HTTPException, Depends\nfrom fastapi.security import HTTPBearer\nimport joblib\n\napp = FastAPI(title=\"Credit Risk Scoring Agent\")\nsecurity = HTTPBearer()\nscoring_model = joblib.load(\"models/xgb_credit_v1.joblib\")\n\n@app.post(\"/api/credit/score\")\nasync def score_company(request: dict, token=Depends(security)):\n    siren = request.get(\"siren\")\n    if not siren:\n        raise HTTPException(400, \"SIREN requis\")\n    # Collecte des donnees multi-sources\n    bilan = await fetch_financial_data(siren)\n    company_info = await fetch_company_info(siren)\n    payment_history = await fetch_payment_history(siren)\n    legal_info = await fetch_legal_info(siren)\n    sector_benchmarks = await fetch_sector_benchmarks(company_info[\"sector\"])\n    # Calcul des ratios\n    ratios = compute_ratios(bilan[\"bilan\"], bilan[\"compte_resultat\"])\n    features = ratios_to_features(ratios)\n    # Scoring statistique\n    stat_score, stat_grade = predict_risk(scoring_model, features)\n    # Analyse LLM\n    result = analyze_credit_risk(\n        ratios, stat_score, stat_grade,\n        company_info, sector_benchmarks, payment_history, legal_info\n    )\n    # Sauvegarde et audit\n    await save_scoring_result(siren, result)\n    # Alertes si risque eleve\n    if result.grade in [RiskGrade.D, RiskGrade.E]:\n        await send_risk_alert(siren, result)\n    return result.model_dump()\n\n@app.get(\"/api/credit/history/{siren}\")\nasync def scoring_history(siren: str, token=Depends(security)):\n    return await fetch_scoring_history(siren)\n\n@app.get(\"/api/credit/portfolio\")\nasync def portfolio_overview(token=Depends(security)):\n    return {\n        \"total_expositions\": await total_exposure(),\n        \"distribution_grades\": await grade_distribution(),\n        \"top_risques\": await top_risks(limit=20),\n        \"evolution_mensuelle\": await monthly_trend()\n    }",
+            filename: "api.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et validation réglementaire",
+        content:
+          "Testez le pipeline complet avec des données de test couvrant tous les grades de risque. Validez la conformité avec les exigences réglementaires (traçabilité, non-discrimination, explicabilité).",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pytest\nimport numpy as np\nfrom models import CreditRiskScore, RiskGrade, FinancialRatios\nfrom ratios import compute_ratios\nfrom scoring_model import predict_risk\nfrom credit_analyzer import analyze_credit_risk\n\ndef test_ratios_computation():\n    bilan = {\n        \"capitaux_propres\": 500000, \"total_actif\": 1200000,\n        \"dettes_totales\": 700000, \"actifs_circulants\": 600000,\n        \"passifs_circulants\": 400000, \"creances_clients\": 150000,\n        \"dettes_fournisseurs\": 100000, \"stocks\": 80000\n    }\n    cr = {\n        \"chiffre_affaires\": 2000000, \"resultat_net\": 120000,\n        \"achats\": 800000, \"dotations_amortissements\": 50000,\n        \"ca_precedent\": 1800000\n    }\n    ratios = compute_ratios(bilan, cr)\n    assert ratios.ratio_endettement == pytest.approx(1.4, rel=0.01)\n    assert ratios.ratio_liquidite == pytest.approx(1.5, rel=0.01)\n    assert ratios.marge_nette == pytest.approx(0.06, rel=0.01)\n    assert ratios.taux_croissance_ca == pytest.approx(11.11, rel=0.1)\n\ndef test_scoring_model_output_range():\n    features = [1.2, 1.5, 0.42, 0.06, 25.0, 27.4, 45.6, 170000, 11.1]\n    score, grade = predict_risk(scoring_model, features)\n    assert 0 <= score <= 1000\n    assert grade in [\"A\", \"B\", \"C\", \"D\", \"E\"]\n\ndef test_high_risk_detection():\n    # Entreprise en difficulte financiere\n    bilan = {\n        \"capitaux_propres\": -50000, \"total_actif\": 300000,\n        \"dettes_totales\": 350000, \"actifs_circulants\": 80000,\n        \"passifs_circulants\": 250000, \"creances_clients\": 60000,\n        \"dettes_fournisseurs\": 120000, \"stocks\": 40000\n    }\n    cr = {\n        \"chiffre_affaires\": 500000, \"resultat_net\": -80000,\n        \"achats\": 300000, \"dotations_amortissements\": 20000,\n        \"ca_precedent\": 600000\n    }\n    ratios = compute_ratios(bilan, cr)\n    assert ratios.ratio_liquidite < 1.0\n    assert ratios.marge_nette < 0\n    assert ratios.taux_croissance_ca < 0\n\ndef test_credit_analysis_completeness():\n    ratios = FinancialRatios(\n        ratio_endettement=1.4, ratio_liquidite=1.5, ratio_solvabilite=0.42,\n        marge_nette=0.06, rotation_stocks=25.0, delai_paiement_clients=27.4,\n        delai_paiement_fournisseurs=45.6, capacite_autofinancement=170000,\n        taux_croissance_ca=11.1\n    )\n    result = analyze_credit_risk(\n        ratios, 720, \"B\",\n        {\"name\": \"Test SAS\", \"siren\": \"123456789\", \"sector\": \"tech\", \"employees\": 50},\n        {\"marge_nette_median\": 0.05}, {\"retards_30j\": 0}, {\"contentieux\": 0}\n    )\n    assert isinstance(result, CreditRiskScore)\n    assert 0 <= result.score <= 1000\n    assert result.grade in list(RiskGrade)\n    assert len(result.strengths) >= 1\n    assert result.recommended_credit_limit > 0\n    assert result.confidence >= 0.5",
+            filename: "test_credit_scoring.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données financières des entreprises sont hautement confidentielles. Les bilans complets ne sont jamais envoyés au LLM : seuls les ratios calculés et les données agrégées sont transmis. Les données nominatives des dirigeants sont pseudonymisées. Le stockage respecte les normes bancaires (chiffrement AES-256, clés gérées par HSM). Conformité avec le secret bancaire et le RGPD pour les données des dirigeants personnes physiques.",
+      auditLog: "Piste d'audit complète conforme Bâle III/IV : horodatage de chaque scoring, données sources utilisées, version du modèle statistique, ratios calculés, score LLM, score final retenu, grade attribué, limite de crédit recommandée, identité de l'analyste valideur, décision finale. Conservation 10 ans minimum (exigence réglementaire). Traçabilité des modifications de modèle.",
+      humanInTheLoop: "Tout scoring aboutissant à un grade D ou E est obligatoirement revu par un analyste crédit senior avant notification au client. Les décisions d'octroi supérieures à 500K EUR nécessitent une double validation (analyste + responsable engagements). Un comité de crédit mensuel revoit les dossiers sensibles. L'analyste peut ajuster le score avec justification obligatoire tracée.",
+      monitoring: "Dashboard réglementaire : distribution des grades du portefeuille, taux de défaut observé vs prédit par grade (backtesting), performance du modèle (Gini, KS, AUC), concentration sectorielle et géographique, évolution des encours par grade, alertes de dégradation, suivi de la calibration du modèle, rapport de conformité EBA automatisé.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (demande de scoring via API) → Node HTTP Request (API Infogreffe - données légales) → Node HTTP Request (API Banque de France - cotation) → Node Code (calcul ratios financiers) → Node HTTP Request (API modèle XGBoost - scoring statistique) → Node HTTP Request (API Claude - analyse qualitative) → Node Code (score final pondéré) → Node Switch (grade D/E ?) → Branch risque élevé: Node Email (alerte analyste senior) → Node PostgreSQL (sauvegarde scoring + audit) → Node HTTP Request (génération rapport PDF).",
+      nodes: ["Webhook (demande scoring)", "HTTP Request (Infogreffe)", "HTTP Request (Banque de France)", "Code (calcul ratios)", "HTTP Request (XGBoost scoring)", "HTTP Request (Claude analyse)", "Code (score final)", "Switch (grade)", "Email (alerte risque)", "PostgreSQL (audit)", "HTTP Request (rapport PDF)"],
+      triggerType: "Webhook (demande de scoring crédit via API sécurisée)",
+    },
+    estimatedTime: "14-20h",
+    difficulty: "Expert",
+    sectors: ["Banque", "Assurance", "Finance", "Leasing", "Affacturage"],
+    metiers: ["Analyse Crédit", "Risk Management", "Direction des Risques", "Engagements"],
+    functions: ["Finance"],
+    metaTitle: "Agent IA de Scoring de Risque Crédit — Guide Expert",
+    metaDescription:
+      "Automatisez l'évaluation du risque crédit avec un agent IA. Analyse financière multi-sources, scoring statistique XGBoost, analyse qualitative LLM et conformité Bâle III. Tutoriel complet.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
 ];
