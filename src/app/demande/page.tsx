@@ -63,21 +63,27 @@ function DemandeContent() {
           <div className="text-5xl">&#10003;</div>
           <h1 className="text-2xl font-bold">Demande envoyée !</h1>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Nous avons bien reçu votre demande. Vous recevrez un email de confirmation
-            et serez notifié dès que votre workflow sera disponible.
+            Vous recevrez un email de confirmation sous 48h. Votre workflow
+            sera livré sous 5 jours ouvrés avec tutoriel complet et estimation de ROI.
           </p>
-          <div className="pt-4 flex gap-3 justify-center">
+          <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/catalogue"
               className="rounded-lg border px-5 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
             >
-              Retour au catalogue
+              Explorer les 30+ workflows
             </Link>
             <Link
-              href="/"
+              href="/guide"
+              className="rounded-lg border px-5 py-2.5 text-sm font-medium hover:bg-accent transition-colors"
+            >
+              Lire nos guides IA
+            </Link>
+            <Link
+              href="/pricing"
               className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              Page d&apos;accueil
+              Voir les plans
             </Link>
           </div>
         </div>
@@ -147,15 +153,22 @@ function DemandeContent() {
               <textarea
                 id="description"
                 required
-                rows={4}
+                rows={6}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: J'aimerais un agent IA qui analyse automatiquement les contrats fournisseurs et détecte les clauses à risque..."
+                placeholder={"Secteur : ex. Banque, E-commerce, SaaS...\nBesoin : ex. Trier les emails entrants par priorité\nVolume : ex. 500 emails/jour\nOutils existants : ex. Zendesk, Gmail, Salesforce\nRésultat attendu : ex. 50% de temps gagné sur le support"}
                 className="w-full rounded-lg border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-y"
               />
-              <p className="mt-1.5 text-xs text-muted-foreground">
-                Soyez le plus précis possible : secteur, outils utilisés, volume, résultat attendu...
-              </p>
+              {description.length > 0 && description.length < 50 && (
+                <p className="mt-1.5 text-xs text-amber-600">
+                  Plus votre description est précise, plus le workflow sera adapté à votre contexte.
+                </p>
+              )}
+              {(description.length === 0 || description.length >= 50) && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Secteur, outils utilisés, volume de données, résultat attendu...
+                </p>
+              )}
             </div>
 
             {status === "error" && (

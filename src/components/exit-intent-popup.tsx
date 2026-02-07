@@ -92,11 +92,11 @@ export function ExitIntentPopup() {
             <div className="text-center mb-6">
               <p className="text-sm font-medium text-primary mb-2">Avant de partir...</p>
               <h2 className="text-xl font-bold sm:text-2xl">
-                Recevez un workflow IA gratuit chaque matin
+                1 cas d&apos;usage IA par jour, avec tutoriel complet
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Tutoriel pas-à-pas, stack technique et estimation de ROI.
-                Rejoignez les professionnels qui automatisent leur entreprise.
+                Chaque matin : un workflow IA documenté avec code, architecture
+                et ROI. Rejoint par les ops, CTO et équipes data des entreprises françaises.
               </p>
             </div>
 

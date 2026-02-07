@@ -49,8 +49,11 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link href="/catalogue">Workflows</Link>
+          </Button>
           <Button size="sm" asChild>
-            <Link href="/catalogue">Voir les workflows</Link>
+            <Link href="/pricing">Essai gratuit</Link>
           </Button>
         </div>
 
@@ -97,10 +100,15 @@ export function Header() {
                   </Link>
                 );
               })}
-              <div className="mt-4 border-t pt-4">
-                <Button className="w-full" asChild>
+              <div className="mt-4 border-t pt-4 space-y-2">
+                <Button className="w-full" variant="outline" asChild>
                   <Link href="/catalogue" onClick={() => setOpen(false)}>
                     Voir les workflows
+                  </Link>
+                </Button>
+                <Button className="w-full" asChild>
+                  <Link href="/pricing" onClick={() => setOpen(false)}>
+                    Essai gratuit
                   </Link>
                 </Button>
               </div>
