@@ -24,6 +24,7 @@ const footerLinks = [
   {
     title: "Ressources",
     links: [
+      { href: "/guide", label: "Guides pratiques" },
       { href: "/catalogue?diff=Facile", label: "Workflows faciles" },
       { href: "/catalogue?diff=Moyen", label: "Workflows intermédiaires" },
       { href: "/catalogue?diff=Expert", label: "Workflows experts" },

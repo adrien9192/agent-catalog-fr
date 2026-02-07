@@ -22,7 +22,7 @@ const tiers = [
     ctaVariant: "outline" as const,
     highlighted: false,
     features: [
-      "Accès aux 20+ workflows documentés",
+      "Accès aux 25+ workflows documentés",
       "Tutoriels pas-à-pas complets",
       "Stack technique et alternatives low-cost",
       "Schémas d'architecture",
@@ -232,7 +232,7 @@ export default function PricingPage() {
             </thead>
             <tbody className="divide-y">
               {[
-                { feature: "Workflows documentés", free: "20+", pro: "20+", team: "20+" },
+                { feature: "Workflows documentés", free: "25+", pro: "25+", team: "25+" },
                 { feature: "Tutoriels pas-à-pas", free: "check", pro: "check", team: "check" },
                 { feature: "Estimation de ROI", free: "check", pro: "check", team: "check" },
                 { feature: "Newsletter quotidienne", free: "check", pro: "check", team: "check" },

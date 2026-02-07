@@ -12,7 +12,7 @@ import { sectors } from "@/data/sectors";
 const functions = ["Support", "Sales", "RH", "Marketing", "Finance", "IT", "Supply Chain"];
 
 const stats = [
-  { value: "20+", label: "workflows documentés" },
+  { value: "25+", label: "workflows documentés" },
   { value: "60%", label: "de temps gagné en moyenne" },
   { value: "10", label: "fonctions couvertes" },
   { value: "100%", label: "gratuit pour démarrer" },
@@ -55,7 +55,7 @@ export default function HomePage() {
               pas en 6 mois
             </h1>
             <p className="mt-4 text-base text-muted-foreground sm:text-xl max-w-2xl mx-auto leading-relaxed">
-              20+ workflows IA documentés avec tutoriel pas-à-pas, stack technique
+              25+ workflows IA documentés avec tutoriel pas-à-pas, stack technique
               et estimation de ROI. Prêts à copier et déployer. Gratuit.
             </p>
 
@@ -234,6 +234,55 @@ export default function HomePage() {
             .map((uc) => (
               <UseCaseCard key={uc.slug} useCase={uc} />
             ))}
+        </div>
+      </section>
+
+      {/* Guides section */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <Badge variant="secondary" className="mb-2 text-xs">
+              Ressources gratuites
+            </Badge>
+            <h2 className="text-2xl font-bold sm:text-3xl">
+              Guides pratiques IA
+            </h2>
+            <p className="mt-1 text-muted-foreground">
+              Apprenez à déployer l&apos;IA dans votre entreprise, département par département.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
+            <Link href="/guide">Tous les guides</Link>
+          </Button>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { slug: "comment-automatiser-support-client-ia", title: "Automatiser le support client avec l\u2019IA", category: "Support", time: "8 min" },
+            { slug: "agent-ia-entreprise-guide-complet", title: "Agent IA en entreprise : le guide complet", category: "G\u00e9n\u00e9ral", time: "12 min" },
+            { slug: "automatiser-qualification-leads-ia", title: "Automatiser la qualification des leads", category: "Sales", time: "7 min" },
+          ].map((g) => (
+            <Link
+              key={g.slug}
+              href={`/guide/${g.slug}`}
+              className="group rounded-xl border bg-card p-5 transition-all hover:shadow-sm hover:border-primary/30"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Badge variant="secondary" className="text-xs">{g.category}</Badge>
+                <span className="text-xs text-muted-foreground">{g.time}</span>
+              </div>
+              <h3 className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors">
+                {g.title}
+              </h3>
+              <p className="mt-2 text-xs text-primary font-medium">
+                Lire le guide &rarr;
+              </p>
+            </Link>
+          ))}
+        </div>
+        <div className="mt-6 text-center sm:hidden">
+          <Button variant="outline" asChild>
+            <Link href="/guide">Voir tous les guides</Link>
+          </Button>
         </div>
       </section>
 
