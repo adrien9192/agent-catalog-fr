@@ -486,6 +486,18 @@ export default function HomePage() {
                 q: "Mes données sont-elles en sécurité ?",
                 a: "Chaque workflow intègre les bonnes pratiques RGPD : anonymisation des données personnelles, hébergement en Europe, audit trail et human-in-the-loop pour les décisions critiques.",
               },
+              {
+                q: "Quel LLM choisir : Claude, GPT-4 ou Mistral ?",
+                a: "Cela dépend de votre cas d'usage. Claude excelle en analyse de documents et fiabilité, GPT-4 en génération de code et écosystème large, Mistral en souveraineté européenne et rapport qualité/prix. Consultez notre comparatif détaillé pour choisir.",
+              },
+              {
+                q: "Combien de temps pour déployer un agent IA ?",
+                a: "Avec nos tutoriels, un workflow simple (triage support, qualification leads) se déploie en 2 à 4 heures avec n8n ou Make. Un agent plus complexe (conversationnel multi-actions) nécessite 1 à 2 semaines.",
+              },
+              {
+                q: "Quel ROI attendre d'un agent IA ?",
+                a: "Le ROI varie selon le cas d'usage. En moyenne, nos workflows documentés génèrent un ROI de 200 à 500% sur 12 mois. Un agent de triage support économise 60% du temps de première réponse. Utilisez notre calculateur ROI pour une estimation personnalisée.",
+              },
             ].map((faq) => (
               <div key={faq.q} className="rounded-xl border p-4 sm:p-5">
                 <h3 className="font-semibold text-sm sm:text-base">{faq.q}</h3>
@@ -525,6 +537,21 @@ export default function HomePage() {
                   "@type": "Question",
                   name: "Mes données sont-elles en sécurité ?",
                   acceptedAnswer: { "@type": "Answer", text: "Chaque workflow intègre les bonnes pratiques RGPD : anonymisation, hébergement en Europe, audit trail et human-in-the-loop." },
+                },
+                {
+                  "@type": "Question",
+                  name: "Quel LLM choisir : Claude, GPT-4 ou Mistral ?",
+                  acceptedAnswer: { "@type": "Answer", text: "Claude excelle en analyse de documents et fiabilité, GPT-4 en génération de code, Mistral en souveraineté européenne. Consultez notre comparatif détaillé pour choisir." },
+                },
+                {
+                  "@type": "Question",
+                  name: "Combien de temps pour déployer un agent IA ?",
+                  acceptedAnswer: { "@type": "Answer", text: "Un workflow simple se déploie en 2 à 4 heures avec n8n ou Make. Un agent complexe nécessite 1 à 2 semaines." },
+                },
+                {
+                  "@type": "Question",
+                  name: "Quel ROI attendre d'un agent IA ?",
+                  acceptedAnswer: { "@type": "Answer", text: "En moyenne, un ROI de 200 à 500% sur 12 mois. Un agent de triage support économise 60% du temps de première réponse." },
                 },
               ],
             }),

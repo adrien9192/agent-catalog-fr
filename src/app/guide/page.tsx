@@ -34,6 +34,9 @@ function GuidesCollectionJsonLd() {
 }
 
 export default function GuidesPage() {
+  // Group guides by category
+  const categories = [...new Set(guides.map((g) => g.category))];
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <GuidesCollectionJsonLd />
@@ -49,6 +52,19 @@ export default function GuidesPage() {
           entreprise. Stack technique, ROI, conformité RGPD et étapes
           d&apos;implémentation.
         </p>
+      </div>
+
+      {/* Category quick-nav */}
+      <div className="mb-8 flex flex-wrap gap-2">
+        {categories.map((cat) => (
+          <a
+            key={cat}
+            href={`#cat-${cat.toLowerCase().replace(/\s+/g, "-")}`}
+            className="rounded-full border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          >
+            {cat} ({guides.filter((g) => g.category === cat).length})
+          </a>
+        ))}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
