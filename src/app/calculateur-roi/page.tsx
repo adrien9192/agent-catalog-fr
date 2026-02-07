@@ -320,7 +320,7 @@ export default function CalculateurROIPage() {
             Catalogue de workflows
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            55 workflows IA documentés avec tutoriel.
+            Tous nos workflows IA documentés avec tutoriel.
           </p>
         </Link>
         <Link

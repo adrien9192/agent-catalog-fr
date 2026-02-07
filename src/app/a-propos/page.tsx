@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { NewsletterSignup } from "@/components/newsletter-signup";
+import { useCases } from "@/data/use-cases";
+import { guides } from "@/data/guides";
+import { comparisons } from "@/data/comparisons";
 
 export const metadata: Metadata = {
   title: "À propos — L'équipe derrière AgentCatalog",
@@ -143,15 +146,15 @@ export default function AboutPage() {
           </p>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-primary">55</p>
+              <p className="text-2xl font-bold text-primary">{useCases.length}</p>
               <p className="text-xs text-muted-foreground">Workflows documentés</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-primary">29</p>
+              <p className="text-2xl font-bold text-primary">{guides.length}</p>
               <p className="text-xs text-muted-foreground">Guides pratiques</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-primary">8</p>
+              <p className="text-2xl font-bold text-primary">{comparisons.length}</p>
               <p className="text-xs text-muted-foreground">Comparatifs objectifs</p>
             </div>
             <div>
@@ -244,7 +247,7 @@ export default function AboutPage() {
             Explorer les workflows
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            50 cas d&apos;usage documentés, prêts à déployer.
+            {useCases.length} cas d&apos;usage documentés, prêts à déployer.
           </p>
         </Link>
         <Link
@@ -255,7 +258,7 @@ export default function AboutPage() {
             Lire nos guides
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            29 guides pratiques pour maîtriser l&apos;IA en entreprise.
+            {guides.length} guides pratiques pour maîtriser l&apos;IA en entreprise.
           </p>
         </Link>
         <Link

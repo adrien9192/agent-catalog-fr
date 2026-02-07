@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { NewsletterSignup } from "@/components/newsletter-signup";
+import { useCases } from "@/data/use-cases";
 
 export const metadata: Metadata = {
   title: "Tarifs — Workflows IA pour votre entreprise",
@@ -23,7 +24,7 @@ const tiers = [
     ctaVariant: "outline" as const,
     highlighted: false,
     features: [
-      "Accès aux 55 workflows documentés",
+      `Accès aux ${useCases.length} workflows documentés`,
       "Tutoriels pas-à-pas complets",
       "Stack technique et alternatives low-cost",
       "Schémas d'architecture",
@@ -263,7 +264,7 @@ export default function PricingPage() {
             </thead>
             <tbody className="divide-y">
               {[
-                { feature: "Workflows documentés", free: "55", pro: "55", team: "55" },
+                { feature: "Workflows documentés", free: `${useCases.length}`, pro: `${useCases.length}`, team: `${useCases.length}` },
                 { feature: "Tutoriels pas-à-pas", free: "check", pro: "check", team: "check" },
                 { feature: "Estimation de ROI", free: "check", pro: "check", team: "check" },
                 { feature: "Newsletter quotidienne", free: "check", pro: "check", team: "check" },

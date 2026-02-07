@@ -5,16 +5,46 @@ import { Button } from "@/components/ui/button";
 import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { comparisons } from "@/data/comparisons";
+import { useCases } from "@/data/use-cases";
 
 export const metadata: Metadata = {
   title: "Comparatifs — Agent IA, LLM, Claude vs ChatGPT vs Mistral, n8n vs Make",
   description:
-    "Comparez les solutions d'IA pour votre entreprise. GPT-4 vs Claude vs Mistral, Agent IA vs Chatbot, n8n vs Make, No-code vs Pro-code. 8 comparatifs détaillés.",
+    `Comparez les solutions d'IA pour votre entreprise. GPT-4 vs Claude vs Mistral, Agent IA vs Chatbot, n8n vs Make, No-code vs Pro-code. ${comparisons.length} comparatifs détaillés.`,
 };
+
+function ComparatifJsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Comparatifs IA et outils d'automatisation",
+    description: `${comparisons.length} comparatifs détaillés pour choisir les bons outils IA et d'automatisation pour votre entreprise.`,
+    url: "https://agent-catalog-fr.vercel.app/comparatif",
+    numberOfItems: comparisons.length,
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: comparisons.length,
+      itemListElement: comparisons.map((c, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        url: `https://agent-catalog-fr.vercel.app/comparatif/${c.slug}`,
+        name: c.title,
+      })),
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
 
 export default function ComparatifIndexPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <ComparatifJsonLd />
       <BreadcrumbJsonLd
         items={[
           { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
@@ -79,7 +109,7 @@ export default function ComparatifIndexPage() {
           className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
         >
           <p className="font-semibold text-sm group-hover:text-primary transition-colors">
-            Voir les 55 workflows
+            Voir les {useCases.length} workflows
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Tutoriels, stack technique et ROI. Gratuit.

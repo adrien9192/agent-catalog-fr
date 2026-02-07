@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useCases } from "@/data/use-cases";
 
 export default function NotFound() {
   return (
@@ -15,7 +16,7 @@ export default function NotFound() {
 
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <Button asChild>
-          <Link href="/catalogue">Voir les 55 workflows</Link>
+          <Link href="/catalogue">Voir les {useCases.length} workflows</Link>
         </Button>
         <Button variant="outline" asChild>
           <Link href="/guide">Lire nos guides</Link>
