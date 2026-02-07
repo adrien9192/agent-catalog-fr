@@ -5631,4 +5631,1154 @@ async def get_today_routes():
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
+  {
+    slug: "agent-conformite-fiscale",
+    title: "Agent de Conformité Fiscale et Optimisation TVA",
+    subtitle: "Automatisez la catégorisation TVA, la surveillance réglementaire et les déclarations fiscales grâce à l'IA",
+    problem:
+      "La complexité croissante des règles TVA (OSS/IOSS, facturation électronique obligatoire en France 2026) expose les entreprises à des erreurs de catégorisation coûteuses. Un simple écart de taux ou une mauvaise affectation de régime fiscal peut déclencher un redressement fiscal majeur, avec pénalités et intérêts de retard.",
+    value:
+      "Un agent IA catégorise automatiquement chaque transaction selon le bon régime TVA, surveille en continu les évolutions réglementaires (OSS, IOSS, e-invoicing), pré-remplit les déclarations TVA et génère des alertes en cas d'anomalie détectée. Le risque de redressement est drastiquement réduit.",
+    inputs: [
+      "Flux de transactions (ERP, e-commerce, POS)",
+      "Référentiel réglementaire TVA (taux, régimes, seuils)",
+      "Paramètres entreprise (régime fiscal, pays, SIRET)",
+      "Historique des déclarations TVA précédentes",
+    ],
+    outputs: [
+      "Transactions catégorisées avec taux TVA appliqué",
+      "Déclaration TVA pré-remplie (CA3, OSS, IOSS)",
+      "Rapport d'anomalies et écarts détectés",
+      "Alertes réglementaires (changements de taux, nouvelles obligations)",
+      "Score de conformité global par période",
+    ],
+    risks: [
+      "Erreur de catégorisation sur des régimes TVA complexes (triangulaires, autoliquidation)",
+      "Retard dans la prise en compte d'un changement réglementaire",
+      "Dépendance excessive à l'automatisation sans vérification humaine des déclarations",
+    ],
+    roiIndicatif:
+      "Réduction de 80% du temps de préparation des déclarations TVA. Diminution de 90% des erreurs de catégorisation. Économie moyenne de 15K€/an en pénalités évitées pour une PME.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│ Transactions│────▶│  Agent LLM   │────▶│ Déclaration │
+│  (ERP/POS)  │     │ (Catégoris.) │     │  TVA prête  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+                    ┌──────▼───────┐
+                    │ Référentiel  │
+                    │  TVA / Veille│
+                    └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances nécessaires et configurez l'accès à l'API Anthropic. Préparez votre référentiel de taux TVA et régimes fiscaux par pays.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary python-dotenv fastapi uvicorn`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/fiscal
+VAT_REFERENCE_PATH=./data/vat_rates.json`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Référentiel TVA et modèles de données",
+        content:
+          "Définissez les modèles de données pour les transactions, les régimes TVA et les résultats de catégorisation. Le référentiel doit couvrir tous les pays et régimes applicables (OSS, IOSS, autoliquidation).",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from enum import Enum
+from datetime import date
+
+class VATRegime(str, Enum):
+    STANDARD = "standard"
+    REDUCED = "réduit"
+    SUPER_REDUCED = "super_réduit"
+    EXEMPT = "exonéré"
+    OSS = "oss"
+    IOSS = "ioss"
+    REVERSE_CHARGE = "autoliquidation"
+
+class TransactionCategory(BaseModel):
+    transaction_id: str
+    vat_regime: VATRegime
+    vat_rate: float = Field(ge=0, le=30)
+    country_code: str
+    reasoning: str
+    confidence: float = Field(ge=0, le=1)
+    alerts: list[str] = []
+
+class VATDeclaration(BaseModel):
+    period: str
+    total_ht: float
+    total_tva: float
+    lines: list[dict]
+    compliance_score: float = Field(ge=0, le=100)
+    anomalies: list[str] = []`,
+            filename: "models.py",
+          },
+        ],
+      },
+      {
+        title: "Agent de catégorisation TVA",
+        content:
+          "Construisez l'agent qui analyse chaque transaction, détermine le régime TVA applicable et détecte les anomalies. L'agent utilise le référentiel réglementaire comme contexte pour ses décisions.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+
+client = anthropic.Anthropic()
+
+def load_vat_reference():
+    with open("./data/vat_rates.json") as f:
+        return json.load(f)
+
+def categorize_transaction(transaction: dict, reference: dict) -> TransactionCategory:
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert en fiscalité TVA européenne.
+Analyse cette transaction et détermine le régime TVA applicable.
+
+Transaction: {json.dumps(transaction, ensure_ascii=False)}
+Référentiel TVA: {json.dumps(reference, ensure_ascii=False)}
+
+Retourne un JSON avec: transaction_id, vat_regime, vat_rate,
+country_code, reasoning, confidence, alerts (liste d'anomalies)."""
+        }]
+    )
+    result = json.loads(message.content[0].text)
+    return TransactionCategory(**result)
+
+def batch_categorize(transactions: list[dict]) -> list[TransactionCategory]:
+    reference = load_vat_reference()
+    return [categorize_transaction(tx, reference) for tx in transactions]`,
+            filename: "agent_fiscal.py",
+          },
+        ],
+      },
+      {
+        title: "API de déclaration et monitoring",
+        content:
+          "Exposez l'agent via une API REST. L'endpoint principal catégorise un lot de transactions et génère un brouillon de déclaration TVA. Un dashboard permet de suivre le score de conformité en temps réel.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class BatchRequest(BaseModel):
+    transactions: list[dict]
+    period: str
+    company_id: str
+
+@app.post("/api/vat/categorize")
+async def categorize(req: BatchRequest):
+    results = batch_categorize(req.transactions)
+    anomalies = [r for r in results if r.confidence < 0.8 or r.alerts]
+    total_ht = sum(tx.get("amount_ht", 0) for tx in req.transactions)
+    total_tva = sum(
+        tx.get("amount_ht", 0) * (r.vat_rate / 100)
+        for tx, r in zip(req.transactions, results)
+    )
+    return {
+        "period": req.period,
+        "total_transactions": len(results),
+        "total_ht": total_ht,
+        "total_tva": round(total_tva, 2),
+        "anomalies": [a.model_dump() for a in anomalies],
+        "compliance_score": round(
+            100 * (1 - len(anomalies) / max(len(results), 1)), 1
+        )
+    }`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données de facturation (noms, adresses, SIRET) sont stockées en base interne chiffrée. Seules les données agrégées et anonymisées sont envoyées au LLM pour la catégorisation. Conformité RGPD et secret fiscal respectés.",
+      auditLog: "Chaque catégorisation tracée : transaction ID, régime TVA appliqué, taux, score de confiance, horodatage, version du référentiel utilisé. Piste d'audit complète pour contrôle fiscal.",
+      humanInTheLoop: "Les transactions avec un score de confiance < 0.8 ou présentant des anomalies sont soumises au comptable pour validation. Les déclarations TVA finales nécessitent une approbation du directeur financier avant soumission.",
+      monitoring: "Dashboard : volume de transactions catégorisées/jour, score de conformité moyen, nombre d'anomalies détectées, alertes réglementaires actives, écart TVA collectée vs déclarée.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (quotidien) → HTTP Request (nouvelles transactions ERP) → HTTP Request LLM (catégorisation TVA) → IF anomalie détectée → Email alerte comptable + Mise à jour PostgreSQL → Cron mensuel → Génération déclaration TVA.",
+      nodes: ["Cron Trigger (quotidien)", "HTTP Request (ERP transactions)", "HTTP Request (LLM catégorisation)", "IF (anomalie)", "Email (alerte comptable)", "PostgreSQL (mise à jour)", "Cron Trigger (mensuel déclaration)"],
+      triggerType: "Cron (quotidien + mensuel)",
+    },
+    estimatedTime: "10-16h",
+    difficulty: "Expert",
+    sectors: ["E-commerce", "Retail", "Services"],
+    metiers: ["Comptabilité", "Direction Financière", "Fiscalité"],
+    functions: ["Finance"],
+    metaTitle: "Agent IA de Conformité Fiscale et Optimisation TVA — Guide Expert",
+    metaDescription:
+      "Automatisez la catégorisation TVA et la conformité fiscale avec un agent IA. OSS, IOSS, facturation électronique : tutoriel complet et ROI détaillé.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-soc-cybersecurite",
+    title: "Agent SOC Autonome de Cybersécurité",
+    subtitle: "Détectez, corrélez et répondez aux menaces cyber automatiquement grâce à un agent IA SOC",
+    problem:
+      "Les SOC (Security Operations Centers) sont submergés par des milliers d'alertes par jour, dont 80% sont des faux positifs. Les analystes peinent à traiter le volume, les menaces réelles sont noyées dans le bruit. La directive NIS2 impose désormais des délais de détection et de notification stricts.",
+    value:
+      "Un agent IA corrèle les événements de sécurité multi-sources (SIEM, EDR, firewall), élimine les faux positifs, conduit une investigation automatisée sur les alertes suspectes, applique des remédiations prédéfinies et escalade les incidents critiques avec un dossier pré-constitué complet.",
+    inputs: [
+      "Flux d'alertes SIEM (Splunk, Elastic, Sentinel)",
+      "Logs EDR et firewall",
+      "Base de Threat Intelligence (IoC, TTPs MITRE ATT&CK)",
+      "Playbooks de réponse à incidents",
+    ],
+    outputs: [
+      "Alertes corrélées et dédupliquées avec score de sévérité",
+      "Rapport d'investigation automatisé (timeline, IoC, impact)",
+      "Actions de remédiation exécutées (blocage IP, isolation endpoint)",
+      "Dossier d'escalade pré-constitué pour l'analyste L2/L3",
+      "Métriques SOC : MTTD, MTTR, taux de faux positifs",
+    ],
+    risks: [
+      "Faux négatif : menace réelle classée comme bénigne par l'agent",
+      "Remédiation automatique trop agressive causant un déni de service interne",
+      "Exfiltration de données sensibles via les prompts envoyés au LLM",
+    ],
+    roiIndicatif:
+      "Réduction de 85% du volume d'alertes à traiter manuellement. MTTD (Mean Time To Detect) divisé par 4. Économie de 2 à 3 ETP analystes SOC L1.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Elasticsearch", category: "Database" },
+      { name: "AWS", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "Wazuh", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Docker self-hosted", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│ SIEM/EDR    │────▶│  Agent LLM   │────▶│ Remédiation │
+│  Alertes    │     │ (Corrélation)│     │ / Escalade  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+                    ┌──────▼───────┐
+                    │   Threat     │
+                    │ Intelligence │
+                    └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez les accès aux sources de données de sécurité. L'agent nécessite un accès en lecture au SIEM et en écriture pour les actions de remédiation.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain elasticsearch python-dotenv fastapi uvicorn requests`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+ELASTICSEARCH_URL=https://siem.internal:9200
+ELASTICSEARCH_API_KEY=...
+MITRE_ATTACK_DB=./data/mitre_attack.json
+PLAYBOOKS_PATH=./playbooks/`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Corrélation d'événements et triage",
+        content:
+          "Construisez le module de corrélation qui agrège les alertes multi-sources, élimine les doublons et les faux positifs évidents, puis soumet les alertes suspectes à l'agent LLM pour investigation approfondie.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+from datetime import datetime, timedelta
+from elasticsearch import Elasticsearch
+
+client = anthropic.Anthropic()
+es = Elasticsearch(os.getenv("ELASTICSEARCH_URL"))
+
+def fetch_recent_alerts(minutes: int = 15) -> list[dict]:
+    query = {
+        "query": {
+            "range": {
+                "@timestamp": {
+                    "gte": f"now-{minutes}m",
+                    "lte": "now"
+                }
+            }
+        },
+        "size": 500,
+        "sort": [{"@timestamp": "desc"}]
+    }
+    result = es.search(index="siem-alerts-*", body=query)
+    return [hit["_source"] for hit in result["hits"]["hits"]]
+
+def correlate_and_triage(alerts: list[dict]) -> dict:
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un analyste SOC expert.
+Analyse ces {len(alerts)} alertes de sécurité.
+
+Alertes: {json.dumps(alerts[:50], ensure_ascii=False, default=str)}
+
+Pour chaque groupe d'alertes corrélées, retourne un JSON avec:
+- alert_group_id, severity (critical/high/medium/low/false_positive)
+- correlated_events (liste des IDs), attack_technique (MITRE ATT&CK)
+- summary, recommended_action, requires_escalation (bool)"""
+        }]
+    )
+    return json.loads(message.content[0].text)`,
+            filename: "soc_correlator.py",
+          },
+        ],
+      },
+      {
+        title: "Investigation automatisée et remédiation",
+        content:
+          "L'agent conduit une investigation approfondie sur les alertes à haute sévérité : enrichissement IoC, analyse de la kill chain, et exécution des playbooks de remédiation prédéfinis.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `def investigate_alert_group(alert_group: dict) -> dict:
+    # Enrichissement via Threat Intelligence
+    iocs = extract_iocs(alert_group)
+    ti_results = enrich_iocs(iocs)
+
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Investigation approfondie requise.
+
+Groupe d'alertes: {json.dumps(alert_group, ensure_ascii=False)}
+Enrichissement Threat Intel: {json.dumps(ti_results, ensure_ascii=False)}
+
+Produis un rapport d'investigation complet:
+- timeline (chronologie des événements)
+- iocs_confirmed (IoC confirmés malveillants)
+- attack_chain (étapes MITRE ATT&CK identifiées)
+- impact_assessment (systèmes affectés, données à risque)
+- remediation_actions (actions immédiates recommandées)
+- escalation_brief (résumé pour analyste L3)"""
+        }]
+    )
+    report = json.loads(message.content[0].text)
+
+    # Exécution des remédiations automatiques si playbook existe
+    if report.get("remediation_actions"):
+        for action in report["remediation_actions"]:
+            if action.get("auto_executable"):
+                execute_playbook(action["playbook_id"], action["params"])
+
+    return report`,
+            filename: "soc_investigator.py",
+          },
+        ],
+      },
+      {
+        title: "API SOC et dashboard",
+        content:
+          "Exposez l'agent via une API REST intégrée à votre stack SOC. Le pipeline tourne en continu, traitant les alertes par lots toutes les 15 minutes et exposant les métriques clés.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+@app.get("/api/soc/status")
+async def soc_status():
+    alerts = fetch_recent_alerts(minutes=60)
+    triaged = correlate_and_triage(alerts)
+    critical = [g for g in triaged.get("groups", [])
+                if g["severity"] == "critical"]
+    return {
+        "total_alerts_1h": len(alerts),
+        "groups_identified": len(triaged.get("groups", [])),
+        "critical_incidents": len(critical),
+        "false_positive_rate": triaged.get("false_positive_rate", 0),
+        "mttd_minutes": triaged.get("avg_detection_time", 0)
+    }
+
+@app.post("/api/soc/investigate")
+async def investigate(alert_group_id: str):
+    alert_group = get_alert_group(alert_group_id)
+    report = investigate_alert_group(alert_group)
+    return report`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Aucune donnée personnelle n'est envoyée au LLM : seuls les métadonnées d'alertes (IPs, hashes, timestamps) sont transmises. Les logs bruts restent dans le SIEM interne. Chiffrement TLS pour tous les flux. Conformité NIS2 et ISO 27001.",
+      auditLog: "Chaque corrélation, investigation et remédiation tracée : alertes traitées, sévérité assignée, actions exécutées, temps de détection, temps de réponse, analyste notifié, playbook déclenché.",
+      humanInTheLoop: "Les remédiations critiques (isolation réseau, blocage utilisateur) nécessitent une approbation humaine. Les incidents de sévérité critique sont immédiatement escaladés vers l'analyste L3 avec dossier complet. Seuil configurable par type d'action.",
+      monitoring: "MTTD (Mean Time To Detect), MTTR (Mean Time To Respond), taux de faux positifs, volume d'alertes traitées/heure, nombre de remédiations automatiques, taux d'escalade, couverture MITRE ATT&CK.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (toutes les 15 min) → HTTP Request (alertes SIEM) → HTTP Request LLM (corrélation et triage) → IF sévérité critique → HTTP Request (investigation) → HTTP Request (remédiation) → Slack/PagerDuty (escalade).",
+      nodes: ["Cron Trigger (15 min)", "HTTP Request (SIEM alertes)", "HTTP Request (LLM corrélation)", "IF (sévérité critique)", "HTTP Request (investigation)", "HTTP Request (remédiation)", "PagerDuty (escalade)"],
+      triggerType: "Cron (toutes les 15 minutes)",
+    },
+    estimatedTime: "16-24h",
+    difficulty: "Expert",
+    sectors: ["Banque", "Santé", "Telecom"],
+    metiers: ["RSSI", "SOC Analyst", "Direction IT"],
+    functions: ["IT"],
+    metaTitle: "Agent SOC Autonome de Cybersécurité — Guide Expert IA",
+    metaDescription:
+      "Déployez un agent IA SOC autonome pour détecter, corréler et répondre aux cybermenaces. Corrélation SIEM, investigation automatisée et conformité NIS2.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-qa-logicielle",
+    title: "Agent de QA Logicielle Autonome",
+    subtitle: "Générez, exécutez et analysez vos tests logiciels automatiquement grâce à l'IA",
+    problem:
+      "Les cycles de développement accélérés font des tests le goulet d'étranglement de la delivery. Le code généré par IA nécessite encore plus de vérification. Les équipes QA n'arrivent pas à suivre le rythme des releases, les régressions passent en production.",
+    value:
+      "Un agent IA génère automatiquement des plans de test à partir du code et des spécifications, exécute les tests dans le pipeline CI/CD, détecte les régressions et produit des rapports enrichis avec analyse d'impact. La couverture de test augmente sans effort manuel.",
+    inputs: [
+      "Code source et diff des pull requests",
+      "Spécifications fonctionnelles (tickets Jira, docs)",
+      "Historique des tests et bugs précédents",
+      "Configuration CI/CD (GitHub Actions, GitLab CI)",
+    ],
+    outputs: [
+      "Plan de test généré (cas de test, scénarios edge cases)",
+      "Scripts de test exécutables (pytest, Playwright, Jest)",
+      "Rapport d'exécution avec couverture et régressions détectées",
+      "Analyse d'impact des changements sur les modules existants",
+      "Score de qualité du code et recommandations",
+    ],
+    risks: [
+      "Tests générés superficiels manquant des edge cases critiques",
+      "Faux sentiment de sécurité lié à une couverture de test élevée mais peu pertinente",
+      "Coût API élevé sur des codebases volumineuses si chaque PR déclenche une analyse complète",
+    ],
+    roiIndicatif:
+      "Augmentation de 60% de la couverture de test. Réduction de 45% des régressions en production. Gain de 2 jours/sprint pour l'équipe QA.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "GitHub Actions", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + CodeLlama", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "GitLab CI (self-hosted)", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Pull Req.  │────▶│  Agent LLM   │────▶│  CI/CD      │
+│  (code diff)│     │ (Génér.tests)│     │ (exécution) │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+                    ┌──────▼───────┐
+                    │  Historique  │
+                    │ tests & bugs │
+                    └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez l'accès au dépôt Git et à l'API Anthropic. L'agent s'intègre comme étape dans votre pipeline CI/CD existant.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain gitpython pytest python-dotenv fastapi`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+GITHUB_TOKEN=ghp_...
+REPO_PATH=./my-project
+TEST_OUTPUT_DIR=./generated_tests`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Analyse de diff et génération de tests",
+        content:
+          "L'agent analyse le diff d'une pull request, identifie les fonctions modifiées et génère des cas de test couvrant les chemins nominaux, les edge cases et les régressions potentielles.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+from git import Repo
+
+client = anthropic.Anthropic()
+
+def get_pr_diff(repo_path: str, base: str, head: str) -> str:
+    repo = Repo(repo_path)
+    diff = repo.git.diff(f"{base}...{head}")
+    return diff
+
+def generate_tests(diff: str, spec: str = "") -> dict:
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un ingénieur QA expert.
+Analyse ce diff et génère des tests complets.
+
+Diff:
+{diff[:8000]}
+
+Spécifications: {spec if spec else "Non fournies"}
+
+Retourne un JSON avec:
+- test_plan: liste de cas de test (description, type: unit/integration/e2e)
+- test_code: code pytest exécutable
+- edge_cases: scénarios limites identifiés
+- regression_risks: risques de régression sur les modules existants
+- coverage_estimate: estimation de la couverture ajoutée"""
+        }]
+    )
+    return json.loads(message.content[0].text)`,
+            filename: "agent_qa.py",
+          },
+        ],
+      },
+      {
+        title: "Exécution CI/CD et rapport",
+        content:
+          "Intégrez l'agent dans votre pipeline CI/CD. À chaque pull request, l'agent génère les tests, les exécute via pytest et produit un rapport enrichi avec analyse d'impact.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import subprocess
+import json
+
+def run_generated_tests(test_code: str, output_dir: str) -> dict:
+    # Écrire les tests générés
+    test_file = f"{output_dir}/test_generated.py"
+    with open(test_file, "w") as f:
+        f.write(test_code)
+
+    # Exécuter avec pytest
+    result = subprocess.run(
+        ["pytest", test_file, "--json-report", "--json-report-file=report.json", "-v"],
+        capture_output=True, text=True
+    )
+
+    with open("report.json") as f:
+        report = json.load(f)
+
+    return {
+        "passed": report["summary"]["passed"],
+        "failed": report["summary"]["failed"],
+        "errors": report["summary"].get("error", 0),
+        "duration": report["duration"],
+        "details": report.get("tests", []),
+        "stdout": result.stdout[-2000:]
+    }
+
+def generate_quality_report(test_results: dict, diff: str) -> dict:
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""Analyse les résultats de test et le diff.
+Résultats: {json.dumps(test_results)}
+Diff: {diff[:4000]}
+
+Produis un rapport qualité: quality_score (0-100),
+regressions_detected, recommendations, safe_to_merge (bool)."""
+        }]
+    )
+    return json.loads(message.content[0].text)`,
+            filename: "ci_runner.py",
+          },
+        ],
+      },
+      {
+        title: "Intégration GitHub Actions",
+        content:
+          "Configurez un workflow GitHub Actions qui déclenche l'agent QA automatiquement sur chaque pull request. Le rapport est posté en commentaire sur la PR.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+import requests
+
+app = FastAPI()
+
+class PRWebhook(BaseModel):
+    action: str
+    pr_number: int
+    base_branch: str
+    head_branch: str
+    repo: str
+
+@app.post("/api/qa/webhook")
+async def handle_pr(webhook: PRWebhook):
+    if webhook.action not in ["opened", "synchronize"]:
+        return {"status": "skipped"}
+
+    diff = get_pr_diff(webhook.repo, webhook.base_branch, webhook.head_branch)
+    test_plan = generate_tests(diff)
+    results = run_generated_tests(test_plan["test_code"], "./generated_tests")
+    report = generate_quality_report(results, diff)
+
+    # Poster le rapport en commentaire sur la PR
+    requests.post(
+        f"https://api.github.com/repos/{webhook.repo}/issues/{webhook.pr_number}/comments",
+        headers={"Authorization": f"token {GITHUB_TOKEN}"},
+        json={"body": format_report_markdown(report)}
+    )
+    return {"status": "completed", "quality_score": report["quality_score"]}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Le code source est analysé en mémoire sans persistance externe. Les diffs envoyés au LLM sont tronqués pour exclure les fichiers sensibles (.env, credentials). Liste d'exclusion configurable. Aucune donnée client dans les tests générés.",
+      auditLog: "Chaque exécution tracée : PR analysée, tests générés, résultats d'exécution, score qualité, recommandations, décision merge/block, temps d'analyse, coût API.",
+      humanInTheLoop: "L'agent ne merge jamais automatiquement. Le rapport qualité est informatif. Les tests avec un score < 70 bloquent la PR et nécessitent une revue manuelle par le Tech Lead.",
+      monitoring: "Couverture de test par module, taux de régressions détectées vs passées en prod, temps moyen de génération de tests, coût API par PR, score qualité moyen par équipe.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (GitHub PR event) → HTTP Request (récupération diff) → HTTP Request LLM (génération tests) → Execute Command (pytest) → HTTP Request LLM (rapport qualité) → HTTP Request (commentaire GitHub PR).",
+      nodes: ["Webhook (GitHub PR)", "HTTP Request (diff)", "HTTP Request (LLM génération tests)", "Execute Command (pytest)", "HTTP Request (LLM rapport)", "HTTP Request (GitHub commentaire)"],
+      triggerType: "Webhook (événement Pull Request)",
+    },
+    estimatedTime: "6-10h",
+    difficulty: "Moyen",
+    sectors: ["B2B SaaS", "E-commerce", "Banque"],
+    metiers: ["QA Engineer", "Tech Lead", "CTO"],
+    functions: ["IT"],
+    metaTitle: "Agent IA de QA Logicielle Autonome — Guide Complet",
+    metaDescription:
+      "Automatisez vos tests logiciels avec un agent IA. Génération de tests, exécution CI/CD et détection de régressions. Tutoriel pas-à-pas.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-negociation-achats",
+    title: "Agent de Négociation Achats Indirects",
+    subtitle: "Analysez vos contrats, benchmarkez les prix et négociez automatiquement vos achats indirects",
+    problem:
+      "Les achats indirects représentent 15 à 30% des dépenses d'une entreprise mais sont rarement renégociés faute de temps et de données comparatives. Des millions d'euros de savings sont laissés sur la table chaque année : contrats reconduits tacitement, prix jamais challengés, fournisseurs alternatifs non évalués.",
+    value:
+      "Un agent IA analyse vos contrats en cours, effectue un benchmark tarifaire automatique, identifie les opportunités de savings et mène des négociations autonomes par email avec les fournisseurs. Il présente des recommandations avec options à valider par le décideur.",
+    inputs: [
+      "Contrats fournisseurs en cours (PDF, ERP)",
+      "Historique des dépenses par catégorie d'achats",
+      "Données de benchmark tarifaire (bases sectorielles, web)",
+      "Politique achats et seuils de validation internes",
+    ],
+    outputs: [
+      "Cartographie des dépenses avec potentiel de savings par catégorie",
+      "Benchmark tarifaire comparatif (prix actuels vs marché)",
+      "Emails de négociation générés et envoyés aux fournisseurs",
+      "Recommandations de renégociation avec options chiffrées",
+      "Suivi des négociations en cours et résultats obtenus",
+    ],
+    risks: [
+      "Benchmark biaisé par des données de marché incomplètes ou obsolètes",
+      "Ton de négociation inapproprié pouvant détériorer la relation fournisseur",
+      "Engagement contractuel non autorisé si les garde-fous de validation sont contournés",
+    ],
+    roiIndicatif:
+      "Savings moyen de 8 à 15% sur les achats indirects renégociés. ROI typique de 5x à 10x le coût de l'outil dès la première année. Gain de 3 jours/mois pour l'équipe achats.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Contrats   │────▶│  Agent LLM   │────▶│  Emails de  │
+│  & Dépenses │     │ (Benchmark)  │     │ négociation │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+                    ┌──────▼───────┐
+                    │  Benchmark   │
+                    │  tarifaire   │
+                    └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez les accès. L'agent nécessite un accès aux contrats (PDF) et à l'historique des dépenses (ERP ou export CSV).",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary python-dotenv fastapi pymupdf pandas`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/achats
+SMTP_HOST=smtp.company.com
+SMTP_USER=achats@company.com
+SMTP_PASSWORD=...`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Extraction et analyse de contrats",
+        content:
+          "L'agent extrait les informations clés des contrats fournisseurs (montants, échéances, clauses de reconduction, conditions tarifaires) et les structure dans une base de données pour analyse.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+import fitz  # PyMuPDF
+
+client = anthropic.Anthropic()
+
+def extract_contract_data(pdf_path: str) -> dict:
+    doc = fitz.open(pdf_path)
+    text = " ".join([page.get_text() for page in doc])
+
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""Analyse ce contrat fournisseur et extrais les informations clés.
+
+Contrat:
+{text[:6000]}
+
+Retourne un JSON avec:
+- supplier_name, contract_id, start_date, end_date
+- auto_renewal (bool), notice_period_days
+- total_annual_value, payment_terms
+- key_line_items: liste de (description, unit_price, quantity, annual_total)
+- negotiation_levers: points de négociation identifiés
+- renewal_deadline: date limite pour renégocier"""
+        }]
+    )
+    return json.loads(message.content[0].text)`,
+            filename: "contract_extractor.py",
+          },
+        ],
+      },
+      {
+        title: "Benchmark et stratégie de négociation",
+        content:
+          "L'agent compare vos prix actuels aux données de marché, identifie les écarts et génère une stratégie de négociation adaptée à chaque fournisseur avec des arguments chiffrés.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `def generate_negotiation_strategy(contract: dict, benchmark: dict) -> dict:
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert en achats indirects.
+Analyse ce contrat et ce benchmark pour définir une stratégie de négociation.
+
+Contrat actuel: {json.dumps(contract, ensure_ascii=False)}
+Benchmark marché: {json.dumps(benchmark, ensure_ascii=False)}
+
+Retourne un JSON avec:
+- savings_potential_pct: économie estimée en %
+- savings_potential_eur: économie estimée en EUR/an
+- negotiation_strategy: approche recommandée
+- arguments: liste d'arguments de négociation chiffrés
+- email_draft: brouillon d'email de négociation professionnel
+- options: 3 scénarios (conservateur, modéré, ambitieux)
+  avec pour chacun: target_saving, probability, risk_level
+- alternative_suppliers: fournisseurs alternatifs à mentionner"""
+        }]
+    )
+    return json.loads(message.content[0].text)`,
+            filename: "negotiation_engine.py",
+          },
+        ],
+      },
+      {
+        title: "API et suivi des négociations",
+        content:
+          "Exposez l'agent via une API. Le décideur valide la stratégie et les emails avant envoi. L'agent suit les réponses fournisseurs et adapte sa stratégie en fonction.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+import smtplib
+from email.mime.text import MIMEText
+
+app = FastAPI()
+
+class NegotiationRequest(BaseModel):
+    contract_id: str
+    strategy_option: str  # conservateur, modéré, ambitieux
+    approved_by: str
+
+@app.post("/api/achats/negotiate")
+async def start_negotiation(req: NegotiationRequest):
+    contract = get_contract(req.contract_id)
+    benchmark = get_benchmark(contract["category"])
+    strategy = generate_negotiation_strategy(contract, benchmark)
+
+    selected = next(
+        o for o in strategy["options"]
+        if o["level"] == req.strategy_option
+    )
+    return {
+        "contract_id": req.contract_id,
+        "strategy": strategy["negotiation_strategy"],
+        "email_draft": strategy["email_draft"],
+        "target_saving": selected["target_saving"],
+        "status": "pending_approval",
+        "approved_by": req.approved_by
+    }
+
+@app.post("/api/achats/send-email")
+async def send_negotiation_email(contract_id: str, approved: bool):
+    if not approved:
+        return {"status": "cancelled"}
+    negotiation = get_negotiation(contract_id)
+    send_email(
+        to=negotiation["supplier_email"],
+        subject=f"Revue contrat {contract_id}",
+        body=negotiation["email_draft"]
+    )
+    return {"status": "email_sent"}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les contrats et données fournisseurs sont stockés en base interne chiffrée. Les montants et conditions contractuelles envoyés au LLM sont agrégés sans mention du nom de l'entreprise. Conformité RGPD pour les contacts fournisseurs.",
+      auditLog: "Chaque analyse tracée : contrat analysé, benchmark effectué, stratégie générée, option choisie, email approuvé/envoyé, réponse fournisseur, saving obtenu, approbateur identifié.",
+      humanInTheLoop: "L'agent ne peut jamais envoyer un email ou accepter une offre sans validation explicite du responsable achats. Chaque stratégie est présentée avec 3 options. Seuils de validation hiérarchiques selon les montants en jeu.",
+      monitoring: "Savings obtenus vs estimés par catégorie, nombre de contrats renégociés, taux de réponse fournisseurs, délai moyen de négociation, pipeline de contrats à échéance, ROI global du programme achats.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (hebdomadaire) → HTTP Request (contrats à échéance < 90 jours) → HTTP Request LLM (analyse et benchmark) → HTTP Request LLM (stratégie négociation) → Email (notification responsable achats) → Wait approval → SMTP (envoi email fournisseur).",
+      nodes: ["Cron Trigger (hebdomadaire)", "HTTP Request (contrats ERP)", "HTTP Request (LLM analyse)", "HTTP Request (LLM stratégie)", "Email (notification interne)", "Wait (approbation)", "SMTP (email fournisseur)"],
+      triggerType: "Cron (hebdomadaire)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["Services", "Banque", "Industrie"],
+    metiers: ["Direction Achats", "Operations", "Direction Financière"],
+    functions: ["Operations"],
+    metaTitle: "Agent IA de Négociation Achats Indirects — Guide Complet",
+    metaDescription:
+      "Optimisez vos achats indirects avec un agent IA. Benchmark tarifaire, négociation automatisée et suivi des savings. Tutoriel pas-à-pas.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-analytics-conversationnel",
+    title: "Agent d'Analytics Conversationnel",
+    subtitle: "Interrogez vos données en langage naturel et obtenez des réponses instantanées avec graphiques",
+    problem:
+      "Accéder à une donnée nécessite de maîtriser SQL ou d'attendre que l'équipe data traite la demande (backlog de plusieurs semaines). Le patrimoine data de l'entreprise est sous-exploité : seuls les profils techniques y accèdent, les décideurs restent dépendants de rapports statiques.",
+    value:
+      "Un agent IA permet à n'importe quel collaborateur de poser des questions en langage naturel. L'agent traduit la question en requête SQL, l'exécute sur la base de données, et retourne une réponse synthétisée avec graphiques. Démocratisation complète de l'accès aux données.",
+    inputs: [
+      "Question en langage naturel de l'utilisateur",
+      "Schéma de la base de données (tables, colonnes, relations)",
+      "Dictionnaire métier (glossaire termes business → colonnes SQL)",
+      "Historique des requêtes précédentes (cache et optimisation)",
+    ],
+    outputs: [
+      "Requête SQL générée et validée",
+      "Résultat structuré (tableau de données)",
+      "Réponse en langage naturel synthétisant les résultats",
+      "Graphique adapté au type de données (bar, line, pie chart)",
+      "Suggestions de questions complémentaires pertinentes",
+    ],
+    risks: [
+      "Requête SQL incorrecte retournant des données erronées prises pour argent comptant",
+      "Accès involontaire à des données sensibles ou confidentielles (salaires, données personnelles)",
+      "Requêtes lourdes impactant les performances de la base de production",
+    ],
+    roiIndicatif:
+      "Réduction de 80% du backlog de demandes data. Temps d'accès à une donnée : de 3 jours à 30 secondes. Augmentation de 3x du nombre de décisions data-driven.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "DuckDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Question   │────▶│  Agent LLM   │────▶│  Réponse +  │
+│  (langage)  │     │ (SQL + Synth)│     │  graphique  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+                    ┌──────▼───────┐
+                    │   Base de    │
+                    │   données    │
+                    └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez l'accès à votre base de données en lecture seule. L'agent nécessite le schéma de la base et un dictionnaire métier pour mapper les termes business aux colonnes SQL.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary python-dotenv fastapi plotly pandas`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://readonly_user:pass@localhost:5432/analytics
+SCHEMA_PATH=./data/schema.json
+GLOSSARY_PATH=./data/glossary.json`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Extraction du schéma et dictionnaire métier",
+        content:
+          "Chargez le schéma de la base de données et le dictionnaire métier. Le schéma permet à l'agent de connaître les tables et colonnes disponibles, le glossaire traduit les termes métier en noms techniques.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import json
+import psycopg2
+
+def extract_schema(db_url: str) -> dict:
+    conn = psycopg2.connect(db_url)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT table_name, column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+        ORDER BY table_name, ordinal_position
+    """)
+    schema = {}
+    for table, column, dtype, nullable in cur.fetchall():
+        if table not in schema:
+            schema[table] = []
+        schema[table].append({
+            "column": column,
+            "type": dtype,
+            "nullable": nullable == "YES"
+        })
+    cur.close()
+    conn.close()
+    return schema
+
+def load_glossary(path: str) -> dict:
+    with open(path) as f:
+        return json.load(f)
+    # Exemple: {"chiffre d'affaires": "orders.total_amount",
+    #           "nombre de clients": "COUNT(DISTINCT customers.id)"}`,
+            filename: "schema_loader.py",
+          },
+        ],
+      },
+      {
+        title: "Agent Text-to-SQL et synthèse",
+        content:
+          "L'agent reçoit une question en langage naturel, génère la requête SQL correspondante, l'exécute en lecture seule, et produit une réponse synthétisée en français avec un graphique adapté.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+import psycopg2
+import pandas as pd
+
+client = anthropic.Anthropic()
+
+def ask_data(question: str, schema: dict, glossary: dict) -> dict:
+    # Étape 1 : Générer la requête SQL
+    message = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert SQL.
+Traduis cette question en requête SQL PostgreSQL.
+
+Question: {question}
+Schéma: {json.dumps(schema, ensure_ascii=False)}
+Glossaire: {json.dumps(glossary, ensure_ascii=False)}
+
+Règles:
+- SELECT uniquement (pas de INSERT, UPDATE, DELETE)
+- LIMIT 1000 par défaut
+- Retourne un JSON: sql, explanation, chart_type (bar/line/pie/table)"""
+        }]
+    )
+    result = json.loads(message.content[0].text)
+
+    # Étape 2 : Exécuter la requête
+    conn = psycopg2.connect(DATABASE_URL)
+    df = pd.read_sql_query(result["sql"], conn)
+    conn.close()
+
+    # Étape 3 : Synthétiser la réponse
+    synthesis = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": f"""Synthétise ces résultats pour un décideur non-technique.
+Question: {question}
+Données: {df.head(20).to_json(orient="records", force_ascii=False)}
+
+Retourne un JSON: answer (texte synthétique en français),
+key_insights (3 points clés), follow_up_questions (3 suggestions)"""
+        }]
+    )
+    synthesis_result = json.loads(synthesis.content[0].text)
+
+    return {
+        "sql": result["sql"],
+        "chart_type": result["chart_type"],
+        "data": df.to_dict(orient="records"),
+        **synthesis_result
+    }`,
+            filename: "agent_analytics.py",
+          },
+        ],
+      },
+      {
+        title: "API et interface conversationnelle",
+        content:
+          "Exposez l'agent via une API REST. Chaque question est traitée et retourne les données, la synthèse et le graphique. Un historique des conversations permet d'affiner les requêtes.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+import plotly.express as px
+import plotly.io as pio
+
+app = FastAPI()
+
+class QuestionRequest(BaseModel):
+    question: str
+    user_id: str
+    conversation_id: str | None = None
+
+@app.post("/api/analytics/ask")
+async def ask(req: QuestionRequest):
+    schema = extract_schema(DATABASE_URL)
+    glossary = load_glossary(GLOSSARY_PATH)
+    result = ask_data(req.question, schema, glossary)
+
+    # Générer le graphique
+    chart_html = None
+    if result["chart_type"] != "table" and result["data"]:
+        df = pd.DataFrame(result["data"])
+        if result["chart_type"] == "bar":
+            fig = px.bar(df, x=df.columns[0], y=df.columns[1])
+        elif result["chart_type"] == "line":
+            fig = px.line(df, x=df.columns[0], y=df.columns[1])
+        elif result["chart_type"] == "pie":
+            fig = px.pie(df, names=df.columns[0], values=df.columns[1])
+        chart_html = pio.to_html(fig, full_html=False)
+
+    return {
+        "answer": result["answer"],
+        "key_insights": result["key_insights"],
+        "sql": result["sql"],
+        "data": result["data"][:100],
+        "chart_html": chart_html,
+        "follow_up_questions": result["follow_up_questions"]
+    }`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "L'agent utilise un utilisateur base de données en lecture seule avec accès restreint aux tables autorisées. Les colonnes sensibles (salaires, données personnelles) sont exclues du schéma exposé à l'agent. Les requêtes et résultats sont loggés sans les données brutes.",
+      auditLog: "Chaque requête tracée : question posée, SQL généré, nombre de résultats, utilisateur, horodatage, temps d'exécution, coût API. Détection des tentatives d'injection SQL ou d'accès non autorisé.",
+      humanInTheLoop: "Les requêtes touchant des tables sensibles (finance, RH) nécessitent une approbation du data owner. L'utilisateur voit toujours la requête SQL générée et peut la modifier avant exécution. Mode sandbox pour les nouveaux utilisateurs.",
+      monitoring: "Nombre de questions/jour par utilisateur, taux de requêtes réussies vs erreurs SQL, temps de réponse moyen, tables les plus interrogées, coût API quotidien, satisfaction utilisateur (pouce haut/bas).",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (question utilisateur Slack/Teams) → HTTP Request LLM (génération SQL) → PostgreSQL (exécution requête) → HTTP Request LLM (synthèse) → HTTP Request (génération graphique) → Slack/Teams (réponse avec graphique).",
+      nodes: ["Webhook (Slack/Teams)", "HTTP Request (LLM SQL)", "PostgreSQL (exécution)", "HTTP Request (LLM synthèse)", "HTTP Request (graphique)", "Slack (réponse)"],
+      triggerType: "Webhook (message Slack ou Teams)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Facile",
+    sectors: ["E-commerce", "Retail", "Services"],
+    metiers: ["Direction Générale", "Data Analyst", "Direction Opérations"],
+    functions: ["Operations"],
+    metaTitle: "Agent IA d'Analytics Conversationnel — Guide Complet",
+    metaDescription:
+      "Interrogez vos données en langage naturel avec un agent IA. Questions → SQL → réponses avec graphiques. Démocratisation des données, tutoriel pas-à-pas.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
 ];
