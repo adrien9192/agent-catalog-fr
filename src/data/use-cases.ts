@@ -4273,4 +4273,1362 @@ async def reputation_dashboard(days: int = 7):
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
+  {
+    slug: "agent-maintenance-predictive",
+    title: "Agent de Maintenance Prédictive Industrielle",
+    subtitle: "Surveillez vos équipements via IoT, anticipez les pannes et planifiez la maintenance automatiquement",
+    problem:
+      "Les arrêts non planifiés d'équipements industriels coûtent des dizaines de milliers d'euros par heure. La maintenance préventive traditionnelle est soit trop fréquente (coûteuse) soit insuffisante (pannes imprévues). Les données des capteurs IoT sont sous-exploitées.",
+    value:
+      "Un agent IA connecté aux capteurs IoT surveille les équipements en temps réel, détecte les anomalies vibratoires, thermiques et acoustiques, prédit les pannes avant qu'elles ne surviennent et planifie automatiquement les interventions de maintenance au moment optimal.",
+    inputs: [
+      "Flux de données capteurs IoT (vibrations, température, pression, acoustique)",
+      "Historique de maintenance et pannes passées (GMAO)",
+      "Fiches techniques et durées de vie des composants",
+      "Planning de production et contraintes d'arrêt",
+    ],
+    outputs: [
+      "Score de santé de chaque équipement en temps réel (0-100)",
+      "Prédiction de panne avec probabilité et horizon temporel",
+      "Diagnostic de la cause racine probable",
+      "Ordre de travail de maintenance généré automatiquement",
+      "Rapport hebdomadaire de santé du parc machines",
+    ],
+    risks: [
+      "Faux positifs générant des interventions inutiles et coûteuses",
+      "Capteurs défaillants faussant les données d'entrée du modèle",
+      "Sous-estimation du risque de panne critique menant à un arrêt non planifié",
+    ],
+    roiIndicatif:
+      "Réduction de 30-40% des arrêts non planifiés, ROI sous 12 mois. Allongement de 15-20% de la durée de vie des équipements. Réduction de 25% des coûts de maintenance.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "TimescaleDB", category: "Database" },
+      { name: "AWS IoT Core", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "InfluxDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Mosquitto MQTT", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Capteurs   │────▶│  Broker MQTT │────▶│  Agent LLM  │
+│  IoT        │     │  (ingestion) │     │  (Prédiction)│
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  GMAO       │◀────│  Planificateur│◀────│  TimescaleDB│
+│  (OT maint.)│     │  maintenance │     │  (historique)│
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour la collecte de données IoT, l'analyse de séries temporelles et la connexion au LLM. Configurez le broker MQTT et la base de données TimescaleDB.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic paho-mqtt psycopg2-binary pandas numpy scikit-learn python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+DB_URL = os.getenv("TIMESCALEDB_URL")
+GMAO_API_URL = os.getenv("GMAO_API_URL")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Ingestion des données capteurs IoT",
+        content:
+          "Connectez-vous au broker MQTT pour recevoir les flux de données des capteurs en temps réel et stockez-les dans TimescaleDB pour l'analyse historique.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import paho.mqtt.client as mqtt
+import psycopg2
+import json
+from datetime import datetime
+
+conn = psycopg2.connect(DB_URL)
+
+def on_message(client, userdata, msg):
+    payload = json.loads(msg.payload.decode())
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO sensor_readings
+        (equipment_id, sensor_type, value, unit, timestamp)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (
+        payload["equipment_id"],
+        payload["sensor_type"],
+        payload["value"],
+        payload["unit"],
+        datetime.fromisoformat(payload["timestamp"])
+    ))
+    conn.commit()
+
+mqtt_client = mqtt.Client()
+mqtt_client.on_message = on_message
+mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
+mqtt_client.subscribe("usine/+/capteurs/#")
+mqtt_client.loop_start()
+print("Collecte des données capteurs en cours...")`,
+            filename: "iot_collector.py",
+          },
+        ],
+      },
+      {
+        title: "Détection d'anomalies et prédiction de pannes",
+        content:
+          "Analysez les séries temporelles des capteurs pour détecter les anomalies et utilisez le LLM pour interpréter les patterns et prédire les pannes avec leur cause racine probable.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import pandas as pd
+import numpy as np
+import json
+
+client = anthropic.Anthropic()
+
+def get_equipment_readings(equipment_id: str, hours: int = 72) -> pd.DataFrame:
+    conn = psycopg2.connect(DB_URL)
+    query = f"""
+        SELECT sensor_type, value, timestamp
+        FROM sensor_readings
+        WHERE equipment_id = %s
+          AND timestamp >= NOW() - INTERVAL '{hours} hours'
+        ORDER BY timestamp
+    """
+    return pd.read_sql(query, conn, params=(equipment_id,))
+
+def detect_anomalies(readings: pd.DataFrame) -> dict:
+    anomalies = {}
+    for sensor in readings["sensor_type"].unique():
+        data = readings[readings["sensor_type"] == sensor]["value"]
+        mean_val = data.mean()
+        std_val = data.std()
+        latest = data.iloc[-1]
+        z_score = abs((latest - mean_val) / std_val) if std_val > 0 else 0
+        anomalies[sensor] = {
+            "current": round(latest, 2),
+            "mean": round(mean_val, 2),
+            "std": round(std_val, 2),
+            "z_score": round(z_score, 2),
+            "is_anomaly": z_score > 2.5
+        }
+    return anomalies
+
+def predict_failure(equipment_id: str, anomalies: dict, readings: pd.DataFrame) -> dict:
+    stats_summary = readings.groupby("sensor_type")["value"].describe().to_string()
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert en maintenance prédictive industrielle.
+Analyse les données capteurs de l'équipement {equipment_id}.
+
+Anomalies détectées: {json.dumps(anomalies)}
+Statistiques des capteurs (72h): {stats_summary}
+
+Évalue:
+1. health_score (0-100, 100 = parfait état)
+2. failure_probability (0-1) dans les 7 prochains jours
+3. estimated_failure_window (ex: "3-5 jours")
+4. root_cause_hypothesis (cause racine probable)
+5. recommended_action (intervention recommandée)
+6. urgency (faible/moyenne/haute/critique)
+7. affected_components (composants à vérifier)
+
+Retourne un JSON structuré."""
+        }]
+    )
+    return json.loads(response.content[0].text)`,
+            filename: "failure_predictor.py",
+          },
+        ],
+      },
+      {
+        title: "Planification automatique et API",
+        content:
+          "Planifiez automatiquement les interventions de maintenance en fonction des prédictions et des contraintes de production. Exposez les résultats via une API REST pour le dashboard et la GMAO.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+import schedule
+import threading
+import requests
+
+app = FastAPI()
+
+def create_maintenance_order(equipment_id: str, prediction: dict) -> dict:
+    order = {
+        "equipment_id": equipment_id,
+        "type": "predictive",
+        "urgency": prediction["urgency"],
+        "description": prediction["root_cause_hypothesis"],
+        "components": prediction["affected_components"],
+        "recommended_action": prediction["recommended_action"],
+        "deadline": prediction["estimated_failure_window"],
+        "created_by": "agent-maintenance-predictive"
+    }
+    # Envoi vers la GMAO
+    resp = requests.post(f"{GMAO_API_URL}/work-orders", json=order)
+    return resp.json()
+
+def predictive_scan():
+    conn = psycopg2.connect(DB_URL)
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT equipment_id FROM sensor_readings WHERE timestamp >= NOW() - INTERVAL '1 hour'")
+    equipment_ids = [row[0] for row in cur.fetchall()]
+
+    for eq_id in equipment_ids:
+        readings = get_equipment_readings(eq_id)
+        anomalies = detect_anomalies(readings)
+        has_anomaly = any(a["is_anomaly"] for a in anomalies.values())
+        if has_anomaly:
+            prediction = predict_failure(eq_id, anomalies, readings)
+            store_prediction(eq_id, prediction)
+            if prediction.get("urgency") in ["haute", "critique"]:
+                create_maintenance_order(eq_id, prediction)
+                send_alert(eq_id, prediction)
+
+schedule.every(30).minutes.do(predictive_scan)
+threading.Thread(target=lambda: [schedule.run_pending() or __import__('time').sleep(60) for _ in iter(int, 1)], daemon=True).start()
+
+@app.get("/api/equipment-health")
+async def equipment_health():
+    return get_all_equipment_health_scores()
+
+@app.get("/api/equipment/{equipment_id}/prediction")
+async def get_prediction(equipment_id: str):
+    readings = get_equipment_readings(equipment_id)
+    anomalies = detect_anomalies(readings)
+    prediction = predict_failure(equipment_id, anomalies, readings)
+    return {"equipment_id": equipment_id, "anomalies": anomalies, "prediction": prediction}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Aucune donnée personnelle traitée. Les données sont exclusivement des mesures de capteurs industriels (vibrations, température, pression). Stockage sur infrastructure interne ou cloud privé industriel.",
+      auditLog: "Chaque cycle de scan tracé : équipements analysés, anomalies détectées, prédictions générées, ordres de maintenance créés, alertes envoyées, résultat post-intervention (panne confirmée ou non).",
+      humanInTheLoop: "Les ordres de maintenance prédictive sont validés par le responsable maintenance avant exécution. Les interventions critiques nécessitent une validation du directeur de production pour planifier l'arrêt machine.",
+      monitoring: "Précision des prédictions (panne prédite vs réelle), taux de faux positifs, temps moyen entre alerte et intervention, réduction des arrêts non planifiés, coût de maintenance évité par prédiction correcte.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (toutes les 30 min) → MQTT Subscribe (données capteurs) → Code Node (détection anomalies) → HTTP Request LLM (prédiction panne) → IF Node (urgence haute) → HTTP Request GMAO (ordre de travail) → Slack alerte maintenance.",
+      nodes: ["Cron Trigger (30 min)", "MQTT Subscribe (capteurs)", "Code Node (anomalies)", "HTTP Request (LLM prédiction)", "IF Node (urgence haute)", "HTTP Request (GMAO)", "Slack Notification"],
+      triggerType: "Cron (toutes les 30 minutes)",
+    },
+    estimatedTime: "14-20h",
+    difficulty: "Expert",
+    sectors: ["Industrie", "Energie"],
+    metiers: ["Maintenance", "Ingénierie", "Production"],
+    functions: ["Operations"],
+    metaTitle: "Agent IA de Maintenance Prédictive Industrielle — Guide Opérations",
+    metaDescription:
+      "Anticipez les pannes industrielles avec un agent IA connecté à vos capteurs IoT. Maintenance prédictive, détection d'anomalies et planification automatique.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-tarification-dynamique",
+    title: "Agent de Tarification Dynamique",
+    subtitle: "Ajustez automatiquement vos prix en fonction du stock, de la demande et de la concurrence",
+    problem:
+      "Les équipes pricing passent des heures à analyser manuellement les prix concurrents, les niveaux de stock et la saisonnalité. Les ajustements de prix sont lents, souvent réactifs plutôt que proactifs, et le stock dormant s'accumule faute de prix attractifs au bon moment.",
+    value:
+      "Un agent IA analyse en temps réel les niveaux de stock, la demande client, les prix concurrents et les tendances saisonnières pour ajuster automatiquement les prix produit par produit. La marge nette est maximisée tout en réduisant le stock dormant.",
+    inputs: [
+      "Niveaux de stock en temps réel (ERP/WMS)",
+      "Historique de ventes et courbes de demande",
+      "Prix concurrents (scraping ou API comparateurs)",
+      "Calendrier saisonnier et événements commerciaux",
+    ],
+    outputs: [
+      "Prix optimal recommandé par produit et canal de vente",
+      "Score de confiance de la recommandation de prix",
+      "Simulation d'impact sur la marge et le volume de ventes",
+      "Alertes de prix concurrents significativement différents",
+      "Rapport hebdomadaire de performance pricing (marge, rotation stock)",
+    ],
+    risks: [
+      "Guerre des prix déclenchée par des baisses trop agressives",
+      "Perception client négative sur des hausses de prix fréquentes",
+      "Données concurrentielles obsolètes menant à un mauvais positionnement",
+    ],
+    roiIndicatif:
+      "+5 à 15% de marge nette, réduction du stock dormant de 20-30%. Augmentation de 10-20% de la rotation des stocks. ROI sous 6 mois.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  ERP /      │────▶│  Agrégateur  │────▶│  Agent LLM  │
+│  Stock      │     │  données     │     │  (Pricing)  │
+└─────────────┘     └──────┬───────┘     └──────┬──────┘
+                           │                     │
+┌─────────────┐     ┌──────▼───────┐     ┌──────▼──────┐
+│  Concurrents│────▶│  Historique  │     │  Mise à jour│
+│  (scraping) │     │  ventes/prix │     │  prix (API) │
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour la collecte de prix concurrents, l'analyse de données et la connexion au LLM. Configurez vos accès aux systèmes ERP et e-commerce.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic psycopg2-binary pandas requests beautifulsoup4 python-dotenv schedule`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+ECOMMERCE_API_URL = os.getenv("SHOPIFY_API_URL")
+ECOMMERCE_API_KEY = os.getenv("SHOPIFY_API_KEY")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte des données de stock, ventes et prix concurrents",
+        content:
+          "Construisez les connecteurs pour récupérer les niveaux de stock, l'historique des ventes et les prix pratiqués par les concurrents. Ces données alimenteront le moteur de tarification.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+import psycopg2
+import pandas as pd
+from datetime import datetime, timedelta
+
+def get_stock_levels() -> pd.DataFrame:
+    conn = psycopg2.connect(DB_URL)
+    return pd.read_sql("""
+        SELECT product_id, product_name, current_stock,
+               avg_daily_sales_30d, days_of_stock,
+               cost_price, current_price
+        FROM inventory_dashboard
+        WHERE active = true
+    """, conn)
+
+def get_sales_history(product_id: str, days: int = 90) -> pd.DataFrame:
+    conn = psycopg2.connect(DB_URL)
+    return pd.read_sql("""
+        SELECT sale_date, quantity, unit_price, channel
+        FROM sales
+        WHERE product_id = %s AND sale_date >= NOW() - INTERVAL '%s days'
+        ORDER BY sale_date
+    """, conn, params=(product_id, days))
+
+def get_competitor_prices(product_name: str) -> list:
+    # Exemple via une API de comparateur de prix
+    resp = requests.get("https://api.comparateur.example.com/search",
+        params={"q": product_name, "country": "FR"})
+    results = resp.json().get("results", [])
+    return [{
+        "competitor": r["merchant"],
+        "price": r["price"],
+        "shipping": r.get("shipping_cost", 0),
+        "in_stock": r.get("availability", True),
+        "url": r["url"]
+    } for r in results[:10]]`,
+            filename: "data_collector.py",
+          },
+        ],
+      },
+      {
+        title: "Moteur de tarification dynamique avec le LLM",
+        content:
+          "Utilisez l'agent LLM pour analyser l'ensemble des données collectées, calculer le prix optimal pour chaque produit et simuler l'impact sur la marge et les volumes.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+
+client = anthropic.Anthropic()
+
+def calculate_optimal_price(product: dict, sales: pd.DataFrame, competitors: list) -> dict:
+    sales_summary = sales.groupby("sale_date").agg(
+        {"quantity": "sum", "unit_price": "mean"}
+    ).tail(30).to_string()
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert en pricing e-commerce et retail.
+Analyse les données et recommande le prix optimal.
+
+Produit: {product['product_name']}
+- Prix actuel: {product['current_price']}EUR
+- Prix de revient: {product['cost_price']}EUR
+- Stock actuel: {product['current_stock']} unités
+- Ventes moyennes/jour: {product['avg_daily_sales_30d']}
+- Jours de stock restants: {product['days_of_stock']}
+
+Historique des ventes (30j):
+{sales_summary}
+
+Prix concurrents: {json.dumps(competitors)}
+
+Calcule:
+1. optimal_price (prix recommandé en EUR)
+2. price_range (min-max acceptable)
+3. confidence_score (0-100)
+4. strategy (pénétration/alignement/premium/déstockage)
+5. expected_margin_pct (marge brute attendue)
+6. expected_volume_change_pct (impact volume vs prix actuel)
+7. reasoning (justification en 2-3 phrases)
+
+Retourne un JSON structuré."""
+        }]
+    )
+    return json.loads(response.content[0].text)
+
+def apply_price_update(product_id: str, new_price: float):
+    resp = requests.put(
+        f"{ECOMMERCE_API_URL}/products/{product_id}.json",
+        headers={"X-Shopify-Access-Token": ECOMMERCE_API_KEY},
+        json={"product": {"variants": [{"price": str(new_price)}]}}
+    )
+    return resp.json()`,
+            filename: "pricing_engine.py",
+          },
+        ],
+      },
+      {
+        title: "Boucle de repricing automatique et API",
+        content:
+          "Mettez en place la boucle de repricing automatique qui analyse le catalogue, calcule les prix optimaux et les applique selon les règles de validation configurées.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+import schedule
+import threading
+
+app = FastAPI()
+
+PRICE_CHANGE_THRESHOLD = 0.15  # Max 15% de variation par cycle
+
+def repricing_loop():
+    stock = get_stock_levels()
+    results = []
+    for _, product in stock.iterrows():
+        sales = get_sales_history(product["product_id"])
+        competitors = get_competitor_prices(product["product_name"])
+        recommendation = calculate_optimal_price(product.to_dict(), sales, competitors)
+
+        price_change_pct = abs(recommendation["optimal_price"] - product["current_price"]) / product["current_price"]
+        auto_apply = price_change_pct <= PRICE_CHANGE_THRESHOLD
+
+        if auto_apply and recommendation["confidence_score"] >= 70:
+            apply_price_update(product["product_id"], recommendation["optimal_price"])
+            recommendation["applied"] = True
+        else:
+            recommendation["applied"] = False
+            recommendation["requires_review"] = True
+
+        results.append({"product_id": product["product_id"], **recommendation})
+    store_repricing_results(results)
+    return results
+
+schedule.every(6).hours.do(repricing_loop)
+threading.Thread(target=lambda: [schedule.run_pending() or __import__('time').sleep(60) for _ in iter(int, 1)], daemon=True).start()
+
+@app.get("/api/pricing-dashboard")
+async def pricing_dashboard():
+    return {
+        "last_run": get_last_repricing_run(),
+        "products_repriced": get_repriced_count_today(),
+        "avg_margin_improvement": get_avg_margin_delta(),
+        "pending_reviews": get_pending_price_reviews()
+    }
+
+@app.get("/api/pricing/{product_id}")
+async def get_product_pricing(product_id: str):
+    product = get_product_details(product_id)
+    sales = get_sales_history(product_id)
+    competitors = get_competitor_prices(product["product_name"])
+    return calculate_optimal_price(product, sales, competitors)`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Aucune donnée personnelle traitée. Les données manipulées sont des prix, des stocks et des volumes de vente agrégés. Les prix concurrents proviennent de sources publiques. Accès restreint à l'équipe pricing.",
+      auditLog: "Chaque cycle de repricing tracé : produit concerné, prix avant/après, justification de la recommandation, score de confiance, application automatique ou manuelle, impact observé sur les ventes 48h après.",
+      humanInTheLoop: "Les variations de prix supérieures à 15% nécessitent une validation du responsable pricing. Les prix sous le coût de revient sont bloqués automatiquement. Le directeur commercial valide la stratégie de pricing globale.",
+      monitoring: "Marge nette moyenne avant/après, taux de rotation du stock, nombre de produits repricés/semaine, taux d'acceptation des recommandations, impact sur le chiffre d'affaires, évolution du stock dormant.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (toutes les 6h) → HTTP Request (ERP stocks) → HTTP Request (scraping prix concurrents) → HTTP Request LLM (calcul prix optimal) → IF Node (variation > 15%) → HTTP Request (mise à jour prix e-commerce) → Google Sheets (log repricing).",
+      nodes: ["Cron Trigger (6h)", "HTTP Request (ERP stocks)", "HTTP Request (prix concurrents)", "HTTP Request (LLM pricing)", "IF Node (variation > 15%)", "HTTP Request (update prix)", "Google Sheets (log)"],
+      triggerType: "Cron (toutes les 6 heures)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["E-commerce", "Retail"],
+    metiers: ["Pricing", "Category Management", "E-commerce"],
+    functions: ["Sales"],
+    metaTitle: "Agent IA de Tarification Dynamique — Guide Sales & E-commerce",
+    metaDescription:
+      "Optimisez vos prix automatiquement avec un agent IA. Analyse concurrentielle, gestion du stock dormant et maximisation de la marge nette en temps réel.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-knowledge-management",
+    title: "Agent de Gestion de Base de Connaissances",
+    subtitle: "Structurez votre documentation interne, détectez les contenus obsolètes et répondez aux questions des collaborateurs",
+    problem:
+      "La documentation interne est dispersée sur plusieurs outils (Confluence, SharePoint, Google Docs, Notion), souvent obsolète et difficile à trouver. Les collaborateurs perdent en moyenne 1h30 par jour à chercher de l'information, et les mêmes questions sont posées des dizaines de fois.",
+    value:
+      "Un agent IA ingère, structure et maintient automatiquement la base de connaissances interne. Il détecte les contenus obsolètes ou contradictoires, répond aux questions des collaborateurs en citant ses sources, et suggère les mises à jour nécessaires.",
+    inputs: [
+      "Documentation interne (Confluence, Notion, SharePoint, Google Docs)",
+      "FAQ et tickets de support interne résolus",
+      "Procédures et processus métier documentés",
+      "Organigramme et référentiel de compétences",
+    ],
+    outputs: [
+      "Réponses contextualisées aux questions avec sources citées",
+      "Détection de contenus obsolètes avec date de dernière mise à jour",
+      "Identification de contenus contradictoires entre documents",
+      "Suggestions de nouveaux articles à créer (questions sans réponse)",
+      "Rapport mensuel de santé de la base de connaissances",
+    ],
+    risks: [
+      "Réponse incorrecte basée sur un document obsolète non encore détecté",
+      "Hallucination du LLM inventant des procédures inexistantes",
+      "Accès à des documents confidentiels par des collaborateurs non autorisés",
+    ],
+    roiIndicatif:
+      "-40 à 60% du temps de recherche d'information, ROI sous 6 mois. Réduction de 50% des questions répétitives au support interne. Amélioration de 30% de la qualité documentaire.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Pinecone", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Confluence │────▶│  Indexeur     │────▶│  Vector DB  │
+│  Notion...  │     │  (embedding) │     │  (Pinecone) │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Question   │────▶│  Agent LLM   │────▶│  Réponse    │
+│  collabor.  │     │  (RAG)       │     │  + sources  │
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour l'indexation documentaire, le RAG (Retrieval-Augmented Generation) et la connexion aux sources de documentation. Configurez vos clés API et accès.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain pinecone-client python-dotenv requests beautifulsoup4 tiktoken`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_INDEX = os.getenv("PINECONE_INDEX", "knowledge-base")
+CONFLUENCE_URL = os.getenv("CONFLUENCE_URL")
+CONFLUENCE_TOKEN = os.getenv("CONFLUENCE_API_TOKEN")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Indexation de la documentation interne",
+        content:
+          "Connectez-vous aux sources de documentation, découpez les contenus en chunks et indexez-les dans la base vectorielle. Stockez les métadonnées pour la traçabilité des sources.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Pinecone
+from datetime import datetime
+
+def fetch_confluence_pages(space_key: str) -> list:
+    pages = []
+    url = f"{CONFLUENCE_URL}/rest/api/content"
+    params = {"spaceKey": space_key, "expand": "body.storage,version", "limit": 50}
+    headers = {"Authorization": f"Bearer {CONFLUENCE_TOKEN}"}
+    resp = requests.get(url, params=params, headers=headers)
+    for page in resp.json().get("results", []):
+        pages.append({
+            "title": page["title"],
+            "content": page["body"]["storage"]["value"],
+            "url": f"{CONFLUENCE_URL}{page['_links']['webui']}",
+            "last_updated": page["version"]["when"],
+            "author": page["version"]["by"]["displayName"],
+            "page_id": page["id"]
+        })
+    return pages
+
+def index_documents(pages: list):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    docs = []
+    for page in pages:
+        chunks = splitter.split_text(page["content"])
+        for i, chunk in enumerate(chunks):
+            docs.append({
+                "text": chunk,
+                "metadata": {
+                    "title": page["title"],
+                    "url": page["url"],
+                    "last_updated": page["last_updated"],
+                    "author": page["author"],
+                    "chunk_index": i
+                }
+            })
+    embeddings = OpenAIEmbeddings()
+    vectorstore = Pinecone.from_texts(
+        [d["text"] for d in docs],
+        embeddings,
+        metadatas=[d["metadata"] for d in docs],
+        index_name=PINECONE_INDEX
+    )
+    print(f"{len(docs)} chunks indexés depuis {len(pages)} pages.")
+    return vectorstore`,
+            filename: "indexer.py",
+          },
+        ],
+      },
+      {
+        title: "Agent RAG et détection de contenus obsolètes",
+        content:
+          "Implémentez l'agent de questions-réponses avec RAG qui cite ses sources, et le système de détection automatique des contenus obsolètes ou contradictoires.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from langchain.vectorstores import Pinecone
+from langchain.embeddings import OpenAIEmbeddings
+import json
+from datetime import datetime, timedelta
+
+client = anthropic.Anthropic()
+embeddings = OpenAIEmbeddings()
+vectorstore = Pinecone.from_existing_index(PINECONE_INDEX, embeddings)
+
+def answer_question(question: str, user_role: str = "collaborateur") -> dict:
+    relevant_docs = vectorstore.similarity_search(question, k=5)
+    context = "\\n\\n".join([
+        f"[Source: {doc.metadata['title']} - Mis à jour: {doc.metadata['last_updated']}]\\n{doc.page_content}"
+        for doc in relevant_docs
+    ])
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un assistant de base de connaissances interne.
+Réponds à la question en utilisant UNIQUEMENT les sources fournies.
+Si l'information n'est pas dans les sources, dis-le clairement.
+Cite toujours tes sources entre crochets.
+
+Sources disponibles:
+{context}
+
+Question: {question}
+
+Réponds en JSON:
+1. answer: réponse détaillée avec citations [Source: titre]
+2. sources: liste des sources utilisées avec URL
+3. confidence: score de confiance (0-100)
+4. outdated_warning: true si une source date de plus de 6 mois"""
+        }]
+    )
+    return json.loads(response.content[0].text)
+
+def detect_obsolete_content() -> list:
+    threshold = datetime.now() - timedelta(days=180)
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT title, url, last_updated, author
+        FROM indexed_documents
+        WHERE last_updated < %s
+        ORDER BY last_updated ASC
+    """, (threshold.isoformat(),))
+    obsolete = [{"title": r[0], "url": r[1], "last_updated": r[2],
+                 "author": r[3]} for r in cur.fetchall()]
+    return obsolete`,
+            filename: "knowledge_agent.py",
+          },
+        ],
+      },
+      {
+        title: "API et intégration Slack",
+        content:
+          "Exposez l'agent de connaissances via une API REST et intégrez-le à Slack pour que les collaborateurs puissent poser leurs questions directement depuis leur messagerie.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, Request
+import json
+
+app = FastAPI()
+
+@app.post("/api/ask")
+async def ask_question(request: Request):
+    body = await request.json()
+    question = body["question"]
+    user_role = body.get("role", "collaborateur")
+    result = answer_question(question, user_role)
+    store_qa_log(question, result)
+    return result
+
+@app.get("/api/obsolete-content")
+async def get_obsolete_content():
+    obsolete = detect_obsolete_content()
+    return {"count": len(obsolete), "documents": obsolete}
+
+@app.post("/api/slack/ask")
+async def slack_command(request: Request):
+    form = await request.form()
+    question = form.get("text", "")
+    result = answer_question(question)
+    return {
+        "response_type": "in_channel",
+        "text": result["answer"],
+        "attachments": [{
+            "text": "Sources: " + ", ".join([s["title"] for s in result["sources"]]),
+            "color": "#36a64f" if result["confidence"] >= 70 else "#ff9900"
+        }]
+    }
+
+@app.post("/api/reindex")
+async def trigger_reindex(space_key: str = "ALL"):
+    pages = fetch_confluence_pages(space_key)
+    index_documents(pages)
+    return {"status": "indexed", "pages_count": len(pages)}`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "La documentation interne peut contenir des données sensibles. Contrôle d'accès basé sur les rôles (RBAC) pour filtrer les résultats selon les permissions de l'utilisateur. Aucune donnée personnelle stockée dans l'index vectoriel. Conformité RGPD sur les données auteurs.",
+      auditLog: "Chaque question tracée : question posée (anonymisée), sources consultées, réponse générée, score de confiance, feedback utilisateur (utile/non utile), documents obsolètes détectés, réindexations effectuées.",
+      humanInTheLoop: "Les réponses avec un score de confiance inférieur à 50% affichent un avertissement et proposent de contacter un expert humain. Les suggestions de contenus obsolètes sont validées par le propriétaire du document avant archivage.",
+      monitoring: "Nombre de questions/jour, taux de résolution (réponse utile), temps de réponse moyen, couverture documentaire (questions sans réponse), nombre de documents obsolètes détectés/mois, satisfaction utilisateur (NPS).",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (question Slack/API) → HTTP Request (recherche vectorielle Pinecone) → HTTP Request LLM (génération réponse RAG) → Slack Reply (réponse) → Google Sheets (log QA). Cron hebdomadaire → HTTP Request (scan obsolescence) → Email (rapport).",
+      nodes: ["Webhook Trigger (question)", "HTTP Request (Pinecone search)", "HTTP Request (LLM RAG)", "Slack Reply", "Google Sheets (log)", "Cron Trigger (weekly)", "HTTP Request (scan obsolescence)", "Send Email (rapport)"],
+      triggerType: "Webhook (question Slack ou API) + Cron (hebdomadaire)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["Services", "Banque", "Assurance"],
+    metiers: ["Knowledge Manager", "Support Interne", "IT"],
+    functions: ["IT"],
+    metaTitle: "Agent IA de Gestion de Base de Connaissances — Guide IT & Knowledge",
+    metaDescription:
+      "Structurez et maintenez votre documentation interne avec un agent IA. RAG, détection de contenus obsolètes et réponses instantanées aux collaborateurs.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-optimisation-energetique",
+    title: "Agent d'Optimisation Énergétique",
+    subtitle: "Analysez et réduisez vos consommations énergétiques en temps réel grâce à l'IA",
+    problem:
+      "Les entreprises industrielles et de distribution peinent à maîtriser leurs consommations énergétiques. Les factures augmentent, les réglementations se durcissent (décret tertiaire, taxonomie EU) et les données de consommation sont sous-exploitées. Les ajustements manuels sont trop lents face aux variations de prix de l'énergie.",
+    value:
+      "Un agent IA analyse les consommations énergétiques en temps réel (électricité, gaz, eau), identifie les gaspillages, ajuste automatiquement les usages (HVAC, éclairage, process) et optimise les achats d'énergie en fonction des tarifs dynamiques. L'empreinte carbone est réduite sans impact sur la productivité.",
+    inputs: [
+      "Données de consommation en temps réel (compteurs intelligents, sous-compteurs)",
+      "Tarifs énergétiques dynamiques (RTE, marché spot)",
+      "Données météo et prévisions (température, ensoleillement)",
+      "Planning de production et occupation des bâtiments",
+    ],
+    outputs: [
+      "Dashboard de consommation en temps réel par zone et usage",
+      "Détection automatique des anomalies et gaspillages",
+      "Consignes d'ajustement automatique HVAC et éclairage",
+      "Prévision de consommation et coûts pour les 7 prochains jours",
+      "Rapport mensuel d'empreinte carbone avec évolution",
+    ],
+    risks: [
+      "Ajustement HVAC trop agressif impactant le confort des occupants",
+      "Données de compteurs défaillantes menant à des optimisations erronées",
+      "Non-prise en compte de contraintes process industriel dans les ajustements",
+    ],
+    roiIndicatif:
+      "-10 à 25% des coûts énergétiques, -10 à 20% d'empreinte carbone. Conformité facilitée avec le décret tertiaire. ROI sous 12-18 mois selon le volume de consommation.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "TimescaleDB", category: "Database" },
+      { name: "AWS Lambda", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "InfluxDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Compteurs  │────▶│  Collecteur  │────▶│  Agent LLM  │
+│  intelligts │     │  énergie     │     │  (Analyse)  │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+┌─────────────┐     ┌──────────────┐     ┌──────▼──────┐
+│  Automates  │◀────│  Optimiseur  │◀────│  TimescaleDB│
+│  HVAC/GTB   │     │  consignes   │     │  (historique)│
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour la collecte de données énergétiques, l'analyse de séries temporelles et la connexion aux automates de gestion technique du bâtiment (GTB). Configurez les accès aux compteurs et APIs tarifaires.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic psycopg2-binary pandas numpy requests python-dotenv schedule`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DB_URL = os.getenv("TIMESCALEDB_URL")
+WEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
+GTB_API_URL = os.getenv("GTB_API_URL")
+RTE_API_TOKEN = os.getenv("RTE_API_TOKEN")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte des données de consommation et contexte",
+        content:
+          "Connectez-vous aux compteurs intelligents, récupérez les tarifs énergétiques en temps réel et les prévisions météo pour alimenter le moteur d'optimisation.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+import psycopg2
+import pandas as pd
+from datetime import datetime
+
+def get_energy_consumption(hours: int = 24) -> pd.DataFrame:
+    conn = psycopg2.connect(DB_URL)
+    return pd.read_sql(f"""
+        SELECT meter_id, zone, energy_type, value_kwh, timestamp
+        FROM energy_readings
+        WHERE timestamp >= NOW() - INTERVAL '{hours} hours'
+        ORDER BY timestamp
+    """, conn)
+
+def get_spot_prices() -> dict:
+    resp = requests.get("https://digital.iservices.rte-france.com/open_api/wholesale_market/v2/france/spot",
+        headers={"Authorization": f"Bearer {RTE_API_TOKEN}"})
+    data = resp.json()
+    return {
+        "current_price_mwh": data["spot_prices"][-1]["value"],
+        "next_hours": [{"hour": p["period"], "price": p["value"]}
+                       for p in data["spot_prices"][-24:]]
+    }
+
+def get_weather_forecast(lat: float, lon: float) -> dict:
+    resp = requests.get("https://api.openweathermap.org/data/2.5/forecast",
+        params={"lat": lat, "lon": lon, "appid": WEATHER_API_KEY, "units": "metric"})
+    forecasts = resp.json().get("list", [])
+    return [{
+        "datetime": f["dt_txt"],
+        "temp": f["main"]["temp"],
+        "humidity": f["main"]["humidity"],
+        "clouds": f["clouds"]["all"]
+    } for f in forecasts[:16]]  # 48h
+
+def get_building_occupancy() -> dict:
+    conn = psycopg2.connect(DB_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT zone, current_occupancy, max_capacity
+        FROM building_occupancy WHERE updated_at >= NOW() - INTERVAL '1 hour'
+    """)
+    return {row[0]: {"occupancy": row[1], "capacity": row[2]} for row in cur.fetchall()}`,
+            filename: "data_collector.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse et recommandations d'optimisation",
+        content:
+          "Utilisez le LLM pour analyser les patterns de consommation, détecter les anomalies et générer des consignes d'optimisation adaptées au contexte (météo, occupation, tarifs).",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+
+client = anthropic.Anthropic()
+
+def analyze_and_optimize(consumption: pd.DataFrame, prices: dict, weather: list, occupancy: dict) -> dict:
+    consumption_summary = consumption.groupby(["zone", "energy_type"]).agg(
+        {"value_kwh": ["sum", "mean", "max"]}
+    ).to_string()
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert en efficacité énergétique industrielle et tertiaire.
+Analyse les données de consommation et recommande des optimisations.
+
+Consommation (24h par zone):
+{consumption_summary}
+
+Tarifs énergie: {json.dumps(prices)}
+Prévisions météo (48h): {json.dumps(weather)}
+Occupation des zones: {json.dumps(occupancy)}
+
+Analyse et retourne un JSON avec:
+1. anomalies: gaspillages détectés avec zone, type et estimation kWh perdus
+2. hvac_adjustments: consignes HVAC par zone (température cible, ventilation)
+3. lighting_adjustments: ajustements éclairage par zone
+4. load_shifting: recommandations de décalage de charge vers heures creuses
+5. estimated_savings_kwh: économie estimée sur 24h
+6. estimated_savings_eur: économie estimée en euros
+7. carbon_reduction_kg: réduction CO2 estimée
+8. comfort_impact: impact sur le confort (aucun/faible/modéré)"""
+        }]
+    )
+    return json.loads(response.content[0].text)
+
+def apply_hvac_adjustments(adjustments: list):
+    for adj in adjustments:
+        requests.post(f"{GTB_API_URL}/zones/{adj['zone']}/hvac", json={
+            "target_temperature": adj["target_temperature"],
+            "ventilation_mode": adj["ventilation_mode"],
+            "source": "agent-optimisation-energetique"
+        })`,
+            filename: "energy_optimizer.py",
+          },
+        ],
+      },
+      {
+        title: "Boucle d'optimisation continue et reporting",
+        content:
+          "Mettez en place la boucle d'optimisation qui tourne en continu, ajuste les consignes et produit les rapports de performance énergétique et d'empreinte carbone.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+import schedule
+import threading
+
+app = FastAPI()
+
+CARBON_FACTOR_KWH = 0.052  # kg CO2/kWh (mix FR moyen)
+
+def optimization_loop():
+    consumption = get_energy_consumption(hours=24)
+    prices = get_spot_prices()
+    weather = get_weather_forecast(48.8566, 2.3522)
+    occupancy = get_building_occupancy()
+
+    analysis = analyze_and_optimize(consumption, prices, weather, occupancy)
+    store_analysis(analysis)
+
+    if analysis.get("comfort_impact") in ["aucun", "faible"]:
+        apply_hvac_adjustments(analysis.get("hvac_adjustments", []))
+
+    if analysis.get("anomalies"):
+        send_anomaly_alert(analysis["anomalies"])
+
+    return analysis
+
+schedule.every(30).minutes.do(optimization_loop)
+threading.Thread(target=lambda: [schedule.run_pending() or __import__('time').sleep(60) for _ in iter(int, 1)], daemon=True).start()
+
+@app.get("/api/energy-dashboard")
+async def energy_dashboard():
+    consumption = get_energy_consumption(hours=24)
+    return {
+        "total_kwh_today": consumption["value_kwh"].sum(),
+        "by_zone": consumption.groupby("zone")["value_kwh"].sum().to_dict(),
+        "current_spot_price": get_spot_prices()["current_price_mwh"],
+        "carbon_footprint_kg": consumption["value_kwh"].sum() * CARBON_FACTOR_KWH,
+        "savings_today": get_today_savings(),
+        "active_optimizations": get_active_adjustments()
+    }
+
+@app.get("/api/energy-report/{period}")
+async def energy_report(period: str = "monthly"):
+    return generate_energy_report(period)`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Aucune donnée personnelle traitée. Les données sont des mesures de consommation énergétique par zone, sans identification individuelle. Les données d'occupation sont agrégées par zone sans suivi individuel.",
+      auditLog: "Chaque cycle d'optimisation tracé : consommations relevées, tarifs appliqués, consignes envoyées, économies estimées vs réelles, anomalies détectées, ajustements HVAC effectués, empreinte carbone calculée.",
+      humanInTheLoop: "Les ajustements impactant le confort (niveau modéré) nécessitent une validation du facility manager. Les modifications de process industriel sont toujours validées par le responsable production. Les seuils de confort sont configurés par zone.",
+      monitoring: "Consommation kWh avant/après optimisation, coût énergétique mensuel, empreinte carbone (scope 1+2), taux de confort (plaintes occupants), précision des prévisions de consommation, conformité décret tertiaire.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (toutes les 30 min) → HTTP Request (compteurs énergie) → HTTP Request (RTE tarifs spot) → HTTP Request (météo) → HTTP Request LLM (analyse + optimisation) → HTTP Request (GTB ajustements HVAC) → Google Sheets (log) → Slack si anomalie.",
+      nodes: ["Cron Trigger (30 min)", "HTTP Request (compteurs)", "HTTP Request (RTE tarifs)", "HTTP Request (météo)", "HTTP Request (LLM optimisation)", "HTTP Request (GTB HVAC)", "Google Sheets (log)", "Slack (alerte anomalie)"],
+      triggerType: "Cron (toutes les 30 minutes)",
+    },
+    estimatedTime: "14-20h",
+    difficulty: "Expert",
+    sectors: ["Industrie", "Distribution"],
+    metiers: ["Energy Manager", "Facility Management", "RSE"],
+    functions: ["Operations"],
+    metaTitle: "Agent IA d'Optimisation Énergétique — Guide Opérations & RSE",
+    metaDescription:
+      "Réduisez vos coûts énergétiques et votre empreinte carbone avec un agent IA. Analyse temps réel, ajustement HVAC automatique et reporting carbone.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-planification-logistique",
+    title: "Agent de Planification Logistique Terrain",
+    subtitle: "Optimisez les tournées et plannings de vos équipes terrain en temps réel",
+    problem:
+      "La planification des tournées et des équipes terrain (techniciens, livreurs, commerciaux) est un casse-tête quotidien. Les aléas (trafic, météo, absences, urgences) rendent les plannings obsolètes dès le matin. Les équipes perdent du temps en trajets inutiles et les clients subissent des retards.",
+    value:
+      "Un agent IA recalcule en continu les tournées et plannings des équipes terrain en fonction des aléas en temps réel. Il optimise les trajets, réaffecte les interventions en cas d'absence et prévient les clients automatiquement en cas de changement d'horaire.",
+    inputs: [
+      "Liste des interventions planifiées avec adresses et durées",
+      "Disponibilité et compétences des techniciens/livreurs",
+      "Données trafic en temps réel et prévisions météo",
+      "Historique des interventions et temps de trajet réels",
+    ],
+    outputs: [
+      "Planning optimisé par technicien avec itinéraire détaillé",
+      "Replanification automatique en cas d'aléa (temps réel)",
+      "Notifications clients avec créneau horaire précis",
+      "Estimation des temps de trajet et heures d'arrivée",
+      "Rapport quotidien de performance logistique (km, interventions, ponctualité)",
+    ],
+    risks: [
+      "Replanification trop fréquente perturbant les équipes terrain",
+      "Données trafic imprécises menant à des estimations erronées",
+      "Non-prise en compte de contraintes terrain spécifiques (accès, matériel)",
+    ],
+    roiIndicatif:
+      "-15 à 25% des coûts de transport, ROI sous 6-12 mois. Amélioration de 20-30% de la ponctualité des interventions. +15% d'interventions réalisées par jour par technicien.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Interven-  │────▶│  Optimiseur  │────▶│  Agent LLM  │
+│  tions      │     │  tournées    │     │  (Replanif.) │
+└─────────────┘     └──────┬───────┘     └──────┬──────┘
+                           │                     │
+┌─────────────┐     ┌──────▼───────┐     ┌──────▼──────┐
+│  Trafic /   │────▶│  PostgreSQL  │     │  Notif.     │
+│  Météo      │     │  (plannings) │     │  client/tech│
+└─────────────┘     └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances pour le calcul d'itinéraires, la gestion des plannings et la connexion au LLM. Configurez vos accès aux APIs de géolocalisation et de trafic.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic psycopg2-binary requests python-dotenv schedule geopy`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+WEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
+SMS_API_KEY = os.getenv("TWILIO_AUTH_TOKEN")`,
+            filename: "config.py",
+          },
+        ],
+      },
+      {
+        title: "Collecte des données et calcul des distances",
+        content:
+          "Récupérez les interventions planifiées, les disponibilités des techniciens et les données de trafic en temps réel. Calculez la matrice de distances et de temps de trajet entre chaque point.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+import psycopg2
+import pandas as pd
+from datetime import datetime
+
+def get_daily_interventions(date: str) -> list:
+    conn = psycopg2.connect(DB_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, client_name, address, lat, lon,
+               estimated_duration_min, required_skills,
+               priority, time_window_start, time_window_end
+        FROM interventions
+        WHERE scheduled_date = %s AND status = 'planned'
+        ORDER BY priority DESC
+    """, (date,))
+    return [{"id": r[0], "client": r[1], "address": r[2],
+             "lat": r[3], "lon": r[4], "duration_min": r[5],
+             "skills": r[6], "priority": r[7],
+             "window_start": str(r[8]), "window_end": str(r[9])}
+            for r in cur.fetchall()]
+
+def get_available_technicians(date: str) -> list:
+    conn = psycopg2.connect(DB_URL)
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, name, skills, home_lat, home_lon,
+               max_km_per_day, start_time, end_time
+        FROM technicians
+        WHERE id NOT IN (SELECT tech_id FROM absences WHERE date = %s)
+    """, (date,))
+    return [{"id": r[0], "name": r[1], "skills": r[2],
+             "home_lat": r[3], "home_lon": r[4],
+             "max_km": r[5], "start": str(r[6]), "end": str(r[7])}
+            for r in cur.fetchall()]
+
+def get_travel_time(origin: tuple, destination: tuple) -> dict:
+    resp = requests.get("https://maps.googleapis.com/maps/api/distancematrix/json",
+        params={
+            "origins": f"{origin[0]},{origin[1]}",
+            "destinations": f"{destination[0]},{destination[1]}",
+            "departure_time": "now",
+            "key": GOOGLE_MAPS_API_KEY
+        })
+    element = resp.json()["rows"][0]["elements"][0]
+    return {
+        "distance_km": element["distance"]["value"] / 1000,
+        "duration_min": element["duration_in_traffic"]["value"] / 60
+    }`,
+            filename: "data_collector.py",
+          },
+        ],
+      },
+      {
+        title: "Optimisation des tournées avec le LLM",
+        content:
+          "Utilisez l'agent LLM pour optimiser l'affectation des interventions aux techniciens et l'ordre des tournées en tenant compte de toutes les contraintes (compétences, fenêtres horaires, trafic, météo).",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+
+client = anthropic.Anthropic()
+
+def optimize_routes(interventions: list, technicians: list, weather: dict) -> dict:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Tu es un expert en optimisation logistique et planification de tournées.
+Optimise l'affectation et l'ordre des interventions pour minimiser les km et maximiser la ponctualité.
+
+Interventions à planifier: {json.dumps(interventions)}
+Techniciens disponibles: {json.dumps(technicians)}
+Conditions météo: {json.dumps(weather)}
+
+Contraintes:
+- Respecter les compétences requises par intervention
+- Respecter les fenêtres horaires clients
+- Respecter le kilométrage max par technicien
+- Respecter les horaires de travail des techniciens
+- Prioriser les interventions de haute priorité
+- Ajouter 15% de marge sur les temps de trajet si pluie/neige
+
+Retourne un JSON:
+1. routes: pour chaque technicien, liste ordonnée des interventions avec heure d'arrivée estimée
+2. unassigned: interventions non affectables (avec raison)
+3. total_km: km total pour toutes les tournées
+4. total_interventions: nombre d'interventions planifiées
+5. estimated_completion_rate: taux de réalisation estimé
+6. optimization_notes: remarques et suggestions"""
+        }]
+    )
+    return json.loads(response.content[0].text)
+
+def replan_on_disruption(current_plan: dict, disruption: dict) -> dict:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{
+            "role": "user",
+            "content": f"""Replanifie les tournées suite à un aléa.
+
+Plan actuel: {json.dumps(current_plan)}
+Aléa survenu: {json.dumps(disruption)}
+
+Minimise les changements tout en maintenant la ponctualité.
+Retourne le plan mis à jour au même format, avec un champ changes_summary."""
+        }]
+    )
+    return json.loads(response.content[0].text)`,
+            filename: "route_optimizer.py",
+          },
+        ],
+      },
+      {
+        title: "API, notifications et suivi en temps réel",
+        content:
+          "Exposez le service de planification via une API REST, envoyez les notifications aux clients et aux techniciens, et mettez en place le suivi en temps réel des tournées.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, Request
+import schedule
+import threading
+import requests as http_requests
+
+app = FastAPI()
+
+def notify_client(client_phone: str, tech_name: str, eta: str):
+    http_requests.post("https://api.twilio.com/2010-04-01/Accounts/ACXXX/Messages.json",
+        auth=("ACXXX", SMS_API_KEY),
+        data={
+            "From": "+33XXXXXXXXX",
+            "To": client_phone,
+            "Body": f"Bonjour, votre technicien {tech_name} arrivera vers {eta}. "
+                    f"Vous recevrez une notification 30 min avant son arrivée."
+        })
+
+def morning_planning():
+    today = datetime.now().strftime("%Y-%m-%d")
+    interventions = get_daily_interventions(today)
+    technicians = get_available_technicians(today)
+    weather = get_weather_conditions()
+    plan = optimize_routes(interventions, technicians, weather)
+    store_plan(today, plan)
+
+    for route in plan.get("routes", []):
+        for intervention in route.get("interventions", []):
+            notify_client(
+                intervention["client_phone"],
+                route["technician_name"],
+                intervention["eta"]
+            )
+    return plan
+
+schedule.every().day.at("06:30").do(morning_planning)
+threading.Thread(target=lambda: [schedule.run_pending() or __import__('time').sleep(60) for _ in iter(int, 1)], daemon=True).start()
+
+@app.post("/api/disruption")
+async def report_disruption(request: Request):
+    disruption = await request.json()
+    current_plan = get_today_plan()
+    new_plan = replan_on_disruption(current_plan, disruption)
+    store_plan(datetime.now().strftime("%Y-%m-%d"), new_plan)
+    notify_affected_clients(current_plan, new_plan)
+    return {"status": "replanned", "changes": new_plan.get("changes_summary")}
+
+@app.get("/api/routes/today")
+async def get_today_routes():
+    plan = get_today_plan()
+    return {
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "routes": plan.get("routes", []),
+        "total_km": plan.get("total_km"),
+        "completion_rate": get_realtime_completion_rate()
+    }`,
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données clients (noms, adresses, téléphones) sont nécessaires pour les interventions. Stockage sécurisé en base interne. Les données de géolocalisation des techniciens sont utilisées uniquement pendant les heures de travail. Conformité RGPD avec consentement client.",
+      auditLog: "Chaque planification tracée : interventions affectées, tournées générées, km estimés vs réels, replanifications effectuées, raison des changements, notifications envoyées, taux de ponctualité par technicien.",
+      humanInTheLoop: "Le responsable logistique valide le planning matinal avant envoi aux techniciens. Les replanifications mineures sont automatiques, les majeures (>30% de changements) nécessitent une validation humaine. Les techniciens peuvent signaler des contraintes terrain.",
+      monitoring: "Km parcourus vs optimaux, taux de ponctualité, nombre d'interventions/jour/technicien, taux de replanification, satisfaction client (enquête post-intervention), coût de transport par intervention.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (6h30 chaque matin) → HTTP Request (interventions du jour) → HTTP Request (disponibilités techniciens) → HTTP Request (trafic Google Maps) → HTTP Request LLM (optimisation tournées) → Webhook (envoi planning techniciens) → SMS notifications clients.",
+      nodes: ["Cron Trigger (6h30)", "HTTP Request (interventions)", "HTTP Request (techniciens)", "HTTP Request (Google Maps)", "HTTP Request (LLM optimisation)", "Webhook (planning)", "Twilio SMS (notifications)"],
+      triggerType: "Cron (quotidien à 6h30)",
+    },
+    estimatedTime: "4-8h",
+    difficulty: "Facile",
+    sectors: ["Distribution", "Services"],
+    metiers: ["Logistique", "Planification", "Direction Opérations"],
+    functions: ["Supply Chain"],
+    metaTitle: "Agent IA de Planification Logistique Terrain — Guide Supply Chain",
+    metaDescription:
+      "Optimisez les tournées de vos équipes terrain avec un agent IA. Replanification en temps réel, réduction des km et amélioration de la ponctualité.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
 ];
