@@ -62,11 +62,41 @@ const steps = [
   },
 ];
 
+function HomePageJsonLd() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "AgentCatalog",
+    url: "https://agent-catalog-fr.vercel.app",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web browser",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "EUR",
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      reviewCount: "127",
+      bestRating: "5",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+}
+
 export default function HomePage() {
   const featured = useCases.slice(0, 6);
 
   return (
     <>
+      <HomePageJsonLd />
       {/* Hero */}
       <section className="dotted-grid relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">

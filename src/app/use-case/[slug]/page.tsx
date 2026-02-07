@@ -11,6 +11,7 @@ import { RelatedUseCases } from "@/components/related-use-cases";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { StickyCTABar } from "@/components/sticky-cta-bar";
 import { useCases } from "@/data/use-cases";
+import { guides } from "@/data/guides";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -481,6 +482,35 @@ export default async function UseCasePage({ params }: PageProps) {
           </p>
         </Link>
       </div>
+
+      {/* Related guides */}
+      {(() => {
+        const relatedGuides = guides.filter((g) =>
+          g.relatedUseCases.includes(uc.slug)
+        ).slice(0, 3);
+        if (relatedGuides.length === 0) return null;
+        return (
+          <div className="mt-12">
+            <h2 className="text-lg font-semibold mb-4">Guides connexes</h2>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {relatedGuides.map((g) => (
+                <Link
+                  key={g.slug}
+                  href={`/guide/${g.slug}`}
+                  className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+                >
+                  <Badge variant="secondary" className="mb-2 text-[10px]">
+                    {g.category} · {g.readTime}
+                  </Badge>
+                  <h3 className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-2">
+                    {g.title}
+                  </h3>
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Newsletter CTA */}
       <div className="mt-8">

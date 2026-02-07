@@ -70,8 +70,14 @@ export default async function GuidePage({ params }: PageProps) {
             publisher: {
               "@type": "Organization",
               name: "AgentCatalog",
+              url: "https://agent-catalog-fr.vercel.app",
             },
             mainEntityOfPage: `https://agent-catalog-fr.vercel.app/guide/${guide.slug}`,
+            image: `https://agent-catalog-fr.vercel.app/guide/${guide.slug}/opengraph-image`,
+            articleSection: guide.category,
+            inLanguage: "fr-FR",
+            isAccessibleForFree: true,
+            wordCount: guide.sections.reduce((acc, s) => acc + s.content.split(" ").length, 0),
           }),
         }}
       />

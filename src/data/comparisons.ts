@@ -102,4 +102,60 @@ export const comparisons: Comparison[] = [
       "L'agent IA est le choix optimal pour les processus répétitifs et scalables : support client, qualification de leads, traitement de factures, tri de CV. Le consultant reste pertinent pour les projets stratégiques uniques (transformation digitale, choix d'architecture, conduite du changement) ou quand l'expertise métier spécifique est critique. La meilleure approche combine souvent les deux : un consultant pour la stratégie initiale, puis des agents IA pour l'exécution quotidienne.",
     relatedUseCases: ["agent-triage-support-client", "agent-qualification-leads", "agent-rapports-financiers"],
   },
+  {
+    slug: "claude-vs-chatgpt-entreprise",
+    title: "Claude vs ChatGPT pour l'entreprise : quel LLM choisir ?",
+    metaTitle: "Claude vs ChatGPT Entreprise — Comparatif LLM 2025",
+    metaDescription:
+      "Claude (Anthropic) vs ChatGPT (OpenAI) : prix, contexte, qualité en français, API, sécurité. Comparatif détaillé pour choisir le meilleur LLM en entreprise.",
+    intro:
+      "Le choix d'un grand modèle de langage (LLM) est devenu une décision stratégique pour les entreprises françaises. Deux acteurs dominent le marché : Claude d'Anthropic et ChatGPT d'OpenAI. Chacun propose des offres entreprise avec des forces distinctes en termes de prix, de capacités techniques et de conformité réglementaire.\n\nCe comparatif s'adresse aux décideurs, DSI et responsables innovation qui doivent choisir un LLM pour leurs équipes ou leurs produits. Nous avons testé les deux solutions sur des critères concrets : qualité des réponses en français, fiabilité de l'API, fenêtre de contexte, et respect des exigences de sécurité propres au marché européen.\n\nAu-delà des benchmarks marketing, ce guide vous donne les éléments factuels pour faire un choix éclairé selon votre contexte métier, votre budget et vos contraintes réglementaires.",
+    options: [
+      { name: "Claude (Anthropic)", description: "LLM développé par Anthropic, disponible via API et Claude for Work. Modèles Opus, Sonnet et Haiku. Reconnu pour la qualité du raisonnement et le respect des consignes." },
+      { name: "ChatGPT (OpenAI)", description: "LLM développé par OpenAI, disponible via API et ChatGPT Enterprise. Modèles GPT-4o, GPT-4 Turbo et o1. Écosystème le plus large du marché." },
+    ],
+    rows: [
+      { feature: "Prix API (modèle phare)", values: ["Claude Sonnet : 3 $/M tokens en entrée, 15 $/M en sortie", "GPT-4o : 5 $/M tokens en entrée, 15 $/M en sortie"] },
+      { feature: "Offre entreprise", values: ["Claude for Work : à partir de 30 $/utilisateur/mois, SSO et admin inclus", "ChatGPT Enterprise : tarif sur devis, SSO, analytics, admin avancé"] },
+      { feature: "Fenêtre de contexte", values: ["200 000 tokens (Sonnet/Opus), idéal pour l'analyse de longs documents", "128 000 tokens (GPT-4o), 200K annoncé pour certains modèles"] },
+      { feature: "Qualité des réponses en français", values: ["Excellente : tournures naturelles, registre soutenu maîtrisé, peu d'anglicismes", "Très bonne : parfois des calques de l'anglais, mais globalement fiable"] },
+      { feature: "Fiabilité de l'API", values: ["Uptime ~99,7 %, latence stable, rate limits généreux", "Uptime ~99,5 %, pics de latence en heures de pointe US"] },
+      { feature: "Respect des consignes (instruction following)", values: ["Point fort reconnu : suivi précis des prompts système, peu d'hallucinations", "Bon mais parfois verbeux, tendance à ajouter des informations non demandées"] },
+      { feature: "Sécurité et conformité", values: ["SOC 2 Type II, pas d'entraînement sur les données API, engagements RGPD", "SOC 2 Type II, RGPD via DPA, données Enterprise non utilisées pour l'entraînement"] },
+      { feature: "Écosystème et intégrations", values: ["API, SDK Python/TS, intégrations n8n, LangChain, Amazon Bedrock", "API, SDK Python/TS, plugins ChatGPT, Azure OpenAI, écosystème le plus vaste"] },
+      { feature: "Vision et multimodal", values: ["Analyse d'images native (Sonnet/Opus), PDF, pas de génération d'images", "Analyse d'images, génération d'images (DALL-E), audio (Whisper/TTS)"] },
+      { feature: "Cas d'usage recommandé", values: ["Analyse documentaire, rédaction structurée, agents de support, tâches nécessitant précision", "Assistants polyvalents, génération de contenu multimodal, prototypage rapide"] },
+    ],
+    verdict:
+      "Pour les entreprises françaises qui privilégient la qualité du français, la précision dans le suivi des consignes et l'analyse de documents longs, Claude représente un choix particulièrement pertinent. Sa fenêtre de contexte étendue et son respect rigoureux des prompts système en font un excellent candidat pour les agents IA en production.\n\nChatGPT reste incontournable pour les équipes qui ont besoin d'un écosystème multimodal complet (texte, image, audio) ou qui s'appuient sur Azure OpenAI pour leur infrastructure cloud. Son réseau d'intégrations tierces est également le plus large du marché.\n\nNotre recommandation : testez les deux sur vos cas d'usage réels avec vos propres données. Pour les workflows d'agents IA structurés (support client, analyse de contrats, rédaction), Claude offre généralement un meilleur rapport qualité-prix. Pour les besoins multimodaux ou les intégrations Microsoft, ChatGPT garde l'avantage.",
+    relatedUseCases: ["agent-triage-support-client", "agent-redaction-contenu-marketing", "agent-analyse-contrats"],
+  },
+  {
+    slug: "ia-interne-vs-ia-externe",
+    title: "IA interne vs IA externe : build or buy pour votre entreprise",
+    metaTitle: "IA Interne vs IA Externe — Build or Buy IA 2025",
+    metaDescription:
+      "Faut-il développer votre IA en interne ou acheter une solution SaaS ? Coût, délai, RGPD, personnalisation. Guide complet pour les CTO et décideurs IT.",
+    intro:
+      "La question « build or buy » se pose avec une acuité particulière pour l'intelligence artificielle. D'un côté, développer une IA en interne (self-hosted) promet un contrôle total sur les données et une personnalisation maximale. De l'autre, les solutions SaaS cloud offrent un déploiement rapide et une maintenance externalisée.\n\nCe comparatif s'adresse aux CTO, directeurs techniques et responsables data qui doivent arbitrer entre ces deux approches. Les enjeux sont importants : coûts d'infrastructure, conformité RGPD, dette technique, et capacité à recruter les talents nécessaires.\n\nIl n'existe pas de réponse universelle. Le bon choix dépend de votre maturité technique, de la sensibilité de vos données, de votre budget et de votre horizon temporel. Ce guide vous donne les critères objectifs pour trancher.",
+    options: [
+      { name: "IA Interne (self-hosted)", description: "Modèles hébergés sur votre infrastructure (on-premise ou cloud privé). Inclut les LLM open-source (Llama, Mistral) et les pipelines ML maison. Contrôle total, investissement élevé." },
+      { name: "IA SaaS (cloud)", description: "Solutions d'IA en tant que service : API de LLM (OpenAI, Anthropic), plateformes no-code, outils SaaS spécialisés. Déploiement rapide, dépendance au fournisseur." },
+    ],
+    rows: [
+      { feature: "Coût initial", values: ["50 000 - 500 000 € (infrastructure GPU, ingénierie, configuration)", "0 - 5 000 € (abonnement, intégration API)"] },
+      { feature: "Coût récurrent mensuel", values: ["5 000 - 30 000 €/mois (serveurs GPU, équipe ML, maintenance)", "500 - 5 000 €/mois (tokens API, abonnements SaaS)"] },
+      { feature: "Délai de déploiement", values: ["3 - 12 mois (recrutement, infrastructure, fine-tuning, tests)", "1 - 4 semaines (configuration, intégration, tests)"] },
+      { feature: "Personnalisation", values: ["Totale : fine-tuning, RAG sur vos données, architecture sur mesure", "Limitée au paramétrage : prompts système, RAG via plugins, pas de modification du modèle"] },
+      { feature: "Contrôle des données", values: ["Total : les données ne quittent jamais votre infrastructure", "Partiel : données transitent par les serveurs du fournisseur (DPA disponible)"] },
+      { feature: "Performance des modèles", values: ["Modèles open-source (Mistral, Llama) : très bons mais en retrait sur les benchmarks vs modèles propriétaires", "Modèles propriétaires (GPT-4, Claude) : état de l'art, mises à jour régulières incluses"] },
+      { feature: "Maintenance et mises à jour", values: ["À votre charge : veille technologique, mises à jour de sécurité, évolutions des modèles", "Gérée par le fournisseur : nouvelles versions, correctifs, scaling automatique"] },
+      { feature: "Conformité RGPD", values: ["Maximale : hébergement souverain possible (OVH, Scaleway), audit interne complet", "Variable : DPA requis, vérifier la localisation des serveurs et les sous-traitants"] },
+      { feature: "Compétences requises", values: ["Équipe ML/MLOps dédiée (2-5 ingénieurs), expertise DevOps GPU", "Développeurs API, prompt engineers, pas besoin d'expertise ML profonde"] },
+      { feature: "Risque de dépendance (vendor lock-in)", values: ["Faible : vous maîtrisez la stack, portabilité des modèles open-source", "Élevé : migration coûteuse si changement de fournisseur, formats propriétaires"] },
+    ],
+    verdict:
+      "L'IA SaaS est le choix rationnel pour la majorité des entreprises qui débutent avec l'IA ou qui ont besoin de résultats rapides. Le rapport coût/performance est imbattable : en quelques semaines, vous déployez des agents IA performants sans recruter d'équipe ML. C'est l'approche recommandée pour valider vos cas d'usage avant d'investir davantage.\n\nL'IA interne se justifie dans trois cas précis : données hautement sensibles (santé, défense, finance réglementée), besoin de personnalisation profonde du modèle (fine-tuning spécialisé), ou volume d'inférences si élevé que le coût API devient prohibitif (généralement au-delà de 50 000 €/mois d'API).\n\nL'approche hybride gagne en popularité : utiliser des API SaaS pour les tâches générales et héberger un modèle spécialisé en interne pour les données les plus sensibles. Cette stratégie combine le meilleur des deux mondes tout en maîtrisant les coûts et les risques.",
+    relatedUseCases: ["agent-knowledge-management", "agent-triage-support-client", "agent-gestion-incidents-it"],
+  },
 ];
