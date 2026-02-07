@@ -215,6 +215,28 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Recently added */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <Badge variant="secondary" className="mb-2 text-xs">
+              Nouveautés
+            </Badge>
+            <h2 className="text-2xl font-bold sm:text-3xl">
+              Derniers workflows ajoutés
+            </h2>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {useCases
+            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+            .slice(0, 3)
+            .map((uc) => (
+              <UseCaseCard key={uc.slug} useCase={uc} />
+            ))}
+        </div>
+      </section>
+
       {/* CTA: custom request */}
       <section className="border-t bg-muted/30">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">

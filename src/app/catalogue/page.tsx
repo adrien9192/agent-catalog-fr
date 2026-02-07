@@ -132,10 +132,30 @@ function CatalogueContent() {
             {filtered.length} résultat{filtered.length !== 1 ? "s" : ""}
           </p>
           {filtered.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {filtered.map((uc) => (
-                <UseCaseCard key={uc.slug} useCase={uc} searchQuery={searchQuery} />
-              ))}
+            <div className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {filtered.slice(0, 8).map((uc) => (
+                  <UseCaseCard key={uc.slug} useCase={uc} searchQuery={searchQuery} />
+                ))}
+              </div>
+              {filtered.length > 8 && (
+                <>
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 text-center">
+                    <p className="text-sm font-medium mb-1">
+                      Recevez un nouveau workflow chaque matin
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Tutoriel, stack et ROI inclus. Gratuit.
+                    </p>
+                    <NewsletterSignup variant="hero" />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {filtered.slice(8).map((uc) => (
+                      <UseCaseCard key={uc.slug} useCase={uc} searchQuery={searchQuery} />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="rounded-xl border border-dashed p-12 text-center space-y-6">

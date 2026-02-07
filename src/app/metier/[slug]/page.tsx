@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { UseCaseCard } from "@/components/use-case-card";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { useCases } from "@/data/use-cases";
 import { metiers } from "@/data/metiers";
 
@@ -65,6 +66,29 @@ export default async function MetierPage({ params }: PageProps) {
           </Link>
         </div>
       )}
+
+      {/* CTA section */}
+      <div className="mt-12 rounded-xl border border-primary/20 bg-primary/5 p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex-1">
+            <p className="font-semibold">Vous ne trouvez pas le workflow {metier.name} qu&apos;il vous faut ?</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Décrivez votre besoin et recevez un workflow sur mesure sous 5 jours.
+            </p>
+          </div>
+          <Link
+            href={`/demande?q=workflow ${metier.name}`}
+            className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Demander un workflow
+          </Link>
+        </div>
+      </div>
+
+      {/* Newsletter */}
+      <div className="mt-8">
+        <NewsletterSignup variant="inline" />
+      </div>
 
       {/* Other metiers */}
       <div className="mt-16 border-t pt-8">
