@@ -88,7 +88,6 @@ export async function GET(req: NextRequest) {
         sender: { name: BREVO_SENDER_NAME, email: BREVO_SENDER_EMAIL },
         recipients: { listIds: [BREVO_LIST_ID] },
         htmlContent: buildEmailHtml(uc),
-        scheduledAt: new Date().toISOString(),
       }),
     });
 
