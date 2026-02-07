@@ -8131,4 +8131,1796 @@ async def scan_portfolio():
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
+  {
+    slug: "agent-analyse-sentiments",
+    title: "Agent d'Analyse de Sentiments",
+    subtitle: "Analysez automatiquement le sentiment client sur tous vos canaux de communication",
+    problem:
+      "Les équipes marketing et CX sont incapables de traiter manuellement le volume croissant de feedbacks clients provenant de multiples canaux (emails, chat en direct, réseaux sociaux, avis en ligne). Les sentiments négatifs passent inaperçus pendant des jours, les tendances émergentes sont détectées trop tard, et les rapports manuels sont biaisés par l'échantillonnage humain. Résultat : des crises réputationnelles évitables et des opportunités d'amélioration manquées.",
+    value:
+      "Un agent IA collecte et analyse en temps réel les feedbacks de tous les canaux, détecte le sentiment (positif, négatif, neutre, mixte), identifie les thèmes récurrents et les signaux faibles, et génère des alertes immédiates pour les situations critiques. Les équipes disposent d'un tableau de bord unifié avec des tendances et recommandations actionnables.",
+    inputs: [
+      "Emails et tickets support client",
+      "Conversations de chat en direct (Intercom, Zendesk Chat)",
+      "Publications et commentaires réseaux sociaux (Twitter/X, LinkedIn, Instagram)",
+      "Avis en ligne (Google Reviews, Trustpilot, G2)",
+      "Enquêtes NPS et CSAT",
+    ],
+    outputs: [
+      "Score de sentiment par message (-1 à +1) avec label (positif/négatif/neutre/mixte)",
+      "Thèmes et sujets récurrents par canal et par période",
+      "Alertes temps réel pour les pics de sentiment négatif",
+      "Rapport hebdomadaire de tendances avec recommandations",
+      "Tableau de bord unifié multi-canal avec évolution temporelle",
+    ],
+    risks: [
+      "Mauvaise interprétation du sarcasme, de l'ironie ou de l'humour culturel",
+      "Biais linguistique sur les expressions régionales ou le langage informel",
+      "Surcharge d'alertes faux-positifs provoquant une fatigue d'alerte chez les équipes",
+      "Non-conformité RGPD si des données personnelles sont transmises au LLM",
+    ],
+    roiIndicatif:
+      "Détection des crises réputationnelles 48h plus tôt en moyenne. Réduction de 40% du temps d'analyse manuelle des feedbacks. Amélioration de 15% du score NPS grâce aux actions correctives rapides.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Sources    │────▶│  Agent LLM   │────▶│  Dashboard  │
+│  multi-canal│     │  (Analyse    │     │  & Alertes  │
+│  (API/Webhook)    │  Sentiment)  │     │  (Grafana)  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │  Email /  │ │  Social  │ │  Chat /  │
+       │  Tickets  │ │  Media   │ │  Avis    │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances nécessaires et configurez les accès aux différentes APIs de collecte. Vous aurez besoin d'un compte Anthropic et des tokens d'accès aux réseaux sociaux que vous souhaitez monitorer.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary tweepy python-dotenv fastapi uvicorn`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/sentiments_db
+TWITTER_BEARER_TOKEN=...
+SLACK_WEBHOOK_ALERTS=https://hooks.slack.com/services/...
+INTERCOM_ACCESS_TOKEN=...`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Collecte multi-canal",
+        content:
+          "Mettez en place les connecteurs pour collecter les feedbacks depuis chaque canal. Chaque message est normalisé dans un format unifié avant analyse. Les connecteurs fonctionnent en mode webhook (temps réel) ou polling (batch périodique).",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from typing import Optional, Literal
+from datetime import datetime
+import tweepy
+import os
+
+class FeedbackMessage(BaseModel):
+    id: str
+    source: Literal["email", "chat", "twitter", "linkedin", "review", "nps"]
+    contenu: str
+    auteur: Optional[str] = None
+    date: datetime
+    metadata: dict = Field(default_factory=dict)
+
+class TwitterCollector:
+    def __init__(self):
+        self.client = tweepy.Client(
+            bearer_token=os.getenv("TWITTER_BEARER_TOKEN")
+        )
+
+    def collecter_mentions(self, query: str, max_results: int = 100) -> list[FeedbackMessage]:
+        tweets = self.client.search_recent_tweets(
+            query=query,
+            max_results=max_results,
+            tweet_fields=["created_at", "author_id", "lang"]
+        )
+        messages = []
+        for tweet in tweets.data or []:
+            if tweet.lang == "fr":
+                messages.append(FeedbackMessage(
+                    id=str(tweet.id),
+                    source="twitter",
+                    contenu=tweet.text,
+                    auteur=str(tweet.author_id),
+                    date=tweet.created_at,
+                    metadata={"lang": tweet.lang}
+                ))
+        return messages
+
+class EmailCollector:
+    def collecter_depuis_webhook(self, payload: dict) -> FeedbackMessage:
+        return FeedbackMessage(
+            id=payload["message_id"],
+            source="email",
+            contenu=payload["body_text"],
+            auteur=payload.get("from_email"),
+            date=datetime.fromisoformat(payload["received_at"]),
+            metadata={"subject": payload.get("subject", "")}
+        )`,
+            filename: "collectors.py",
+          },
+        ],
+      },
+      {
+        title: "Agent d'analyse de sentiment",
+        content:
+          "L'agent analyse chaque message, détecte le sentiment, identifie les thèmes abordés et extrait les insights actionnables. Il utilise un prompt structuré pour produire une analyse cohérente et comparable entre les canaux.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from collectors import FeedbackMessage
+from pydantic import BaseModel, Field
+from typing import List
+import json
+
+class AnalyseSentiment(BaseModel):
+    message_id: str
+    score_sentiment: float = Field(ge=-1, le=1, description="Score de -1 (très négatif) à +1 (très positif)")
+    label: str = Field(description="positif, négatif, neutre ou mixte")
+    themes: List[str] = Field(description="Thèmes identifiés dans le message")
+    emotions: List[str] = Field(description="Émotions détectées (frustration, satisfaction, colère, etc.)")
+    urgence: bool = Field(description="True si action immédiate requise")
+    resume: str = Field(description="Résumé en une phrase du feedback")
+    action_suggeree: str = Field(description="Action recommandée pour l'équipe CX")
+
+client = anthropic.Anthropic()
+
+def analyser_sentiment(message: FeedbackMessage) -> AnalyseSentiment:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=1024,
+        messages=[
+            {"role": "user", "content": f"""Tu es un expert en analyse de sentiment client.
+Analyse le message suivant provenant du canal "{message.source}".
+
+MESSAGE :
+{message.contenu}
+
+MÉTADONNÉES :
+- Source : {message.source}
+- Date : {message.date.isoformat()}
+- Auteur : {message.auteur or "Anonyme"}
+
+Produis un JSON avec :
+- score_sentiment : float de -1 (très négatif) à +1 (très positif)
+- label : "positif", "négatif", "neutre" ou "mixte"
+- themes : liste des thèmes abordés (prix, qualité, support, livraison, etc.)
+- emotions : liste des émotions détectées
+- urgence : true si le message nécessite une action immédiate (menace de départ, plainte grave, etc.)
+- resume : résumé en une phrase
+- action_suggeree : action concrète recommandée
+
+Attention au sarcasme et à l'ironie. Analyse le contexte global, pas seulement les mots-clés."""}
+        ]
+    )
+    result = json.loads(response.content[0].text)
+    result["message_id"] = message.id
+    return AnalyseSentiment(**result)
+
+def analyser_batch(messages: List[FeedbackMessage]) -> List[AnalyseSentiment]:
+    analyses = []
+    for msg in messages:
+        analyse = analyser_sentiment(msg)
+        analyses.append(analyse)
+    return analyses`,
+            filename: "agent_sentiment.py",
+          },
+        ],
+      },
+      {
+        title: "API et alertes temps réel",
+        content:
+          "Exposez l'agent via une API REST et configurez les alertes automatiques pour les sentiments négatifs urgents. Le système génère également des rapports de tendances agrégés.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from agent_sentiment import analyser_sentiment, analyser_batch, AnalyseSentiment
+from collectors import FeedbackMessage, TwitterCollector
+from datetime import datetime, timedelta
+import requests
+import os
+
+app = FastAPI()
+SLACK_WEBHOOK = os.getenv("SLACK_WEBHOOK_ALERTS")
+
+@app.post("/api/sentiment/analyse")
+async def analyse_single(message: FeedbackMessage):
+    result = analyser_sentiment(message)
+    # Alerte si urgent
+    if result.urgence and SLACK_WEBHOOK:
+        requests.post(SLACK_WEBHOOK, json={
+            "text": f"⚠️ Sentiment négatif urgent détecté\\n"
+                    f"Source: {message.source} | Score: {result.score_sentiment}\\n"
+                    f"Résumé: {result.resume}\\n"
+                    f"Action: {result.action_suggeree}"
+        })
+    return result.model_dump()
+
+@app.get("/api/sentiment/tendances")
+async def get_tendances(jours: int = 7):
+    """Agrège les analyses des N derniers jours par thème et canal"""
+    from sqlalchemy import create_engine, text
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    with engine.connect() as conn:
+        rows = conn.execute(text("""
+            SELECT source, label, themes, score_sentiment, date_analyse
+            FROM analyses_sentiment
+            WHERE date_analyse >= NOW() - INTERVAL ':jours days'
+            ORDER BY date_analyse DESC
+        """), {"jours": jours}).fetchall()
+
+    tendances = {
+        "periode": f"Derniers {jours} jours",
+        "total_messages": len(rows),
+        "score_moyen": sum(r.score_sentiment for r in rows) / max(len(rows), 1),
+        "repartition": {},
+        "themes_frequents": {}
+    }
+    for row in rows:
+        tendances["repartition"][row.label] = tendances["repartition"].get(row.label, 0) + 1
+    return tendances`,
+            filename: "api_sentiment.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les messages sont anonymisés avant envoi au LLM — noms, emails, numéros de téléphone et identifiants client sont masqués via des expressions régulières et Microsoft Presidio. Seul le contenu textuel nettoyé est transmis à l'API. Les données brutes restent en base interne avec accès restreint.",
+      auditLog: "Chaque analyse est tracée : message ID (hashé), source, score de sentiment, thèmes détectés, actions recommandées, horodatage. Les modifications manuelles du label par un analyste humain sont enregistrées pour améliorer le modèle. Rétention des logs : 24 mois.",
+      humanInTheLoop: "Les messages classés comme urgents déclenchent une notification immédiate au responsable CX qui valide l'action recommandée avant exécution. Les analyses avec un score de confiance faible (sentiment mixte ou ambigu) sont renvoyées pour revue humaine. Revue hebdomadaire des faux positifs et faux négatifs.",
+      monitoring: "Dashboard Grafana : volume de messages analysés par canal, distribution des sentiments (temps réel), évolution du score moyen par semaine, top thèmes négatifs, temps de réponse de l'API, coût API par jour, alertes si le taux de sentiment négatif dépasse 30% sur une fenêtre de 4h.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Schedule Trigger (toutes les 15 min) → Node HTTP Request (collecte Twitter API) + Node Webhook (emails entrants) + Node HTTP Request (Intercom conversations) → Node Merge (unification) → Node HTTP Request (API LLM analyse sentiment) → Node IF (urgence = true) → Branch urgente: Node Slack (alerte immédiate) + Node Airtable (log) → Branch normale: Node PostgreSQL (stockage).",
+      nodes: ["Schedule Trigger (15 min)", "HTTP Request (Twitter API)", "Webhook (emails)", "HTTP Request (Intercom)", "Merge (unification)", "HTTP Request (LLM analyse)", "IF (urgence)", "Slack (alerte)", "PostgreSQL (stockage)", "Airtable (log)"],
+      triggerType: "Schedule (cron toutes les 15 minutes) + Webhook (emails entrants)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Moyen",
+    sectors: ["E-commerce", "Services", "SaaS", "Hôtellerie", "Retail"],
+    metiers: ["Marketing", "Customer Experience", "Communication"],
+    functions: ["Marketing"],
+    metaTitle: "Agent IA d'Analyse de Sentiments Multi-Canal — Guide Complet",
+    metaDescription:
+      "Déployez un agent IA d'analyse de sentiments multi-canal. Détectez en temps réel le sentiment client sur emails, chat, réseaux sociaux. Tutoriel pas-à-pas avec stack complète.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-generation-rapports-esg",
+    title: "Agent de Génération de Rapports ESG",
+    subtitle: "Automatisez la collecte de données et la génération de rapports ESG/RSE conformes aux réglementations",
+    problem:
+      "La génération de rapports ESG (Environnement, Social, Gouvernance) est un processus annuel fastidieux qui mobilise des dizaines de collaborateurs pendant des mois. Les données sont dispersées dans de multiples départements (RH, opérations, achats, finance), souvent dans des formats hétérogènes (tableurs, ERP, emails). Les réglementations évoluent rapidement (CSRD, taxonomie européenne) et les erreurs de reporting exposent l'entreprise à des sanctions réglementaires et un risque réputationnel majeur.",
+    value:
+      "Un agent IA orchestre la collecte automatique des données ESG depuis les différents systèmes d'information, vérifie leur cohérence, calcule les indicateurs clés (émissions carbone, diversité, gouvernance), et génère des rapports conformes aux standards GRI, CSRD et taxonomie européenne. Le temps de production du rapport annuel passe de 3 mois à 2 semaines.",
+    inputs: [
+      "Données RH (effectifs, diversité, formation, accidents du travail)",
+      "Données environnementales (consommation énergie, eau, déchets, émissions)",
+      "Données fournisseurs (audits sociaux, certifications, provenance)",
+      "Données financières (investissements verts, part CA durable)",
+      "Référentiels réglementaires (GRI, CSRD, taxonomie UE)",
+    ],
+    outputs: [
+      "Rapport ESG complet conforme CSRD avec indicateurs GRI",
+      "Tableau de bord des KPI ESG avec évolution N-1/N-2",
+      "Matrice de double matérialité auto-générée",
+      "Plan d'action avec recommandations d'amélioration priorisées",
+      "Alertes de non-conformité réglementaire",
+    ],
+    risks: [
+      "Données source incorrectes ou incomplètes conduisant à un reporting erroné",
+      "Hallucinations du LLM sur des chiffres réglementaires ou des seuils",
+      "Évolution réglementaire non prise en compte entre deux mises à jour du prompt",
+      "Greenwashing involontaire si l'agent surinterprète positivement les données",
+    ],
+    roiIndicatif:
+      "Réduction de 70% du temps de production du rapport ESG annuel. Économie de 50 000 à 150 000 EUR en coûts de conseil externe. Diminution de 90% des erreurs de consolidation de données inter-départements.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Sources    │────▶│  Agent LLM   │────▶│  Rapport    │
+│  données    │     │  (Collecte & │     │  ESG/CSRD   │
+│  (multi-dept)│    │  Génération) │     │  (PDF/Web)  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │    RH     │ │  Ops /   │ │ Finance  │
+       │  (SIRH)   │ │  Env.    │ │  (ERP)   │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez les accès aux systèmes sources. Préparez le référentiel des indicateurs GRI et CSRD qui servira de grille de collecte pour l'agent.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain psycopg2-binary pandas openpyxl python-dotenv fastapi jinja2 weasyprint`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+OPENAI_API_KEY=sk-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/esg_db
+SIRH_API_URL=https://sirh.entreprise.com/api
+ERP_API_URL=https://erp.entreprise.com/api
+YEAR_REPORTING=2024`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Collecte et normalisation des données",
+        content:
+          "L'agent collecte les données depuis les différents systèmes sources (SIRH, ERP, tableurs) et les normalise dans un format unifié. Chaque indicateur est mappé au référentiel GRI/CSRD correspondant.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pandas as pd
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from datetime import datetime
+import requests
+import os
+
+class IndicateurESG(BaseModel):
+    code_gri: str = Field(description="Code indicateur GRI (ex: GRI 305-1)")
+    categorie: str = Field(description="E, S ou G")
+    nom: str
+    valeur: float
+    unite: str
+    annee: int
+    source: str
+    methode_calcul: str
+    valeur_n_moins_1: Optional[float] = None
+    evolution_pct: Optional[float] = None
+
+class DonneesESG(BaseModel):
+    entreprise: str
+    annee_reporting: int
+    indicateurs: List[IndicateurESG]
+    completude_pct: float = Field(description="Pourcentage d'indicateurs renseignés")
+
+def collecter_donnees_rh() -> List[IndicateurESG]:
+    """Collecte les indicateurs sociaux depuis le SIRH"""
+    sirh_url = os.getenv("SIRH_API_URL")
+    annee = int(os.getenv("YEAR_REPORTING"))
+
+    effectifs = requests.get(f"{sirh_url}/effectifs?year={annee}").json()
+    formation = requests.get(f"{sirh_url}/formation?year={annee}").json()
+    securite = requests.get(f"{sirh_url}/securite?year={annee}").json()
+
+    indicateurs = [
+        IndicateurESG(
+            code_gri="GRI 2-7",
+            categorie="S",
+            nom="Effectif total",
+            valeur=effectifs["total"],
+            unite="ETP",
+            annee=annee,
+            source="SIRH",
+            methode_calcul="Comptage ETP au 31/12"
+        ),
+        IndicateurESG(
+            code_gri="GRI 405-1",
+            categorie="S",
+            nom="Part de femmes dans le management",
+            valeur=effectifs["pct_femmes_management"],
+            unite="%",
+            annee=annee,
+            source="SIRH",
+            methode_calcul="Femmes managers / Total managers x 100"
+        ),
+        IndicateurESG(
+            code_gri="GRI 404-1",
+            categorie="S",
+            nom="Heures de formation par salarié",
+            valeur=formation["heures_par_salarie"],
+            unite="heures/ETP",
+            annee=annee,
+            source="SIRH",
+            methode_calcul="Total heures formation / Effectif moyen"
+        ),
+        IndicateurESG(
+            code_gri="GRI 403-9",
+            categorie="S",
+            nom="Taux de fréquence des accidents",
+            valeur=securite["taux_frequence"],
+            unite="pour 1M heures",
+            annee=annee,
+            source="SIRH",
+            methode_calcul="(Nb accidents AT / Heures travaillées) x 1 000 000"
+        ),
+    ]
+    return indicateurs
+
+def collecter_donnees_environnement() -> List[IndicateurESG]:
+    """Collecte les indicateurs environnementaux"""
+    annee = int(os.getenv("YEAR_REPORTING"))
+    # Lecture depuis un fichier Excel consolidé par les opérations
+    df = pd.read_excel("data/donnees_environnement.xlsx", sheet_name=str(annee))
+
+    indicateurs = [
+        IndicateurESG(
+            code_gri="GRI 305-1",
+            categorie="E",
+            nom="Émissions GES Scope 1",
+            valeur=df.loc[df["indicateur"] == "scope1", "valeur"].values[0],
+            unite="tCO2eq",
+            annee=annee,
+            source="Bilan Carbone",
+            methode_calcul="Méthode Bilan Carbone ADEME - émissions directes"
+        ),
+        IndicateurESG(
+            code_gri="GRI 305-2",
+            categorie="E",
+            nom="Émissions GES Scope 2",
+            valeur=df.loc[df["indicateur"] == "scope2", "valeur"].values[0],
+            unite="tCO2eq",
+            annee=annee,
+            source="Bilan Carbone",
+            methode_calcul="Méthode location-based - électricité et chaleur"
+        ),
+        IndicateurESG(
+            code_gri="GRI 302-1",
+            categorie="E",
+            nom="Consommation énergétique totale",
+            valeur=df.loc[df["indicateur"] == "energie_totale", "valeur"].values[0],
+            unite="MWh",
+            annee=annee,
+            source="Factures énergie",
+            methode_calcul="Somme des consommations électricité + gaz + carburants"
+        ),
+    ]
+    return indicateurs`,
+            filename: "collecte_esg.py",
+          },
+        ],
+      },
+      {
+        title: "Agent de génération de rapport",
+        content:
+          "L'agent LLM prend en entrée les indicateurs consolidés et génère le contenu rédactionnel du rapport ESG. Il structure le rapport selon le standard CSRD, rédige les commentaires d'analyse, et identifie les points d'amélioration.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+from collecte_esg import DonneesESG, IndicateurESG
+from pydantic import BaseModel, Field
+from typing import List
+import json
+
+class SectionRapport(BaseModel):
+    titre: str
+    contenu_markdown: str
+    indicateurs_cles: List[dict]
+    points_forts: List[str]
+    axes_amelioration: List[str]
+
+class RapportESG(BaseModel):
+    titre: str
+    annee: int
+    sections: List[SectionRapport]
+    synthese_executive: str
+    score_conformite_csrd: float = Field(ge=0, le=100)
+    recommandations_prioritaires: List[str]
+
+client = OpenAI()
+
+def generer_rapport(donnees: DonneesESG) -> RapportESG:
+    indicateurs_json = json.dumps(
+        [ind.model_dump() for ind in donnees.indicateurs],
+        ensure_ascii=False, indent=2
+    )
+
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0.2,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": """Tu es un expert en reporting ESG/RSE.
+Tu génères des rapports conformes à la directive CSRD et aux standards GRI.
+Tu ne dois JAMAIS inventer de chiffres. Utilise uniquement les données fournies.
+Si un indicateur est manquant, signale-le explicitement comme lacune."""},
+            {"role": "user", "content": f"""Génère un rapport ESG structuré pour l'année {donnees.annee_reporting}.
+
+ENTREPRISE : {donnees.entreprise}
+COMPLÉTUDE DES DONNÉES : {donnees.completude_pct}%
+
+INDICATEURS :
+{indicateurs_json}
+
+Structure le rapport en 3 sections (Environnement, Social, Gouvernance).
+Pour chaque section :
+- Rédige un commentaire analytique des indicateurs
+- Compare avec N-1 si disponible
+- Identifie les points forts et axes d'amélioration
+- Évalue la conformité CSRD
+
+Produis un JSON avec le format RapportESG."""}
+        ]
+    )
+    result = json.loads(response.choices[0].message.content)
+    return RapportESG(**result)`,
+            filename: "agent_esg.py",
+          },
+        ],
+      },
+      {
+        title: "API et génération PDF",
+        content:
+          "Déployez l'API de génération de rapports avec export PDF. Le rapport est généré à partir d'un template Jinja2 et converti en PDF via WeasyPrint pour un rendu professionnel prêt à publier.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from agent_esg import generer_rapport, RapportESG
+from collecte_esg import collecter_donnees_rh, collecter_donnees_environnement, DonneesESG
+from jinja2 import Environment, FileSystemLoader
+from weasyprint import HTML
+import os
+
+app = FastAPI()
+
+@app.post("/api/esg/generer")
+async def generer_rapport_esg():
+    annee = int(os.getenv("YEAR_REPORTING"))
+
+    # Collecte depuis toutes les sources
+    indicateurs = []
+    indicateurs.extend(collecter_donnees_rh())
+    indicateurs.extend(collecter_donnees_environnement())
+
+    donnees = DonneesESG(
+        entreprise="Mon Entreprise SAS",
+        annee_reporting=annee,
+        indicateurs=indicateurs,
+        completude_pct=round(len(indicateurs) / 30 * 100, 1)
+    )
+
+    rapport = generer_rapport(donnees)
+
+    # Génération PDF
+    env = Environment(loader=FileSystemLoader("templates"))
+    template = env.get_template("rapport_esg.html")
+    html_content = template.render(rapport=rapport.model_dump())
+
+    pdf_path = f"output/rapport_esg_{annee}.pdf"
+    HTML(string=html_content).write_pdf(pdf_path)
+
+    return {
+        "rapport": rapport.model_dump(),
+        "pdf_url": f"/api/esg/download/{annee}",
+        "completude": donnees.completude_pct
+    }
+
+@app.get("/api/esg/download/{annee}")
+async def download_rapport(annee: int):
+    pdf_path = f"output/rapport_esg_{annee}.pdf"
+    return FileResponse(pdf_path, media_type="application/pdf",
+                       filename=f"rapport_esg_{annee}.pdf")`,
+            filename: "api_esg.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données individuelles RH (noms, salaires, évaluations) sont agrégées avant envoi au LLM — seuls les indicateurs statistiques (moyennes, taux, totaux) sont transmis. Aucune donnée nominative ne quitte le périmètre interne. Les données fournisseurs sont anonymisées (code fournisseur uniquement).",
+      auditLog: "Chaque génération de rapport est tracée : date, version, sources de données utilisées, complétude, indicateurs calculés, modifications manuelles apportées par le responsable RSE. Historique complet des versions du rapport avec diff entre versions. Rétention : durée légale de 10 ans.",
+      humanInTheLoop: "Le rapport généré est systématiquement relu et validé par le responsable RSE avant publication. Les chiffres clés (émissions carbone, effectifs, investissements) nécessitent une double validation (opérationnel + direction). Comité de validation ESG avant publication finale.",
+      monitoring: "Dashboard de suivi : taux de complétude des données par département, statut de collecte par source, comparaison N/N-1 des indicateurs, alertes si un indicateur dévie de plus de 20% vs N-1 (possible erreur de données), coût de génération par rapport, historique des scores de conformité CSRD.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Schedule Trigger (mensuel) → Node HTTP Request (API SIRH données RH) + Node Google Sheets (données environnement) + Node HTTP Request (API ERP données finance) → Node Merge (consolidation) → Node Code (calcul indicateurs GRI) → Node HTTP Request (API LLM génération rapport) → Node IF (complétude > 80%) → Branch complète: Node Google Drive (stockage PDF) + Node Email (envoi direction RSE) → Branch incomplète: Node Slack (alerte données manquantes).",
+      nodes: ["Schedule Trigger (mensuel)", "HTTP Request (SIRH)", "Google Sheets (environnement)", "HTTP Request (ERP)", "Merge (consolidation)", "Code (calcul KPI)", "HTTP Request (LLM génération)", "IF (complétude)", "Google Drive (stockage)", "Email (envoi direction)", "Slack (alerte)"],
+      triggerType: "Schedule (cron mensuel le 5 du mois)",
+    },
+    estimatedTime: "6-10h",
+    difficulty: "Expert",
+    sectors: ["Industrie", "Finance", "Énergie", "Grande distribution", "Services"],
+    metiers: ["RSE / Développement Durable", "Direction Générale", "Conformité"],
+    functions: ["RSE"],
+    metaTitle: "Agent IA de Génération de Rapports ESG/CSRD — Guide Complet",
+    metaDescription:
+      "Automatisez la production de vos rapports ESG avec un agent IA. Collecte de données multi-départements, conformité CSRD/GRI, génération PDF. Tutoriel pas-à-pas pour entreprises réglementées.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-optimisation-campagnes-ads",
+    title: "Agent d'Optimisation des Campagnes Publicitaires",
+    subtitle: "Optimisez automatiquement vos dépenses publicitaires sur Google Ads, Meta et LinkedIn grâce à l'IA",
+    problem:
+      "Les équipes marketing gèrent des campagnes publicitaires sur de multiples plateformes (Google Ads, Meta Ads, LinkedIn Ads) avec des budgets croissants mais une optimisation manuelle chronophage et réactive. Les ajustements de budget, d'enchères et de ciblage sont faits trop tard, les données de performance sont consultées en silos par plateforme, et les corrélations cross-canal restent invisibles. Résultat : un ROAS sous-optimal et un gaspillage de budget estimé entre 20% et 40%.",
+    value:
+      "Un agent IA analyse en temps réel les performances de toutes vos campagnes publicitaires, identifie les créas et audiences les plus performantes, réalloue automatiquement les budgets entre plateformes et campagnes, et ajuste les enchères pour maximiser le ROAS. L'optimisation cross-canal permet de détecter des synergies invisibles à l'oeil humain.",
+    inputs: [
+      "Données de performance Google Ads (impressions, clics, conversions, CPA, ROAS)",
+      "Données de performance Meta Ads (reach, engagement, conversions, CPM)",
+      "Données de performance LinkedIn Ads (impressions, clics, leads, CPL)",
+      "Budget total et contraintes d'allocation par plateforme",
+      "Objectifs de campagne (conversions, notoriété, leads) et KPI cibles",
+    ],
+    outputs: [
+      "Recommandations d'allocation budgétaire optimisée par plateforme et campagne",
+      "Ajustements d'enchères automatiques par mot-clé / audience",
+      "Rapport de performance cross-canal unifié avec attribution",
+      "Alertes sur les campagnes sous-performantes ou les anomalies de dépense",
+      "Prévisions de performance à 7/14/30 jours avec intervalles de confiance",
+    ],
+    risks: [
+      "Réallocation trop agressive causant un arrêt de diffusion sur certaines campagnes",
+      "Données de conversion retardées (attribution post-view) faussant l'optimisation en temps réel",
+      "Sur-optimisation court-terme au détriment du branding et de la notoriété long-terme",
+      "Dépendance aux API tierces avec risques de changements de format ou de quotas",
+    ],
+    roiIndicatif:
+      "Amélioration de 25% à 40% du ROAS global. Réduction de 30% du CPA moyen. Économie de 15h par semaine de travail manuel d'optimisation. Détection des anomalies de dépense 6x plus rapide.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Mistral Large", category: "LLM", isFree: false },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Plateformes│────▶│  Agent LLM   │────▶│  Actions    │
+│  Ads        │     │  (Analyse &  │     │  (Budget /  │
+│  (API)      │     │  Optimisation│     │  Enchères)  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │  Google   │ │   Meta   │ │ LinkedIn │
+       │  Ads API  │ │  Ads API │ │ Ads API  │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez les accès aux APIs publicitaires. Chaque plateforme nécessite des credentials OAuth2 spécifiques. Prévoyez un compte développeur sur chaque plateforme.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary google-ads facebook-business python-dotenv fastapi pandas`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/ads_optimizer_db
+GOOGLE_ADS_DEVELOPER_TOKEN=...
+GOOGLE_ADS_CLIENT_ID=...
+GOOGLE_ADS_CLIENT_SECRET=...
+GOOGLE_ADS_REFRESH_TOKEN=...
+GOOGLE_ADS_CUSTOMER_ID=123-456-7890
+META_APP_ID=...
+META_APP_SECRET=...
+META_ACCESS_TOKEN=...
+META_AD_ACCOUNT_ID=act_123456789
+LINKEDIN_ACCESS_TOKEN=...
+LINKEDIN_AD_ACCOUNT_ID=...
+SLACK_WEBHOOK_ADS=https://hooks.slack.com/services/...`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Collecte des données de performance",
+        content:
+          "Connectez-vous aux APIs de chaque plateforme publicitaire et récupérez les métriques de performance dans un format unifié. La normalisation des données est essentielle pour permettre une comparaison cross-canal pertinente.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from typing import List, Optional, Literal
+from datetime import date
+import os
+
+class CampaignMetrics(BaseModel):
+    plateforme: Literal["google_ads", "meta_ads", "linkedin_ads"]
+    campaign_id: str
+    campaign_name: str
+    date_debut: date
+    date_fin: date
+    budget_quotidien: float
+    depense_totale: float
+    impressions: int
+    clics: int
+    conversions: float
+    revenu: float
+    ctr: float = Field(description="Click-through rate en %")
+    cpc: float = Field(description="Coût par clic")
+    cpa: float = Field(description="Coût par acquisition")
+    roas: float = Field(description="Return on Ad Spend")
+    cpm: float = Field(description="Coût pour mille impressions")
+
+class PerformanceGlobale(BaseModel):
+    periode: str
+    budget_total: float
+    depense_totale: float
+    campagnes: List[CampaignMetrics]
+    roas_global: float
+    cpa_moyen: float
+
+def collecter_google_ads(date_from: date, date_to: date) -> List[CampaignMetrics]:
+    from google.ads.googleads.client import GoogleAdsClient
+    client = GoogleAdsClient.load_from_env()
+    service = client.get_service("GoogleAdsService")
+    customer_id = os.getenv("GOOGLE_ADS_CUSTOMER_ID").replace("-", "")
+
+    query = f"""
+        SELECT campaign.id, campaign.name,
+               metrics.impressions, metrics.clicks, metrics.conversions,
+               metrics.conversions_value, metrics.cost_micros,
+               campaign.campaign_budget
+        FROM campaign
+        WHERE segments.date BETWEEN '{date_from}' AND '{date_to}'
+        AND campaign.status = 'ENABLED'
+    """
+    response = service.search(customer_id=customer_id, query=query)
+    campagnes = []
+    for row in response:
+        cost = row.metrics.cost_micros / 1_000_000
+        convs = row.metrics.conversions
+        campagnes.append(CampaignMetrics(
+            plateforme="google_ads",
+            campaign_id=str(row.campaign.id),
+            campaign_name=row.campaign.name,
+            date_debut=date_from,
+            date_fin=date_to,
+            budget_quotidien=0,
+            depense_totale=cost,
+            impressions=row.metrics.impressions,
+            clics=row.metrics.clicks,
+            conversions=convs,
+            revenu=row.metrics.conversions_value,
+            ctr=round(row.metrics.clicks / max(row.metrics.impressions, 1) * 100, 2),
+            cpc=round(cost / max(row.metrics.clicks, 1), 2),
+            cpa=round(cost / max(convs, 0.01), 2),
+            roas=round(row.metrics.conversions_value / max(cost, 0.01), 2),
+            cpm=round(cost / max(row.metrics.impressions, 1) * 1000, 2)
+        ))
+    return campagnes
+
+def collecter_meta_ads(date_from: date, date_to: date) -> List[CampaignMetrics]:
+    from facebook_business.api import FacebookAdsApi
+    from facebook_business.adobjects.adaccount import AdAccount
+    FacebookAdsApi.init(os.getenv("META_APP_ID"), os.getenv("META_APP_SECRET"),
+                        os.getenv("META_ACCESS_TOKEN"))
+    account = AdAccount(os.getenv("META_AD_ACCOUNT_ID"))
+    campaigns = account.get_campaigns(
+        fields=["name", "status"],
+        params={"effective_status": ["ACTIVE"]}
+    )
+    campagnes = []
+    for camp in campaigns:
+        insights = camp.get_insights(params={
+            "time_range": {"since": str(date_from), "until": str(date_to)},
+            "fields": ["impressions", "clicks", "spend", "actions", "action_values"]
+        })
+        for row in insights:
+            spend = float(row.get("spend", 0))
+            conversions = sum(a["value"] for a in row.get("actions", [])
+                            if a["action_type"] == "offsite_conversion") if row.get("actions") else 0
+            revenue = sum(float(a["value"]) for a in row.get("action_values", [])
+                        if a["action_type"] == "offsite_conversion") if row.get("action_values") else 0
+            campagnes.append(CampaignMetrics(
+                plateforme="meta_ads",
+                campaign_id=camp["id"],
+                campaign_name=camp["name"],
+                date_debut=date_from, date_fin=date_to,
+                budget_quotidien=0, depense_totale=spend,
+                impressions=int(row.get("impressions", 0)),
+                clics=int(row.get("clicks", 0)),
+                conversions=float(conversions), revenu=float(revenue),
+                ctr=round(int(row.get("clicks", 0)) / max(int(row.get("impressions", 1)), 1) * 100, 2),
+                cpc=round(spend / max(int(row.get("clicks", 1)), 1), 2),
+                cpa=round(spend / max(float(conversions), 0.01), 2),
+                roas=round(float(revenue) / max(spend, 0.01), 2),
+                cpm=round(spend / max(int(row.get("impressions", 1)), 1) * 1000, 2)
+            ))
+    return campagnes`,
+            filename: "collecte_ads.py",
+          },
+        ],
+      },
+      {
+        title: "Agent d'optimisation",
+        content:
+          "L'agent analyse les performances cross-canal, identifie les opportunités d'optimisation et génère des recommandations actionnables de réallocation budgétaire et d'ajustement d'enchères.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from collecte_ads import PerformanceGlobale, CampaignMetrics
+from pydantic import BaseModel, Field
+from typing import List
+import json
+
+class RecommandationAds(BaseModel):
+    campaign_id: str
+    campaign_name: str
+    plateforme: str
+    action: str = Field(description="augmenter_budget, reduire_budget, pauser, ajuster_enchere, modifier_ciblage")
+    variation_budget_pct: float = Field(description="Variation de budget recommandée en %")
+    justification: str
+    impact_estime_roas: float = Field(description="Impact estimé sur le ROAS")
+    priorite: str = Field(description="haute, moyenne, basse")
+
+class PlanOptimisation(BaseModel):
+    recommandations: List[RecommandationAds]
+    budget_reallocation: dict = Field(description="Nouvelle répartition du budget par plateforme")
+    roas_prevu: float
+    economies_estimees: float
+    synthese: str
+
+client = anthropic.Anthropic()
+
+def optimiser_campagnes(performance: PerformanceGlobale) -> PlanOptimisation:
+    perf_json = json.dumps(
+        [c.model_dump() for c in performance.campagnes],
+        ensure_ascii=False, indent=2, default=str
+    )
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[
+            {"role": "user", "content": f"""Tu es un expert en acquisition digitale et optimisation media.
+Analyse les performances suivantes et produis un plan d'optimisation.
+
+BUDGET TOTAL : {performance.budget_total} EUR
+DÉPENSE TOTALE : {performance.depense_totale} EUR
+ROAS GLOBAL : {performance.roas_global}
+CPA MOYEN : {performance.cpa_moyen} EUR
+
+CAMPAGNES :
+{perf_json}
+
+RÈGLES D'OPTIMISATION :
+- Réallouer le budget des campagnes avec ROAS < 1.5 vers celles avec ROAS > 3
+- Ne jamais couper plus de 30% du budget d'une campagne en une fois
+- Prendre en compte la phase de la campagne (apprentissage Meta = min 50 conversions)
+- Campagne avec CPA > 2x CPA moyen = candidate à la pause
+- Campagne avec CTR < 0.5% sur Google Search = revoir les annonces
+- Toujours garder un minimum de 20% du budget en test/expérimentation
+
+Produis un JSON PlanOptimisation avec des recommandations actionnables."""}
+        ]
+    )
+    result = json.loads(response.content[0].text)
+    return PlanOptimisation(**result)`,
+            filename: "agent_ads.py",
+          },
+        ],
+      },
+      {
+        title: "API et exécution automatique",
+        content:
+          "Déployez l'API d'optimisation avec la possibilité d'appliquer automatiquement les recommandations validées. Le système inclut un mode simulation (dry-run) pour prévisualiser les changements avant application.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from agent_ads import optimiser_campagnes, PlanOptimisation
+from collecte_ads import collecter_google_ads, collecter_meta_ads, PerformanceGlobale
+from datetime import date, timedelta
+import requests
+import os
+
+app = FastAPI()
+SLACK_WEBHOOK = os.getenv("SLACK_WEBHOOK_ADS")
+
+@app.post("/api/ads/optimiser")
+async def lancer_optimisation(dry_run: bool = True):
+    today = date.today()
+    date_from = today - timedelta(days=7)
+
+    # Collecte cross-canal
+    campagnes = []
+    campagnes.extend(collecter_google_ads(date_from, today))
+    campagnes.extend(collecter_meta_ads(date_from, today))
+
+    depense_totale = sum(c.depense_totale for c in campagnes)
+    revenu_total = sum(c.revenu for c in campagnes)
+    convs_total = sum(c.conversions for c in campagnes)
+
+    performance = PerformanceGlobale(
+        periode=f"{date_from} - {today}",
+        budget_total=depense_totale * 1.2,
+        depense_totale=depense_totale,
+        campagnes=campagnes,
+        roas_global=round(revenu_total / max(depense_totale, 0.01), 2),
+        cpa_moyen=round(depense_totale / max(convs_total, 0.01), 2)
+    )
+
+    plan = optimiser_campagnes(performance)
+
+    # Notification Slack
+    if SLACK_WEBHOOK:
+        reco_text = "\\n".join([
+            f"• {r.campaign_name} ({r.plateforme}): {r.action} ({r.variation_budget_pct:+.0f}%) - {r.justification}"
+            for r in plan.recommandations[:5]
+        ])
+        requests.post(SLACK_WEBHOOK, json={
+            "text": f"📊 Plan d'optimisation Ads généré\\n"
+                    f"ROAS actuel: {performance.roas_global} → Prévu: {plan.roas_prevu}\\n"
+                    f"Économies estimées: {plan.economies_estimees:.0f} EUR\\n"
+                    f"Mode: {'SIMULATION' if dry_run else 'APPLICATION'}\\n\\n"
+                    f"Top recommandations :\\n{reco_text}"
+        })
+
+    if not dry_run:
+        # Appliquer les changements via les APIs
+        for reco in plan.recommandations:
+            if reco.priorite == "haute":
+                appliquer_recommandation(reco)
+
+    return {
+        "plan": plan.model_dump(),
+        "mode": "dry_run" if dry_run else "applied",
+        "campagnes_analysees": len(campagnes)
+    }
+
+def appliquer_recommandation(reco):
+    """Applique une recommandation via l'API de la plateforme concernée"""
+    # Implémentation spécifique par plateforme
+    pass`,
+            filename: "api_ads.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Aucune donnée personnelle utilisateur n'est transmise au LLM — seules les métriques agrégées de campagne (impressions, clics, conversions, dépense) sont envoyées. Les données d'audience et de ciblage restent dans les plateformes publicitaires. Les identifiants de campagne internes ne sont pas exposés.",
+      auditLog: "Chaque cycle d'optimisation est tracé : date, performance avant/après, recommandations générées, recommandations appliquées, résultat observé à J+7. Historique complet des modifications de budget et d'enchères avec rollback possible. Rétention : 36 mois pour les données de performance.",
+      humanInTheLoop: "Mode dry-run par défaut — les recommandations sont présentées pour validation humaine avant application. Les changements de budget supérieurs à 20% nécessitent une approbation du responsable acquisition. Revue hebdomadaire des performances post-optimisation avec le Head of Marketing.",
+      monitoring: "Dashboard temps réel : ROAS par plateforme et par campagne, CPA et CPL avec tendances, budget consommé vs alloué, alertes si le CPA dépasse 150% de la cible, alertes si une campagne dépense sans convertir pendant 48h, coût API LLM par cycle d'optimisation.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Schedule Trigger (quotidien 7h) → Node HTTP Request (Google Ads API) + Node HTTP Request (Meta Ads API) + Node HTTP Request (LinkedIn Ads API) → Node Merge (consolidation cross-canal) → Node HTTP Request (API LLM optimisation) → Node IF (dry_run ou apply) → Branch simulation: Node Slack (rapport recommandations) → Branch application: Node HTTP Request (modifier budgets APIs) + Node Slack (confirmation) → Node Google Sheets (historique).",
+      nodes: ["Schedule Trigger (quotidien 7h)", "HTTP Request (Google Ads)", "HTTP Request (Meta Ads)", "HTTP Request (LinkedIn Ads)", "Merge (consolidation)", "HTTP Request (LLM optimisation)", "IF (dry_run)", "Slack (recommandations)", "HTTP Request (modifier budgets)", "Google Sheets (historique)"],
+      triggerType: "Schedule (cron quotidien à 7h00)",
+    },
+    estimatedTime: "6-8h",
+    difficulty: "Expert",
+    sectors: ["E-commerce", "SaaS", "Services", "Retail", "Startup"],
+    metiers: ["Marketing Digital", "Growth", "Acquisition"],
+    functions: ["Marketing"],
+    metaTitle: "Agent IA d'Optimisation des Campagnes Publicitaires — Guide Complet",
+    metaDescription:
+      "Optimisez automatiquement vos campagnes Google Ads, Meta et LinkedIn avec un agent IA. Réallocation budgétaire, ajustement d'enchères et analyse cross-canal. Tutoriel pas-à-pas.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-gestion-connaissances-juridiques",
+    title: "Agent de Gestion des Connaissances Juridiques",
+    subtitle: "Un assistant RAG intelligent pour les directions juridiques d'entreprise",
+    problem:
+      "Les directions juridiques croulent sous un volume documentaire considérable : contrats, jurisprudences, réglementations, notes internes, avis juridiques. Retrouver une clause spécifique dans des milliers de contrats, vérifier la conformité d'une pratique avec la dernière réglementation, ou identifier un précédent jurisprudentiel prend des heures de recherche manuelle. Les connaissances sont souvent concentrées chez quelques experts seniors, créant un risque de perte de savoir critique.",
+    value:
+      "Un agent RAG (Retrieval-Augmented Generation) indexe l'intégralité du corpus juridique de l'entreprise et permet aux juristes d'interroger cette base en langage naturel. L'agent retrouve les documents pertinents, synthétise les informations, compare les clauses entre contrats, et produit des analyses juridiques sourcées avec références précises aux documents originaux.",
+    inputs: [
+      "Corpus de contrats (PDF, Word) avec métadonnées (type, date, parties, statut)",
+      "Base jurisprudentielle interne et externe (décisions de justice pertinentes)",
+      "Textes réglementaires et législatifs (codes, directives, décrets)",
+      "Notes et avis juridiques internes",
+      "Questions en langage naturel des juristes",
+    ],
+    outputs: [
+      "Réponses sourcées avec références précises aux documents (page, paragraphe, clause)",
+      "Synthèses comparatives de clauses entre plusieurs contrats",
+      "Alertes de non-conformité réglementaire sur les contrats existants",
+      "Fiches de synthèse jurisprudentielle sur un sujet donné",
+      "Suggestions de clauses types basées sur les précédents internes",
+    ],
+    risks: [
+      "Hallucination juridique : l'agent invente des références ou des interprétations",
+      "Omission de documents pertinents dans la recherche vectorielle (recall insuffisant)",
+      "Interprétation erronée de clauses ambiguës hors contexte",
+      "Confidentialité : risque de fuite de contrats sensibles via le LLM",
+    ],
+    roiIndicatif:
+      "Réduction de 60% du temps de recherche juridique. Économie de 80 000 EUR annuels en heures de juristes seniors sur les recherches documentaires. Détection de 30% de risques contractuels supplémentaires grâce à l'analyse systématique.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Pinecone", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mixtral", category: "LLM", isFree: true },
+      { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Question   │────▶│  Agent RAG   │────▶│  Réponse    │
+│  juriste    │     │  (Retrieval  │     │  sourcée    │
+│  (NL)       │     │  + Génération│     │  + Réfs     │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │ Contrats  │ │ Jurispru-│ │ Réglemen- │
+       │ (Vector)  │ │ dence    │ │ tation   │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances nécessaires pour le pipeline RAG. Vous aurez besoin d'un extracteur de texte PDF robuste (pymupdf ou unstructured) et d'une base vectorielle pour l'indexation des documents juridiques.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain pinecone-client pymupdf unstructured python-dotenv fastapi tiktoken`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+OPENAI_API_KEY=sk-...
+PINECONE_API_KEY=...
+PINECONE_INDEX=juridique-kb
+DOCS_PATH=./corpus_juridique
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Indexation du corpus juridique",
+        content:
+          "Indexez l'ensemble du corpus juridique dans la base vectorielle. Le découpage (chunking) est critique pour les documents juridiques : il faut préserver les clauses complètes et leur contexte. Un chunking trop fin perd le contexte, trop large dilue la pertinence.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Pinecone
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.document_loaders import DirectoryLoader, PyMuPDFLoader
+from typing import List
+import os
+
+def charger_corpus(docs_path: str) -> List:
+    """Charge tous les documents juridiques (PDF, DOCX)"""
+    loader = DirectoryLoader(
+        docs_path,
+        glob="**/*.pdf",
+        loader_cls=PyMuPDFLoader,
+        show_progress=True
+    )
+    documents = loader.load()
+    print(f"{len(documents)} pages chargées depuis {docs_path}")
+    return documents
+
+def decouper_documents(documents: List) -> List:
+    """Découpe les documents en chunks optimisés pour le juridique"""
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=int(os.getenv("CHUNK_SIZE", 1000)),
+        chunk_overlap=int(os.getenv("CHUNK_OVERLAP", 200)),
+        separators=[
+            "\\nArticle ",     # Articles de contrats
+            "\\nClause ",      # Clauses
+            "\\nSection ",     # Sections
+            "\\nChapitre ",    # Chapitres
+            "\\n\\n",          # Paragraphes
+            "\\n",             # Lignes
+            ". ",              # Phrases
+        ]
+    )
+    chunks = splitter.split_documents(documents)
+    # Enrichir chaque chunk avec des métadonnées
+    for i, chunk in enumerate(chunks):
+        chunk.metadata["chunk_id"] = i
+        chunk.metadata["source_file"] = chunk.metadata.get("source", "inconnu")
+        chunk.metadata["page"] = chunk.metadata.get("page", 0)
+    print(f"{len(chunks)} chunks créés")
+    return chunks
+
+def indexer_corpus():
+    """Pipeline complet d'indexation"""
+    docs_path = os.getenv("DOCS_PATH", "./corpus_juridique")
+    documents = charger_corpus(docs_path)
+    chunks = decouper_documents(documents)
+
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+    vectorstore = Pinecone.from_documents(
+        chunks,
+        embeddings,
+        index_name=os.getenv("PINECONE_INDEX"),
+        batch_size=100
+    )
+    print(f"Indexation terminée : {len(chunks)} chunks dans Pinecone")
+    return vectorstore
+
+if __name__ == "__main__":
+    indexer_corpus()`,
+            filename: "indexation_juridique.py",
+          },
+        ],
+      },
+      {
+        title: "Agent RAG juridique",
+        content:
+          "L'agent RAG combine la recherche vectorielle avec la génération augmentée. Il retrouve les passages les plus pertinents du corpus puis génère une réponse structurée avec des références précises aux documents sources. Un système de re-ranking améliore la pertinence des résultats.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Pinecone
+from pydantic import BaseModel, Field
+from typing import List, Optional
+import json
+import os
+
+class Reference(BaseModel):
+    document: str
+    page: int
+    extrait: str = Field(description="Passage pertinent extrait du document")
+    pertinence: float = Field(ge=0, le=1)
+
+class ReponseJuridique(BaseModel):
+    reponse: str = Field(description="Réponse détaillée à la question juridique")
+    references: List[Reference] = Field(description="Documents sources avec extraits")
+    niveau_confiance: str = Field(description="élevé, moyen, faible")
+    points_attention: List[str] = Field(description="Points nécessitant une vérification humaine")
+    suggestions_recherche: List[str] = Field(description="Recherches complémentaires suggérées")
+
+# Initialisation
+embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+vectorstore = Pinecone.from_existing_index(
+    os.getenv("PINECONE_INDEX"), embeddings
+)
+client = OpenAI()
+
+def rechercher_et_repondre(question: str, top_k: int = 10) -> ReponseJuridique:
+    # Étape 1 : Recherche vectorielle
+    docs = vectorstore.similarity_search_with_score(question, k=top_k)
+
+    # Étape 2 : Préparer le contexte avec métadonnées
+    contexte_parts = []
+    for doc, score in docs:
+        source = doc.metadata.get("source_file", "Document inconnu")
+        page = doc.metadata.get("page", 0)
+        contexte_parts.append(
+            f"[Source: {source} | Page: {page} | Pertinence: {score:.3f}]\\n{doc.page_content}"
+        )
+    contexte = "\\n\\n---\\n\\n".join(contexte_parts)
+
+    # Étape 3 : Génération de la réponse
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": """Tu es un assistant juridique expert pour une direction juridique d'entreprise.
+
+RÈGLES STRICTES :
+1. Ne réponds QUE sur la base des documents fournis dans le contexte
+2. Si l'information n'est pas dans les documents, dis-le explicitement
+3. CITE TOUJOURS tes sources avec le nom du document et le numéro de page
+4. N'invente JAMAIS de références juridiques, d'articles de loi ou de jurisprudences
+5. Signale tout point ambigu nécessitant une vérification humaine
+6. Utilise un langage juridique précis mais accessible"""},
+            {"role": "user", "content": f"""QUESTION : {question}
+
+DOCUMENTS PERTINENTS :
+{contexte}
+
+Produis une réponse JSON structurée avec : reponse, references, niveau_confiance, points_attention, suggestions_recherche."""}
+        ]
+    )
+    result = json.loads(response.choices[0].message.content)
+    return ReponseJuridique(**result)`,
+            filename: "agent_juridique.py",
+          },
+        ],
+      },
+      {
+        title: "API et interface de recherche",
+        content:
+          "Exposez l'agent via une API REST avec des endpoints de recherche, d'analyse comparative de clauses, et de vérification de conformité. L'interface permet aux juristes d'interagir en langage naturel.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, Query
+from agent_juridique import rechercher_et_repondre, ReponseJuridique
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
+
+app = FastAPI(title="Assistant Juridique IA")
+
+class QuestionRequest(BaseModel):
+    question: str
+    filtre_type_doc: Optional[str] = None  # contrat, jurisprudence, reglementation
+    filtre_date_apres: Optional[str] = None
+
+@app.post("/api/juridique/recherche")
+async def recherche_juridique(req: QuestionRequest):
+    result = rechercher_et_repondre(req.question)
+    # Log de la requête pour audit
+    log_requete(req.question, result)
+    return result.model_dump()
+
+@app.post("/api/juridique/comparer-clauses")
+async def comparer_clauses(clause_type: str, contrat_ids: list[str]):
+    """Compare une clause spécifique entre plusieurs contrats"""
+    question = f"Compare la clause de {clause_type} entre les contrats suivants : {', '.join(contrat_ids)}. Identifie les différences et les risques."
+    result = rechercher_et_repondre(question, top_k=20)
+    return result.model_dump()
+
+@app.post("/api/juridique/conformite")
+async def verifier_conformite(contrat_id: str, reglementation: str):
+    """Vérifie la conformité d'un contrat avec une réglementation"""
+    question = f"Le contrat {contrat_id} est-il conforme à {reglementation} ? Identifie les clauses manquantes ou non conformes."
+    result = rechercher_et_repondre(question, top_k=15)
+    return result.model_dump()
+
+def log_requete(question: str, result: ReponseJuridique):
+    """Log pour audit et amélioration continue"""
+    from sqlalchemy import create_engine, text
+    import os
+    engine = create_engine(os.getenv("DATABASE_URL", "sqlite:///audit.db"))
+    with engine.connect() as conn:
+        conn.execute(text("""
+            INSERT INTO audit_juridique (date, question, confiance, nb_refs, refs_docs)
+            VALUES (:date, :question, :confiance, :nb_refs, :refs)
+        """), {
+            "date": datetime.now().isoformat(),
+            "question": question,
+            "confiance": result.niveau_confiance,
+            "nb_refs": len(result.references),
+            "refs": ",".join([r.document for r in result.references])
+        })
+        conn.commit()`,
+            filename: "api_juridique.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les contrats contiennent des informations confidentielles (parties, montants, conditions). En mode cloud, seuls les passages pertinents (chunks) sont envoyés au LLM, jamais les contrats complets. Pour les entreprises avec des exigences élevées, déploiement on-premise recommandé avec Ollama + Mixtral. Les noms de parties et montants peuvent être masqués avant envoi au LLM si nécessaire.",
+      auditLog: "Chaque requête est tracée : horodatage, utilisateur (juriste), question posée, documents retrouvés, réponse générée, niveau de confiance, feedback du juriste (utile/pas utile). Les statistiques d'usage permettent d'identifier les lacunes du corpus. Rétention des logs : 5 ans (conformité réglementaire).",
+      humanInTheLoop: "L'agent est un outil d'aide à la recherche — il ne remplace jamais l'avis d'un juriste qualifié. Les réponses avec un niveau de confiance 'faible' sont signalées en rouge. Les analyses de conformité nécessitent une validation par un juriste senior avant transmission au client interne. Feedback obligatoire sur la pertinence pour améliorer le modèle.",
+      monitoring: "Dashboard usage : nombre de requêtes par jour/semaine, temps de réponse moyen, taux de satisfaction des juristes (feedback), documents les plus consultés, questions sans réponse satisfaisante (gap du corpus), coût API par requête, alertes si le temps de réponse dépasse 30 secondes ou si le taux de confiance moyen chute sous 60%.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (requête juriste) → Node HTTP Request (recherche vectorielle Pinecone) → Node Code (re-ranking et filtrage) → Node HTTP Request (API LLM génération réponse) → Node IF (confiance > seuil) → Branch confiance haute: Node Slack (réponse directe au juriste) → Branch confiance basse: Node Email (escalade juriste senior) → Node PostgreSQL (audit log).",
+      nodes: ["Webhook (requête juriste)", "HTTP Request (Pinecone)", "Code (re-ranking)", "HTTP Request (LLM)", "IF (confiance)", "Slack (réponse)", "Email (escalade)", "PostgreSQL (audit)"],
+      triggerType: "Webhook (requête depuis l'interface juriste)",
+    },
+    estimatedTime: "5-8h",
+    difficulty: "Expert",
+    sectors: ["Finance", "Industrie", "Services", "Assurance", "Immobilier"],
+    metiers: ["Direction Juridique", "Compliance", "Secrétariat Général"],
+    functions: ["Juridique"],
+    metaTitle: "Agent RAG Juridique pour Direction Juridique — Guide Complet",
+    metaDescription:
+      "Déployez un assistant IA RAG pour votre direction juridique. Recherche documentaire intelligente, analyse de contrats, vérification de conformité. Tutoriel pas-à-pas avec stack RAG complète.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-scoring-credit",
+    title: "Agent de Scoring Crédit Automatisé",
+    subtitle: "Automatisez l'évaluation de solvabilité avec un agent IA intégrant de multiples sources de données",
+    problem:
+      "L'évaluation de solvabilité traditionnelle repose sur des modèles statistiques rigides et un nombre limité de variables (historique bancaire, revenus déclarés). Le processus d'instruction est lent (48-72h), ne prend pas en compte les données alternatives, et pénalise les profils atypiques (freelances, néo-entrepreneurs, jeunes actifs) qui n'ont pas d'historique bancaire classique. Les fintechs et banques challenger ont besoin d'un scoring plus rapide, plus inclusif et plus précis.",
+    value:
+      "Un agent IA orchestre la collecte de données multi-sources (open banking, données fiscales, données alternatives), applique des modèles ML de scoring, et génère une décision de crédit argumentée en moins de 5 minutes. Le modèle intègre des données alternatives (transactions, comportement de remboursement, données professionnelles) pour un scoring plus fin et plus inclusif.",
+    inputs: [
+      "Données open banking (transactions, soldes, crédits en cours) via API DSP2",
+      "Données fiscales (revenus, charges, patrimoine déclaré)",
+      "Données du bureau de crédit (Banque de France, fichiers d'incidents)",
+      "Données alternatives (historique de paiement loyer, factures, abonnements)",
+      "Informations du demandeur (profession, ancienneté, situation familiale)",
+    ],
+    outputs: [
+      "Score de crédit (0-1000) avec niveau de risque (A à E)",
+      "Probabilité de défaut à 12, 24 et 36 mois",
+      "Décision argumentée (accepté, refusé, contre-proposition) avec justification",
+      "Montant maximum recommandé et taux proposé",
+      "Rapport de scoring détaillé avec contribution de chaque variable",
+    ],
+    risks: [
+      "Biais discriminatoire dans le scoring (géographique, socio-démographique, ethnique indirect)",
+      "Non-conformité réglementaire (droit à l'explication RGPD, réglementation bancaire)",
+      "Modèle adversarial : tentatives de fraude par manipulation des données d'entrée",
+      "Drift du modèle : dégradation des performances si les conditions économiques changent",
+    ],
+    roiIndicatif:
+      "Réduction du temps d'instruction de 72h à 5 minutes. Diminution de 25% du taux de défaut grâce à un scoring plus précis. Augmentation de 15% du taux d'acceptation grâce à l'intégration de données alternatives. Économie de 40% sur les coûts d'instruction par dossier.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Demande    │────▶│  Agent IA    │────▶│  Décision   │
+│  crédit     │     │  (Scoring ML │     │  argumentée │
+│  (formulaire)│    │  + LLM)      │     │  + rapport  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │  Open     │ │ Bureau   │ │ Données  │
+       │  Banking  │ │ Crédit   │ │ Alterna- │
+       │  (DSP2)   │ │ (BdF)   │ │ tives    │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances nécessaires et configurez les accès aux APIs de données. L'accès aux APIs open banking (DSP2) et au bureau de crédit nécessite des agréments spécifiques.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary pandas scikit-learn xgboost python-dotenv fastapi shap`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/scoring_db
+OPEN_BANKING_API_URL=https://api.openbanking-provider.com/v2
+OPEN_BANKING_CLIENT_ID=...
+OPEN_BANKING_CLIENT_SECRET=...
+CREDIT_BUREAU_API_URL=https://api.credit-bureau.fr/v1
+CREDIT_BUREAU_API_KEY=...
+RISK_THRESHOLD_ACCEPT=650
+RISK_THRESHOLD_REVIEW=450`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Collecte et enrichissement des données",
+        content:
+          "Collectez les données depuis les différentes sources (open banking, bureau de crédit, données alternatives) et construisez le profil financier complet du demandeur. Chaque source est interrogée via son API dédiée.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from typing import List, Optional
+from datetime import date
+import requests
+import os
+
+class ProfilFinancier(BaseModel):
+    demandeur_id: str
+    # Données déclaratives
+    revenu_mensuel_net: float
+    charges_mensuelles: float
+    profession: str
+    anciennete_emploi_mois: int
+    situation_familiale: str
+    personnes_a_charge: int
+    # Données Open Banking
+    solde_moyen_3m: float = 0
+    revenus_reguliers_detectes: float = 0
+    depenses_jeu_alcool_pct: float = 0
+    nb_rejets_prelevement_6m: int = 0
+    nb_credits_en_cours: int = 0
+    mensualites_credits: float = 0
+    epargne_detectee: float = 0
+    variation_solde_tendance: float = 0
+    # Données bureau de crédit
+    score_bureau_credit: Optional[int] = None
+    incidents_paiement: int = 0
+    fichage_bdf: bool = False
+    # Données alternatives
+    regularite_loyer_12m: Optional[float] = None
+    anciennete_adresse_mois: int = 0
+    # Ratios calculés
+    taux_endettement: float = 0
+    reste_a_vivre: float = 0
+    capacite_remboursement: float = 0
+
+def collecter_open_banking(consent_token: str, demandeur_id: str) -> dict:
+    """Collecte les données via API Open Banking (DSP2)"""
+    api_url = os.getenv("OPEN_BANKING_API_URL")
+    headers = {"Authorization": f"Bearer {consent_token}"}
+
+    # Récupérer les comptes
+    comptes = requests.get(f"{api_url}/accounts", headers=headers).json()
+
+    # Récupérer les transactions (6 derniers mois)
+    transactions = []
+    for compte in comptes["accounts"]:
+        txs = requests.get(
+            f"{api_url}/accounts/{compte['id']}/transactions",
+            headers=headers,
+            params={"from": "2024-07-01", "to": "2025-01-01"}
+        ).json()
+        transactions.extend(txs["transactions"])
+
+    # Analyser les transactions
+    import pandas as pd
+    df = pd.DataFrame(transactions)
+    df["amount"] = df["amount"].astype(float)
+    df["date"] = pd.to_datetime(df["bookingDate"])
+
+    solde_moyen = df.groupby(df["date"].dt.to_period("M"))["amount"].sum().mean()
+    revenus = df[df["amount"] > 0].groupby(df[df["amount"] > 0]["date"].dt.to_period("M"))["amount"].sum().mean()
+    rejets = len(df[df["status"] == "rejected"])
+
+    return {
+        "solde_moyen_3m": round(solde_moyen, 2),
+        "revenus_reguliers_detectes": round(revenus, 2),
+        "nb_rejets_prelevement_6m": rejets,
+        "nb_credits_en_cours": len(df[df["category"] == "loan_repayment"]["creditorName"].unique()),
+        "mensualites_credits": abs(df[df["category"] == "loan_repayment"]["amount"].sum() / 6),
+        "epargne_detectee": df[df["category"] == "savings"]["amount"].sum()
+    }
+
+def collecter_bureau_credit(identifiant_national: str) -> dict:
+    """Interroge le bureau de crédit"""
+    api_url = os.getenv("CREDIT_BUREAU_API_URL")
+    api_key = os.getenv("CREDIT_BUREAU_API_KEY")
+    response = requests.get(
+        f"{api_url}/scoring/{identifiant_national}",
+        headers={"X-API-Key": api_key}
+    ).json()
+    return {
+        "score_bureau_credit": response.get("score"),
+        "incidents_paiement": response.get("nb_incidents", 0),
+        "fichage_bdf": response.get("ficp", False) or response.get("fcc", False)
+    }
+
+def construire_profil(demandeur_id: str, donnees_declaratives: dict,
+                      consent_token: str, identifiant_national: str) -> ProfilFinancier:
+    """Construit le profil financier complet"""
+    ob_data = collecter_open_banking(consent_token, demandeur_id)
+    cb_data = collecter_bureau_credit(identifiant_national)
+
+    revenu = donnees_declaratives["revenu_mensuel_net"]
+    charges = donnees_declaratives["charges_mensuelles"]
+    mensualites = ob_data.get("mensualites_credits", 0)
+
+    profil = ProfilFinancier(
+        demandeur_id=demandeur_id,
+        **donnees_declaratives,
+        **ob_data,
+        **cb_data,
+        taux_endettement=round((mensualites + charges) / max(revenu, 1) * 100, 2),
+        reste_a_vivre=round(revenu - charges - mensualites, 2),
+        capacite_remboursement=round((revenu - charges - mensualites) * 0.33, 2)
+    )
+    return profil`,
+            filename: "collecte_credit.py",
+          },
+        ],
+      },
+      {
+        title: "Modèle de scoring et agent de décision",
+        content:
+          "Combinez un modèle ML (XGBoost) pour le scoring quantitatif avec un agent LLM pour la génération de la décision argumentée. Le LLM analyse le profil et le score ML pour produire une décision explicable et conforme aux exigences réglementaires.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import xgboost as xgb
+import shap
+import numpy as np
+import json
+from collecte_credit import ProfilFinancier
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
+class DecisionCredit(BaseModel):
+    demandeur_id: str
+    score_credit: int = Field(ge=0, le=1000, description="Score de 0 à 1000")
+    niveau_risque: str = Field(description="A (excellent) à E (très risqué)")
+    probabilite_defaut_12m: float = Field(ge=0, le=1)
+    probabilite_defaut_24m: float = Field(ge=0, le=1)
+    probabilite_defaut_36m: float = Field(ge=0, le=1)
+    decision: str = Field(description="accepte, refuse, contre_proposition, revue_manuelle")
+    montant_max_recommande: Optional[float] = None
+    taux_propose: Optional[float] = None
+    justification: str = Field(description="Explication détaillée de la décision")
+    facteurs_positifs: List[str]
+    facteurs_negatifs: List[str]
+    conditions_speciales: List[str] = Field(default_factory=list)
+
+# Charger le modèle XGBoost pré-entraîné
+model = xgb.XGBClassifier()
+model.load_model("models/scoring_credit_v2.json")
+explainer = shap.TreeExplainer(model)
+
+llm_client = anthropic.Anthropic()
+
+def scorer_ml(profil: ProfilFinancier) -> tuple:
+    """Calcule le score ML et les contributions SHAP"""
+    features = np.array([[
+        profil.revenu_mensuel_net,
+        profil.charges_mensuelles,
+        profil.taux_endettement,
+        profil.reste_a_vivre,
+        profil.anciennete_emploi_mois,
+        profil.solde_moyen_3m,
+        profil.nb_rejets_prelevement_6m,
+        profil.nb_credits_en_cours,
+        profil.incidents_paiement,
+        int(profil.fichage_bdf),
+        profil.epargne_detectee,
+        profil.anciennete_adresse_mois,
+        profil.regularite_loyer_12m or 0
+    ]])
+    proba_defaut = model.predict_proba(features)[0][1]
+    score = int((1 - proba_defaut) * 1000)
+    shap_values = explainer.shap_values(features)
+    return score, proba_defaut, shap_values[0]
+
+def decider_credit(profil: ProfilFinancier, montant_demande: float,
+                   duree_mois: int) -> DecisionCredit:
+    """Génère une décision de crédit complète"""
+    score, proba_defaut, shap_vals = scorer_ml(profil)
+
+    feature_names = ["revenu", "charges", "endettement", "reste_a_vivre",
+                    "anciennete_emploi", "solde_moyen", "rejets_prelevement",
+                    "credits_en_cours", "incidents", "fichage_bdf",
+                    "epargne", "anciennete_adresse", "regularite_loyer"]
+    contributions = dict(zip(feature_names, shap_vals.tolist()))
+
+    # Niveau de risque
+    if score >= 800: niveau = "A"
+    elif score >= 650: niveau = "B"
+    elif score >= 500: niveau = "C"
+    elif score >= 350: niveau = "D"
+    else: niveau = "E"
+
+    profil_json = profil.model_dump_json()
+    response = llm_client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[
+            {"role": "user", "content": f"""Tu es un analyste crédit senior dans une banque française.
+Génère une décision de crédit argumentée et conforme à la réglementation.
+
+DEMANDE :
+- Montant : {montant_demande} EUR
+- Durée : {duree_mois} mois
+- Mensualité estimée : {montant_demande / duree_mois:.2f} EUR/mois
+
+PROFIL FINANCIER :
+{profil_json}
+
+SCORING ML :
+- Score : {score}/1000
+- Niveau de risque : {niveau}
+- Probabilité de défaut 12 mois : {proba_defaut:.4f}
+- Contributions des variables : {json.dumps(contributions, indent=2)}
+
+RÈGLES RÉGLEMENTAIRES :
+- Taux d'endettement max : 35% (HCSF)
+- Fichage BdF = refus automatique
+- Score < 350 = refus sauf exception motivée
+- Score 350-450 = revue manuelle obligatoire
+- Droit à l'explication RGPD : la décision doit être compréhensible par le demandeur
+
+Produis un JSON DecisionCredit avec décision argumentée."""}
+        ]
+    )
+    result = json.loads(response.content[0].text)
+    result["demandeur_id"] = profil.demandeur_id
+    result["score_credit"] = score
+    return DecisionCredit(**result)`,
+            filename: "agent_scoring.py",
+          },
+        ],
+      },
+      {
+        title: "API et monitoring réglementaire",
+        content:
+          "Déployez l'API de scoring avec les endpoints d'évaluation, de suivi et de monitoring du modèle. Le système inclut un monitoring de drift pour détecter la dégradation des performances et des contrôles anti-biais.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, HTTPException
+from agent_scoring import decider_credit, DecisionCredit
+from collecte_credit import construire_profil, ProfilFinancier
+from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
+import os
+
+app = FastAPI(title="API Scoring Crédit IA")
+
+class DemandeCredit(BaseModel):
+    demandeur_id: str
+    montant: float
+    duree_mois: int
+    revenu_mensuel_net: float
+    charges_mensuelles: float
+    profession: str
+    anciennete_emploi_mois: int
+    situation_familiale: str
+    personnes_a_charge: int
+    consent_token: str  # Token de consentement Open Banking
+    identifiant_national: str
+
+@app.post("/api/scoring/evaluer")
+async def evaluer_demande(demande: DemandeCredit):
+    # Vérification fichage BdF préalable
+    from collecte_credit import collecter_bureau_credit
+    cb_data = collecter_bureau_credit(demande.identifiant_national)
+    if cb_data.get("fichage_bdf"):
+        return DecisionCredit(
+            demandeur_id=demande.demandeur_id,
+            score_credit=0,
+            niveau_risque="E",
+            probabilite_defaut_12m=1.0,
+            probabilite_defaut_24m=1.0,
+            probabilite_defaut_36m=1.0,
+            decision="refuse",
+            justification="Fichage Banque de France actif (FICP/FCC). Refus réglementaire automatique.",
+            facteurs_positifs=[],
+            facteurs_negatifs=["Fichage Banque de France actif"],
+        ).model_dump()
+
+    # Construction du profil complet
+    profil = construire_profil(
+        demandeur_id=demande.demandeur_id,
+        donnees_declaratives={
+            "revenu_mensuel_net": demande.revenu_mensuel_net,
+            "charges_mensuelles": demande.charges_mensuelles,
+            "profession": demande.profession,
+            "anciennete_emploi_mois": demande.anciennete_emploi_mois,
+            "situation_familiale": demande.situation_familiale,
+            "personnes_a_charge": demande.personnes_a_charge,
+        },
+        consent_token=demande.consent_token,
+        identifiant_national=demande.identifiant_national
+    )
+
+    # Scoring et décision
+    decision = decider_credit(profil, demande.montant, demande.duree_mois)
+
+    # Audit log
+    log_decision(demande, decision)
+
+    return decision.model_dump()
+
+@app.get("/api/scoring/monitoring")
+async def monitoring_modele():
+    """Retourne les métriques de performance du modèle"""
+    from sqlalchemy import create_engine, text
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    with engine.connect() as conn:
+        stats = conn.execute(text("""
+            SELECT
+                COUNT(*) as total_demandes,
+                AVG(score_credit) as score_moyen,
+                COUNT(*) FILTER (WHERE decision = 'accepte') * 100.0 / COUNT(*) as taux_acceptation,
+                COUNT(*) FILTER (WHERE decision = 'refuse') * 100.0 / COUNT(*) as taux_refus,
+                COUNT(*) FILTER (WHERE decision = 'revue_manuelle') * 100.0 / COUNT(*) as taux_revue
+            FROM decisions_credit
+            WHERE date_decision >= NOW() - INTERVAL '30 days'
+        """)).fetchone()
+
+    return {
+        "periode": "30 derniers jours",
+        "total_demandes": stats.total_demandes,
+        "score_moyen": round(stats.score_moyen, 0),
+        "taux_acceptation": round(stats.taux_acceptation, 1),
+        "taux_refus": round(stats.taux_refus, 1),
+        "taux_revue_manuelle": round(stats.taux_revue, 1)
+    }
+
+def log_decision(demande, decision: DecisionCredit):
+    """Log la décision pour audit réglementaire"""
+    from sqlalchemy import create_engine, text
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    with engine.connect() as conn:
+        conn.execute(text("""
+            INSERT INTO decisions_credit
+            (date_decision, demandeur_id, montant, duree, score_credit,
+             niveau_risque, decision, justification, proba_defaut_12m)
+            VALUES (:date, :did, :montant, :duree, :score, :risque,
+                    :decision, :justification, :proba)
+        """), {
+            "date": datetime.now().isoformat(),
+            "did": demande.demandeur_id,
+            "montant": demande.montant,
+            "duree": demande.duree_mois,
+            "score": decision.score_credit,
+            "risque": decision.niveau_risque,
+            "decision": decision.decision,
+            "justification": decision.justification,
+            "proba": decision.probabilite_defaut_12m
+        })
+        conn.commit()`,
+            filename: "api_scoring.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données personnelles et financières sont traitées en environnement sécurisé (infrastructure certifiée PCI-DSS). Les identifiants sont pseudonymisés avant envoi au LLM — seuls les indicateurs financiers agrégés sont transmis (taux d'endettement, ratios, scores), jamais les noms, IBAN ou numéros de sécurité sociale. Chiffrement AES-256 au repos et TLS 1.3 en transit.",
+      auditLog: "Conformité totale avec les exigences réglementaires bancaires : chaque décision de crédit est tracée avec horodatage, données d'entrée (hashées), score ML, contributions SHAP, décision LLM, justification, résultat final. Possibilité de rejouer une décision à l'identique pour audit. Rétention : durée légale de 5 ans après fin du contrat de crédit.",
+      humanInTheLoop: "Les demandes avec un score entre 350 et 450 sont systématiquement renvoyées à un analyste crédit humain pour décision finale. Les refus génèrent automatiquement un courrier d'explication conforme RGPD. Les décisions d'acceptation au-delà de 50 000 EUR nécessitent une validation managériale. Comité de crédit hebdomadaire pour les cas limites.",
+      monitoring: "Dashboard réglementaire : distribution des scores par segment, taux d'acceptation/refus, taux de défaut réel vs prédit (matrice de confusion), monitoring de biais (analyse par genre, âge, zone géographique), drift du modèle (PSI - Population Stability Index), alertes si le taux de défaut observé dépasse de plus de 2 points la prédiction, coût API par décision.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (demande de crédit) → Node HTTP Request (API Open Banking DSP2) + Node HTTP Request (Bureau de crédit) → Node Merge (consolidation profil) → Node Code (feature engineering) → Node HTTP Request (API scoring ML + LLM) → Node Switch (décision) → Branch accepté: Node HTTP Request (création offre) + Node Email (notification demandeur) → Branch refusé: Node Email (courrier motivation RGPD) → Branch revue: Node Slack (alerte analyste) → Node PostgreSQL (audit log).",
+      nodes: ["Webhook (demande crédit)", "HTTP Request (Open Banking)", "HTTP Request (Bureau crédit)", "Merge (profil)", "Code (features)", "HTTP Request (scoring)", "Switch (décision)", "HTTP Request (offre)", "Email (notification)", "Email (motivation refus)", "Slack (analyste)", "PostgreSQL (audit)"],
+      triggerType: "Webhook (soumission formulaire de demande de crédit)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Expert",
+    sectors: ["Banque", "Fintech", "Assurance", "Crédit à la consommation"],
+    metiers: ["Risques Crédit", "Data Science", "Direction des Risques"],
+    functions: ["Finance"],
+    metaTitle: "Agent IA de Scoring Crédit Automatisé — Guide Complet",
+    metaDescription:
+      "Automatisez le scoring crédit avec un agent IA combinant ML et LLM. Open banking, données alternatives, décisions explicables et conformes RGPD. Tutoriel pas-à-pas pour banques et fintechs.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
 ];
