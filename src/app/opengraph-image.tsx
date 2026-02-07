@@ -59,7 +59,7 @@ export default function OgImage() {
             margin: 0,
           }}
         >
-          Agents IA implantables en entreprise
+          Déployez un Agent IA en quelques heures
         </h1>
         <p
           style={{
@@ -70,7 +70,7 @@ export default function OgImage() {
             marginTop: "16px",
           }}
         >
-          10+ cas d&apos;usage avec stack technique, tutoriels et ROI
+          30+ workflows IA documentés avec tutoriel, stack et ROI. Gratuit.
         </p>
       </div>
     ),

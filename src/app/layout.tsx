@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/header";
@@ -10,6 +10,13 @@ const inter = Inter({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+};
+
 export const metadata: Metadata = {
   title: {
     default: "AgentCatalog — Workflows d'Agents IA prêts à déployer",
@@ -18,12 +25,6 @@ export const metadata: Metadata = {
   description:
     "Automatisez votre entreprise avec des workflows d'Agents IA documentés. Tutoriels, stack technique et ROI pour chaque solution. Gratuit.",
   metadataBase: new URL("https://agent-catalog-fr.vercel.app"),
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-    viewportFit: "cover",
-  },
   openGraph: {
     locale: "fr_FR",
     type: "website",
