@@ -295,8 +295,20 @@ export default function PricingPage() {
         </div>
       </div>
 
+      {/* ROI Calculator CTA */}
+      <div className="mt-16 rounded-xl border border-primary/20 bg-primary/5 p-6 sm:p-8 text-center">
+        <h2 className="text-xl font-bold mb-2">Pas encore convaincu ?</h2>
+        <p className="text-sm text-muted-foreground max-w-lg mx-auto mb-4">
+          Calculez le retour sur investissement d&apos;un agent IA pour votre équipe
+          avec notre outil gratuit.
+        </p>
+        <Button variant="outline" size="lg" asChild>
+          <Link href="/calculateur-roi">Calculer mon ROI gratuitement</Link>
+        </Button>
+      </div>
+
       {/* Newsletter CTA */}
-      <div className="mt-16">
+      <div className="mt-10">
         <NewsletterSignup variant="inline" />
       </div>
     </div>
