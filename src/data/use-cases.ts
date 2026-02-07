@@ -9923,4 +9923,2363 @@ def log_decision(demande, decision: DecisionCredit):
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
+  {
+    slug: "agent-gestion-avis-clients",
+    title: "Agent de Gestion des Avis Clients",
+    subtitle: "Répondez automatiquement aux avis sur Google, Trustpilot et l'App Store grâce à l'IA",
+    problem:
+      "Les entreprises reçoivent des centaines d'avis clients sur de multiples plateformes (Google Business, Trustpilot, App Store, G2). Répondre manuellement à chacun est chronophage, et l'absence de réponse nuit à la réputation en ligne. Les réponses tardives ou génériques dégradent la relation client et le référencement local (SEO).",
+    value:
+      "Un agent IA surveille en temps réel les avis publiés sur toutes les plateformes, analyse le sentiment et le contenu, puis génère une réponse personnalisée, empathique et alignée avec le ton de la marque. Les avis négatifs critiques sont escaladés vers l'équipe concernée avec un plan d'action suggéré.",
+    inputs: [
+      "Avis clients provenant de Google Business, Trustpilot, App Store, Play Store",
+      "Historique des interactions client (CRM)",
+      "Charte éditoriale et ton de la marque",
+      "Base de connaissances produit/service",
+      "Règles d'escalade selon la gravité",
+    ],
+    outputs: [
+      "Réponse personnalisée à l'avis (adaptée au ton de la marque)",
+      "Analyse de sentiment (positif, neutre, négatif, critique)",
+      "Catégorisation thématique de l'avis (produit, service, livraison, SAV)",
+      "Alerte d'escalade pour les avis critiques avec plan d'action",
+      "Rapport hebdomadaire de tendances et insights",
+    ],
+    risks: [
+      "Réponse inappropriée ou insensible à un avis émotionnel",
+      "Ton robotique détectable par les clients",
+      "Réponse erronée sur un problème technique produit",
+      "Non-conformité avec les CGU des plateformes d'avis",
+    ],
+    roiIndicatif:
+      "Réduction de 80% du temps de réponse aux avis. Amélioration de 0.3 point de la note moyenne sur 6 mois. Augmentation de 20% du taux de réponse aux avis. Impact positif sur le SEO local (+15% de visibilité).",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Plateformes│────▶│  Agent LLM   │────▶│  Réponse    │
+│  d'avis     │     │  (Analyse +  │     │  publiée    │
+│  (API/Scrape)│    │  Génération) │     │  ou escalade│
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+                    ┌──────▼───────┐
+                    │  KB Marque   │
+                    │  + CRM       │
+                    └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration des APIs",
+        content:
+          "Installez les dépendances et configurez les accès aux plateformes d'avis. Vous aurez besoin des APIs Google Business Profile, Trustpilot Business et App Store Connect.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary python-dotenv fastapi httpx google-auth`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/avis_db
+GOOGLE_BUSINESS_ACCOUNT_ID=...
+GOOGLE_BUSINESS_CREDENTIALS=./credentials.json
+TRUSTPILOT_API_KEY=...
+TRUSTPILOT_BUSINESS_UNIT_ID=...
+APPSTORE_KEY_ID=...
+APPSTORE_ISSUER_ID=...
+APPSTORE_PRIVATE_KEY_PATH=./AuthKey.p8
+SLACK_WEBHOOK_ESCALADE=https://hooks.slack.com/services/...`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Collecte des avis multi-plateformes",
+        content:
+          "Créez un module de collecte unifié qui interroge les APIs de chaque plateforme et normalise les avis dans un format commun. Un scheduler exécute la collecte toutes les 15 minutes.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+import httpx
+import os
+
+class AvisClient(BaseModel):
+    plateforme: str
+    auteur: str
+    note: int = Field(ge=1, le=5)
+    titre: Optional[str] = None
+    contenu: str
+    date_publication: datetime
+    langue: str = "fr"
+    avis_id: str
+    url_avis: Optional[str] = None
+    reponse_existante: Optional[str] = None
+
+async def collecter_google_reviews(limit: int = 50) -> List[AvisClient]:
+    """Collecte les avis Google Business Profile via API"""
+    from google.oauth2 import service_account
+    credentials = service_account.Credentials.from_service_account_file(
+        os.getenv("GOOGLE_BUSINESS_CREDENTIALS"),
+        scopes=["https://www.googleapis.com/auth/business.manage"]
+    )
+    account_id = os.getenv("GOOGLE_BUSINESS_ACCOUNT_ID")
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"https://mybusiness.googleapis.com/v4/accounts/{account_id}/locations/-/reviews",
+            headers={"Authorization": f"Bearer {credentials.token}"},
+            params={"pageSize": limit}
+        )
+        data = resp.json()
+    avis = []
+    for r in data.get("reviews", []):
+        avis.append(AvisClient(
+            plateforme="google",
+            auteur=r["reviewer"]["displayName"],
+            note=int(r["starRating"].replace("STAR_", "").replace("_", "")),
+            contenu=r.get("comment", ""),
+            date_publication=r["createTime"],
+            avis_id=r["reviewId"],
+            reponse_existante=r.get("reviewReply", {}).get("comment")
+        ))
+    return avis
+
+async def collecter_trustpilot_reviews(limit: int = 50) -> List[AvisClient]:
+    """Collecte les avis Trustpilot via API"""
+    api_key = os.getenv("TRUSTPILOT_API_KEY")
+    bu_id = os.getenv("TRUSTPILOT_BUSINESS_UNIT_ID")
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"https://api.trustpilot.com/v1/business-units/{bu_id}/reviews",
+            headers={"apikey": api_key},
+            params={"perPage": limit, "orderBy": "createdat.desc"}
+        )
+        data = resp.json()
+    avis = []
+    for r in data.get("reviews", []):
+        avis.append(AvisClient(
+            plateforme="trustpilot",
+            auteur=r["consumer"]["displayName"],
+            note=r["stars"],
+            titre=r.get("title"),
+            contenu=r["text"],
+            date_publication=r["createdAt"],
+            avis_id=r["id"]
+        ))
+    return avis`,
+            filename: "collecte_avis.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse de sentiment et catégorisation",
+        content:
+          "L'agent IA analyse chaque avis pour en extraire le sentiment, la thématique principale, le niveau de criticité et les points clés à adresser dans la réponse.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+from collecte_avis import AvisClient
+from pydantic import BaseModel, Field
+from typing import List
+
+class AnalyseAvis(BaseModel):
+    sentiment: str = Field(description="positif, neutre, negatif, critique")
+    score_sentiment: float = Field(ge=-1, le=1)
+    themes: List[str] = Field(description="Thèmes identifiés")
+    points_cles: List[str] = Field(description="Points à adresser")
+    niveau_urgence: str = Field(description="faible, moyen, eleve, critique")
+    necessite_escalade: bool
+    raison_escalade: str = ""
+
+client = anthropic.Anthropic()
+
+def analyser_avis(avis: AvisClient) -> AnalyseAvis:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": f"""Analyse cet avis client et produis un JSON structuré.
+
+AVIS :
+- Plateforme : {avis.plateforme}
+- Note : {avis.note}/5
+- Titre : {avis.titre or "Sans titre"}
+- Contenu : {avis.contenu}
+
+Évalue le sentiment, identifie les thèmes (produit, service, livraison, prix, SAV, UX),
+les points clés à adresser, le niveau d'urgence, et si une escalade humaine est nécessaire.
+
+Critères d'escalade :
+- Note 1/5 avec menace juridique ou médiatique
+- Problème de sécurité ou santé mentionné
+- Client influenceur (> 50 avis sur la plateforme)
+- Accusation de fraude ou tromperie
+
+Retourne un JSON AnalyseAvis."""}]
+    )
+    result = json.loads(response.content[0].text)
+    return AnalyseAvis(**result)`,
+            filename: "analyse_avis.py",
+          },
+        ],
+      },
+      {
+        title: "Génération de réponses personnalisées",
+        content:
+          "Le moteur de génération crée des réponses empathiques, personnalisées et conformes à la charte éditoriale de la marque. Chaque réponse est adaptée au sentiment, à la plateforme et au contenu de l'avis.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from collecte_avis import AvisClient
+from analyse_avis import AnalyseAvis
+
+client = anthropic.Anthropic()
+
+CHARTE_EDITORIALE = """
+Ton : Chaleureux, professionnel, authentique.
+Tutoiement : Non, toujours vouvoyer.
+Signature : L'équipe [NomMarque].
+Règles :
+- Toujours remercier pour l'avis
+- Personnaliser en reprenant un élément spécifique de l'avis
+- Proposer une solution concrète pour les avis négatifs
+- Ne jamais être défensif ou argumentatif
+- Maximum 150 mots pour Google, 200 pour Trustpilot
+"""
+
+def generer_reponse(avis: AvisClient, analyse: AnalyseAvis) -> str:
+    max_mots = 150 if avis.plateforme == "google" else 200
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=512,
+        messages=[{"role": "user", "content": f"""Rédige une réponse à cet avis client.
+
+CHARTE ÉDITORIALE :
+{CHARTE_EDITORIALE}
+
+AVIS :
+- Plateforme : {avis.plateforme}
+- Auteur : {avis.auteur}
+- Note : {avis.note}/5
+- Contenu : {avis.contenu}
+
+ANALYSE :
+- Sentiment : {analyse.sentiment}
+- Thèmes : {', '.join(analyse.themes)}
+- Points à adresser : {', '.join(analyse.points_cles)}
+
+CONSIGNES :
+- Maximum {max_mots} mots
+- Ton empathique et personnalisé
+- Si négatif : reconnaître le problème, proposer une solution concrète
+- Si positif : renforcer la satisfaction, mentionner un détail spécifique
+- Ne jamais inventer de faits ou promesses non vérifiables
+
+Réponse uniquement (pas de guillemets ni préambule) :"""}]
+    )
+    return response.content[0].text.strip()`,
+            filename: "generation_reponse.py",
+          },
+        ],
+      },
+      {
+        title: "Publication et escalade automatique",
+        content:
+          "Publiez automatiquement les réponses validées sur chaque plateforme via leurs APIs respectives. Les avis critiques déclenchent une alerte Slack avec le contexte complet et un plan d'action proposé.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import httpx
+import os
+from collecte_avis import AvisClient
+from analyse_avis import AnalyseAvis
+
+async def publier_reponse_google(avis: AvisClient, reponse: str):
+    from google.oauth2 import service_account
+    credentials = service_account.Credentials.from_service_account_file(
+        os.getenv("GOOGLE_BUSINESS_CREDENTIALS"),
+        scopes=["https://www.googleapis.com/auth/business.manage"]
+    )
+    account_id = os.getenv("GOOGLE_BUSINESS_ACCOUNT_ID")
+    async with httpx.AsyncClient() as client:
+        await client.put(
+            f"https://mybusiness.googleapis.com/v4/accounts/{account_id}/locations/-/reviews/{avis.avis_id}/reply",
+            headers={"Authorization": f"Bearer {credentials.token}"},
+            json={"comment": reponse}
+        )
+
+async def escalader_avis(avis: AvisClient, analyse: AnalyseAvis, reponse_suggeree: str):
+    webhook_url = os.getenv("SLACK_WEBHOOK_ESCALADE")
+    message = {
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": f"Avis critique - {avis.plateforme.upper()}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Auteur :* {avis.auteur} | *Note :* {'star' * avis.note}/5\\n*Contenu :* {avis.contenu[:300]}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Analyse :* {analyse.sentiment} | *Thèmes :* {', '.join(analyse.themes)}\\n*Raison escalade :* {analyse.raison_escalade}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Réponse suggérée :*\\n{reponse_suggeree}"}},
+        ]
+    }
+    async with httpx.AsyncClient() as client:
+        await client.post(webhook_url, json=message)`,
+            filename: "publication_avis.py",
+          },
+        ],
+      },
+      {
+        title: "Pipeline complet et scheduling",
+        content:
+          "Assemblez le pipeline complet : collecte, analyse, génération, publication et escalade. Un scheduler lance le traitement toutes les 15 minutes pour garantir des réponses rapides.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import asyncio
+from collecte_avis import collecter_google_reviews, collecter_trustpilot_reviews, AvisClient
+from analyse_avis import analyser_avis
+from generation_reponse import generer_reponse
+from publication_avis import publier_reponse_google, escalader_avis
+from typing import List
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+async def traiter_avis(avis: AvisClient):
+    if avis.reponse_existante:
+        logger.info(f"Avis {avis.avis_id} déjà répondu, skip.")
+        return
+    analyse = analyser_avis(avis)
+    reponse = generer_reponse(avis, analyse)
+    if analyse.necessite_escalade:
+        await escalader_avis(avis, analyse, reponse)
+        logger.warning(f"Avis {avis.avis_id} escaladé - {analyse.raison_escalade}")
+    else:
+        if avis.plateforme == "google":
+            await publier_reponse_google(avis, reponse)
+        logger.info(f"Réponse publiée pour avis {avis.avis_id} ({avis.plateforme})")
+
+async def pipeline_avis():
+    logger.info("Démarrage du pipeline de gestion des avis...")
+    avis_google = await collecter_google_reviews(limit=20)
+    avis_trustpilot = await collecter_trustpilot_reviews(limit=20)
+    tous_avis = avis_google + avis_trustpilot
+    logger.info(f"{len(tous_avis)} avis collectés.")
+    for avis in tous_avis:
+        await traiter_avis(avis)
+    logger.info("Pipeline terminé.")
+
+if __name__ == "__main__":
+    asyncio.run(pipeline_avis())`,
+            filename: "pipeline_avis.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et monitoring",
+        content:
+          "Testez la qualité des réponses générées avec des avis réels anonymisés. Mesurez le taux de satisfaction et mettez en place un dashboard de suivi de la réputation en ligne.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pytest
+from collecte_avis import AvisClient
+from analyse_avis import analyser_avis
+from generation_reponse import generer_reponse
+from datetime import datetime
+
+def test_avis_positif():
+    avis = AvisClient(
+        plateforme="google", auteur="Marie L.", note=5,
+        contenu="Service exceptionnel ! Livraison rapide et produit conforme. Je recommande vivement.",
+        date_publication=datetime.now(), avis_id="test-001"
+    )
+    analyse = analyser_avis(avis)
+    assert analyse.sentiment == "positif"
+    assert not analyse.necessite_escalade
+    reponse = generer_reponse(avis, analyse)
+    assert len(reponse.split()) <= 150
+    assert "Marie" in reponse or "merci" in reponse.lower()
+
+def test_avis_negatif_escalade():
+    avis = AvisClient(
+        plateforme="trustpilot", auteur="Jean P.", note=1,
+        contenu="Scandaleux ! Produit défectueux reçu et aucune réponse du SAV depuis 3 semaines. Je vais contacter une association de consommateurs.",
+        date_publication=datetime.now(), avis_id="test-002"
+    )
+    analyse = analyser_avis(avis)
+    assert analyse.sentiment in ["negatif", "critique"]
+    assert analyse.necessite_escalade`,
+            filename: "test_avis.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les noms d'auteurs des avis sont publics, mais les données CRM associées sont pseudonymisées avant envoi au LLM. Aucune donnée personnelle interne (email, téléphone, historique d'achat détaillé) n'est transmise au modèle. Chiffrement AES-256 au repos pour la base de données des avis.",
+      auditLog: "Chaque réponse générée est loguée avec : horodatage, avis source, analyse de sentiment, réponse générée, statut de publication, et éventuelle escalade. Rétention des logs pendant 24 mois pour analyse de tendances.",
+      humanInTheLoop: "Les avis avec une note de 1/5 ou un sentiment 'critique' sont systématiquement soumis à validation humaine avant publication. Les réponses aux avis mentionnant des problèmes juridiques ou de sécurité ne sont jamais publiées automatiquement.",
+      monitoring: "Dashboard temps réel : volume d'avis par plateforme, distribution des sentiments, temps moyen de réponse, taux d'escalade, évolution de la note moyenne, top thématiques négatives. Alertes si la note moyenne chute de plus de 0.2 point sur 7 jours.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Schedule Trigger (toutes les 15 min) → Node HTTP Request (API Google Business) + Node HTTP Request (API Trustpilot) → Node Merge (consolidation avis) → Node Code (filtrage avis sans réponse) → Node HTTP Request (API LLM analyse sentiment) → Node Switch (escalade ou réponse auto) → Branch auto: Node HTTP Request (API LLM génération réponse) → Node HTTP Request (publication) → Branch escalade: Node Slack (alerte équipe) → Node PostgreSQL (log).",
+      nodes: ["Schedule Trigger", "HTTP Request (Google Business)", "HTTP Request (Trustpilot)", "Merge (avis)", "Code (filtrage)", "HTTP Request (analyse LLM)", "Switch (escalade)", "HTTP Request (génération réponse)", "HTTP Request (publication)", "Slack (escalade)", "PostgreSQL (log)"],
+      triggerType: "Schedule Trigger (toutes les 15 minutes)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Moyen",
+    sectors: ["E-commerce", "Retail", "Hôtellerie-Restauration", "SaaS", "Services"],
+    metiers: ["Marketing Digital", "Community Management", "Relation Client"],
+    functions: ["Marketing"],
+    metaTitle: "Agent IA de Gestion des Avis Clients — Guide Complet",
+    metaDescription:
+      "Automatisez la gestion de vos avis clients sur Google, Trustpilot et App Store avec un agent IA. Réponses personnalisées, analyse de sentiment et escalade intelligente.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-analyse-predictive-pannes",
+    title: "Agent d'Analyse Prédictive des Pannes IT",
+    subtitle: "Anticipez les défaillances de votre infrastructure IT grâce à un agent IA de maintenance prédictive",
+    problem:
+      "Les pannes d'infrastructure IT (serveurs, réseaux, stockage) surviennent de manière imprévisible, causant des interruptions de service coûteuses. La surveillance traditionnelle basée sur des seuils statiques ne détecte les problèmes qu'une fois qu'ils se produisent. Les équipes IT passent plus de temps à éteindre des incendies qu'à prévenir les incidents. Le coût moyen d'une heure d'indisponibilité dépasse 100 000 EUR pour les entreprises de taille intermédiaire.",
+    value:
+      "Un agent IA collecte et analyse en continu les métriques d'infrastructure (CPU, RAM, disque, réseau, logs applicatifs), détecte les anomalies et prédit les pannes 2 à 48 heures avant qu'elles ne surviennent. Il génère des alertes contextualisées avec diagnostic probable et recommandations d'action préventive, permettant aux équipes IT d'intervenir proactivement.",
+    inputs: [
+      "Métriques d'infrastructure en temps réel (Prometheus, Datadog, Zabbix)",
+      "Logs système et applicatifs (ELK Stack, Splunk)",
+      "Historique des incidents (ServiceNow, Jira Service Management)",
+      "Configuration des assets IT (CMDB)",
+      "Données de capacité et seuils d'alerte actuels",
+    ],
+    outputs: [
+      "Prédiction de panne avec probabilité et horizon temporel (2h à 48h)",
+      "Diagnostic probable de la cause racine",
+      "Recommandation d'action préventive détaillée",
+      "Score de criticité de l'asset concerné (impact métier)",
+      "Rapport hebdomadaire de santé infrastructure avec tendances",
+    ],
+    risks: [
+      "Faux positifs générant de la fatigue d'alerte chez les opérateurs",
+      "Faux négatifs manquant une panne critique imminente",
+      "Dépendance au LLM pour des décisions opérationnelles sensibles",
+      "Modèle entraîné sur des données historiques non représentatives de nouvelles architectures",
+    ],
+    roiIndicatif:
+      "Réduction de 65% des pannes non planifiées. Diminution de 40% du temps moyen de résolution (MTTR). Économie estimée de 500K EUR/an pour une infrastructure de 200 serveurs. Amélioration de la disponibilité de 99.5% à 99.95%.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Métriques  │────▶│  Agent IA    │────▶│  Alertes    │
+│  Infra      │     │  (Détection  │     │  prédictives│
+│  (Prometheus│     │  anomalies + │     │  + actions  │
+│  + Logs)    │     │  Prédiction) │     │  préventives│
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │ Historique│ │  CMDB    │ │  Modèle  │
+       │ incidents │ │  Assets  │ │  ML      │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration des sources de données",
+        content:
+          "Installez les dépendances et configurez les connexions vers vos sources de métriques (Prometheus) et de logs (Elasticsearch). L'agent a besoin d'un accès en lecture à l'historique d'au moins 3 mois pour entraîner le modèle de détection d'anomalies.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary pandas scikit-learn prophet prometheus-api-client elasticsearch python-dotenv fastapi`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/predictive_db
+PROMETHEUS_URL=http://prometheus.internal:9090
+ELASTICSEARCH_URL=http://elasticsearch.internal:9200
+ELASTICSEARCH_INDEX=syslog-*
+SERVICENOW_INSTANCE=https://company.service-now.com
+SERVICENOW_USER=...
+SERVICENOW_PASSWORD=...
+SLACK_WEBHOOK_ALERTS=https://hooks.slack.com/services/...
+PAGERDUTY_API_KEY=...
+SEUIL_ALERTE_PROBA=0.75`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Collecte et normalisation des métriques",
+        content:
+          "Créez un module de collecte qui interroge Prometheus pour les métriques infrastructure et Elasticsearch pour les logs système. Les données sont normalisées dans un format commun pour l'analyse par le modèle.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from prometheus_api_client import PrometheusConnect
+from elasticsearch import Elasticsearch
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict
+from datetime import datetime, timedelta
+import pandas as pd
+import os
+
+class MetriqueServeur(BaseModel):
+    hostname: str
+    timestamp: datetime
+    cpu_usage_pct: float
+    memory_usage_pct: float
+    disk_usage_pct: float
+    disk_io_read_mbps: float
+    disk_io_write_mbps: float
+    network_in_mbps: float
+    network_out_mbps: float
+    load_average_5m: float
+    nb_erreurs_log_1h: int = 0
+    nb_warnings_log_1h: int = 0
+    latence_reseau_ms: float = 0
+    nb_connexions_actives: int = 0
+
+prom = PrometheusConnect(url=os.getenv("PROMETHEUS_URL"), disable_ssl=True)
+es = Elasticsearch(os.getenv("ELASTICSEARCH_URL"))
+
+def collecter_metriques_serveur(hostname: str, heures: int = 24) -> List[MetriqueServeur]:
+    """Collecte les métriques Prometheus d'un serveur sur N heures"""
+    fin = datetime.now()
+    debut = fin - timedelta(hours=heures)
+
+    queries = {
+        "cpu_usage_pct": f'100 - (avg(rate(node_cpu_seconds_total{{mode="idle",instance="{hostname}"}}[5m])) * 100)',
+        "memory_usage_pct": f'(1 - node_memory_MemAvailable_bytes{{instance="{hostname}"}} / node_memory_MemTotal_bytes{{instance="{hostname}"}}) * 100',
+        "disk_usage_pct": f'(1 - node_filesystem_avail_bytes{{instance="{hostname}",mountpoint="/"}} / node_filesystem_size_bytes{{instance="{hostname}",mountpoint="/"}}) * 100',
+        "load_average_5m": f'node_load5{{instance="{hostname}"}}',
+    }
+    metriques = []
+    resultats = {}
+    for nom, query in queries.items():
+        data = prom.custom_query_range(query, start_time=debut, end_time=fin, step="5m")
+        if data:
+            resultats[nom] = {datetime.fromtimestamp(v[0]): float(v[1]) for v in data[0]["values"]}
+
+    # Compter les erreurs dans les logs
+    log_errors = es.count(
+        index=os.getenv("ELASTICSEARCH_INDEX"),
+        body={"query": {"bool": {"must": [
+            {"match": {"host.name": hostname}},
+            {"match": {"log.level": "error"}},
+            {"range": {"@timestamp": {"gte": f"now-{heures}h"}}}
+        ]}}}
+    )["count"]
+
+    timestamps = sorted(resultats.get("cpu_usage_pct", {}).keys())
+    for ts in timestamps:
+        metriques.append(MetriqueServeur(
+            hostname=hostname,
+            timestamp=ts,
+            cpu_usage_pct=resultats.get("cpu_usage_pct", {}).get(ts, 0),
+            memory_usage_pct=resultats.get("memory_usage_pct", {}).get(ts, 0),
+            disk_usage_pct=resultats.get("disk_usage_pct", {}).get(ts, 0),
+            disk_io_read_mbps=0, disk_io_write_mbps=0,
+            network_in_mbps=0, network_out_mbps=0,
+            load_average_5m=resultats.get("load_average_5m", {}).get(ts, 0),
+            nb_erreurs_log_1h=log_errors // max(heures, 1)
+        ))
+    return metriques`,
+            filename: "collecte_metriques.py",
+          },
+        ],
+      },
+      {
+        title: "Modèle de détection d'anomalies et prédiction",
+        content:
+          "Entraînez un modèle de détection d'anomalies (Isolation Forest) sur l'historique des métriques, couplé à Prophet pour la prédiction de tendances. Les anomalies détectées sont enrichies par le LLM pour produire un diagnostic compréhensible.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from sklearn.ensemble import IsolationForest
+from prophet import Prophet
+import pandas as pd
+import numpy as np
+import pickle
+from typing import Dict, Tuple
+
+class PredicteurPannes:
+    def __init__(self):
+        self.isolation_forest = IsolationForest(
+            n_estimators=200, contamination=0.05, random_state=42
+        )
+        self.prophets: Dict[str, Prophet] = {}
+        self.est_entraine = False
+
+    def entrainer(self, df_historique: pd.DataFrame):
+        """Entraîne le modèle sur l'historique des métriques"""
+        features = ["cpu_usage_pct", "memory_usage_pct", "disk_usage_pct",
+                    "load_average_5m", "nb_erreurs_log_1h"]
+        X = df_historique[features].fillna(0)
+        self.isolation_forest.fit(X)
+
+        # Entraîner Prophet pour chaque métrique
+        for col in features:
+            prophet_df = df_historique[["timestamp", col]].rename(
+                columns={"timestamp": "ds", col: "y"}
+            )
+            model = Prophet(
+                changepoint_prior_scale=0.05,
+                seasonality_mode="multiplicative"
+            )
+            model.fit(prophet_df)
+            self.prophets[col] = model
+        self.est_entraine = True
+        pickle.dump(self, open("models/predicteur_pannes.pkl", "wb"))
+
+    def detecter_anomalies(self, df_recent: pd.DataFrame) -> pd.DataFrame:
+        """Détecte les anomalies dans les métriques récentes"""
+        features = ["cpu_usage_pct", "memory_usage_pct", "disk_usage_pct",
+                    "load_average_5m", "nb_erreurs_log_1h"]
+        X = df_recent[features].fillna(0)
+        scores = self.isolation_forest.decision_function(X)
+        predictions = self.isolation_forest.predict(X)
+        df_recent["anomaly_score"] = scores
+        df_recent["is_anomaly"] = predictions == -1
+        return df_recent[df_recent["is_anomaly"]]
+
+    def predire_tendances(self, horizon_heures: int = 48) -> Dict[str, pd.DataFrame]:
+        """Prédit l'évolution des métriques sur l'horizon donné"""
+        predictions = {}
+        for metrique, model in self.prophets.items():
+            future = model.make_future_dataframe(periods=horizon_heures * 12, freq="5min")
+            forecast = model.predict(future)
+            predictions[metrique] = forecast[["ds", "yhat", "yhat_upper"]].tail(horizon_heures * 12)
+        return predictions`,
+            filename: "predicteur_pannes.py",
+          },
+        ],
+      },
+      {
+        title: "Agent LLM de diagnostic et recommandation",
+        content:
+          "L'agent LLM reçoit les anomalies détectées et les prédictions, puis génère un diagnostic en langage naturel avec des recommandations d'action concrètes pour l'équipe IT.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
+class DiagnosticPanne(BaseModel):
+    hostname: str
+    probabilite_panne: float = Field(ge=0, le=1)
+    horizon_estime: str = Field(description="Estimation temporelle avant la panne")
+    cause_probable: str
+    composant_concerne: str = Field(description="CPU, RAM, Disque, Réseau, Application")
+    impact_metier: str = Field(description="critique, eleve, moyen, faible")
+    recommandations: List[str]
+    actions_immediates: List[str]
+    metriques_cles: dict
+
+client = anthropic.Anthropic()
+
+def diagnostiquer(hostname: str, anomalies: dict, predictions: dict,
+                   historique_incidents: list) -> DiagnosticPanne:
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[{"role": "user", "content": f"""Tu es un ingénieur SRE senior spécialisé en maintenance prédictive IT.
+Analyse ces données et produis un diagnostic structuré.
+
+SERVEUR : {hostname}
+
+ANOMALIES DÉTECTÉES :
+{json.dumps(anomalies, indent=2, default=str)}
+
+PRÉDICTIONS (48 prochaines heures) :
+{json.dumps(predictions, indent=2, default=str)}
+
+HISTORIQUE DES INCIDENTS SUR CE SERVEUR :
+{json.dumps(historique_incidents, indent=2, default=str)}
+
+Analyse les patterns, corrèle avec l'historique, et produis :
+1. La probabilité d'une panne (0 à 1)
+2. L'horizon temporel estimé
+3. La cause racine probable
+4. L'impact métier potentiel
+5. Les recommandations d'action préventive
+6. Les actions immédiates à entreprendre
+
+Retourne un JSON DiagnosticPanne."""}]
+    )
+    result = json.loads(response.content[0].text)
+    result["hostname"] = hostname
+    return DiagnosticPanne(**result)`,
+            filename: "agent_diagnostic.py",
+          },
+        ],
+      },
+      {
+        title: "API et système d'alertes",
+        content:
+          "Déployez l'API de prédiction avec un système d'alertes multi-canal (Slack, PagerDuty, email). Les alertes sont enrichies avec le diagnostic complet et les recommandations d'action.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from agent_diagnostic import diagnostiquer, DiagnosticPanne
+from collecte_metriques import collecter_metriques_serveur
+from predicteur_pannes import PredicteurPannes
+import httpx
+import os
+import pickle
+
+app = FastAPI(title="API Maintenance Prédictive IT")
+predicteur = pickle.load(open("models/predicteur_pannes.pkl", "rb"))
+
+@app.get("/api/prediction/{hostname}")
+async def predire_panne(hostname: str):
+    metriques = collecter_metriques_serveur(hostname, heures=24)
+    import pandas as pd
+    df = pd.DataFrame([m.model_dump() for m in metriques])
+    anomalies = predicteur.detecter_anomalies(df)
+    predictions = predicteur.predire_tendances(horizon_heures=48)
+    if not anomalies.empty:
+        diagnostic = diagnostiquer(
+            hostname=hostname,
+            anomalies=anomalies.to_dict(orient="records"),
+            predictions={k: v.to_dict(orient="records") for k, v in predictions.items()},
+            historique_incidents=[]
+        )
+        if diagnostic.probabilite_panne >= float(os.getenv("SEUIL_ALERTE_PROBA", 0.75)):
+            await envoyer_alerte(diagnostic)
+        return diagnostic.model_dump()
+    return {"hostname": hostname, "status": "nominal", "anomalies": 0}
+
+async def envoyer_alerte(diagnostic: DiagnosticPanne):
+    webhook = os.getenv("SLACK_WEBHOOK_ALERTS")
+    emoji = {"critique": "🔴", "eleve": "🟠", "moyen": "🟡", "faible": "🟢"}
+    message = {
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": f"Alerte prédictive - {diagnostic.hostname}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Probabilité :* {diagnostic.probabilite_panne:.0%} | *Horizon :* {diagnostic.horizon_estime}\\n*Cause :* {diagnostic.cause_probable}\\n*Impact :* {emoji.get(diagnostic.impact_metier, '')} {diagnostic.impact_metier}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Actions immédiates :*\\n" + "\\n".join(f"• {a}" for a in diagnostic.actions_immediates)}},
+        ]
+    }
+    async with httpx.AsyncClient() as client:
+        await client.post(webhook, json=message)`,
+            filename: "api_predictive.py",
+          },
+        ],
+      },
+      {
+        title: "Pipeline de surveillance continue",
+        content:
+          "Mettez en place le pipeline complet de surveillance continue. Un scheduler analyse chaque serveur périodiquement, stocke les résultats et alimente un dashboard de santé infrastructure.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import asyncio
+import logging
+from datetime import datetime
+from collecte_metriques import collecter_metriques_serveur
+from predicteur_pannes import PredicteurPannes
+from agent_diagnostic import diagnostiquer
+import pandas as pd
+import pickle
+import psycopg2
+import os
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+SERVEURS = [
+    "web-prod-01", "web-prod-02", "api-prod-01",
+    "db-master-01", "db-replica-01", "cache-prod-01"
+]
+
+predicteur = pickle.load(open("models/predicteur_pannes.pkl", "rb"))
+
+async def surveiller_infrastructure():
+    logger.info(f"Scan infrastructure - {datetime.now().isoformat()}")
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    cur = conn.cursor()
+    for hostname in SERVEURS:
+        try:
+            metriques = collecter_metriques_serveur(hostname, heures=6)
+            df = pd.DataFrame([m.model_dump() for m in metriques])
+            anomalies = predicteur.detecter_anomalies(df)
+            status = "anomalie" if not anomalies.empty else "nominal"
+            cur.execute(
+                "INSERT INTO health_checks (hostname, timestamp, status, nb_anomalies, metriques) VALUES (%s, %s, %s, %s, %s)",
+                (hostname, datetime.now(), status, len(anomalies), df.describe().to_json())
+            )
+            if not anomalies.empty:
+                logger.warning(f"{hostname}: {len(anomalies)} anomalies détectées")
+        except Exception as e:
+            logger.error(f"Erreur surveillance {hostname}: {e}")
+    conn.commit()
+    conn.close()
+
+if __name__ == "__main__":
+    asyncio.run(surveiller_infrastructure())`,
+            filename: "surveillance.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et calibration du modèle",
+        content:
+          "Testez le système avec des données historiques de pannes réelles pour calibrer les seuils d'alerte et minimiser les faux positifs. Mesurez la précision prédictive sur les 3 derniers mois.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pytest
+import pandas as pd
+import numpy as np
+from predicteur_pannes import PredicteurPannes
+from datetime import datetime, timedelta
+
+def test_detection_anomalie_cpu():
+    predicteur = PredicteurPannes()
+    # Générer des données normales
+    dates = pd.date_range(end=datetime.now(), periods=1000, freq="5min")
+    df_normal = pd.DataFrame({
+        "timestamp": dates,
+        "cpu_usage_pct": np.random.normal(45, 10, 1000).clip(0, 100),
+        "memory_usage_pct": np.random.normal(60, 8, 1000).clip(0, 100),
+        "disk_usage_pct": np.random.normal(55, 5, 1000).clip(0, 100),
+        "load_average_5m": np.random.normal(2, 0.5, 1000).clip(0, 20),
+        "nb_erreurs_log_1h": np.random.poisson(2, 1000),
+    })
+    predicteur.entrainer(df_normal)
+    # Injecter une anomalie (CPU spike)
+    df_anomalie = df_normal.tail(10).copy()
+    df_anomalie["cpu_usage_pct"] = 98.5
+    df_anomalie["nb_erreurs_log_1h"] = 150
+    anomalies = predicteur.detecter_anomalies(df_anomalie)
+    assert len(anomalies) > 0, "L'anomalie CPU devrait être détectée"
+
+def test_pas_de_faux_positif_normal():
+    predicteur = PredicteurPannes()
+    dates = pd.date_range(end=datetime.now(), periods=1000, freq="5min")
+    df = pd.DataFrame({
+        "timestamp": dates,
+        "cpu_usage_pct": np.random.normal(45, 10, 1000).clip(0, 100),
+        "memory_usage_pct": np.random.normal(60, 8, 1000).clip(0, 100),
+        "disk_usage_pct": np.random.normal(55, 5, 1000).clip(0, 100),
+        "load_average_5m": np.random.normal(2, 0.5, 1000).clip(0, 20),
+        "nb_erreurs_log_1h": np.random.poisson(2, 1000),
+    })
+    predicteur.entrainer(df)
+    anomalies = predicteur.detecter_anomalies(df.tail(50))
+    taux_faux_positif = len(anomalies) / 50
+    assert taux_faux_positif < 0.1, f"Taux de faux positifs trop élevé: {taux_faux_positif:.0%}"`,
+            filename: "test_predicteur.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Aucune donnée personnelle n'est transmise au LLM. Seules les métriques techniques agrégées (CPU, RAM, disque, réseau) et les identifiants de serveurs (hostnames) sont envoyés. Les logs système sont filtrés pour retirer toute information sensible (IP internes, credentials) avant analyse.",
+      auditLog: "Chaque prédiction est loguée avec : horodatage, serveur concerné, probabilité de panne, diagnostic, recommandations, et résultat réel (panne survenue ou non) pour le réentraînement du modèle. Rétention de 12 mois pour analyse de performance du modèle.",
+      humanInTheLoop: "Les alertes avec une probabilité de panne supérieure à 90% et un impact critique déclenchent un appel PagerDuty obligatoire. Aucune action automatique n'est exécutée sur l'infrastructure sans validation humaine. Les recommandations sont consultatives uniquement.",
+      monitoring: "Dashboard Grafana : précision du modèle (vrais positifs vs faux positifs), taux de pannes prédites vs non prédites, MTTR avant et après déploiement, coût API LLM par diagnostic, nombre d'alertes par jour et par criticité, tendance de santé globale de l'infrastructure.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Schedule Trigger (toutes les 30 min) → Node HTTP Request (Prometheus API métriques) + Node HTTP Request (Elasticsearch logs) → Node Code (normalisation données) → Node HTTP Request (API modèle ML anomalies) → Node IF (anomalie détectée ?) → Node HTTP Request (API LLM diagnostic) → Node Switch (criticité) → Branch critique: Node PagerDuty (alerte on-call) → Branch élevée: Node Slack (canal ops) → Node PostgreSQL (log prédiction).",
+      nodes: ["Schedule Trigger", "HTTP Request (Prometheus)", "HTTP Request (Elasticsearch)", "Code (normalisation)", "HTTP Request (ML anomalies)", "IF (anomalie ?)", "HTTP Request (LLM diagnostic)", "Switch (criticité)", "PagerDuty (alerte)", "Slack (ops)", "PostgreSQL (log)"],
+      triggerType: "Schedule Trigger (toutes les 30 minutes)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Expert",
+    sectors: ["Technologie", "Finance", "Telecom", "E-commerce", "Industrie"],
+    metiers: ["SRE", "Infrastructure", "DevOps", "IT Operations"],
+    functions: ["IT"],
+    metaTitle: "Agent IA d'Analyse Prédictive des Pannes IT — Guide Complet",
+    metaDescription:
+      "Anticipez les pannes d'infrastructure IT avec un agent IA de maintenance prédictive. Détection d'anomalies, diagnostic automatisé et alertes proactives. Tutoriel pas-à-pas.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-planification-rendez-vous",
+    title: "Agent de Planification de Rendez-vous Commercial",
+    subtitle: "Automatisez la prise de rendez-vous et la qualification des prospects avec un agent IA conversationnel",
+    problem:
+      "La prise de rendez-vous commerciaux est un processus inefficace : les SDR passent 60% de leur temps sur des tâches administratives (relances email, coordination d'agendas, qualification initiale) au lieu de vendre. Les délais de réponse aux demandes entrantes dépassent souvent 24h, entraînant la perte de prospects chauds. La coordination des agendas entre prospects et commerciaux génère des allers-retours interminables.",
+    value:
+      "Un agent IA conversationnel gère l'intégralité du processus de prise de rendez-vous : il qualifie le prospect via un échange naturel (email ou chat), identifie le bon interlocuteur commercial selon le profil, propose des créneaux disponibles, et confirme le rendez-vous avec rappels automatiques. Le temps de réponse passe de 24h à moins de 2 minutes.",
+    inputs: [
+      "Demande entrante du prospect (formulaire, email, chatbot)",
+      "Données CRM du prospect (si existant)",
+      "Calendriers des commerciaux (Google Calendar, Outlook)",
+      "Critères de qualification (BANT, secteur, taille d'entreprise)",
+      "Règles d'attribution par territoire, secteur ou taille de deal",
+    ],
+    outputs: [
+      "Score de qualification du prospect (0-100)",
+      "Profil BANT complété (Budget, Authority, Need, Timeline)",
+      "Commercial attribué avec justification",
+      "Rendez-vous confirmé avec invitation calendrier",
+      "Fiche de briefing commercial avec contexte du prospect",
+    ],
+    risks: [
+      "Qualification trop agressive repoussant des prospects à fort potentiel",
+      "Mauvaise attribution du commercial (territoire, expertise)",
+      "Créneaux proposés non adaptés au fuseau horaire du prospect",
+      "Ton trop robotique dans les échanges dégradant l'image de marque",
+    ],
+    roiIndicatif:
+      "Réduction de 75% du temps administratif des SDR. Augmentation de 40% du taux de prise de rendez-vous. Diminution du délai de réponse de 24h à 2 minutes. Amélioration de 25% du taux de show-up grâce aux rappels automatiques.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Prospect   │────▶│  Agent IA    │────▶│  Rendez-vous│
+│  (email,    │     │  (Qualif. +  │     │  confirmé + │
+│  chat, form)│     │  Planning)   │     │  briefing   │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │  CRM      │ │ Calendar │ │  Règles  │
+       │(HubSpot)  │ │ (Google) │ │  attrib. │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration des intégrations",
+        content:
+          "Installez les dépendances et configurez les connexions vers votre CRM (HubSpot), votre calendrier (Google Calendar) et votre messagerie. L'agent a besoin d'un accès en lecture/écriture au calendrier et en lecture au CRM.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain psycopg2-binary python-dotenv fastapi google-auth google-api-python-client hubspot-api-client python-dateutil pytz`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+OPENAI_API_KEY=sk-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/rdv_db
+HUBSPOT_API_KEY=pat-...
+GOOGLE_CALENDAR_CREDENTIALS=./calendar_credentials.json
+GOOGLE_CALENDAR_IDS=commercial1@company.com,commercial2@company.com
+SMTP_HOST=smtp.company.com
+SMTP_PORT=587
+SMTP_USER=agent-rdv@company.com
+SMTP_PASSWORD=...
+SLACK_WEBHOOK_SALES=https://hooks.slack.com/services/...
+FUSEAU_HORAIRE_DEFAUT=Europe/Paris`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Module de qualification conversationnelle",
+        content:
+          "Créez l'agent conversationnel qui qualifie le prospect via un échange naturel. L'agent pose des questions pertinentes sans être intrusif et construit progressivement le profil BANT du prospect.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+from pydantic import BaseModel, Field
+from typing import List, Optional
+import json
+
+class ProfilBANT(BaseModel):
+    budget_estime: Optional[str] = None
+    est_decideur: Optional[bool] = None
+    role_dans_decision: Optional[str] = None
+    besoin_principal: Optional[str] = None
+    problematique_identifiee: Optional[str] = None
+    timeline: Optional[str] = None
+    taille_entreprise: Optional[str] = None
+    secteur: Optional[str] = None
+    score_qualification: int = Field(default=0, ge=0, le=100)
+    questions_posees: List[str] = Field(default_factory=list)
+    informations_manquantes: List[str] = Field(default_factory=list)
+
+client = OpenAI()
+
+SYSTEM_PROMPT = """Tu es un assistant commercial pour [NomEntreprise].
+Ton rôle est de qualifier les prospects de manière naturelle et bienveillante.
+
+OBJECTIF : Obtenir les informations BANT sans interrogatoire.
+- Budget : Fourchette budgétaire ou contraintes financières
+- Authority : Rôle dans la décision d'achat
+- Need : Besoin principal et problématique
+- Timeline : Urgence et calendrier du projet
+
+RÈGLES :
+- Sois naturel, empathique, jamais intrusif
+- Pose maximum 2 questions par message
+- Adapte tes questions aux réponses précédentes
+- Si le prospect semble pressé, propose directement un créneau
+- Vouvoie toujours le prospect
+- Ne révèle jamais que tu es une IA sauf si on te le demande directement
+
+Quand tu as suffisamment d'informations (score >= 60), propose un rendez-vous."""
+
+def qualifier_prospect(historique_conversation: list, contexte_crm: dict = None) -> dict:
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if contexte_crm:
+        messages.append({"role": "system", "content": f"Contexte CRM du prospect : {json.dumps(contexte_crm)}"})
+    messages.extend(historique_conversation)
+    messages.append({"role": "system", "content": "Après ta réponse, fournis aussi un JSON ProfilBANT mis à jour dans un bloc json."})
+
+    response = client.chat.completions.create(
+        model="gpt-4.1", temperature=0.7, max_tokens=1024, messages=messages
+    )
+    contenu = response.choices[0].message.content
+    # Extraire la réponse et le profil BANT
+    if "---json" in contenu:
+        parts = contenu.split("---json")
+        reponse_prospect = parts[0].strip()
+        profil_json = parts[1].split("---")[0].strip()
+        profil = ProfilBANT(**json.loads(profil_json))
+    else:
+        reponse_prospect = contenu
+        profil = ProfilBANT()
+    return {"reponse": reponse_prospect, "profil": profil.model_dump()}`,
+            filename: "qualification.py",
+          },
+        ],
+      },
+      {
+        title: "Gestion des calendriers et disponibilités",
+        content:
+          "Intégrez Google Calendar pour récupérer les disponibilités des commerciaux et proposer des créneaux adaptés au prospect. Le module gère les fuseaux horaires et les préférences de chaque commercial.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from datetime import datetime, timedelta
+from typing import List, Dict
+import pytz
+import os
+
+SCOPES = ["https://www.googleapis.com/auth/calendar"]
+
+def get_calendar_service():
+    credentials = service_account.Credentials.from_service_account_file(
+        os.getenv("GOOGLE_CALENDAR_CREDENTIALS"), scopes=SCOPES
+    )
+    return build("calendar", "v3", credentials=credentials)
+
+def obtenir_disponibilites(
+    calendar_id: str,
+    jours_ahead: int = 5,
+    duree_rdv_min: int = 30,
+    fuseau: str = "Europe/Paris"
+) -> List[Dict]:
+    service = get_calendar_service()
+    tz = pytz.timezone(fuseau)
+    now = datetime.now(tz)
+    time_min = now.isoformat()
+    time_max = (now + timedelta(days=jours_ahead)).isoformat()
+
+    events = service.events().list(
+        calendarId=calendar_id,
+        timeMin=time_min, timeMax=time_max,
+        singleEvents=True, orderBy="startTime"
+    ).execute().get("items", [])
+
+    # Calculer les créneaux libres (9h-18h, lundi-vendredi)
+    creneaux_libres = []
+    for jour in range(jours_ahead):
+        date = now.date() + timedelta(days=jour + 1)
+        if date.weekday() >= 5:
+            continue
+        debut_journee = tz.localize(datetime.combine(date, datetime.strptime("09:00", "%H:%M").time()))
+        fin_journee = tz.localize(datetime.combine(date, datetime.strptime("18:00", "%H:%M").time()))
+
+        occupations = [
+            (datetime.fromisoformat(e["start"]["dateTime"]),
+             datetime.fromisoformat(e["end"]["dateTime"]))
+            for e in events
+            if datetime.fromisoformat(e["start"]["dateTime"]).date() == date
+        ]
+        occupations.sort()
+
+        cursor = debut_journee
+        for start_occ, end_occ in occupations:
+            if (start_occ - cursor).total_seconds() >= duree_rdv_min * 60:
+                creneaux_libres.append({
+                    "debut": cursor.isoformat(),
+                    "fin": start_occ.isoformat(),
+                    "date_lisible": cursor.strftime("%A %d %B à %Hh%M")
+                })
+            cursor = max(cursor, end_occ)
+        if (fin_journee - cursor).total_seconds() >= duree_rdv_min * 60:
+            creneaux_libres.append({
+                "debut": cursor.isoformat(),
+                "fin": fin_journee.isoformat(),
+                "date_lisible": cursor.strftime("%A %d %B à %Hh%M")
+            })
+    return creneaux_libres[:10]
+
+def creer_evenement(calendar_id: str, titre: str, debut: str,
+                     duree_min: int, email_prospect: str, notes: str):
+    service = get_calendar_service()
+    event = {
+        "summary": titre,
+        "description": notes,
+        "start": {"dateTime": debut, "timeZone": "Europe/Paris"},
+        "end": {"dateTime": (datetime.fromisoformat(debut) + timedelta(minutes=duree_min)).isoformat(), "timeZone": "Europe/Paris"},
+        "attendees": [{"email": email_prospect}, {"email": calendar_id}],
+        "conferenceData": {"createRequest": {"requestId": f"rdv-{datetime.now().timestamp()}"}},
+        "reminders": {"useDefault": False, "overrides": [
+            {"method": "email", "minutes": 60},
+            {"method": "popup", "minutes": 15}
+        ]}
+    }
+    return service.events().insert(
+        calendarId=calendar_id, body=event,
+        conferenceDataVersion=1, sendUpdates="all"
+    ).execute()`,
+            filename: "calendrier.py",
+          },
+        ],
+      },
+      {
+        title: "Attribution intelligente des commerciaux",
+        content:
+          "Le module d'attribution sélectionne le commercial le plus adapté au prospect en fonction du territoire, du secteur d'activité, de la taille du deal et de la charge de travail actuelle de chaque commercial.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from typing import List, Optional
+import json
+from openai import OpenAI
+
+class Commercial(BaseModel):
+    nom: str
+    email: str
+    calendar_id: str
+    territoires: List[str]
+    secteurs_expertise: List[str]
+    taille_deals: str = Field(description="PME, ETI, GrandCompte")
+    charge_actuelle: int = Field(description="Nombre de deals en cours")
+    taux_conversion_30j: float = 0
+    langues: List[str] = Field(default_factory=lambda: ["fr"])
+
+EQUIPE_COMMERCIALE = [
+    Commercial(nom="Sophie Martin", email="sophie@company.com", calendar_id="sophie@company.com",
+               territoires=["IDF", "Nord"], secteurs_expertise=["Tech", "SaaS"], taille_deals="ETI",
+               charge_actuelle=12, taux_conversion_30j=0.32, langues=["fr", "en"]),
+    Commercial(nom="Thomas Dubois", email="thomas@company.com", calendar_id="thomas@company.com",
+               territoires=["Sud", "Ouest"], secteurs_expertise=["Industrie", "Retail"], taille_deals="PME",
+               charge_actuelle=18, taux_conversion_30j=0.28, langues=["fr"]),
+    Commercial(nom="Camille Laurent", email="camille@company.com", calendar_id="camille@company.com",
+               territoires=["IDF", "International"], secteurs_expertise=["Finance", "Assurance"], taille_deals="GrandCompte",
+               charge_actuelle=6, taux_conversion_30j=0.45, langues=["fr", "en", "de"]),
+]
+
+client = OpenAI()
+
+def attribuer_commercial(profil_bant: dict) -> Commercial:
+    response = client.chat.completions.create(
+        model="gpt-4.1", temperature=0, max_tokens=512,
+        messages=[
+            {"role": "system", "content": f"""Sélectionne le commercial le plus adapté pour ce prospect.
+Équipe : {json.dumps([c.model_dump() for c in EQUIPE_COMMERCIALE], indent=2)}
+Critères de sélection (par ordre de priorité) :
+1. Territoire géographique compatible
+2. Expertise sectorielle
+3. Taille de deal appropriée
+4. Charge de travail la plus faible
+5. Meilleur taux de conversion
+Retourne le nom du commercial sélectionné et la justification en JSON."""},
+            {"role": "user", "content": f"Profil prospect : {json.dumps(profil_bant)}"}
+        ]
+    )
+    result = json.loads(response.choices[0].message.content)
+    return next(c for c in EQUIPE_COMMERCIALE if c.nom == result["commercial"])`,
+            filename: "attribution.py",
+          },
+        ],
+      },
+      {
+        title: "API et pipeline de bout en bout",
+        content:
+          "Assemblez le pipeline complet : réception de la demande, qualification conversationnelle, attribution du commercial, proposition de créneaux, et confirmation du rendez-vous avec briefing automatique.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Optional
+from qualification import qualifier_prospect, ProfilBANT
+from attribution import attribuer_commercial
+from calendrier import obtenir_disponibilites, creer_evenement
+import json
+
+app = FastAPI(title="API Planification RDV Commercial")
+
+class MessageProspect(BaseModel):
+    session_id: str
+    message: str
+    email_prospect: Optional[str] = None
+    source: str = "chatbot"
+
+# Stockage en mémoire des sessions (utiliser Redis en production)
+sessions = {}
+
+@app.post("/api/rdv/conversation")
+async def converser(msg: MessageProspect):
+    if msg.session_id not in sessions:
+        sessions[msg.session_id] = {"historique": [], "profil": {}, "etape": "qualification"}
+    session = sessions[msg.session_id]
+    session["historique"].append({"role": "user", "content": msg.message})
+
+    if session["etape"] == "qualification":
+        resultat = qualifier_prospect(session["historique"])
+        session["profil"] = resultat["profil"]
+        session["historique"].append({"role": "assistant", "content": resultat["reponse"]})
+
+        if resultat["profil"].get("score_qualification", 0) >= 60:
+            commercial = attribuer_commercial(resultat["profil"])
+            session["commercial"] = commercial.model_dump()
+            creneaux = obtenir_disponibilites(commercial.calendar_id)
+            session["creneaux"] = creneaux
+            session["etape"] = "proposition_creneau"
+            creneaux_texte = "\\n".join([f"- {c['date_lisible']}" for c in creneaux[:5]])
+            reponse_finale = f"{resultat['reponse']}\\n\\nJe vous propose un échange avec {commercial.nom}, spécialiste de votre secteur. Voici les prochains créneaux disponibles :\\n{creneaux_texte}\\n\\nQuel créneau vous conviendrait le mieux ?"
+            session["historique"][-1]["content"] = reponse_finale
+            return {"reponse": reponse_finale, "etape": "proposition_creneau", "creneaux": creneaux[:5]}
+
+        return {"reponse": resultat["reponse"], "etape": "qualification", "score": resultat["profil"].get("score_qualification", 0)}
+
+    elif session["etape"] == "proposition_creneau":
+        # Confirmer le créneau choisi
+        commercial = session["commercial"]
+        creneau_choisi = session["creneaux"][0]  # Simplifié: prendre le premier
+        briefing = f"Prospect qualifié via chatbot. Profil BANT : {json.dumps(session['profil'], indent=2)}"
+        event = creer_evenement(
+            calendar_id=commercial["calendar_id"],
+            titre=f"RDV Commercial - {msg.email_prospect or 'Prospect'}",
+            debut=creneau_choisi["debut"],
+            duree_min=30,
+            email_prospect=msg.email_prospect or "",
+            notes=briefing
+        )
+        session["etape"] = "confirme"
+        return {
+            "reponse": f"Parfait ! Votre rendez-vous avec {commercial['nom']} est confirmé pour le {creneau_choisi['date_lisible']}. Vous recevrez une invitation par email avec le lien de visioconférence. A bientôt !",
+            "etape": "confirme",
+            "event_id": event.get("id")
+        }`,
+            filename: "api_rdv.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et métriques de performance",
+        content:
+          "Testez le pipeline complet avec des scénarios de prospects variés. Mesurez le taux de conversion, le temps moyen de qualification et la satisfaction des prospects.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pytest
+from qualification import qualifier_prospect, ProfilBANT
+
+def test_qualification_prospect_chaud():
+    historique = [
+        {"role": "user", "content": "Bonjour, je suis directeur commercial chez TechCorp (150 employés). Nous cherchons une solution de CRM IA pour Q2, budget autour de 50K EUR."},
+    ]
+    resultat = qualifier_prospect(historique)
+    profil = resultat["profil"]
+    assert profil["score_qualification"] >= 60, "Un prospect avec budget, timeline et autorité devrait scorer haut"
+    assert profil["est_decideur"] is True
+    assert profil["budget_estime"] is not None
+
+def test_qualification_prospect_froid():
+    historique = [
+        {"role": "user", "content": "Bonjour, je voulais juste des informations sur vos tarifs."},
+    ]
+    resultat = qualifier_prospect(historique)
+    profil = resultat["profil"]
+    assert profil["score_qualification"] < 60, "Un prospect sans info BANT devrait scorer bas"
+    assert len(profil["informations_manquantes"]) > 0
+
+def test_reponse_naturelle():
+    historique = [
+        {"role": "user", "content": "Salut, je suis intéressé par votre offre."},
+    ]
+    resultat = qualifier_prospect(historique)
+    reponse = resultat["reponse"]
+    assert len(reponse) > 20, "La réponse doit être substantielle"
+    assert "vous" in reponse.lower(), "L'agent doit vouvoyer"`,
+            filename: "test_rdv.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données prospects (nom, email, entreprise) sont nécessaires au processus mais ne sont jamais stockées dans les logs LLM. Les conversations sont pseudonymisées avant archivage. Les données CRM sont accédées en lecture seule via API sécurisée avec token à durée limitée.",
+      auditLog: "Chaque session de qualification est loguée : horodatage, source du prospect, score de qualification, commercial attribué, créneau proposé, résultat (RDV confirmé, abandonné, escaladé). Traçabilité complète pour analyse du funnel de conversion.",
+      humanInTheLoop: "Les prospects stratégiques (entreprises > 500 employés ou deal > 100K EUR) sont automatiquement escaladés vers un manager commercial. Les conversations où le prospect exprime une insatisfaction sont transférées à un humain en temps réel.",
+      monitoring: "Dashboard commercial : taux de qualification, taux de prise de RDV, délai moyen de réponse, taux de show-up, NPS post-interaction, répartition des attributions par commercial, coût par lead qualifié.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (nouveau lead formulaire/chat) → Node HTTP Request (API CRM HubSpot enrichissement) → Node HTTP Request (API LLM qualification) → Node IF (score >= 60 ?) → Node HTTP Request (Google Calendar disponibilités) → Node HTTP Request (API LLM choix commercial) → Node Google Calendar (création événement) → Node Email (confirmation prospect) → Node Slack (notification commercial) → Node HubSpot (mise à jour deal).",
+      nodes: ["Webhook (nouveau lead)", "HTTP Request (HubSpot)", "HTTP Request (LLM qualification)", "IF (score qualif)", "HTTP Request (Calendar)", "HTTP Request (attribution)", "Google Calendar (RDV)", "Email (confirmation)", "Slack (notification)", "HubSpot (update deal)"],
+      triggerType: "Webhook (soumission formulaire ou message chatbot)",
+    },
+    estimatedTime: "6-8h",
+    difficulty: "Moyen",
+    sectors: ["SaaS", "Services B2B", "Conseil", "Technologie", "Immobilier"],
+    metiers: ["Sales Development", "Inside Sales", "Business Development"],
+    functions: ["Sales"],
+    metaTitle: "Agent IA de Planification de Rendez-vous Commercial — Guide Complet",
+    metaDescription:
+      "Automatisez la prise de rendez-vous et la qualification de prospects avec un agent IA conversationnel. Intégration CRM, Calendar et scoring BANT. Tutoriel pas-à-pas.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-traduction-localisation",
+    title: "Agent de Traduction et Localisation de Contenu",
+    subtitle: "Localisez automatiquement vos contenus marketing pour les marchés internationaux grâce à l'IA",
+    problem:
+      "Les entreprises françaises qui s'internationalisent font face à un défi majeur : traduire et localiser des volumes importants de contenu (site web, emails marketing, fiches produit, documentation) dans plusieurs langues. La traduction humaine est coûteuse (0.15-0.25 EUR/mot) et lente (2-5 jours par document). Les outils de traduction automatique classiques produisent des résultats littéraux qui ne respectent ni le ton de la marque, ni les spécificités culturelles du marché cible.",
+    value:
+      "Un agent IA spécialisé traduit et localise les contenus en adaptant le message aux spécificités culturelles, réglementaires et marketing de chaque marché cible. Il respecte le glossaire de la marque, adapte les références culturelles, convertit les formats (dates, devises, unités) et produit un contenu qui semble natif. La qualité approche celle d'un traducteur professionnel à un coût 10x inférieur.",
+    inputs: [
+      "Contenu source en français (texte, HTML, Markdown, JSON)",
+      "Langue et marché cible (ex: anglais US, allemand Allemagne, espagnol Mexique)",
+      "Glossaire de marque et terminologie spécifique",
+      "Guide de style et ton par marché",
+      "Contexte marketing (type de contenu, audience, objectif)",
+    ],
+    outputs: [
+      "Contenu traduit et localisé dans la langue cible",
+      "Rapport de localisation (adaptations culturelles effectuées, termes du glossaire appliqués)",
+      "Score de qualité de la traduction (fluency, accuracy, style)",
+      "Liste des segments nécessitant une relecture humaine",
+      "Contenu au format original préservé (HTML, Markdown, JSON)",
+    ],
+    risks: [
+      "Contresens ou nuance culturelle manquée pouvant offenser le marché cible",
+      "Non-respect des contraintes réglementaires locales (mentions légales, RGPD vs CCPA)",
+      "Perte du ton et de la personnalité de la marque dans la traduction",
+      "Hallucination du LLM ajoutant ou omettant des informations du texte source",
+    ],
+    roiIndicatif:
+      "Réduction de 85% du coût de traduction (de 0.20 EUR/mot à 0.03 EUR/mot). Accélération du time-to-market international de 5 jours à 2 heures. Capacité de localiser en 10+ langues simultanément. Cohérence terminologique de 98% grâce au glossaire automatisé.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Contenu    │────▶│  Agent IA    │────▶│  Contenu    │
+│  source FR  │     │  (Traduction │     │  localisé   │
+│  (texte,    │     │  + Adaptation│     │  (multi-    │
+│  HTML, JSON)│     │  culturelle) │     │  langues)   │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │ Glossaire │ │  Guide   │ │ Mémoire  │
+       │  marque   │ │  style   │ │ traduct. │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez l'environnement. Préparez votre glossaire de marque et vos guides de style par marché cible pour garantir la cohérence terminologique.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary python-dotenv fastapi beautifulsoup4 markdown pyyaml deepl`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/traduction_db
+DEEPL_API_KEY=...  # Optionnel: pour comparaison qualité
+SLACK_WEBHOOK_REVIEW=https://hooks.slack.com/services/...
+LANGUES_CIBLES=en-US,de-DE,es-ES,it-IT,pt-BR,ja-JP
+SEUIL_QUALITE_AUTO=0.85`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Gestion du glossaire et de la mémoire de traduction",
+        content:
+          "Créez un système de glossaire et de mémoire de traduction qui assure la cohérence terminologique à travers tous les contenus. Le glossaire stocke les traductions validées des termes clés de la marque.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from typing import Dict, List, Optional
+import json
+import psycopg2
+import os
+
+class EntreeGlossaire(BaseModel):
+    terme_source: str
+    traductions: Dict[str, str]  # {"en-US": "...", "de-DE": "..."}
+    contexte: str = ""
+    ne_pas_traduire: bool = False  # Pour les noms propres, marques
+
+class MemoireTraduction(BaseModel):
+    segment_source: str
+    traductions: Dict[str, str]
+    valide_par_humain: bool = False
+    date_validation: Optional[str] = None
+
+# Glossaire de marque
+GLOSSAIRE = [
+    EntreeGlossaire(
+        terme_source="intelligence artificielle agentique",
+        traductions={"en-US": "agentic AI", "de-DE": "agentische KI", "es-ES": "IA agéntica", "it-IT": "IA agentica"},
+        contexte="Terme technique central de la marque"
+    ),
+    EntreeGlossaire(
+        terme_source="automatisation intelligente",
+        traductions={"en-US": "intelligent automation", "de-DE": "intelligente Automatisierung", "es-ES": "automatización inteligente"},
+        contexte="Feature principale du produit"
+    ),
+    EntreeGlossaire(
+        terme_source="NomMarque",
+        traductions={},
+        ne_pas_traduire=True,
+        contexte="Nom de la marque - ne jamais traduire"
+    ),
+]
+
+def charger_glossaire(langue_cible: str) -> Dict[str, str]:
+    """Charge le glossaire pour une langue cible donnée"""
+    glossaire = {}
+    for entree in GLOSSAIRE:
+        if entree.ne_pas_traduire:
+            glossaire[entree.terme_source] = entree.terme_source
+        elif langue_cible in entree.traductions:
+            glossaire[entree.terme_source] = entree.traductions[langue_cible]
+    return glossaire
+
+def chercher_memoire_traduction(segment: str, langue_cible: str) -> Optional[str]:
+    """Recherche un segment déjà traduit dans la mémoire"""
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT traductions FROM memoire_traduction WHERE segment_source = %s AND valide_par_humain = true",
+        (segment,)
+    )
+    result = cur.fetchone()
+    conn.close()
+    if result:
+        traductions = json.loads(result[0])
+        return traductions.get(langue_cible)
+    return None`,
+            filename: "glossaire.py",
+          },
+        ],
+      },
+      {
+        title: "Moteur de traduction et localisation",
+        content:
+          "Le coeur de l'agent : un moteur de traduction qui segmente le contenu, applique le glossaire, traduit avec le LLM en respectant le contexte culturel, puis reconstitue le format original.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import json
+import re
+from typing import List, Dict, Optional
+from pydantic import BaseModel, Field
+from glossaire import charger_glossaire, chercher_memoire_traduction
+
+class SegmentTraduit(BaseModel):
+    source: str
+    traduction: str
+    score_confiance: float = Field(ge=0, le=1)
+    adaptations_culturelles: List[str] = Field(default_factory=list)
+    necessite_relecture: bool = False
+    raison_relecture: str = ""
+
+class ResultatTraduction(BaseModel):
+    langue_source: str
+    langue_cible: str
+    contenu_traduit: str
+    segments: List[SegmentTraduit]
+    score_qualite_global: float
+    glossaire_applique: Dict[str, str]
+    adaptations_culturelles: List[str]
+    nb_segments_relecture: int
+
+GUIDES_STYLE = {
+    "en-US": "Ton direct et action-oriented. Phrases courtes. Utiliser 'you' fréquemment. Éviter le passif.",
+    "de-DE": "Ton formel (Sie). Précision technique valorisée. Phrases structurées. Respecter la capitalisation des noms.",
+    "es-ES": "Ton chaleureux mais professionnel. Utiliser 'usted' en B2B. Adapter les expressions idiomatiques.",
+    "it-IT": "Ton élégant et engageant. Forme de politesse 'Lei'. Adapter les références culturelles.",
+    "pt-BR": "Ton moderne et accessible. Utiliser 'você'. Adapter au marché brésilien, pas portugais.",
+    "ja-JP": "Niveau de politesse keigo en B2B. Adapter la structure (sujet souvent omis). Formats: YYYY年MM月DD日.",
+}
+
+client = anthropic.Anthropic()
+
+def traduire_contenu(
+    contenu: str,
+    langue_cible: str,
+    type_contenu: str = "page_web",
+    contexte_marketing: str = ""
+) -> ResultatTraduction:
+    glossaire = charger_glossaire(langue_cible)
+    guide_style = GUIDES_STYLE.get(langue_cible, "")
+
+    # Segmenter le contenu
+    segments = segmenter_contenu(contenu)
+    segments_traduits = []
+
+    for segment in segments:
+        # Vérifier la mémoire de traduction
+        traduction_existante = chercher_memoire_traduction(segment, langue_cible)
+        if traduction_existante:
+            segments_traduits.append(SegmentTraduit(
+                source=segment, traduction=traduction_existante,
+                score_confiance=1.0, necessite_relecture=False
+            ))
+            continue
+
+        response = client.messages.create(
+            model="claude-sonnet-4-5-20250514",
+            max_tokens=2048,
+            messages=[{"role": "user", "content": f"""Tu es un traducteur-localiseur professionnel spécialisé dans le marketing B2B.
+
+LANGUE SOURCE : Français (France)
+LANGUE CIBLE : {langue_cible}
+TYPE DE CONTENU : {type_contenu}
+CONTEXTE : {contexte_marketing}
+
+GUIDE DE STYLE ({langue_cible}) :
+{guide_style}
+
+GLOSSAIRE OBLIGATOIRE (utilise ces traductions exactes) :
+{json.dumps(glossaire, indent=2, ensure_ascii=False)}
+
+SEGMENT À TRADUIRE :
+{segment}
+
+RÈGLES :
+1. Traduis le sens, pas les mots. Adapte les expressions idiomatiques.
+2. Respecte le glossaire de marque (termes imposés ci-dessus).
+3. Adapte les formats : dates, devises, unités de mesure.
+4. Adapte les références culturelles au marché cible.
+5. Préserve le formatage (Markdown, HTML) intact.
+6. Ne jamais ajouter ni omettre d'information par rapport au source.
+7. Signale si un segment nécessite une relecture humaine.
+
+Retourne un JSON SegmentTraduit."""}]
+        )
+        result = json.loads(response.content[0].text)
+        result["source"] = segment
+        segments_traduits.append(SegmentTraduit(**result))
+
+    contenu_final = " ".join([s.traduction for s in segments_traduits])
+    score_global = sum(s.score_confiance for s in segments_traduits) / max(len(segments_traduits), 1)
+    adaptations = [a for s in segments_traduits for a in s.adaptations_culturelles]
+
+    return ResultatTraduction(
+        langue_source="fr-FR", langue_cible=langue_cible,
+        contenu_traduit=contenu_final, segments=segments_traduits,
+        score_qualite_global=round(score_global, 3),
+        glossaire_applique=glossaire, adaptations_culturelles=adaptations,
+        nb_segments_relecture=sum(1 for s in segments_traduits if s.necessite_relecture)
+    )
+
+def segmenter_contenu(contenu: str) -> List[str]:
+    """Segmente le contenu en unités de traduction"""
+    segments = re.split(r'\\n\\n+', contenu)
+    return [s.strip() for s in segments if s.strip()]`,
+            filename: "traducteur.py",
+          },
+        ],
+      },
+      {
+        title: "Traitement par lots et formats multiples",
+        content:
+          "Gérez la traduction par lots de fichiers entiers (HTML, Markdown, JSON de localisation) en préservant la structure et le formatage d'origine. Le module supporte les formats i18n standards.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import json
+import yaml
+from bs4 import BeautifulSoup
+from typing import Dict, List
+from traducteur import traduire_contenu, ResultatTraduction
+import os
+
+def traduire_fichier_json_i18n(
+    fichier_source: str,
+    langue_cible: str
+) -> Dict:
+    """Traduit un fichier JSON i18n (format clé-valeur)"""
+    with open(fichier_source, "r", encoding="utf-8") as f:
+        source = json.load(f)
+
+    resultat = {}
+    def traduire_recursif(obj, prefix=""):
+        if isinstance(obj, str):
+            trad = traduire_contenu(obj, langue_cible, type_contenu="ui_string")
+            return trad.contenu_traduit
+        elif isinstance(obj, dict):
+            return {k: traduire_recursif(v, f"{prefix}.{k}") for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [traduire_recursif(item, f"{prefix}[{i}]") for i, item in enumerate(obj)]
+        return obj
+
+    return traduire_recursif(source)
+
+def traduire_html(html_source: str, langue_cible: str) -> str:
+    """Traduit le contenu textuel d'un fichier HTML en préservant la structure"""
+    soup = BeautifulSoup(html_source, "html.parser")
+
+    # Éléments contenant du texte à traduire
+    for element in soup.find_all(text=True):
+        if element.parent.name in ["script", "style", "code", "pre"]:
+            continue
+        texte = element.strip()
+        if texte and len(texte) > 2:
+            trad = traduire_contenu(texte, langue_cible, type_contenu="page_web")
+            element.replace_with(trad.contenu_traduit)
+
+    # Traduire les attributs alt, title, placeholder
+    for tag in soup.find_all(True):
+        for attr in ["alt", "title", "placeholder", "aria-label"]:
+            if tag.get(attr):
+                trad = traduire_contenu(tag[attr], langue_cible, type_contenu="ui_string")
+                tag[attr] = trad.contenu_traduit
+
+    return str(soup)
+
+def traduire_lot(
+    dossier_source: str,
+    langue_cible: str,
+    dossier_sortie: str
+) -> List[Dict]:
+    """Traduit un dossier complet de fichiers"""
+    resultats = []
+    os.makedirs(dossier_sortie, exist_ok=True)
+    for fichier in os.listdir(dossier_source):
+        chemin = os.path.join(dossier_source, fichier)
+        if fichier.endswith(".json"):
+            traduit = traduire_fichier_json_i18n(chemin, langue_cible)
+            with open(os.path.join(dossier_sortie, fichier), "w", encoding="utf-8") as f:
+                json.dump(traduit, f, ensure_ascii=False, indent=2)
+        elif fichier.endswith(".html"):
+            with open(chemin, "r", encoding="utf-8") as f:
+                traduit = traduire_html(f.read(), langue_cible)
+            with open(os.path.join(dossier_sortie, fichier), "w", encoding="utf-8") as f:
+                f.write(traduit)
+        resultats.append({"fichier": fichier, "langue": langue_cible, "status": "traduit"})
+    return resultats`,
+            filename: "traduction_lots.py",
+          },
+        ],
+      },
+      {
+        title: "API et contrôle qualité",
+        content:
+          "Déployez l'API de traduction avec un système de contrôle qualité intégré. Les traductions sous le seuil de qualité sont automatiquement envoyées pour relecture humaine.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, UploadFile, File
+from pydantic import BaseModel
+from typing import List, Optional
+from traducteur import traduire_contenu, ResultatTraduction
+from traduction_lots import traduire_fichier_json_i18n, traduire_html
+import httpx
+import os
+
+app = FastAPI(title="API Traduction & Localisation IA")
+
+class DemandeTraduction(BaseModel):
+    contenu: str
+    langue_cible: str
+    type_contenu: str = "page_web"
+    contexte: str = ""
+    auto_publish: bool = False
+
+@app.post("/api/traduction/traduire")
+async def traduire(demande: DemandeTraduction) -> dict:
+    resultat = traduire_contenu(
+        contenu=demande.contenu,
+        langue_cible=demande.langue_cible,
+        type_contenu=demande.type_contenu,
+        contexte_marketing=demande.contexte
+    )
+    seuil = float(os.getenv("SEUIL_QUALITE_AUTO", 0.85))
+    if resultat.score_qualite_global < seuil or resultat.nb_segments_relecture > 0:
+        await notifier_relecture(resultat)
+        return {**resultat.model_dump(), "status": "en_relecture",
+                "message": f"Qualité {resultat.score_qualite_global:.0%} sous le seuil de {seuil:.0%}. Envoyé en relecture."}
+    if demande.auto_publish:
+        return {**resultat.model_dump(), "status": "publie"}
+    return {**resultat.model_dump(), "status": "traduit"}
+
+@app.post("/api/traduction/lot")
+async def traduire_en_lot(langues: List[str], contenu: str, type_contenu: str = "page_web"):
+    resultats = {}
+    for langue in langues:
+        resultat = traduire_contenu(contenu, langue, type_contenu)
+        resultats[langue] = {
+            "contenu": resultat.contenu_traduit,
+            "score": resultat.score_qualite_global,
+            "adaptations": resultat.adaptations_culturelles
+        }
+    return resultats
+
+async def notifier_relecture(resultat: ResultatTraduction):
+    webhook = os.getenv("SLACK_WEBHOOK_REVIEW")
+    segments_a_revoir = [s for s in resultat.segments if s.necessite_relecture]
+    message = {
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": f"Relecture requise - {resultat.langue_cible}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Score qualité :* {resultat.score_qualite_global:.0%}\\n*Segments à revoir :* {len(segments_a_revoir)}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "\\n".join([f"• _{s.source[:80]}..._ → {s.raison_relecture}" for s in segments_a_revoir[:5]])}},
+        ]
+    }
+    async with httpx.AsyncClient() as client:
+        await client.post(webhook, json=message)`,
+            filename: "api_traduction.py",
+          },
+        ],
+      },
+      {
+        title: "Tests de qualité et benchmarks",
+        content:
+          "Testez la qualité des traductions en comparant avec des traductions de référence. Mesurez la précision du glossaire, la fluidité et la fidélité au texte source.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pytest
+from traducteur import traduire_contenu
+
+def test_traduction_anglais_qualite():
+    contenu = "Notre solution d'intelligence artificielle agentique permet aux entreprises françaises d'automatiser leurs processus métier en toute sécurité."
+    resultat = traduire_contenu(contenu, "en-US", type_contenu="page_web")
+    assert resultat.score_qualite_global >= 0.8
+    assert "agentic AI" in resultat.contenu_traduit, "Le glossaire doit être respecté"
+    assert "French" in resultat.contenu_traduit or "companies" in resultat.contenu_traduit
+
+def test_glossaire_respecte():
+    contenu = "L'automatisation intelligente transforme les processus métier."
+    resultat = traduire_contenu(contenu, "de-DE")
+    assert "intelligente Automatisierung" in resultat.contenu_traduit, "Le terme du glossaire DE doit être utilisé"
+
+def test_preservation_formatage_html():
+    contenu = "<h1>Bienvenue</h1><p>Découvrez notre <strong>solution IA</strong> pour les entreprises.</p>"
+    from traduction_lots import traduire_html
+    resultat = traduire_html(contenu, "en-US")
+    assert "<h1>" in resultat and "</h1>" in resultat, "Les balises HTML doivent être préservées"
+    assert "<strong>" in resultat
+
+def test_traduction_japonais():
+    contenu = "Contactez-nous pour une démonstration gratuite de notre plateforme."
+    resultat = traduire_contenu(contenu, "ja-JP", type_contenu="page_web")
+    assert resultat.score_qualite_global >= 0.7
+    assert len(resultat.contenu_traduit) > 0`,
+            filename: "test_traduction.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les contenus marketing ne contiennent généralement pas de données personnelles. En cas de données nominatives dans le contenu source (témoignages clients, études de cas), elles sont transmises au LLM uniquement pour traduction et ne sont pas stockées dans les logs. Le glossaire et la mémoire de traduction sont chiffrés au repos.",
+      auditLog: "Chaque traduction est loguée avec : horodatage, contenu source (hash), langue cible, score qualité, segments nécessitant relecture, glossaire appliqué, et validation humaine éventuelle. Rétention 12 mois pour amélioration continue du modèle.",
+      humanInTheLoop: "Les traductions avec un score qualité inférieur à 85% sont automatiquement envoyées à un traducteur humain pour relecture. Les contenus juridiques (CGV, mentions légales, contrats) nécessitent toujours une validation humaine. Les traducteurs peuvent enrichir le glossaire et la mémoire de traduction.",
+      monitoring: "Dashboard traduction : volume de mots traduits par langue, score qualité moyen par langue, taux de relecture humaine, coût par mot, temps moyen de traduction, couverture du glossaire, comparaison qualité IA vs humain sur échantillons.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (nouveau contenu à traduire) → Node Code (détection format et segmentation) → Node Loop (pour chaque langue cible) → Node HTTP Request (API LLM traduction) → Node Code (reconstruction format) → Node IF (score qualité >= seuil ?) → Branch OK: Node HTTP Request (CMS publication) → Branch relecture: Node Slack (notification traducteur) → Node PostgreSQL (log et mémoire de traduction).",
+      nodes: ["Webhook (contenu)", "Code (segmentation)", "Loop (langues cibles)", "HTTP Request (LLM traduction)", "Code (reconstruction)", "IF (qualité)", "HTTP Request (CMS)", "Slack (relecture)", "PostgreSQL (log)"],
+      triggerType: "Webhook (nouveau contenu ou mise à jour CMS)",
+    },
+    estimatedTime: "6-8h",
+    difficulty: "Moyen",
+    sectors: ["SaaS", "E-commerce", "Tourisme", "Luxe", "Industrie"],
+    metiers: ["Marketing International", "Content Marketing", "Localisation"],
+    functions: ["Marketing"],
+    metaTitle: "Agent IA de Traduction et Localisation de Contenu — Guide Complet",
+    metaDescription:
+      "Localisez automatiquement vos contenus marketing pour l'international avec un agent IA. Glossaire de marque, adaptation culturelle et contrôle qualité intégré. Tutoriel pas-à-pas.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-gestion-notes-frais",
+    title: "Agent de Gestion des Notes de Frais",
+    subtitle: "Automatisez le traitement, la validation et le remboursement des notes de frais grâce à l'IA",
+    problem:
+      "Le traitement des notes de frais est un processus chronophage et source d'erreurs pour les services financiers. Les collaborateurs perdent en moyenne 20 minutes par note de frais à saisir manuellement les informations. Les équipes comptables passent 30% de leur temps à vérifier la conformité des justificatifs, détecter les doublons et appliquer la politique de dépenses. Les délais de remboursement dépassent souvent 3 semaines, générant de la frustration chez les salariés.",
+    value:
+      "Un agent IA traite intégralement les notes de frais : il extrait automatiquement les données des justificatifs (OCR intelligent), vérifie la conformité avec la politique de dépenses, détecte les anomalies et doublons, catégorise comptablement chaque dépense, et soumet pour validation. Le délai de traitement passe de 3 semaines à 48 heures.",
+    inputs: [
+      "Photos ou scans de justificatifs (tickets, factures, reçus)",
+      "Politique de dépenses de l'entreprise (plafonds, catégories autorisées)",
+      "Données du collaborateur (service, grade, lieu d'affectation)",
+      "Plan comptable et règles d'imputation analytique",
+      "Historique des notes de frais précédentes du collaborateur",
+    ],
+    outputs: [
+      "Note de frais complète avec données extraites et catégorisées",
+      "Statut de conformité de chaque ligne (conforme, anomalie, rejeté)",
+      "Imputation comptable et analytique automatique",
+      "Score de risque fraude (0-100) avec justification",
+      "Rapport mensuel d'analyse des dépenses par service",
+    ],
+    risks: [
+      "Erreur d'OCR sur un montant ou une date de justificatif",
+      "Non-détection d'un justificatif frauduleux ou modifié",
+      "Mauvaise catégorisation comptable impactant la fiscalité",
+      "Rejet abusif d'une dépense légitime frustrant le collaborateur",
+    ],
+    roiIndicatif:
+      "Réduction de 90% du temps de saisie pour les collaborateurs. Diminution de 70% du temps de traitement comptable. Détection de 35% d'anomalies supplémentaires par rapport au contrôle manuel. Réduction du délai de remboursement de 21 jours à 48 heures. Économie de 15 EUR par note de frais traitée.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Justificatif│────▶│  Agent IA    │────▶│  Note de    │
+│  (photo,    │     │  (OCR +      │     │  frais      │
+│  scan, PDF) │     │  Validation) │     │  validée    │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │ Politique │ │  Plan    │ │ Historique│
+       │ dépenses  │ │ comptable│ │ collab.  │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez l'environnement. L'agent utilise la vision multimodale de Claude pour l'extraction OCR des justificatifs et le traitement du langage naturel pour la validation.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary python-dotenv fastapi python-multipart pillow pdf2image pytesseract`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/notes_frais_db
+SLACK_WEBHOOK_COMPTABILITE=https://hooks.slack.com/services/...
+STOCKAGE_JUSTIFICATIFS=./justificatifs/
+SEUIL_VALIDATION_AUTO=500  # Montant max pour validation automatique (EUR)
+SEUIL_RISQUE_FRAUDE=70  # Score au-dessus duquel une alerte est déclenchée
+EMAIL_COMPTA=comptabilite@company.com`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Extraction OCR intelligente des justificatifs",
+        content:
+          "Utilisez la capacité de vision de Claude pour extraire les données structurées des justificatifs. Le modèle multimodal identifie le type de document, extrait le montant, la date, le fournisseur et la TVA avec une précision supérieure aux OCR traditionnels.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+import base64
+import json
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import date
+
+class DonneeJustificatif(BaseModel):
+    type_document: str = Field(description="ticket_caisse, facture, recu_carte, note_restaurant, billet_transport, hebergement, autre")
+    fournisseur: str
+    date_depense: str
+    montant_ttc: float
+    montant_ht: Optional[float] = None
+    tva: Optional[float] = None
+    taux_tva: Optional[float] = None
+    devise: str = "EUR"
+    description_depense: str
+    lieu: Optional[str] = None
+    numero_facture: Optional[str] = None
+    mode_paiement: Optional[str] = None
+    nb_convives: Optional[int] = None  # Pour les repas d'affaires
+    confiance_extraction: float = Field(ge=0, le=1)
+    champs_incertains: List[str] = Field(default_factory=list)
+
+client = anthropic.Anthropic()
+
+def extraire_justificatif(image_path: str) -> DonneeJustificatif:
+    """Extrait les données d'un justificatif via vision multimodale"""
+    with open(image_path, "rb") as f:
+        image_data = base64.standard_b64encode(f.read()).decode("utf-8")
+
+    extension = image_path.split(".")[-1].lower()
+    media_type = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "pdf": "application/pdf"}.get(extension, "image/jpeg")
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=1024,
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_data}},
+                {"type": "text", "text": """Analyse ce justificatif de dépense et extrais toutes les informations.
+
+INFORMATIONS À EXTRAIRE :
+- Type de document (ticket, facture, reçu, note restaurant, billet transport, hébergement)
+- Nom du fournisseur/établissement
+- Date de la dépense (format YYYY-MM-DD)
+- Montant TTC
+- Montant HT et TVA si visibles
+- Description de la dépense
+- Lieu (ville si visible)
+- Numéro de facture si présent
+- Mode de paiement si visible
+- Nombre de convives si c'est un repas
+
+RÈGLES :
+- Si un champ n'est pas lisible, indique-le dans champs_incertains
+- Le score de confiance reflète la lisibilité globale du document
+- Montants en EUR par défaut sauf indication contraire
+- Pour les repas, essaie de détecter le nombre de convives
+
+Retourne un JSON DonneeJustificatif."""}
+            ]
+        }]
+    )
+    result = json.loads(response.content[0].text)
+    return DonneeJustificatif(**result)`,
+            filename: "ocr_justificatif.py",
+          },
+        ],
+      },
+      {
+        title: "Validation et conformité",
+        content:
+          "Le module de validation vérifie chaque dépense par rapport à la politique de l'entreprise : plafonds par catégorie, dépenses autorisées, justificatifs requis, et règles spécifiques (repas d'affaires, déplacements, etc.).",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from typing import List, Optional
+from ocr_justificatif import DonneeJustificatif
+
+class ResultatValidation(BaseModel):
+    est_conforme: bool
+    anomalies: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    score_risque_fraude: int = Field(ge=0, le=100)
+    raisons_risque: List[str] = Field(default_factory=list)
+    categorie_comptable: str
+    compte_comptable: str
+    axe_analytique: str
+    montant_remboursable: float
+    commentaire_validation: str
+
+POLITIQUE_DEPENSES = {
+    "repas_seul": {"plafond": 20.0, "justificatif_obligatoire": True, "description": "Repas individuel en déplacement"},
+    "repas_affaires": {"plafond": 60.0, "justificatif_obligatoire": True, "convives_min": 2, "description": "Repas d'affaires avec client/partenaire"},
+    "hebergement": {"plafond": 150.0, "justificatif_obligatoire": True, "description": "Nuit d'hôtel en déplacement"},
+    "transport_train": {"plafond": 300.0, "justificatif_obligatoire": True, "classe_max": "1ere", "description": "Billet de train"},
+    "transport_taxi": {"plafond": 80.0, "justificatif_obligatoire": True, "description": "Course taxi/VTC"},
+    "fournitures": {"plafond": 100.0, "justificatif_obligatoire": True, "description": "Fournitures de bureau"},
+    "abonnement": {"plafond": 50.0, "justificatif_obligatoire": True, "description": "Abonnement professionnel"},
+}
+
+PLAN_COMPTABLE = {
+    "repas_seul": {"compte": "625100", "analytique": "DEPLACEMENTS"},
+    "repas_affaires": {"compte": "625700", "analytique": "REPRESENTATION"},
+    "hebergement": {"compte": "625600", "analytique": "DEPLACEMENTS"},
+    "transport_train": {"compte": "625100", "analytique": "DEPLACEMENTS"},
+    "transport_taxi": {"compte": "625100", "analytique": "DEPLACEMENTS"},
+    "fournitures": {"compte": "606400", "analytique": "FONCTIONNEMENT"},
+    "abonnement": {"compte": "613500", "analytique": "FONCTIONNEMENT"},
+}
+
+def valider_depense(donnees: DonneeJustificatif, collaborateur: dict, historique: list) -> ResultatValidation:
+    anomalies = []
+    warnings = []
+    raisons_risque = []
+    score_risque = 0
+
+    # Déterminer la catégorie
+    categorie = determiner_categorie(donnees)
+    politique = POLITIQUE_DEPENSES.get(categorie, {})
+    comptabilite = PLAN_COMPTABLE.get(categorie, {"compte": "471000", "analytique": "A_CLASSER"})
+
+    # Vérifier le plafond
+    plafond = politique.get("plafond", 0)
+    montant_remboursable = donnees.montant_ttc
+    if plafond and donnees.montant_ttc > plafond:
+        anomalies.append(f"Montant {donnees.montant_ttc} EUR dépasse le plafond de {plafond} EUR pour {categorie}")
+        montant_remboursable = plafond
+        score_risque += 15
+
+    # Vérifier les repas d'affaires (nombre de convives)
+    if categorie == "repas_affaires" and (donnees.nb_convives is None or donnees.nb_convives < 2):
+        warnings.append("Repas d'affaires sans nombre de convives identifié")
+        score_risque += 10
+
+    # Vérifier la date (pas dans le futur, pas > 90 jours)
+    from datetime import date, datetime, timedelta
+    try:
+        date_dep = datetime.strptime(donnees.date_depense, "%Y-%m-%d").date()
+        if date_dep > date.today():
+            anomalies.append("Date de dépense dans le futur")
+            score_risque += 40
+        elif (date.today() - date_dep).days > 90:
+            warnings.append("Dépense datant de plus de 90 jours")
+            score_risque += 20
+    except ValueError:
+        anomalies.append("Date de dépense invalide")
+        score_risque += 15
+
+    # Vérifier les doublons
+    for h in historique:
+        if (h.get("montant_ttc") == donnees.montant_ttc and
+            h.get("date_depense") == donnees.date_depense and
+            h.get("fournisseur") == donnees.fournisseur):
+            anomalies.append(f"Doublon potentiel avec la note de frais #{h.get('id')}")
+            score_risque += 50
+            raisons_risque.append("Doublon détecté")
+
+    # Vérifier la confiance OCR
+    if donnees.confiance_extraction < 0.7:
+        warnings.append(f"Confiance OCR faible ({donnees.confiance_extraction:.0%}). Vérification manuelle recommandée.")
+        score_risque += 10
+
+    est_conforme = len(anomalies) == 0
+    commentaire = "Dépense conforme à la politique." if est_conforme else f"Anomalies détectées : {'; '.join(anomalies)}"
+
+    return ResultatValidation(
+        est_conforme=est_conforme, anomalies=anomalies, warnings=warnings,
+        score_risque_fraude=min(score_risque, 100), raisons_risque=raisons_risque,
+        categorie_comptable=categorie, compte_comptable=comptabilite["compte"],
+        axe_analytique=comptabilite["analytique"],
+        montant_remboursable=montant_remboursable,
+        commentaire_validation=commentaire
+    )
+
+def determiner_categorie(donnees: DonneeJustificatif) -> str:
+    mapping = {
+        "note_restaurant": "repas_affaires" if donnees.nb_convives and donnees.nb_convives >= 2 else "repas_seul",
+        "ticket_caisse": "repas_seul",
+        "hebergement": "hebergement",
+        "billet_transport": "transport_train",
+        "facture": "fournitures",
+    }
+    return mapping.get(donnees.type_document, "fournitures")`,
+            filename: "validation_ndf.py",
+          },
+        ],
+      },
+      {
+        title: "Pipeline de traitement complet",
+        content:
+          "Assemblez le pipeline end-to-end : upload du justificatif, extraction OCR, validation, catégorisation comptable, et soumission pour approbation. Le tout exposé via une API REST.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, UploadFile, File, Form
+from pydantic import BaseModel
+from typing import List, Optional
+from ocr_justificatif import extraire_justificatif
+from validation_ndf import valider_depense, ResultatValidation
+import shutil
+import os
+import uuid
+from datetime import datetime
+import psycopg2
+import json
+
+app = FastAPI(title="API Gestion Notes de Frais IA")
+
+@app.post("/api/ndf/soumettre")
+async def soumettre_justificatif(
+    fichier: UploadFile = File(...),
+    collaborateur_id: str = Form(...),
+    commentaire: Optional[str] = Form(None)
+):
+    # Sauvegarder le justificatif
+    upload_dir = os.getenv("STOCKAGE_JUSTIFICATIFS", "./justificatifs")
+    os.makedirs(upload_dir, exist_ok=True)
+    file_id = str(uuid.uuid4())
+    extension = fichier.filename.split(".")[-1]
+    chemin_fichier = os.path.join(upload_dir, f"{file_id}.{extension}")
+    with open(chemin_fichier, "wb") as f:
+        shutil.copyfileobj(fichier.file, f)
+
+    # Extraction OCR
+    donnees = extraire_justificatif(chemin_fichier)
+
+    # Récupérer l'historique du collaborateur
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT id, montant_ttc, date_depense, fournisseur FROM notes_frais WHERE collaborateur_id = %s AND date_depense >= NOW() - INTERVAL '6 months'",
+        (collaborateur_id,)
+    )
+    historique = [{"id": r[0], "montant_ttc": r[1], "date_depense": r[2], "fournisseur": r[3]} for r in cur.fetchall()]
+
+    collaborateur = {"id": collaborateur_id}  # Enrichir depuis le SIRH
+
+    # Validation
+    validation = valider_depense(donnees, collaborateur, historique)
+
+    # Déterminer le workflow d'approbation
+    seuil_auto = float(os.getenv("SEUIL_VALIDATION_AUTO", 500))
+    seuil_risque = int(os.getenv("SEUIL_RISQUE_FRAUDE", 70))
+
+    if validation.est_conforme and donnees.montant_ttc <= seuil_auto and validation.score_risque_fraude < 30:
+        statut = "approuve_auto"
+    elif validation.score_risque_fraude >= seuil_risque:
+        statut = "alerte_fraude"
+    elif not validation.est_conforme:
+        statut = "rejet_auto"
+    else:
+        statut = "en_attente_validation"
+
+    # Enregistrer en base
+    cur.execute("""
+        INSERT INTO notes_frais (id, collaborateur_id, fichier_path, fournisseur, date_depense,
+            montant_ttc, montant_remboursable, categorie, compte_comptable, axe_analytique,
+            statut, score_risque, anomalies, commentaire, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (file_id, collaborateur_id, chemin_fichier, donnees.fournisseur,
+          donnees.date_depense, donnees.montant_ttc, validation.montant_remboursable,
+          validation.categorie_comptable, validation.compte_comptable, validation.axe_analytique,
+          statut, validation.score_risque_fraude, json.dumps(validation.anomalies),
+          commentaire, datetime.now()))
+    conn.commit()
+    conn.close()
+
+    return {
+        "id": file_id,
+        "donnees_extraites": donnees.model_dump(),
+        "validation": validation.model_dump(),
+        "statut": statut,
+        "message": {
+            "approuve_auto": "Note de frais approuvée automatiquement. Remboursement sous 48h.",
+            "en_attente_validation": "Note de frais soumise pour validation managériale.",
+            "rejet_auto": f"Note de frais rejetée. Raison : {'; '.join(validation.anomalies)}",
+            "alerte_fraude": "Note de frais bloquée pour vérification. Le service comptabilité a été notifié.",
+        }.get(statut)
+    }`,
+            filename: "api_ndf.py",
+          },
+        ],
+      },
+      {
+        title: "Alertes et reporting",
+        content:
+          "Mettez en place les notifications automatiques pour les valideurs et le reporting mensuel d'analyse des dépenses par service, catégorie et tendances.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import httpx
+import psycopg2
+import os
+from datetime import datetime
+import json
+
+async def notifier_validation_requise(note_id: str, donnees: dict, validation: dict):
+    """Notifie le manager pour validation"""
+    webhook = os.getenv("SLACK_WEBHOOK_COMPTABILITE")
+    message = {
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": "Note de frais en attente de validation"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text":
+                f"*Collaborateur :* {donnees.get('collaborateur_id')}\\n"
+                f"*Fournisseur :* {donnees.get('fournisseur')}\\n"
+                f"*Montant :* {donnees.get('montant_ttc')} EUR\\n"
+                f"*Catégorie :* {validation.get('categorie_comptable')}\\n"
+                f"*Score risque :* {validation.get('score_risque_fraude')}/100"
+            }},
+        ]
+    }
+    if validation.get("anomalies"):
+        message["blocks"].append({"type": "section", "text": {"type": "mrkdwn", "text":
+            "*Anomalies :*\\n" + "\\n".join(f"• {a}" for a in validation["anomalies"])
+        }})
+    async with httpx.AsyncClient() as client:
+        await client.post(webhook, json=message)
+
+def generer_rapport_mensuel(mois: int, annee: int) -> dict:
+    """Génère le rapport mensuel des dépenses"""
+    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            categorie,
+            COUNT(*) as nb_notes,
+            SUM(montant_ttc) as total_ttc,
+            SUM(montant_remboursable) as total_rembourse,
+            AVG(score_risque) as risque_moyen,
+            COUNT(*) FILTER (WHERE statut = 'rejet_auto') as nb_rejets,
+            COUNT(*) FILTER (WHERE statut = 'alerte_fraude') as nb_alertes
+        FROM notes_frais
+        WHERE EXTRACT(MONTH FROM date_depense) = %s AND EXTRACT(YEAR FROM date_depense) = %s
+        GROUP BY categorie
+        ORDER BY total_ttc DESC
+    """, (mois, annee))
+    rows = cur.fetchall()
+    conn.close()
+    categories = []
+    for r in rows:
+        categories.append({
+            "categorie": r[0], "nb_notes": r[1], "total_ttc": float(r[2]),
+            "total_rembourse": float(r[3]), "risque_moyen": round(float(r[4]), 1),
+            "nb_rejets": r[5], "nb_alertes": r[6]
+        })
+    return {
+        "periode": f"{annee}-{mois:02d}",
+        "total_notes": sum(c["nb_notes"] for c in categories),
+        "montant_total": sum(c["total_ttc"] for c in categories),
+        "montant_rembourse": sum(c["total_rembourse"] for c in categories),
+        "economie_conformite": sum(c["total_ttc"] - c["total_rembourse"] for c in categories),
+        "par_categorie": categories
+    }`,
+            filename: "reporting_ndf.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et validation",
+        content:
+          "Testez le pipeline complet avec des justificatifs réels anonymisés. Vérifiez la précision de l'OCR, la fiabilité de la validation et la détection de fraude.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pytest
+from ocr_justificatif import extraire_justificatif, DonneeJustificatif
+from validation_ndf import valider_depense, POLITIQUE_DEPENSES
+
+def test_extraction_ticket_restaurant():
+    donnees = extraire_justificatif("tests/fixtures/ticket_restaurant.jpg")
+    assert donnees.type_document in ["note_restaurant", "ticket_caisse"]
+    assert donnees.montant_ttc > 0
+    assert donnees.date_depense is not None
+    assert donnees.fournisseur != ""
+    assert donnees.confiance_extraction >= 0.7
+
+def test_validation_conforme():
+    donnees = DonneeJustificatif(
+        type_document="note_restaurant", fournisseur="Le Bistrot Parisien",
+        date_depense="2025-02-01", montant_ttc=45.50, montant_ht=37.92,
+        tva=7.58, taux_tva=20.0, devise="EUR",
+        description_depense="Déjeuner client", nb_convives=2,
+        confiance_extraction=0.95
+    )
+    validation = valider_depense(donnees, {"id": "EMP001"}, [])
+    assert validation.est_conforme
+    assert validation.categorie_comptable == "repas_affaires"
+    assert validation.compte_comptable == "625700"
+    assert validation.score_risque_fraude < 30
+
+def test_detection_depassement_plafond():
+    donnees = DonneeJustificatif(
+        type_document="hebergement", fournisseur="Grand Hôtel",
+        date_depense="2025-02-01", montant_ttc=250.00,
+        description_depense="Nuit hôtel", confiance_extraction=0.9
+    )
+    validation = valider_depense(donnees, {"id": "EMP001"}, [])
+    assert not validation.est_conforme
+    assert validation.montant_remboursable == 150.0
+    assert any("plafond" in a for a in validation.anomalies)
+
+def test_detection_doublon():
+    historique = [{"id": "NDF-001", "montant_ttc": 35.00, "date_depense": "2025-02-01", "fournisseur": "Café Central"}]
+    donnees = DonneeJustificatif(
+        type_document="ticket_caisse", fournisseur="Café Central",
+        date_depense="2025-02-01", montant_ttc=35.00,
+        description_depense="Déjeuner", confiance_extraction=0.9
+    )
+    validation = valider_depense(donnees, {"id": "EMP001"}, historique)
+    assert validation.score_risque_fraude >= 50
+    assert any("Doublon" in a for a in validation.anomalies)`,
+            filename: "test_ndf.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les justificatifs peuvent contenir des données personnelles (nom, adresse, numéro de carte bancaire partiel). Les images sont stockées chiffrées (AES-256) et les données extraites sont pseudonymisées avant envoi au LLM. Seuls le montant, la date, le fournisseur et la catégorie sont transmis au modèle pour validation. Les numéros de carte bancaire détectés sont masqués automatiquement.",
+      auditLog: "Traçabilité complète de chaque note de frais : horodatage de soumission, données OCR extraites, résultat de validation, score de risque, décision (auto/manuelle), valideur, date de remboursement. Conservation des justificatifs originaux pendant 10 ans (obligation légale). Piste d'audit conforme aux exigences du commissaire aux comptes.",
+      humanInTheLoop: "Les notes de frais dépassant le seuil de validation automatique (500 EUR par défaut) sont soumises au manager N+1 pour approbation. Les alertes fraude (score >= 70) sont escaladées au contrôle de gestion. Les anomalies comptables sont revues par l'équipe comptabilité avant imputation. Possibilité de contester un rejet automatique.",
+      monitoring: "Dashboard financier : volume de notes traitées, délai moyen de remboursement, taux d'approbation automatique, taux de rejet, montant des économies de conformité, top anomalies détectées, répartition par catégorie et service, tendance mensuelle des dépenses, coût de traitement par note.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (upload justificatif) → Node HTTP Request (API Vision Claude OCR) → Node Code (structuration données extraites) → Node HTTP Request (API validation politique dépenses) → Node Switch (statut validation) → Branch conforme < seuil: Node PostgreSQL (enregistrement + approbation auto) → Branch conforme > seuil: Node Email (demande validation manager) → Branch rejeté: Node Email (notification collaborateur) → Branch fraude: Node Slack (alerte contrôle gestion) → Node PostgreSQL (audit log).",
+      nodes: ["Webhook (upload)", "HTTP Request (OCR Vision)", "Code (structuration)", "HTTP Request (validation)", "Switch (statut)", "PostgreSQL (approbation)", "Email (validation manager)", "Email (rejet)", "Slack (alerte fraude)", "PostgreSQL (audit)"],
+      triggerType: "Webhook (upload de justificatif via application mobile ou web)",
+    },
+    estimatedTime: "6-10h",
+    difficulty: "Moyen",
+    sectors: ["Services", "Conseil", "Industrie", "Technologie", "Finance"],
+    metiers: ["Comptabilité", "Contrôle de Gestion", "Direction Financière"],
+    functions: ["Finance"],
+    metaTitle: "Agent IA de Gestion des Notes de Frais — Guide Complet",
+    metaDescription:
+      "Automatisez le traitement des notes de frais avec un agent IA : OCR intelligent, validation automatique, détection de fraude et catégorisation comptable. Tutoriel pas-à-pas.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
 ];
