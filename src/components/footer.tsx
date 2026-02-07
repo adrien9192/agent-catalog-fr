@@ -24,10 +24,21 @@ const footerLinks = [
   {
     title: "Ressources",
     links: [
-      { href: "/guide", label: "Guides pratiques" },
+      { href: "/guide", label: "Tous les guides" },
+      { href: "/guide/agent-ia-entreprise-guide-complet", label: "Guide : Agent IA en entreprise" },
+      { href: "/guide/automatisation-no-code-pme-n8n-make", label: "Guide : No-code pour PME" },
       { href: "/catalogue?diff=Facile", label: "Workflows faciles" },
-      { href: "/catalogue?diff=Moyen", label: "Workflows intermédiaires" },
       { href: "/catalogue?diff=Expert", label: "Workflows experts" },
+    ],
+  },
+  {
+    title: "Par secteur",
+    links: [
+      { href: "/secteur/banque", label: "Banque" },
+      { href: "/secteur/e-commerce", label: "E-commerce" },
+      { href: "/secteur/b2b-saas", label: "B2B SaaS" },
+      { href: "/secteur/sante", label: "Santé" },
+      { href: "/secteur/industrie", label: "Industrie" },
     ],
   },
 ];
@@ -36,7 +47,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border/60 bg-muted/30">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {footerLinks.map((section) => (
             <div key={section.title}>
               <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
