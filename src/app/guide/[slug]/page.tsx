@@ -52,6 +52,29 @@ export default async function GuidePage({ params }: PageProps) {
           { name: guide.title, url: `https://agent-catalog-fr.vercel.app/guide/${guide.slug}` },
         ]}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: guide.title,
+            description: guide.metaDescription,
+            datePublished: guide.publishedAt,
+            dateModified: guide.updatedAt,
+            author: {
+              "@type": "Organization",
+              name: "AgentCatalog",
+              url: "https://agent-catalog-fr.vercel.app",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "AgentCatalog",
+            },
+            mainEntityOfPage: `https://agent-catalog-fr.vercel.app/guide/${guide.slug}`,
+          }),
+        }}
+      />
 
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground">

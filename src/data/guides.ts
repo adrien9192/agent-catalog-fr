@@ -221,4 +221,124 @@ export const guides: Guide[] = [
       "agent-relance-paiements",
     ],
   },
+  {
+    slug: "roi-ia-entreprise-mesurer",
+    title: "ROI de l'IA en entreprise : comment mesurer le retour sur investissement",
+    metaTitle: "ROI de l'IA en Entreprise — Comment Mesurer le Retour sur Investissement en 2026",
+    metaDescription:
+      "Comment mesurer le ROI de vos projets IA ? Méthodes de calcul, benchmarks par secteur, et modèle de business case pour convaincre votre direction.",
+    excerpt:
+      "2026 est l'année de vérité pour le ROI de l'IA. 98% des entreprises françaises augmentent leurs budgets IA, mais seules 18% mesurent un retour concret. Voici comment faire partie des gagnants.",
+    category: "Stratégie",
+    readTime: "10 min",
+    publishedAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+    sections: [
+      {
+        title: "L'état du ROI de l'IA en France en 2026",
+        content:
+          "Selon les dernières études, 98% des entreprises françaises prévoient d'augmenter leurs budgets IA en 2026. Pourtant, seules 18% constatent un ROI mesurable, tandis que 45% l'attendent sous un an. Le ROI médian observé sur les projets IA en PME est de 159% sur 24 mois, avec un payback moyen de 7 mois.\n\nLe problème n'est pas la technologie — c'est la mesure. La plupart des entreprises lancent des POC sans définir de KPIs clairs, et ne parviennent pas à isoler l'impact de l'IA des autres facteurs. Résultat : le projet IA reste une ligne de coût, pas un investissement.\n\nLes entreprises qui réussissent ont un point commun : elles mesurent le ROI dès le premier jour, avec des métriques simples et tangibles. Ce guide vous donne la méthode.",
+      },
+      {
+        title: "La méthode complète de calcul du ROI",
+        content:
+          "**Étape 1 : Identifier les coûts complets**\nLes coûts directs (infrastructure cloud, licences LLM, développement) ne représentent que 60-70% du coût total. Les coûts cachés incluent : la transformation des processus (15-20%), la conduite du changement (10-15%), et la maintenance continue (5-10%). Comptez 30 à 40% de coûts supplémentaires par rapport au budget technique initial.\n\n**Étape 2 : Quantifier les gains**\nLes gains se mesurent sur 4 axes : productivité (temps gagné × coût horaire), qualité (réduction des erreurs × coût par erreur), vitesse (réduction du time-to-market), et revenus (leads supplémentaires × taux de conversion × panier moyen).\n\n**Étape 3 : Calculer le ROI**\nROI = (Gains annuels - Coûts annuels) / Coûts annuels × 100. Pour une PME typique : un agent de triage support coûte ~5 000€/an (cloud + API) et génère ~45 000€ de gains (temps économisé + satisfaction client). ROI = 800%.\n\n**Étape 4 : Projeter sur 12-36 mois**\nLes gains augmentent avec le temps (l'agent s'améliore, les équipes adoptent), tandis que les coûts se stabilisent. Le ROI à 36 mois est typiquement 2-3x supérieur au ROI à 12 mois.",
+      },
+      {
+        title: "Benchmarks par secteur et taille d'entreprise",
+        content:
+          "**Retail / E-commerce** : ROI moyen de 200%+ grâce à l'optimisation des stocks et la personnalisation. Les agents de prévision de demande génèrent les meilleurs retours (réduction de 15-25% des ruptures et surstock).\n\n**Banque / Assurance** : ROI de 150-300% sur les agents de détection de fraude et de conformité. Le coût d'un incident de fraude (50 000€+) justifie l'investissement à lui seul.\n\n**Services B2B** : ROI de 200-500% sur les agents de qualification de leads et de support client. L'impact sur le pipeline commercial est mesurable en 30 jours.\n\n**Industrie** : ROI de 100-200% sur la maintenance prédictive. Le payback est plus long (12-18 mois) mais les gains sont récurrents et croissants.\n\n**PME (< 50 salariés)** : Budget typique de 15 000-50 000€, ROI médian de 159% sur 24 mois. Les cas d'usage simples (triage support, qualification leads) offrent le meilleur ratio effort/résultat.\n\n**ETI (50-5000 salariés)** : Budget typique de 50 000-150 000€, ROI médian de 200%+ sur 24 mois. La capacité à déployer sur plusieurs départements multiplie les gains.",
+      },
+      {
+        title: "Présenter le business case à votre direction",
+        content:
+          "**Le modèle en 4 slides** :\n\n**Slide 1 — Le problème** : Quantifiez le coût du statu quo. Ex : 'Notre équipe support traite 500 tickets/jour. Chaque ticket coûte 8€ en temps agent. Coût annuel : 1,5M€. Un agent IA réduit ce coût de 40%.'\n\n**Slide 2 — La solution** : Décrivez le projet en termes business, pas techniques. Objectifs chiffrés, timeline, et quick wins à 30 jours.\n\n**Slide 3 — Le ROI** : Investissement : X€. Gains annuels : Y€. Payback : Z mois. Comparaison avec les benchmarks sectoriels.\n\n**Slide 4 — Le plan d'action** : Phase 1 (POC 2 semaines), Phase 2 (déploiement 1 mois), Phase 3 (optimisation ongoing). Ressources nécessaires et jalons.\n\n**Astuce** : Commencez par un POC à faible coût (< 5 000€) pour prouver le concept. Les résultats concrets sont plus convaincants que les projections.\n\nNos workflows documentés incluent une estimation de ROI chiffrée pour chaque cas d'usage. Utilisez-les comme base pour votre business case.",
+      },
+    ],
+    relatedUseCases: [
+      "agent-triage-support-client",
+      "agent-qualification-leads",
+      "agent-rapports-financiers",
+    ],
+  },
+  {
+    slug: "automatisation-no-code-pme-n8n-make",
+    title: "Automatisation no-code pour PME : guide Make, n8n et Zapier",
+    metaTitle: "Automatisation No-Code pour PME — Guide Make vs n8n vs Zapier 2026",
+    metaDescription:
+      "Comparez Make, n8n et Zapier pour automatiser votre PME sans code. 10 workflows concrets, guide de démarrage et intégration IA. Gratuit.",
+    excerpt:
+      "Le no-code est le point d'entrée idéal pour l'IA en PME. n8n compte 12 000+ utilisateurs en France (+40% par an). Découvrez quel outil choisir et 10 workflows à déployer cette semaine.",
+    category: "No-Code",
+    readTime: "9 min",
+    publishedAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+    sections: [
+      {
+        title: "Pourquoi le no-code est le point d'entrée idéal pour l'IA",
+        content:
+          "En 2026, les plateformes no-code comme n8n, Make.com et Zapier permettent à n'importe quelle PME de construire des workflows d'automatisation avec intégration IA — sans écrire une seule ligne de code.\n\nn8n compte plus de 12 000 utilisateurs actifs en France, en croissance de 40% par an. 20% des scale-ups lyonnaises l'ont adopté. La raison : le no-code réduit de 40% les coûts administratifs dès le premier mois.\n\nL'avantage du no-code pour l'IA : vous pouvez connecter un LLM (Claude, GPT-4, Mistral) à vos outils existants (CRM, email, ticketing) en quelques clics. Pas besoin de développeur, pas besoin de budget IT conséquent.\n\nLe résultat : une PME de 20 personnes peut automatiser 5 à 10 processus en 1 à 3 semaines, avec un budget de 0 à 200€/mois.",
+      },
+      {
+        title: "Comparatif : Make vs n8n vs Zapier pour le marché français",
+        content:
+          "**n8n (notre recommandation pour les PME françaises)**\n- Prix : Gratuit en self-hosted, 20€/mois en cloud\n- Avantage : Open-source, hébergeable en France (souveraineté RGPD), intégration IA native (MCP server depuis 2025), 400+ connecteurs\n- Limite : Interface moins intuitive que Make pour les débutants\n\n**Make.com**\n- Prix : 9€/mois (1 000 opérations) à 29€/mois (10 000 opérations)\n- Avantage : Interface visuelle très intuitive, excellent pour les débutants, bonne documentation en français\n- Limite : Hébergement US/EU mais pas de self-hosting, coût qui monte vite en volume\n\n**Zapier**\n- Prix : 19,99$/mois (750 tâches) à 69,99$/mois (2 000 tâches)\n- Avantage : Le plus grand catalogue d'intégrations (7 000+), écosystème mature\n- Limite : Le plus cher des trois, pas d'option self-hosted, intégration IA moins avancée que n8n\n\n**Notre verdict** : n8n si la souveraineté des données et le budget sont prioritaires. Make si vous voulez démarrer rapidement sans compétences techniques. Zapier si vous avez besoin d'intégrations très spécifiques (outils US/niche).",
+      },
+      {
+        title: "10 workflows concrets à déployer cette semaine",
+        content:
+          "**1. Triage automatique des emails** — Email entrant → LLM classifie (urgent/normal/spam) → route vers le bon dossier/personne. Temps : 30 min.\n\n**2. Qualification de leads** — Formulaire web → enrichissement données (API Pappers) → scoring LLM → notification Slack. Temps : 1h.\n\n**3. Réponse automatique aux FAQ** — Email/ticket entrant → RAG sur base de connaissances → réponse draft → validation humaine. Temps : 2h.\n\n**4. Synchronisation CRM-email** — Email entrant/sortant → extraction infos contact → mise à jour CRM automatique. Temps : 45 min.\n\n**5. Veille concurrentielle** — RSS/web → extraction données → résumé LLM → rapport hebdomadaire par email. Temps : 1h.\n\n**6. Traitement de factures** — Email avec pièce jointe → extraction données (montant, TVA, fournisseur) → écriture comptable. Temps : 2h.\n\n**7. Reporting automatique** — Cron trigger lundi 8h → extraction données (CRM, Analytics, ERP) → résumé LLM → email à la direction. Temps : 1h30.\n\n**8. Relance de paiement** — Cron quotidien → factures en retard → email de relance personnalisé → log. Temps : 1h.\n\n**9. Onboarding collaborateur** — Nouveau employé dans SIRH → email de bienvenue → création comptes (Slack, email) → checklist manager. Temps : 2h.\n\n**10. Génération de contenu social** — Nouvel article blog → LLM résume et adapte pour LinkedIn/Twitter → post programmé. Temps : 1h.",
+      },
+      {
+        title: "Plan de déploiement : de 0 à 10 workflows en 3 semaines",
+        content:
+          "**Semaine 1 : Les quick wins (workflows 1-3)**\nCommencez par le triage email et la qualification de leads. Ces workflows ont le ROI le plus rapide et vous familiarisent avec l'outil.\n\n**Semaine 2 : Les processus métier (workflows 4-7)**\nPassez aux workflows qui impactent vos processus clés : synchronisation CRM, traitement de factures, reporting.\n\n**Semaine 3 : L'optimisation (workflows 8-10)**\nAjoutez les workflows d'automatisation avancée : relances, onboarding, contenu. Mesurez les résultats des premières semaines.\n\n**Budget total** : 0€ (n8n self-hosted + Ollama) à 200€/mois (n8n Cloud + Claude API). Pour référence, Bpifrance propose des aides couvrant 50% des coûts de transformation digitale (Pack IA jusqu'à 18 500€ HT).\n\n**Métriques à suivre** : heures économisées par semaine, taux d'erreur avant/après, satisfaction des équipes, coût par processus automatisé.\n\nRetrouvez les templates n8n prêts à importer dans nos workflows documentés.",
+      },
+    ],
+    relatedUseCases: [
+      "agent-triage-support-client",
+      "agent-qualification-leads",
+      "agent-contenu-marketing",
+    ],
+  },
+  {
+    slug: "ia-act-conformite-entreprise-france",
+    title: "IA Act 2026 : guide de mise en conformité pour les entreprises françaises",
+    metaTitle: "IA Act 2026 — Guide de Conformité pour les Entreprises Françaises",
+    metaDescription:
+      "Tout ce qu'il faut savoir sur l'IA Act en France. Calendrier, obligations par niveau de risque, cas des systèmes RH et finance. Guide pratique avec checklist.",
+    excerpt:
+      "L'IA Act entre en application progressive en Europe. Les systèmes IA à haut risque (RH, finance, santé) doivent être conformes d'ici août 2026. Voici votre guide de mise en conformité.",
+    category: "Conformité",
+    readTime: "11 min",
+    publishedAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+    sections: [
+      {
+        title: "Calendrier des obligations : de 2025 à 2027",
+        content:
+          "L'IA Act (Règlement européen sur l'intelligence artificielle) entre en application de manière progressive :\n\n**Février 2025** — Interdiction des systèmes IA à risque inacceptable : manipulation subliminale, scoring social, identification biométrique à distance en temps réel (sauf exceptions sécurité nationale).\n\n**Août 2025** — Obligations pour les modèles d'IA à usage général (GPAI) : documentation technique, transparence, respect du droit d'auteur. Concerne directement les fournisseurs de LLM (OpenAI, Anthropic, Mistral).\n\n**Août 2026** — **Date critique** : obligations pour les systèmes IA à haut risque. Concerne la majorité des agents IA déployés en entreprise : systèmes RH (recrutement, évaluation), systèmes financiers (scoring crédit, détection fraude), systèmes de santé, systèmes juridiques.\n\n**Août 2027** — Obligations résiduelles pour certaines catégories spécifiques.\n\nSi vous déployez un agent IA qui traite des candidatures, évalue des collaborateurs, ou prend des décisions financières, vous avez **moins de 6 mois pour vous conformer**.",
+      },
+      {
+        title: "Classifier vos systèmes IA par niveau de risque",
+        content:
+          "**Risque inacceptable (interdit)**\nManipulation subliminale, exploitation de vulnérabilités, notation sociale par les pouvoirs publics, identification biométrique à distance en temps réel.\n\n**Haut risque (obligations strictes)**\nConcerne vos agents IA s'ils sont utilisés dans :\n- **RH** : tri de CV, scoring de candidats, évaluation de performance, décisions de licenciement\n- **Finance** : scoring de crédit, évaluation de solvabilité, tarification d'assurance\n- **Éducation** : notation automatique, orientation scolaire\n- **Justice** : assistance à la décision judiciaire\n- **Santé** : diagnostic assisté, triage médical\n\n**Risque limité (obligations de transparence)**\nChatbots, systèmes de génération de contenu, deepfakes. Obligation principale : informer l'utilisateur qu'il interagit avec une IA.\n\n**Risque minimal (pas d'obligation spécifique)**\nFiltres anti-spam, jeux vidéo, recommandations de contenu. La majorité de vos agents IA internes (triage email, reporting) entrent probablement dans cette catégorie.",
+      },
+      {
+        title: "Obligations pour les systèmes à haut risque",
+        content:
+          "Si votre agent IA est classé \"haut risque\", voici les obligations concrètes :\n\n**1. Système de gestion des risques** — Documentez les risques identifiés, les mesures de mitigation, et le plan de monitoring continu.\n\n**2. Gouvernance des données** — Assurez-vous que les données d'entraînement et d'exploitation sont pertinentes, représentatives, complètes et sans biais discriminatoires.\n\n**3. Documentation technique** — Rédigez une documentation complète : finalité du système, conception, performances, limites connues, instructions d'utilisation.\n\n**4. Enregistrement des logs** — Conservez les logs permettant de tracer chaque décision du système pendant une durée appropriée.\n\n**5. Transparence** — Informez les utilisateurs finaux de l'utilisation d'un système IA, de ses capacités et de ses limites.\n\n**6. Contrôle humain** — Prévoyez un mécanisme de supervision humaine : l'IA recommande, l'humain décide (ou peut intervenir).\n\n**7. Précision et robustesse** — Testez et validez les performances du système avant déploiement. Surveillez les dérives en production.\n\n**8. Marquage CE** — Pour les systèmes mis sur le marché européen, une évaluation de conformité est nécessaire.",
+      },
+      {
+        title: "Checklist de mise en conformité et ressources",
+        content:
+          "**Checklist pratique en 10 points** :\n1. Inventoriez tous vos systèmes IA déployés\n2. Classifiez chacun par niveau de risque\n3. Pour les systèmes à haut risque : nommez un responsable conformité IA\n4. Rédigez la documentation technique pour chaque système à haut risque\n5. Auditez vos données d'entraînement (biais, représentativité)\n6. Mettez en place le logging des décisions IA\n7. Implémentez le contrôle humain (human-in-the-loop)\n8. Informez les utilisateurs (mention IA dans vos CGU/mentions légales)\n9. Testez la robustesse et documentez les performances\n10. Planifiez le monitoring continu et les revues périodiques\n\n**Autorités compétentes en France** :\n- **CNIL** : protection des données personnelles et supervision IA\n- **DGCCRF** : surveillance du marché\n- **Arcom** : transparence des contenus générés par IA\n\n**Ressources utiles** :\n- Guide Cigref/Numeum pour la mise en œuvre de l'IA Act\n- FAQ CNIL sur l'intelligence artificielle\n- CNIL AI Act self-assessment toolkit\n\nNos workflows documentés intègrent les bonnes pratiques de conformité RGPD et IA Act dans chaque cas d'usage (section \"Considérations Enterprise\").",
+      },
+    ],
+    relatedUseCases: [
+      "agent-screening-cv-recrutement",
+      "agent-detection-fraude",
+      "agent-analyse-contrats",
+    ],
+  },
 ];
