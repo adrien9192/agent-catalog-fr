@@ -4,8 +4,10 @@ import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { comparisons } from "@/data/comparisons";
 import { useCases } from "@/data/use-cases";
+import { guides } from "@/data/guides";
 
 export function generateStaticParams() {
   return comparisons.map((c) => ({ slug: c.slug }));
@@ -74,6 +76,20 @@ export default function ComparatifPage({
   const related = comparison.relatedUseCases
     .map((slug) => useCases.find((uc) => uc.slug === slug))
     .filter(Boolean);
+
+  // Find related guides based on keyword matching
+  const compKeywords = comparison.options.map((o) => o.name.toLowerCase());
+  const relatedGuides = guides.filter((g) =>
+    compKeywords.some((kw) =>
+      g.title.toLowerCase().includes(kw) ||
+      g.metaDescription.toLowerCase().includes(kw)
+    )
+  ).slice(0, 3);
+
+  // Other comparisons for internal linking
+  const otherComparisons = comparisons
+    .filter((c) => c.slug !== comparison.slug)
+    .slice(0, 3);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
@@ -191,8 +207,60 @@ export default function ComparatifPage({
         </div>
       )}
 
+      {/* Related guides */}
+      {relatedGuides.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-xl font-bold mb-4">Guides associés</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {relatedGuides.map((g) => (
+              <Link
+                key={g.slug}
+                href={`/guide/${g.slug}`}
+                className="group rounded-xl border bg-card p-4 transition-all hover:shadow-sm hover:border-primary/30"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">{g.category}</Badge>
+                  <span className="text-xs text-muted-foreground">{g.readTime}</span>
+                </div>
+                <h3 className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors">
+                  {g.title}
+                </h3>
+                <p className="mt-1 text-xs text-primary font-medium">Lire le guide &rarr;</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Other comparisons */}
+      {otherComparisons.length > 0 && (
+        <div className="mb-12">
+          <h2 className="text-xl font-bold mb-4">Autres comparatifs</h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {otherComparisons.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/comparatif/${c.slug}`}
+                className="group rounded-xl border bg-card p-4 transition-all hover:shadow-sm hover:border-primary/30"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {c.options.map((o) => (
+                    <Badge key={o.name} variant="outline" className="text-xs">
+                      {o.name}
+                    </Badge>
+                  ))}
+                </div>
+                <h3 className="font-semibold text-sm leading-snug group-hover:text-primary transition-colors">
+                  {c.title}
+                </h3>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* CTAs */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <div className="flex flex-col sm:flex-row gap-3 justify-center mb-12">
         <Button size="lg" asChild>
           <Link href="/catalogue">Voir tous les workflows</Link>
         </Button>
@@ -200,6 +268,9 @@ export default function ComparatifPage({
           <Link href="/calculateur-roi">Calculer votre ROI</Link>
         </Button>
       </div>
+
+      {/* Newsletter */}
+      <NewsletterSignup variant="inline" />
     </div>
   );
 }

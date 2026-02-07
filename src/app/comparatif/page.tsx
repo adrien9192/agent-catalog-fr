@@ -9,7 +9,7 @@ import { comparisons } from "@/data/comparisons";
 export const metadata: Metadata = {
   title: "Comparatifs — Agent IA, LLM, Claude vs ChatGPT vs Mistral, n8n vs Make",
   description:
-    "Comparez les solutions d'IA pour votre entreprise. GPT-4 vs Claude vs Mistral, Agent IA vs Chatbot, n8n vs Make, No-code vs Pro-code. 7 comparatifs détaillés.",
+    "Comparez les solutions d'IA pour votre entreprise. GPT-4 vs Claude vs Mistral, Agent IA vs Chatbot, n8n vs Make, No-code vs Pro-code. 8 comparatifs détaillés.",
 };
 
 export default function ComparatifIndexPage() {
@@ -79,7 +79,7 @@ export default function ComparatifIndexPage() {
           className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
         >
           <p className="font-semibold text-sm group-hover:text-primary transition-colors">
-            Voir les 50 workflows
+            Voir les 55 workflows
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Tutoriels, stack technique et ROI. Gratuit.

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
+import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 
 export const metadata: Metadata = {
@@ -96,8 +97,21 @@ function AboutJsonLd() {
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
       <AboutJsonLd />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
+          { name: "À propos", url: "https://agent-catalog-fr.vercel.app/a-propos" },
+        ]}
+      />
+
+      {/* Breadcrumb */}
+      <nav className="mb-6 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground">Accueil</Link>
+        {" / "}
+        <span className="text-foreground">À propos</span>
+      </nav>
 
       {/* Hero */}
       <div className="text-center mb-16">
@@ -129,15 +143,15 @@ export default function AboutPage() {
           </p>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-primary">50</p>
+              <p className="text-2xl font-bold text-primary">55</p>
               <p className="text-xs text-muted-foreground">Workflows documentés</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-primary">20</p>
+              <p className="text-2xl font-bold text-primary">29</p>
               <p className="text-xs text-muted-foreground">Guides pratiques</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-primary">5</p>
+              <p className="text-2xl font-bold text-primary">8</p>
               <p className="text-xs text-muted-foreground">Comparatifs objectifs</p>
             </div>
             <div>
@@ -241,7 +255,7 @@ export default function AboutPage() {
             Lire nos guides
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            20 guides pratiques pour maîtriser l&apos;IA en entreprise.
+            29 guides pratiques pour maîtriser l&apos;IA en entreprise.
           </p>
         </Link>
         <Link

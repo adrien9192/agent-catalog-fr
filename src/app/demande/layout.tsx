@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 
 export const metadata: Metadata = {
   title: "Demander un workflow sur mesure — AgentCatalog",
@@ -16,5 +17,16 @@ export default function DemandeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
+          { name: "Catalogue", url: "https://agent-catalog-fr.vercel.app/catalogue" },
+          { name: "Demander un workflow", url: "https://agent-catalog-fr.vercel.app/demande" },
+        ]}
+      />
+      {children}
+    </>
+  );
 }

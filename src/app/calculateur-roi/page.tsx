@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { NewsletterSignup } from "@/components/newsletter-signup";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -140,7 +141,14 @@ export default function CalculateurROIPage() {
   const result = scenario.calculate(values);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <nav className="mb-6 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground">Accueil</Link>
+        {" / "}
+        <span className="text-foreground">Calculateur ROI</span>
+      </nav>
+
       {/* Header */}
       <div className="text-center mb-12">
         <Badge variant="secondary" className="mb-4 text-xs">
@@ -300,6 +308,48 @@ export default function CalculateurROIPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Cross-links */}
+      <div className="mt-12 grid gap-4 sm:grid-cols-3 max-w-3xl mx-auto">
+        <Link
+          href="/catalogue"
+          className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Catalogue de workflows
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            55 workflows IA documentés avec tutoriel.
+          </p>
+        </Link>
+        <Link
+          href="/guide"
+          className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Guides pratiques
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Apprenez à déployer des agents IA étape par étape.
+          </p>
+        </Link>
+        <Link
+          href="/comparatif"
+          className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+        >
+          <p className="font-semibold text-sm group-hover:text-primary transition-colors">
+            Comparatifs
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Claude vs GPT-4, n8n vs Make, Agent IA vs Chatbot.
+          </p>
+        </Link>
+      </div>
+
+      {/* Newsletter */}
+      <div className="mt-12">
+        <NewsletterSignup variant="inline" />
       </div>
     </div>
   );

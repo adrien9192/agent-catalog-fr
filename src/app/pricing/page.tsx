@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 
 export const metadata: Metadata = {
@@ -22,7 +23,7 @@ const tiers = [
     ctaVariant: "outline" as const,
     highlighted: false,
     features: [
-      "Accès aux 50 workflows documentés",
+      "Accès aux 55 workflows documentés",
       "Tutoriels pas-à-pas complets",
       "Stack technique et alternatives low-cost",
       "Schémas d'architecture",
@@ -130,8 +131,22 @@ function PricingFaqJsonLd() {
 
 export default function PricingPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <PricingFaqJsonLd />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
+          { name: "Tarifs", url: "https://agent-catalog-fr.vercel.app/pricing" },
+        ]}
+      />
+
+      {/* Breadcrumb */}
+      <nav className="mb-6 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground">Accueil</Link>
+        {" / "}
+        <span className="text-foreground">Tarifs</span>
+      </nav>
+
       {/* Header */}
       <div className="text-center mb-16">
         <Badge variant="secondary" className="mb-4 text-xs">
@@ -248,7 +263,7 @@ export default function PricingPage() {
             </thead>
             <tbody className="divide-y">
               {[
-                { feature: "Workflows documentés", free: "50", pro: "50", team: "50" },
+                { feature: "Workflows documentés", free: "55", pro: "55", team: "55" },
                 { feature: "Tutoriels pas-à-pas", free: "check", pro: "check", team: "check" },
                 { feature: "Estimation de ROI", free: "check", pro: "check", team: "check" },
                 { feature: "Newsletter quotidienne", free: "check", pro: "check", team: "check" },

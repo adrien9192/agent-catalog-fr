@@ -8,6 +8,7 @@ import { UseCaseCard } from "@/components/use-case-card";
 import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { guides } from "@/data/guides";
 import { useCases } from "@/data/use-cases";
+import { comparisons } from "@/data/comparisons";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -42,6 +43,13 @@ export default async function GuidePage({ params }: PageProps) {
   const related = guide.relatedUseCases
     .map((slug) => useCases.find((uc) => uc.slug === slug))
     .filter(Boolean);
+
+  // Find related comparisons based on guide content keywords
+  const guideWords = guide.title.toLowerCase();
+  const relatedComparisons = comparisons.filter((c) =>
+    c.options.some((o) => guideWords.includes(o.name.toLowerCase())) ||
+    c.title.toLowerCase().split(" ").some((w) => w.length > 4 && guideWords.includes(w))
+  ).slice(0, 3);
 
   return (
     <article className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -208,8 +216,8 @@ export default async function GuidePage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Cross-links */}
-      <div className="mt-12 grid gap-4 sm:grid-cols-3">
+      {/* Cross-links: comparisons + ROI */}
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/calculateur-roi"
           className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
@@ -221,28 +229,52 @@ export default async function GuidePage({ params }: PageProps) {
             Estimez vos gains avec un agent IA.
           </p>
         </Link>
-        <Link
-          href="/comparatif/n8n-vs-make-vs-zapier"
-          className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
-        >
-          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
-            n8n vs Make vs Zapier
-          </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Quel orchestrateur pour vos agents ?
-          </p>
-        </Link>
-        <Link
-          href="/comparatif/agent-ia-vs-chatbot"
-          className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
-        >
-          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
-            Agent IA vs Chatbot
-          </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Comprendre les différences clés.
-          </p>
-        </Link>
+        {relatedComparisons.length > 0
+          ? relatedComparisons.slice(0, 2).map((c) => (
+              <Link
+                key={c.slug}
+                href={`/comparatif/${c.slug}`}
+                className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+              >
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  {c.options.map((o) => (
+                    <Badge key={o.name} variant="outline" className="text-[10px] px-1.5 py-0">
+                      {o.name}
+                    </Badge>
+                  ))}
+                </div>
+                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                  {c.title}
+                </h3>
+              </Link>
+            ))
+          : (
+            <>
+              <Link
+                href="/comparatif/n8n-vs-make-vs-zapier"
+                className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+              >
+                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                  n8n vs Make vs Zapier
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Quel orchestrateur pour vos agents ?
+                </p>
+              </Link>
+              <Link
+                href="/comparatif/agent-ia-vs-chatbot"
+                className="group rounded-xl border p-4 transition-all hover:shadow-sm hover:border-primary/30"
+              >
+                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+                  Agent IA vs Chatbot
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Comprendre les différences clés.
+                </p>
+              </Link>
+            </>
+          )
+        }
       </div>
 
       {/* Newsletter */}

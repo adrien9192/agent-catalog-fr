@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { guides } from "@/data/guides";
 
@@ -40,6 +41,19 @@ export default function GuidesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <GuidesCollectionJsonLd />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
+          { name: "Guides", url: "https://agent-catalog-fr.vercel.app/guide" },
+        ]}
+      />
+
+      {/* Breadcrumb */}
+      <nav className="mb-6 text-sm text-muted-foreground">
+        <Link href="/" className="hover:text-foreground">Accueil</Link>
+        {" / "}
+        <span className="text-foreground">Guides</span>
+      </nav>
       <div className="mb-10">
         <Badge variant="secondary" className="mb-3 text-xs">
           Ressources gratuites

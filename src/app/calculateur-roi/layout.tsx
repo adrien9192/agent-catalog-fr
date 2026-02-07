@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 
 export const metadata: Metadata = {
   title: "Calculateur ROI — Estimez les gains de votre Agent IA",
@@ -49,6 +50,12 @@ export default function CalculateurROILayout({
   return (
     <>
       <CalculatorJsonLd />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Accueil", url: "https://agent-catalog-fr.vercel.app" },
+          { name: "Calculateur ROI", url: "https://agent-catalog-fr.vercel.app/calculateur-roi" },
+        ]}
+      />
       {children}
     </>
   );

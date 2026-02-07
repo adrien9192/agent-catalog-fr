@@ -13050,4 +13050,876 @@ def test_detection_doublon():
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
+  {
+    slug: "agent-chatbot-whatsapp-business",
+    title: "Agent Chatbot WhatsApp Business",
+    subtitle: "Engagez vos clients et suivez leurs commandes via un chatbot IA sur WhatsApp Business",
+    problem:
+      "Les entreprises B2B recoivent un volume croissant de demandes clients via WhatsApp : suivi de commandes, questions produits, demandes de devis. Les equipes commerciales et support ne peuvent pas repondre en temps reel 24h/24, ce qui entraine des delais de reponse eleves, une insatisfaction client et des opportunites commerciales manquees. Le copier-coller de reponses types ne suffit plus face a la diversite des demandes.",
+    value:
+      "Un agent IA connecte a WhatsApp Business API analyse chaque message entrant, identifie l'intention du client (suivi commande, demande de devis, question produit, reclamation), interroge les systemes internes (ERP, CRM, logistique) et repond de maniere personnalisee et instantanee. Les demandes complexes sont escaladees vers un humain avec tout le contexte. Le taux de reponse passe a 100% et le delai moyen chute sous les 30 secondes.",
+    inputs: [
+      "Messages WhatsApp entrants (texte, images, documents)",
+      "Catalogue produits et tarifs",
+      "Donnees ERP (commandes, stocks, expeditions)",
+      "Historique client (CRM)",
+      "FAQ et base de connaissances",
+    ],
+    outputs: [
+      "Reponses automatiques personnalisees sur WhatsApp",
+      "Statut de commande en temps reel",
+      "Devis generes automatiquement",
+      "Escalade vers un agent humain avec contexte complet",
+      "Rapport d'interactions et metriques d'engagement",
+    ],
+    risks: [
+      "Reponses incorrectes sur le statut de commande ou les tarifs",
+      "Non-conformite RGPD sur les donnees personnelles echangees via WhatsApp",
+      "Hallucination du LLM sur des informations produit critiques",
+      "Dependance a la disponibilite de l'API WhatsApp Business",
+      "Ton inapproprie dans un contexte B2B formel",
+    ],
+    roiIndicatif:
+      "Reduction de 70% du temps de reponse moyen. Augmentation de 40% du taux d'engagement client. Diminution de 50% de la charge du support niveau 1.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "AWS (Lambda + API Gateway)", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: "+-------------+     +----------------+     +-------------+\n|  WhatsApp   |---->|  Webhook API   |---->|  Agent LLM  |\n|  Business   |     |  (FastAPI)     |     |  (Routage)  |\n+-------------+     +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  ERP / CRM     |<----|  Fonctions  |\n                    |  (Donnees)     |     |  (Outils)   |\n                    +----------------+     +-------------+\n                                                  |\n                                           +------v------+\n                                           |  Reponse    |\n                                           |  WhatsApp   |\n                                           +-------------+",
+    tutorial: [
+      {
+        title: "Prerequis et configuration WhatsApp Business API",
+        content:
+          "Pour commencer, vous devez configurer un compte WhatsApp Business API via Meta Business Suite. Creez une application Meta, activez le produit WhatsApp et obtenez vos identifiants. Le processus de verification de l'entreprise peut prendre quelques jours.\n\nInstallez les dependances Python necessaires pour le projet. Vous aurez besoin de FastAPI pour l'API webhook, de LangChain pour l'orchestration de l'agent, et de la bibliotheque OpenAI pour le LLM. Configurez les variables d'environnement pour securiser vos cles API.\n\nLa configuration du webhook est cruciale : WhatsApp enverra tous les messages entrants a votre endpoint. Assurez-vous que votre serveur est accessible via HTTPS avec un certificat SSL valide. Pour le developpement local, utilisez ngrok pour creer un tunnel securise.\n\nConfigurez les modeles de messages (templates) dans Meta Business Suite. Ces templates sont necessaires pour initier des conversations et envoyer des notifications proactives comme les confirmations de commande.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install fastapi uvicorn langchain openai httpx python-dotenv pydantic psycopg2-binary",
+            filename: "terminal",
+          },
+        ],
+      },
+      {
+        title: "Webhook et traitement des messages entrants",
+        content:
+          "Le coeur du systeme est le webhook qui recoit les messages WhatsApp. Meta envoie une requete POST a votre endpoint chaque fois qu'un client envoie un message. Vous devez verifier la signature de la requete pour garantir son authenticite, puis extraire le contenu du message.\n\nLe webhook doit gerer differents types de messages : texte simple, images, documents et reponses interactives (boutons, listes). Chaque type necessite un traitement specifique avant d'etre envoye a l'agent LLM pour analyse et generation de reponse.\n\nIl est important de repondre rapidement au webhook (sous 5 secondes) pour eviter les timeouts de Meta. Utilisez un systeme de file d'attente asynchrone pour traiter les messages en arriere-plan tout en accusant reception immediatement.\n\nImplementez un mecanisme de deduplication car Meta peut renvoyer le meme message plusieurs fois. Stockez les identifiants de messages dans votre base de donnees pour eviter les reponses en double.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, Request, HTTPException\nimport httpx\nimport os\n\napp = FastAPI()\n\n@app.get(\"/webhook\")\nasync def verify_webhook(hub_mode: str = \"\", hub_verify_token: str = \"\", hub_challenge: str = \"\"):\n    if hub_mode == \"subscribe\" and hub_verify_token == os.getenv(\"WHATSAPP_VERIFY_TOKEN\"):\n        return int(hub_challenge)\n    raise HTTPException(403, \"Token invalide\")\n\n@app.post(\"/webhook\")\nasync def receive_message(request: Request):\n    data = await request.json()\n    entry = data.get(\"entry\", [{}])[0]\n    changes = entry.get(\"changes\", [{}])[0]\n    value = changes.get(\"value\", {})\n    if \"messages\" in value:\n        message = value[\"messages\"][0]\n        sender = message[\"from\"]\n        text = message.get(\"text\", {}).get(\"body\", \"\")\n        response = await process_message(sender, text)\n        await send_whatsapp_reply(sender, response)\n    return {\"status\": \"ok\"}",
+            filename: "webhook.py",
+          },
+        ],
+      },
+      {
+        title: "Agent conversationnel avec outils metier",
+        content:
+          "L'agent LLM est le cerveau du chatbot. Il analyse l'intention du client, decide quel outil utiliser (recherche commande, catalogue produit, generation devis, escalade), et formule une reponse naturelle et professionnelle. L'utilisation du pattern ReAct permet a l'agent de raisonner etape par etape.\n\nDefinissez les outils metier que l'agent peut appeler : recherche de commande par numero ou nom client, consultation du catalogue et des stocks, generation de devis, et escalade vers un humain. Chaque outil est une fonction Python qui interroge vos systemes internes.\n\nLa gestion du contexte conversationnel est essentielle. Stockez l'historique des conversations par client dans PostgreSQL pour que l'agent puisse maintenir le fil de la discussion. Limitez le contexte aux 10 derniers messages pour optimiser les couts et la latence.\n\nParametrez le prompt systeme avec soin : ton professionnel B2B, reponses concises adaptees au format mobile, vouvoiement systematique, et limites claires sur les actions autonomes de l'agent.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from langchain.chat_models import ChatOpenAI\nfrom langchain.agents import AgentExecutor, create_openai_tools_agent\nfrom langchain.tools import tool\nfrom langchain.prompts import ChatPromptTemplate, MessagesPlaceholder\n\n@tool\ndef rechercher_commande(numero_commande: str) -> str:\n    \"\"\"Recherche le statut d'une commande par son numero.\"\"\"\n    commande = query_erp_order(numero_commande)\n    if not commande:\n        return \"Aucune commande trouvee avec ce numero.\"\n    return \"Commande {num}: statut={s}, livraison prevue le {d}\".format(\n        num=commande[\"numero\"], s=commande[\"statut\"], d=commande[\"date_livraison\"]\n    )\n\n@tool\ndef consulter_catalogue(recherche: str) -> str:\n    \"\"\"Recherche un produit dans le catalogue.\"\"\"\n    produits = search_catalog(recherche)\n    if not produits:\n        return \"Aucun produit trouve.\"\n    return \"\\n\".join(\n        \"- {n} : {p} EUR HT (stock: {s})\".format(n=p[\"nom\"], p=p[\"prix\"], s=p[\"stock\"]) for p in produits[:5]\n    )\n\nllm = ChatOpenAI(model=\"gpt-4.1\", temperature=0.1)\ntools = [rechercher_commande, consulter_catalogue]",
+            filename: "agent_whatsapp.py",
+          },
+        ],
+      },
+      {
+        title: "Tests et deploiement en production",
+        content:
+          "Avant le deploiement, testez exhaustivement chaque scenario conversationnel. Simulez des demandes de suivi commande, des questions produit, des reclamations et des cas limites (messages vides, spam, langues non supportees). Mesurez la qualite des reponses avec un jeu de test annote.\n\nDeployez l'API sur AWS Lambda avec API Gateway pour beneficier du scaling automatique. WhatsApp peut envoyer des pics de messages importants, notamment apres l'envoi de campagnes promotionnelles. Lambda gere ces pics sans intervention manuelle.\n\nMettez en place un monitoring complet avec Langfuse : tracez chaque conversation, mesurez le temps de reponse, le taux d'escalade vers un humain, et la satisfaction client. Configurez des alertes si le taux d'escalade depasse un seuil configurable.\n\nPrevoyez une phase de rodage de 2 semaines ou toutes les reponses sont verifiees par un humain avant envoi (mode shadow). Cela permet d'affiner le prompt et de corriger les cas non couverts avant de passer en mode autonome.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import pytest\nfrom agent_whatsapp import executor\n\ndef test_suivi_commande():\n    result = executor.invoke({\n        \"input\": \"Bonjour, ou en est ma commande CMD-2024-1234 ?\",\n        \"chat_history\": [],\n    })\n    assert \"CMD-2024-1234\" in result[\"output\"]\n\ndef test_escalade():\n    result = executor.invoke({\n        \"input\": \"Je souhaite annuler ma commande immediatement\",\n        \"chat_history\": [],\n    })\n    assert any(mot in result[\"output\"].lower() for mot in [\"conseiller\", \"humain\", \"equipe\"])",
+            filename: "test_agent.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les messages WhatsApp contiennent des donnees personnelles (numeros de telephone, noms, adresses). Anonymisez ces donnees avant envoi au LLM. Les numeros sont pseudonymises dans les logs. Stockage conforme RGPD avec chiffrement AES-256. Politique de retention limitee a 12 mois avec purge automatique.",
+      auditLog: "Chaque interaction est tracee : horodatage, numero pseudonymise, intention detectee, outil appele, reponse generee, temps de traitement, score de confiance, indicateur d'escalade. Logs stockes dans PostgreSQL avec retention de 24 mois.",
+      humanInTheLoop: "Les demandes de modification de commande, reclamations financieres et messages a faible confiance sont escalades vers un agent humain. Le mode shadow est active pendant les 2 premieres semaines. Un superviseur peut prendre le controle de n'importe quelle conversation.",
+      monitoring: "Dashboard temps reel : volume de messages par heure, temps de reponse median, taux d'escalade, taux de resolution autonome, satisfaction client, top 10 des intentions, alertes sur les anomalies.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (message WhatsApp entrant) -> Node Code (extraction du message) -> Node HTTP Request (API LLM agent) -> Node Switch (intention) -> Branch commande: Node HTTP Request (ERP) -> Branch escalade: Node Slack (notification) -> Node HTTP Request (reponse WhatsApp API).",
+      nodes: ["Webhook (WhatsApp)", "Code (extraction)", "HTTP Request (Agent LLM)", "Switch (intention)", "HTTP Request (ERP)", "Slack (escalade)", "HTTP Request (reponse WhatsApp)"],
+      triggerType: "Webhook (message WhatsApp entrant)",
+    },
+    estimatedTime: "6-10h",
+    difficulty: "Moyen",
+    sectors: ["E-commerce", "Distribution", "Industrie", "Services B2B"],
+    metiers: ["Service Client", "Commerce", "Logistique"],
+    functions: ["Support", "Sales"],
+    metaTitle: "Agent Chatbot WhatsApp Business IA -- Guide Complet",
+    metaDescription:
+      "Deployez un chatbot IA sur WhatsApp Business pour automatiser le suivi de commandes et l'engagement client. Stack technique, tutoriel et ROI detaille.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-analyse-sentiments-reseaux",
+    title: "Agent d'Analyse de Sentiments sur les Reseaux Sociaux",
+    subtitle: "Surveillez la reputation de votre marque en temps reel grace a l'analyse de sentiments IA",
+    problem:
+      "Les entreprises B2B sont mentionnees sur les reseaux sociaux (LinkedIn, X/Twitter, forums specialises) sans en avoir conscience. Les equipes marketing ne peuvent pas surveiller manuellement des milliers de publications quotidiennes. Les crises reputationnelles sont detectees trop tard, et les opportunites d'engagement positif sont manquees. Les outils de social listening classiques offrent une analyse de sentiment basique et peu fiable sur le vocabulaire B2B francophone.",
+    value:
+      "Un agent IA collecte en continu les mentions de votre marque, de vos produits et de vos concurrents sur les reseaux sociaux et forums professionnels. Il analyse le sentiment avec une comprehension fine du contexte B2B, detecte les tendances emergentes, identifie les influenceurs cles, et declenche des alertes en temps reel en cas de crise. Les equipes marketing disposent d'un tableau de bord actionnable avec des recommandations de reponse.",
+    inputs: [
+      "Flux de donnees reseaux sociaux (LinkedIn, X/Twitter, forums)",
+      "Liste de mots-cles et mentions a surveiller",
+      "Profils concurrents a analyser",
+      "Historique des campagnes marketing",
+      "Base de connaissances marque (ton, valeurs, FAQ)",
+    ],
+    outputs: [
+      "Score de sentiment par mention (-1 a +1)",
+      "Classification thematique des mentions",
+      "Alertes en temps reel pour les mentions critiques",
+      "Tableau de bord d'evolution du sentiment",
+      "Recommandations de reponse contextualisees",
+      "Rapport hebdomadaire de veille reputationnelle",
+    ],
+    risks: [
+      "Mauvaise interpretation du sarcasme ou de l'ironie en contexte francophone",
+      "Biais dans l'analyse de sentiment selon les secteurs",
+      "Non-respect des conditions d'utilisation des API reseaux sociaux",
+      "Volume de donnees trop important degradant la qualite d'analyse",
+      "Faux positifs declenchant des alertes inutiles",
+    ],
+    roiIndicatif:
+      "Detection des crises reputationnelles 6x plus rapide. Augmentation de 45% du taux d'engagement sur les reponses aux mentions. Economie de 2 ETP sur la veille manuelle.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Mistral Large", category: "LLM", isFree: false },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: "+-------------+  +-------------+  +-------------+\n|  LinkedIn   |  |  X/Twitter  |  |  Forums     |\n|  API        |  |  API        |  |  RSS/Scrape |\n+------+------+  +------+------+  +------+------+\n       |                |                |\n       v                v                v\n+----------------------------------------------+\n|         Collecteur de Mentions               |\n|         (File d'attente Redis)               |\n+-----------------------+----------------------+\n                        |\n                +-------v--------+\n                |   Agent LLM    |\n                |   (Analyse)    |\n                +-------+--------+\n                        |\n              +---------+---------+\n              |                   |\n       +------v------+     +------v------+\n       |  Dashboard  |     |  Alertes    |\n       |  (Metabase) |     |  (Slack)    |\n       +-------------+     +-------------+",
+    tutorial: [
+      {
+        title: "Prerequis et configuration des sources de donnees",
+        content:
+          "Commencez par configurer les acces aux API des reseaux sociaux. Pour LinkedIn, vous aurez besoin d'une application LinkedIn Developer avec les permissions Marketing API. Pour X/Twitter, creez un projet dans le Developer Portal avec un acces Business pour beneficier du volume de requetes necessaire.\n\nInstallez les dependances Python du projet. Le collecteur de mentions utilise des bibliotheques specifiques pour chaque plateforme, ainsi que Redis pour la file d'attente de traitement. LangChain orchestre l'agent d'analyse et Anthropic Claude fournit la comprehension fine du contexte.\n\nConfigurez les mots-cles de surveillance : nom de votre entreprise et ses variantes, noms de produits, noms des dirigeants, et termes specifiques a votre secteur. Incluez egalement les noms de vos principaux concurrents pour une analyse comparative.\n\nMettez en place un scheduler (cron ou APScheduler) pour collecter les mentions a intervalles reguliers. La frequence depend de votre volume : toutes les 5 minutes pour les grandes marques, toutes les heures pour les PME.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install anthropic langchain httpx redis apscheduler pydantic fastapi psycopg2-binary tweepy",
+            filename: "terminal",
+          },
+        ],
+      },
+      {
+        title: "Collecteur de mentions multi-plateformes",
+        content:
+          "Le collecteur interroge chaque plateforme et normalise les donnees dans un format unifie. Chaque mention est stockee avec ses metadonnees (auteur, date, plateforme, engagement) dans une file Redis pour traitement asynchrone par l'agent d'analyse.\n\nPour X/Twitter, utilisez l'API v2 avec les operateurs de recherche avances. Filtrez par langue (lang:fr) et excluez les retweets pour eviter les doublons. Pour LinkedIn, l'API Marketing permet de recuperer les mentions de votre page entreprise.\n\nPour les forums specialises (forums sectoriels, Reddit, communautes publiques), utilisez un scraper RSS ou un outil comme Apify. Normalisez les donnees dans le meme schema que les reseaux sociaux pour un traitement uniforme.\n\nImplementez un systeme de deduplication base sur le hash du contenu et l'identifiant de la plateforme. Les memes contenus peuvent apparaitre sur plusieurs plateformes (cross-posting), et il est important de les regrouper.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import tweepy\nimport redis\nimport json\nfrom datetime import datetime\nfrom pydantic import BaseModel\nfrom typing import Optional\n\nclass Mention(BaseModel):\n    platform: str\n    author: str\n    content: str\n    url: str\n    timestamp: datetime\n    engagement: int\n    language: str = \"fr\"\n\nredis_client = redis.from_url(\"redis://localhost:6379\")\n\ndef collect_twitter_mentions(keywords: list[str], since_id: str = None) -> list[Mention]:\n    client = tweepy.Client(bearer_token=\"...\")\n    query = \" OR \".join(keywords) + \" lang:fr -is:retweet\"\n    tweets = client.search_recent_tweets(\n        query=query, max_results=100, since_id=since_id,\n        tweet_fields=[\"created_at\", \"public_metrics\", \"author_id\"]\n    )\n    mentions = []\n    if tweets.data:\n        for tweet in tweets.data:\n            m = Mention(\n                platform=\"twitter\",\n                author=str(tweet.author_id),\n                content=tweet.text,\n                url=\"https://x.com/i/status/{}\".format(tweet.id),\n                timestamp=tweet.created_at,\n                engagement=tweet.public_metrics[\"like_count\"] + tweet.public_metrics[\"retweet_count\"]\n            )\n            mentions.append(m)\n            redis_client.lpush(\"mentions_queue\", m.model_dump_json())\n    return mentions",
+            filename: "collector.py",
+          },
+        ],
+      },
+      {
+        title: "Agent d'analyse de sentiment contextuel",
+        content:
+          "L'agent LLM analyse chaque mention avec une comprehension fine du contexte B2B francophone. Contrairement aux outils de sentiment classiques bases sur des lexiques, le LLM comprend le sarcasme, les references sectorielles, et les nuances du langage professionnel.\n\nLe prompt systeme est calibre pour le contexte B2B francais. Il inclut les specificites de votre marque, vos produits, et les sujets sensibles a surveiller en priorite. L'agent produit un score de sentiment continu (-1 a +1) plus nuance qu'une simple classification.\n\nPour les mentions a fort engagement ou a sentiment tres negatif, l'agent genere automatiquement une recommandation de reponse adaptee au ton de votre marque. Cette reponse est envoyee a l'equipe marketing pour validation avant publication.\n\nLe traitement par batch permet d'optimiser les couts API. Regroupez les mentions par lots de 10-20 pour une analyse en une seule requete LLM, tout en maintenant la qualite individuelle de chaque analyse.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import anthropic\nfrom pydantic import BaseModel, Field\n\nclient = anthropic.Anthropic()\n\nclass SentimentAnalysis(BaseModel):\n    sentiment_score: float = Field(ge=-1.0, le=1.0)\n    sentiment_label: str\n    themes: list[str]\n    urgency: str\n    summary: str\n    recommended_action: str\n    suggested_response: str = \"\"\n    confidence: float = Field(ge=0.0, le=1.0)\n\ndef analyze_mention(mention_content: str, author_info: str, brand_context: str) -> SentimentAnalysis:\n    prompt = (\n        \"Tu es un analyste de reputation de marque specialise B2B.\\n\"\n        \"Analyse cette mention de notre marque sur les reseaux sociaux.\\n\\n\"\n        \"Mention: {content}\\n\"\n        \"Auteur: {author}\\n\"\n        \"Contexte marque: {context}\\n\\n\"\n        \"Analyse le sentiment, les themes, l'urgence, et recommande une action.\\n\"\n        \"Retourne un JSON avec: sentiment_score, sentiment_label, themes, \"\n        \"urgency, summary, recommended_action, suggested_response, confidence.\"\n    ).format(content=mention_content, author=author_info, context=brand_context)\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=1024,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return SentimentAnalysis.model_validate_json(message.content[0].text)",
+            filename: "sentiment_agent.py",
+          },
+        ],
+      },
+      {
+        title: "Alertes, dashboard et deploiement",
+        content:
+          "Configurez un systeme d'alertes multi-niveaux. Les mentions critiques (sentiment tres negatif, fort engagement, auteur influent) declenchent une notification Slack immediate avec le contexte complet et la reponse suggeree. Les tendances negatives detectees sur 24h generent un rapport de synthese par email.\n\nDeployez un dashboard Metabase connecte a PostgreSQL pour visualiser les metriques en temps reel : evolution du sentiment moyen, repartition par theme, volume de mentions par plateforme, top auteurs et influenceurs, et comparaison avec les concurrents.\n\nAutomatisez la generation de rapports hebdomadaires. L'agent LLM synthetise les evenements marquants de la semaine, les tendances emergentes, et propose des recommandations strategiques. Ce rapport est envoye automatiquement au directeur marketing.\n\nPour le deploiement en production, utilisez Vercel pour l'API et un worker Redis dedie pour le traitement des mentions. Mettez en place des health checks et des alertes d'infrastructure pour garantir la continuite du service de veille.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import httpx\nfrom datetime import datetime\n\nasync def send_critical_alert(mention: dict, analysis: dict):\n    payload = {\n        \"blocks\": [\n            {\"type\": \"header\", \"text\": {\"type\": \"plain_text\", \"text\": \"Alerte Reputation Critique\"}},\n            {\"type\": \"section\", \"text\": {\"type\": \"mrkdwn\", \"text\": (\n                \"*Plateforme:* {plat}\\n*Sentiment:* {label} ({score})\\n*Urgence:* {urg}\\n\\n\"\n                \">{content}\\n\\n*Reponse suggeree:*\\n{resp}\"\n            ).format(\n                plat=mention[\"platform\"], label=analysis[\"sentiment_label\"],\n                score=analysis[\"sentiment_score\"], urg=analysis[\"urgency\"],\n                content=mention[\"content\"][:500], resp=analysis[\"suggested_response\"]\n            )}}\n        ]\n    }\n    async with httpx.AsyncClient() as client:\n        await client.post(SLACK_WEBHOOK_URL, json=payload)",
+            filename: "alerts.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les donnees collectees sur les reseaux sociaux peuvent contenir des informations personnelles. Seul le contenu textuel est envoye au LLM, sans les metadonnees d'identification. Les profils auteurs sont pseudonymises dans la base de donnees. Conformite RGPD avec droit d'opposition. Donnees stockees en UE uniquement.",
+      auditLog: "Chaque analyse est tracee : horodatage, plateforme source, mention originale (hash), score de sentiment, themes detectes, action recommandee, et identite de l'operateur ayant valide ou rejete la recommandation. Conservation 18 mois avec export automatique.",
+      humanInTheLoop: "Les mentions critiques (sentiment < -0.7 ou urgence critique) sont validees par un humain avant toute action de reponse. Les reponses suggerees ne sont jamais publiees automatiquement : un membre de l'equipe marketing doit les valider. Le mode automatique peut etre active uniquement pour les mentions positives a faible engagement.",
+      monitoring: "Dashboard de monitoring : volume de mentions collectees par heure, taux de couverture par plateforme, latence d'analyse, distribution des sentiments en temps reel, taux d'alertes critiques, temps de reaction moyen de l'equipe, et evolution comparative du sentiment vs concurrents.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (toutes les 15 min) -> Node HTTP Request (API Twitter) -> Node HTTP Request (API LinkedIn) -> Node Code (normalisation et deduplication) -> Node HTTP Request (API Claude - analyse sentiment) -> Node Switch (urgence critique ?) -> Branch critique: Node Slack (alerte) -> Node PostgreSQL (sauvegarde) -> Cron hebdomadaire: Node HTTP Request (rapport) -> Node Email (envoi rapport).",
+      nodes: ["Cron Trigger (15 min)", "HTTP Request (Twitter API)", "HTTP Request (LinkedIn API)", "Code (normalisation)", "HTTP Request (Claude analyse)", "Switch (urgence)", "Slack (alerte critique)", "PostgreSQL (sauvegarde)", "Cron (hebdomadaire)", "Email (rapport)"],
+      triggerType: "Cron (toutes les 15 minutes)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["Services B2B", "Industrie", "Tech", "Conseil", "Finance"],
+    metiers: ["Marketing Digital", "Communication", "Relations Publiques"],
+    functions: ["Marketing"],
+    metaTitle: "Agent IA d'Analyse de Sentiments Reseaux Sociaux -- Guide Complet",
+    metaDescription:
+      "Surveillez votre reputation de marque en temps reel avec un agent IA d'analyse de sentiments. Collecte multi-plateformes, analyse contextuelle et alertes automatiques. Tutoriel complet.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-prevision-demande-stock",
+    title: "Agent de Prevision de Demande et Optimisation des Stocks",
+    subtitle: "Anticipez la demande et optimisez vos niveaux de stock grace a l'IA predictive",
+    problem:
+      "Les entreprises B2B souffrent d'un double probleme de gestion des stocks : le surstockage immobilise du capital et genere des couts de stockage, tandis que les ruptures de stock entrainent des pertes de ventes et une insatisfaction client. Les methodes de prevision traditionnelles (moyennes mobiles, saisonnalite simple) ne captent pas les signaux faibles comme les tendances marche, les evenements macroeconomiques ou les comportements d'achat emergents.",
+    value:
+      "Un agent IA combine des modeles de prevision statistiques avec l'analyse contextuelle d'un LLM pour produire des previsions de demande precises. Il integre les donnees de vente historiques, les tendances marche, les evenements sectoriels et les signaux faibles pour generer des recommandations de reapprovisionnement optimales. Le taux de rupture chute et le capital immobilise diminue significativement.",
+    inputs: [
+      "Historique des ventes (3 ans minimum)",
+      "Niveaux de stock actuels par reference",
+      "Delais d'approvisionnement fournisseurs",
+      "Calendrier promotionnel et evenements prevus",
+      "Donnees marche et tendances sectorielles",
+      "Donnees meteo (pour les produits saisonniers)",
+    ],
+    outputs: [
+      "Previsions de demande par reference (horizon 1-12 semaines)",
+      "Recommandations de reapprovisionnement avec quantites",
+      "Alertes de risque de rupture de stock",
+      "Analyse des surstocks avec recommandations de destockage",
+      "Rapport de performance des previsions (MAPE, biais)",
+      "Scenarios what-if pour les decisions strategiques",
+    ],
+    risks: [
+      "Previsions erronees causant des ruptures ou du surstockage",
+      "Surconfiance dans les predictions IA sans validation humaine",
+      "Biais saisonnier mal calibre pour les nouveaux produits sans historique",
+      "Dependance a la qualite et la completude des donnees historiques",
+      "Impact financier eleve en cas de recommandation incorrecte",
+    ],
+    roiIndicatif:
+      "Reduction de 35% du stock moyen. Diminution de 60% des ruptures de stock. Amelioration de 25% de la precision des previsions vs methodes traditionnelles. ROI typique de 300% la premiere annee.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "AWS (Lambda + S3)", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+      { name: "Evidently AI", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: "+-------------+  +-------------+  +-------------+\n|  Historique |  |  Donnees    |  |  Signaux    |\n|  Ventes     |  |  Marche     |  |  Externes   |\n+------+------+  +------+------+  +------+------+\n       |                |                |\n       v                v                v\n+----------------------------------------------+\n|        Modele Statistique (Prophet)          |\n|        + Agent LLM (Contexte)                |\n+-----------------------+----------------------+\n                        |\n              +---------+---------+\n              |                   |\n       +------v------+     +------v------+\n       |  Previsions |     |  Alertes    |\n       |  + Reappro  |     |  Ruptures   |\n       +-------------+     +-------------+",
+    tutorial: [
+      {
+        title: "Prerequis et preparation des donnees",
+        content:
+          "La qualite des previsions depend directement de la qualite des donnees. Commencez par extraire l'historique de ventes de votre ERP sur au moins 3 ans. Nettoyez les donnees : supprimez les commandes annulees, corrigez les valeurs aberrantes, et identifiez les periodes anormales pour les marquer comme anomalies.\n\nInstallez les dependances Python. Prophet (Meta) est un excellent modele de base pour les series temporelles avec saisonnalite. Combinez-le avec LangChain et un LLM pour ajouter une couche d'analyse contextuelle que les modeles statistiques seuls ne peuvent pas fournir.\n\nStructurez vos donnees dans un format standardise : une ligne par couple (reference, date) avec les colonnes quantite vendue, prix, categorie produit, et indicateurs contextuels. Ce format alimentera a la fois le modele statistique et l'agent LLM.\n\nConfigurez egalement les sources de donnees externes : API meteo pour les produits saisonniers, flux RSS sectoriels pour les tendances marche, et calendrier des salons professionnels. Ces signaux enrichissent la precision des previsions.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install openai langchain prophet pandas numpy scikit-learn psycopg2-binary fastapi pydantic httpx",
+            filename: "terminal",
+          },
+        ],
+      },
+      {
+        title: "Modele de prevision statistique avec Prophet",
+        content:
+          "Prophet est particulierement adapte aux series temporelles B2B car il gere nativement la saisonnalite multiple (hebdomadaire, mensuelle, annuelle), les jours feries, et les changements de tendance. Entrainez un modele par reference produit ou par famille de produits.\n\nConfigurez les parametres de Prophet en fonction de vos donnees : ajoutez les jours feries francais, definissez les periodes de changement de tendance, et incluez les regresseurs externes (promotions, meteo) qui impactent la demande.\n\nLe modele produit non seulement une prevision ponctuelle mais aussi un intervalle de confiance. Utilisez cet intervalle pour calibrer vos niveaux de stock de securite : un produit avec un intervalle large necessite un stock de securite plus important.\n\nEvaluez les performances avec un backtesting rigoureux : entrainez sur 80% de l'historique et testez sur les 20% restants. Mesurez le MAPE (erreur moyenne absolue en pourcentage) et le biais. Un MAPE inferieur a 20% est un bon objectif pour les produits a demande reguliere.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from prophet import Prophet\nimport pandas as pd\n\ndef train_forecast_model(sales_df: pd.DataFrame, reference: str, forecast_weeks: int = 12) -> dict:\n    ref_data = sales_df[sales_df[\"reference\"] == reference].copy()\n    ref_data = ref_data[ref_data[\"is_anomaly\"] == False]\n    prophet_df = ref_data.rename(columns={\"date\": \"ds\", \"quantite\": \"y\"})\n    model = Prophet(\n        yearly_seasonality=True,\n        weekly_seasonality=False,\n        daily_seasonality=False,\n        changepoint_prior_scale=0.05,\n        interval_width=0.9\n    )\n    model.add_country_holidays(country_name=\"FR\")\n    model.fit(prophet_df[[\"ds\", \"y\"]])\n    future = model.make_future_dataframe(periods=forecast_weeks, freq=\"W\")\n    forecast = model.predict(future)\n    future_forecast = forecast.tail(forecast_weeks)\n    return {\n        \"reference\": reference,\n        \"forecasts\": [\n            {\n                \"date\": row[\"ds\"].isoformat(),\n                \"predicted\": max(0, round(row[\"yhat\"])),\n                \"lower\": max(0, round(row[\"yhat_lower\"])),\n                \"upper\": max(0, round(row[\"yhat_upper\"]))\n            }\n            for _, row in future_forecast.iterrows()\n        ]\n    }",
+            filename: "forecast_model.py",
+          },
+        ],
+      },
+      {
+        title: "Agent LLM pour l'analyse contextuelle",
+        content:
+          "Le LLM apporte la dimension contextuelle que les modeles statistiques ne captent pas. Il analyse les tendances marche, les evenements sectoriels, et les signaux faibles pour ajuster les previsions statistiques et generer des recommandations actionnables.\n\nL'agent recoit les previsions Prophet, les niveaux de stock actuels, les delais fournisseurs, et le contexte marche. Il produit des recommandations de reapprovisionnement en tenant compte de contraintes invisibles au modele statistique : MOQ, remises volume, contraintes logistiques, et priorites strategiques.\n\nPour les nouveaux produits sans historique, l'agent LLM est particulierement precieux. Il peut estimer la demande initiale en se basant sur des produits similaires, les tendances du marche, et les retours qualitatifs de l'equipe commerciale.\n\nL'agent genere egalement des scenarios what-if : que se passe-t-il si un fournisseur est en retard de 2 semaines ? Si une promotion est lancee ? Si un concurrent baisse ses prix ? Ces scenarios aident les responsables supply chain a prendre des decisions eclairees.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import openai\nfrom pydantic import BaseModel, Field\n\nclient = openai.OpenAI()\n\nclass ReplenishmentRecommendation(BaseModel):\n    reference: str\n    current_stock: int\n    predicted_demand_4w: int\n    recommended_order_qty: int\n    order_urgency: str\n    rupture_risk: str\n    reasoning: str\n    confidence: float = Field(ge=0.0, le=1.0)\n\ndef generate_recommendations(\n    forecasts: list[dict], stock_levels: dict,\n    lead_times: dict, market_context: str\n) -> list[ReplenishmentRecommendation]:\n    forecast_summary = \"\\n\".join(\n        \"- {ref} : prevision 4 sem={pred}, stock actuel={stock}, delai={lt} jours\".format(\n            ref=f[\"reference\"],\n            pred=sum(fc[\"predicted\"] for fc in f[\"forecasts\"][:4]),\n            stock=stock_levels.get(f[\"reference\"], 0),\n            lt=lead_times.get(f[\"reference\"], 14)\n        ) for f in forecasts\n    )\n    prompt = (\n        \"Tu es un expert en supply chain et gestion des stocks B2B.\\n\"\n        \"Analyse ces previsions et niveaux de stock.\\n\\n\"\n        \"Previsions et stocks:\\n{data}\\n\\n\"\n        \"Contexte marche:\\n{context}\\n\\n\"\n        \"Pour chaque reference, recommande: quantite a commander, urgence, \"\n        \"risque de rupture, et raisonnement.\\n\"\n        \"Retourne une liste JSON de recommandations.\"\n    ).format(data=forecast_summary, context=market_context)\n    response = client.chat.completions.create(\n        model=\"gpt-4.1\",\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n        response_format={\"type\": \"json_object\"}\n    )\n    import json\n    parsed = json.loads(response.choices[0].message.content)\n    return [ReplenishmentRecommendation(**r) for r in parsed[\"recommendations\"]]",
+            filename: "recommendation_agent.py",
+          },
+        ],
+      },
+      {
+        title: "API, alertes et deploiement",
+        content:
+          "Exposez le systeme de prevision via une API REST qui alimente votre ERP et votre dashboard supply chain. L'API permet de lancer des previsions a la demande, de consulter les recommandations en cours, et de simuler des scenarios.\n\nConfigurez un systeme d'alertes proactif. Chaque matin, le systeme compare les niveaux de stock avec les previsions de demande et envoie un email aux responsables supply chain avec la liste des references en risque de rupture. Les alertes critiques declenchent une notification Slack immediate.\n\nDeployez le pipeline de prevision comme un job batch quotidien sur AWS Lambda. Les previsions sont recalculees chaque nuit avec les dernieres donnees de vente et stockees dans PostgreSQL. Le dashboard affiche les previsions, niveaux de stock et recommandations en temps reel.\n\nMettez en place un feedback loop : chaque semaine, comparez les previsions passees avec les ventes reelles pour mesurer et ameliorer la precision. Ce mecanisme d'apprentissage continu permet d'affiner les modeles et de detecter rapidement une degradation de la qualite.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, Depends\nfrom fastapi.security import HTTPBearer\n\napp = FastAPI(title=\"Demand Forecasting Agent\")\nsecurity = HTTPBearer()\n\n@app.post(\"/api/forecast/run\")\nasync def run_forecast(params: dict, token=Depends(security)):\n    references = params.get(\"references\", [])\n    horizon_weeks = params.get(\"horizon_weeks\", 12)\n    sales_data = load_sales_data(references)\n    forecasts = []\n    for ref in sales_data[\"reference\"].unique():\n        forecast = train_forecast_model(sales_data, ref, horizon_weeks)\n        forecasts.append(forecast)\n    stock_levels = load_current_stock(references)\n    lead_times = load_lead_times(references)\n    market_context = fetch_market_context()\n    recommendations = generate_recommendations(\n        forecasts, stock_levels, lead_times, market_context\n    )\n    await save_forecasts(forecasts)\n    await save_recommendations(recommendations)\n    critical = [r for r in recommendations if r.rupture_risk == \"critique\"]\n    if critical:\n        await send_critical_alerts(critical)\n    return {\n        \"forecasts_count\": len(forecasts),\n        \"recommendations_count\": len(recommendations),\n        \"critical_alerts\": len(critical)\n    }\n\n@app.post(\"/api/forecast/scenario\")\nasync def what_if_scenario(scenario: dict, token=Depends(security)):\n    return await simulate_scenario(scenario)",
+            filename: "api.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les donnees de prevision ne contiennent generalement pas de PII. Les donnees de vente peuvent inclure des noms de clients : anonymisez-les avant envoi au LLM. Les donnees commerciales (volumes, prix) sont des secrets d'affaires : utilisez un LLM avec clauses de non-retention des donnees. Stockage chiffre AES-256.",
+      auditLog: "Tracabilite complete de chaque cycle de prevision : horodatage, references traitees, version du modele Prophet, parametres du LLM, previsions generees, recommandations emises, decisions prises par les operateurs, et ecart prevision vs realite. Conservation 5 ans pour l'analyse retrospective.",
+      humanInTheLoop: "Les recommandations de reapprovisionnement superieure a un seuil de valeur (configurable, par exemple 50K EUR) necessitent une validation par le responsable supply chain. Les alertes de surstockage avec recommandation de destockage sont toujours soumises a validation humaine.",
+      monitoring: "Dashboard de performance : MAPE par famille de produits, biais de prevision, taux de rupture reel vs predit, taux de surstockage, valeur du stock moyen, taux de couverture, et evolution de la precision dans le temps. Alertes si le MAPE depasse 30% sur une famille de produits.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Cron Trigger (quotidien 6h) -> Node PostgreSQL (extraction donnees ventes) -> Node Code (preparation donnees + modele Prophet) -> Node HTTP Request (API LLM - analyse contextuelle) -> Node Code (generation recommandations) -> Node Switch (alertes critiques ?) -> Branch critique: Node Slack (alerte rupture) -> Node PostgreSQL (sauvegarde) -> Node Email (rapport quotidien supply chain).",
+      nodes: ["Cron Trigger (6h)", "PostgreSQL (donnees ventes)", "Code (Prophet forecast)", "HTTP Request (LLM contexte)", "Code (recommandations)", "Switch (criticite)", "Slack (alerte rupture)", "PostgreSQL (sauvegarde)", "Email (rapport quotidien)"],
+      triggerType: "Cron (quotidien a 6h du matin)",
+    },
+    estimatedTime: "12-18h",
+    difficulty: "Expert",
+    sectors: ["Distribution", "Industrie", "E-commerce", "Agroalimentaire", "Pharmacie"],
+    metiers: ["Supply Chain", "Logistique", "Achats", "Direction des Operations"],
+    functions: ["Supply Chain"],
+    metaTitle: "Agent IA de Prevision de Demande et Optimisation des Stocks -- Guide Expert",
+    metaDescription:
+      "Optimisez vos stocks avec un agent IA de prevision de demande. Modele Prophet, analyse contextuelle LLM et recommandations de reapprovisionnement automatiques. Tutoriel complet.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-generation-contrats",
+    title: "Agent IA de Generation de Contrats",
+    subtitle: "Generez automatiquement des contrats commerciaux personnalises a partir de modeles et de donnees CRM",
+    problem:
+      "Les entreprises perdent des heures a rediger manuellement des contrats commerciaux a partir de modeles Word ou PDF. Le processus implique du copier-coller de donnees clients depuis le CRM, la selection manuelle des clauses appropriees selon le type de contrat, et des allers-retours interminables avec le service juridique pour validation. Les erreurs sont frequentes : mauvais tarifs, clauses manquantes, donnees client obsoletes, fautes de nommage. Le service juridique devient un goulot d'etranglement car chaque contrat doit etre relu integralement. En moyenne, la generation d'un contrat prend 2 a 4 heures et mobilise 3 personnes differentes.",
+    value:
+      "Un agent IA connecte au CRM et a la base de modeles de contrats automatise l'integralite du processus. L'agent extrait les donnees client a jour (raison sociale, SIRET, adresse, contacts, historique commercial), selectionne le modele de contrat adapte au type de deal (licence SaaS, prestation de service, contrat cadre), remplit automatiquement toutes les variables, ajoute les clauses pertinentes selon le secteur et le montant du contrat, et genere un PDF pret a etre relu. La relecture juridique se reduit a une simple verification car la structure et les clauses obligatoires sont toujours presentes. Temps de generation reduit de 2-4h a 10 minutes.",
+    inputs: [
+      "Donnees client depuis le CRM (raison sociale, SIRET, contacts, historique)",
+      "Type de contrat demande (licence, prestation, contrat cadre, NDA)",
+      "Parametres commerciaux (montant, duree, conditions de paiement)",
+      "Bibliotheque de modeles de contrats (.docx, .pdf)",
+      "Base de clauses juridiques par categorie et secteur",
+    ],
+    outputs: [
+      "Contrat PDF genere automatiquement avec toutes les variables remplies",
+      "Version Word editable pour modifications manuelles si necessaire",
+      "Checklist de conformite validee automatiquement",
+      "Resume du contrat avec points d'attention pour le relecteur",
+      "Journal de generation avec traçabilite des sources de donnees",
+    ],
+    risks: [
+      "Erreur de remplissage de variables critiques (montants, dates, raison sociale)",
+      "Hallucination du LLM sur des clauses juridiques inexistantes ou incorrectes",
+      "Non-conformite RGPD lors du traitement des donnees personnelles des contacts",
+      "Mauvaise selection de clauses entrainant un risque juridique pour l'entreprise",
+      "Dependance a la disponibilite du CRM et des APIs de generation PDF",
+    ],
+    roiIndicatif:
+      "Reduction de 80% du temps de redaction des contrats (de 2-4h a 10-15 minutes). Diminution de 95% des erreurs de saisie et de clauses manquantes. Gain de 60% sur le temps de relecture juridique. ROI estime : 2 ETP economises par an pour une equipe commerciale de 10 personnes.",
+    recommendedStack: [
+      { name: "Claude 3.5 Sonnet", category: "LLM" },
+      { name: "n8n", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+    ],
+    architectureDiagram: "+-------------+     +----------------+     +-------------+\n|    CRM      |---->|  API Agent     |---->|  Agent LLM  |\n| (Donnees)   |     |  (FastAPI)     |     |  (Analyse)  |\n+-------------+     +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  Modeles       |<----|  Moteur de  |\n                    |  Contrats      |     |  Clauses    |\n                    +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  PDF/Word      |<----|  Generateur |\n                    |  (Sortie)      |     |  Documents  |\n                    +----------------+     +-------------+",
+    tutorial: [
+      {
+        title: "Configuration des modeles de contrats et de la base de clauses",
+        content:
+          "La premiere etape consiste a structurer votre bibliotheque de modeles de contrats. Chaque modele doit etre converti en un format exploitable par l'agent : un template avec des variables balisees. Nous utilisons le format Jinja2 pour les variables dans les documents.\n\nCommencez par identifier vos types de contrats les plus frequents : contrat de licence SaaS, contrat de prestation de services, accord-cadre, NDA. Pour chaque type, creez un modele de reference avec des variables clairement identifiees (nom_client, siret, montant_ht, duree_contrat, etc.).\n\nLa base de clauses est un element central du systeme. Chaque clause est stockee dans PostgreSQL avec des metadonnees : categorie (responsabilite, confidentialite, resiliation, SLA), secteur d'application, caractere obligatoire ou optionnel, et conditions d'inclusion automatique. Par exemple, une clause de conformite bancaire est automatiquement ajoutee pour les clients du secteur financier.\n\nInstallez les dependances Python necessaires et configurez l'acces a votre base de donnees PostgreSQL. Le schema de base comprend trois tables principales : contract_templates, clauses, et generated_contracts pour la traçabilite.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install fastapi uvicorn anthropic python-docx jinja2 psycopg2-binary pydantic python-dotenv weasyprint langfuse",
+            filename: "terminal",
+          },
+          {
+            language: "sql",
+            code: "CREATE TABLE contract_templates (\n  id SERIAL PRIMARY KEY,\n  name VARCHAR(255) NOT NULL,\n  type VARCHAR(50) NOT NULL, -- 'licence_saas', 'prestation', 'cadre', 'nda'\n  template_content TEXT NOT NULL,\n  variables JSONB NOT NULL, -- liste des variables attendues\n  is_active BOOLEAN DEFAULT true,\n  created_at TIMESTAMP DEFAULT NOW()\n);\n\nCREATE TABLE clauses (\n  id SERIAL PRIMARY KEY,\n  title VARCHAR(255) NOT NULL,\n  content TEXT NOT NULL,\n  category VARCHAR(100) NOT NULL, -- 'responsabilite', 'confidentialite', 'sla', 'resiliation'\n  sectors TEXT[] DEFAULT '{}', -- secteurs applicables\n  is_mandatory BOOLEAN DEFAULT false,\n  min_contract_amount DECIMAL, -- seuil de montant pour inclusion auto\n  created_at TIMESTAMP DEFAULT NOW()\n);\n\nCREATE TABLE generated_contracts (\n  id SERIAL PRIMARY KEY,\n  client_id VARCHAR(100) NOT NULL,\n  template_id INTEGER REFERENCES contract_templates(id),\n  variables_used JSONB NOT NULL,\n  clauses_included INTEGER[] NOT NULL,\n  pdf_path VARCHAR(500),\n  status VARCHAR(50) DEFAULT 'draft', -- 'draft', 'review', 'approved', 'signed'\n  generated_by VARCHAR(100),\n  reviewed_by VARCHAR(100),\n  created_at TIMESTAMP DEFAULT NOW()\n);",
+            filename: "schema.sql",
+          },
+          {
+            language: "python",
+            code: "from pydantic import BaseModel\nfrom typing import Optional\nfrom enum import Enum\n\nclass ContractType(str, Enum):\n    LICENCE_SAAS = \"licence_saas\"\n    PRESTATION = \"prestation\"\n    CADRE = \"cadre\"\n    NDA = \"nda\"\n\nclass ContractRequest(BaseModel):\n    client_id: str\n    contract_type: ContractType\n    montant_ht: float\n    duree_mois: int\n    conditions_paiement: str = \"30 jours fin de mois\"\n    clauses_supplementaires: Optional[list[str]] = None\n\nclass ClientData(BaseModel):\n    raison_sociale: str\n    siret: str\n    adresse: str\n    contact_nom: str\n    contact_email: str\n    contact_telephone: str\n    secteur: str\n    historique_ca: Optional[float] = None",
+            filename: "models.py",
+          },
+        ],
+      },
+      {
+        title: "Integration CRM et extraction des donnees client",
+        content:
+          "L'agent doit pouvoir interroger votre CRM pour recuperer les donnees client a jour. Nous implementons un connecteur generique qui supporte les CRM les plus courants (Salesforce, HubSpot, Pipedrive) via leurs APIs respectives. Le connecteur abstrait les differences entre les CRM derriere une interface unifiee.\n\nLorsqu'une demande de generation de contrat arrive, l'agent commence par extraire toutes les informations necessaires depuis le CRM : donnees legales de l'entreprise (raison sociale, SIRET, adresse du siege), coordonnees du contact signataire, historique commercial (CA cumule, nombre de contrats precedents), et le secteur d'activite du client. Ces informations sont validees avant d'etre injectees dans le contrat.\n\nL'agent LLM intervient ici pour analyser le contexte du deal et enrichir la requete. A partir de la description commerciale du deal dans le CRM, il identifie les besoins specifiques qui doivent se refleter dans le contrat : perimetre fonctionnel, niveaux de SLA attendus, conditions particulieres negociees.\n\nUn systeme de cache est mis en place pour eviter les appels CRM redondants. Les donnees client sont cachees pendant 1 heure avec invalidation automatique en cas de mise a jour dans le CRM via webhook.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import httpx\nimport os\nfrom models import ClientData\nfrom functools import lru_cache\n\nclass CRMConnector:\n    def __init__(self):\n        self.base_url = os.getenv(\"CRM_API_URL\")\n        self.api_key = os.getenv(\"CRM_API_KEY\")\n        self.headers = {\"Authorization\": f\"Bearer {self.api_key}\"}\n\n    async def get_client_data(self, client_id: str) -> ClientData:\n        async with httpx.AsyncClient() as client:\n            response = await client.get(\n                f\"{self.base_url}/contacts/{client_id}\",\n                headers=self.headers,\n            )\n            response.raise_for_status()\n            data = response.json()\n\n            company_response = await client.get(\n                f\"{self.base_url}/companies/{data['company_id']}\",\n                headers=self.headers,\n            )\n            company = company_response.json()\n\n            return ClientData(\n                raison_sociale=company[\"name\"],\n                siret=company.get(\"siret\", \"\"),\n                adresse=company.get(\"address\", \"\"),\n                contact_nom=f\"{data['first_name']} {data['last_name']}\",\n                contact_email=data[\"email\"],\n                contact_telephone=data.get(\"phone\", \"\"),\n                secteur=company.get(\"industry\", \"Autres\"),\n                historique_ca=company.get(\"total_revenue\", 0),\n            )\n\n    async def get_deal_context(self, deal_id: str) -> dict:\n        async with httpx.AsyncClient() as client:\n            response = await client.get(\n                f\"{self.base_url}/deals/{deal_id}\",\n                headers=self.headers,\n            )\n            deal = response.json()\n            return {\n                \"description\": deal.get(\"description\", \"\"),\n                \"montant\": deal.get(\"amount\", 0),\n                \"produits\": deal.get(\"line_items\", []),\n                \"notes\": deal.get(\"notes\", \"\"),\n            }",
+            filename: "crm_connector.py",
+          },
+          {
+            language: "python",
+            code: "from anthropic import Anthropic\nimport json\nimport os\n\nanthopic_client = Anthropic(api_key=os.getenv(\"ANTHROPIC_API_KEY\"))\n\nasync def analyze_deal_for_clauses(deal_context: dict, client_data: ClientData) -> dict:\n    prompt = f\"\"\"Analyse le contexte commercial suivant et identifie les elements\n    contractuels importants.\n\n    Client : {client_data.raison_sociale} (secteur : {client_data.secteur})\n    Description du deal : {deal_context['description']}\n    Montant : {deal_context['montant']} EUR HT\n    Produits : {json.dumps(deal_context['produits'], ensure_ascii=False)}\n\n    Reponds en JSON avec les champs suivants :\n    - clauses_recommandees: liste de categories de clauses a inclure\n    - sla_niveau: \"standard\" | \"premium\" | \"enterprise\"\n    - conditions_particulieres: liste de conditions specifiques identifiees\n    - risques_identifies: liste de points de vigilance juridique\"\"\"\n\n    response = anthopic_client.messages.create(\n        model=\"claude-3-5-sonnet-latest\",\n        max_tokens=1024,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return json.loads(response.content[0].text)",
+            filename: "deal_analyzer.py",
+          },
+        ],
+      },
+      {
+        title: "Moteur de selection de clauses et assemblage du contrat",
+        content:
+          "Le moteur de clauses est le composant qui assemble intelligemment le contrat final. Il combine le modele de base, les variables remplies avec les donnees CRM, et les clauses selectionnees par l'agent LLM. La selection des clauses suit un algorithme en trois etapes.\n\nPremierement, les clauses obligatoires sont systematiquement incluses : elles correspondent aux mentions legales requises et aux clauses standard de votre entreprise. Deuxiemement, les clauses sectorielles sont ajoutees en fonction du secteur du client (conformite bancaire pour la finance, protection des donnees de sante pour le medical, etc.). Troisiemement, l'agent LLM recommande des clauses supplementaires basees sur l'analyse du deal.\n\nL'assemblage final utilise Jinja2 pour le remplissage des variables et python-docx pour la manipulation du document Word. Chaque variable est validee avant insertion : les montants sont formates en euros avec separateur de milliers, les dates suivent le format francais, les raisons sociales sont en majuscules conformement aux usages juridiques.\n\nUn systeme de validation pre-generation verifie la coherence du contrat : toutes les variables obligatoires sont remplies, les montants sont positifs, la duree est raisonnable, les clauses ne se contredisent pas. En cas d'incoherence, l'agent signale le probleme et propose une correction.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import psycopg2\nimport psycopg2.extras\nfrom jinja2 import Template\nfrom datetime import datetime, timedelta\nfrom models import ContractRequest, ClientData\n\nclass ClauseEngine:\n    def __init__(self, db_connection):\n        self.conn = db_connection\n\n    def get_mandatory_clauses(self) -> list[dict]:\n        with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:\n            cur.execute(\n                \"SELECT * FROM clauses WHERE is_mandatory = true ORDER BY category\"\n            )\n            return cur.fetchall()\n\n    def get_sector_clauses(self, secteur: str) -> list[dict]:\n        with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:\n            cur.execute(\n                \"SELECT * FROM clauses WHERE %s = ANY(sectors) AND is_mandatory = false\",\n                (secteur,),\n            )\n            return cur.fetchall()\n\n    def get_amount_clauses(self, montant: float) -> list[dict]:\n        with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:\n            cur.execute(\n                \"SELECT * FROM clauses WHERE min_contract_amount IS NOT NULL AND min_contract_amount <= %s AND is_mandatory = false\",\n                (montant,),\n            )\n            return cur.fetchall()\n\n    def select_clauses(\n        self, client_data: ClientData, request: ContractRequest, ai_recommendations: list[str]\n    ) -> list[dict]:\n        clauses = []\n        clauses.extend(self.get_mandatory_clauses())\n        clauses.extend(self.get_sector_clauses(client_data.secteur))\n        clauses.extend(self.get_amount_clauses(request.montant_ht))\n\n        if ai_recommendations:\n            with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:\n                cur.execute(\n                    \"SELECT * FROM clauses WHERE category = ANY(%s)\",\n                    (ai_recommendations,),\n                )\n                clauses.extend(cur.fetchall())\n\n        seen_ids = set()\n        unique_clauses = []\n        for c in clauses:\n            if c[\"id\"] not in seen_ids:\n                seen_ids.add(c[\"id\"])\n                unique_clauses.append(c)\n        return unique_clauses",
+            filename: "clause_engine.py",
+          },
+          {
+            language: "python",
+            code: "from jinja2 import Template\nfrom datetime import datetime, timedelta\nimport locale\n\nlocale.setlocale(locale.LC_ALL, \"fr_FR.UTF-8\")\n\ndef prepare_variables(client_data: ClientData, request: ContractRequest) -> dict:\n    date_debut = datetime.now()\n    date_fin = date_debut + timedelta(days=request.duree_mois * 30)\n\n    return {\n        \"raison_sociale\": client_data.raison_sociale.upper(),\n        \"siret\": client_data.siret,\n        \"adresse_siege\": client_data.adresse,\n        \"contact_nom\": client_data.contact_nom,\n        \"contact_email\": client_data.contact_email,\n        \"montant_ht\": locale.format_string(\"%.2f\", request.montant_ht, grouping=True),\n        \"montant_tva\": locale.format_string(\"%.2f\", request.montant_ht * 0.20, grouping=True),\n        \"montant_ttc\": locale.format_string(\"%.2f\", request.montant_ht * 1.20, grouping=True),\n        \"duree_mois\": str(request.duree_mois),\n        \"date_debut\": date_debut.strftime(\"%d/%m/%Y\"),\n        \"date_fin\": date_fin.strftime(\"%d/%m/%Y\"),\n        \"conditions_paiement\": request.conditions_paiement,\n        \"date_generation\": datetime.now().strftime(\"%d/%m/%Y a %H:%M\"),\n    }\n\ndef validate_variables(variables: dict, required_fields: list[str]) -> list[str]:\n    errors = []\n    for field in required_fields:\n        if field not in variables or not variables[field]:\n            errors.append(f\"Variable obligatoire manquante : {field}\")\n    if not variables.get(\"siret\") or len(variables[\"siret\"].replace(\" \", \"\")) != 14:\n        errors.append(\"Numero SIRET invalide\")\n    return errors",
+            filename: "variable_engine.py",
+          },
+        ],
+      },
+      {
+        title: "Generation PDF et deploiement de l'agent",
+        content:
+          "La derniere etape consiste a generer le document final en PDF a partir du contrat assemble. Nous utilisons python-docx pour creer le document Word intermediaire avec une mise en page professionnelle, puis WeasyPrint pour la conversion en PDF.\n\nLe document genere inclut automatiquement : une page de garde avec les logos des deux parties, un sommaire cliquable, les articles numerotes avec les clauses selectionnees, les annexes techniques le cas echeant, et un bloc de signatures en derniere page. La mise en forme respecte les standards juridiques francais.\n\nDeployez l'API sur Vercel avec les fonctions serverless. Creez un endpoint POST /api/generate-contract qui recoit une requete ContractRequest, orchestre l'ensemble du processus (extraction CRM, analyse LLM, selection clauses, assemblage, generation PDF) et retourne le document genere.\n\nIntegrez Langfuse pour le monitoring de la qualite. Chaque generation est tracee avec les metriques cles : temps de generation total, nombre de clauses selectionnees, score de confiance de l'analyse LLM, et statut de validation. Configurez des alertes si le temps de generation depasse 60 secondes ou si des erreurs de validation sont detectees.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from docx import Document\nfrom docx.shared import Pt, Inches, Cm\nfrom docx.enum.text import WD_ALIGN_PARAGRAPH\nimport weasyprint\nimport tempfile\nimport os\n\nclass ContractGenerator:\n    def __init__(self, templates_dir: str):\n        self.templates_dir = templates_dir\n\n    def generate_docx(self, template_name: str, variables: dict, clauses: list[dict]) -> str:\n        template_path = os.path.join(self.templates_dir, f\"{template_name}.docx\")\n        doc = Document(template_path)\n\n        for paragraph in doc.paragraphs:\n            for key, value in variables.items():\n                placeholder = \"{{\" + key + \"}}\"\n                if placeholder in paragraph.text:\n                    paragraph.text = paragraph.text.replace(placeholder, str(value))\n\n        clauses_by_category = {}\n        for clause in clauses:\n            cat = clause[\"category\"]\n            if cat not in clauses_by_category:\n                clauses_by_category[cat] = []\n            clauses_by_category[cat].append(clause)\n\n        article_num = 1\n        for category, cat_clauses in clauses_by_category.items():\n            heading = doc.add_heading(f\"Article {article_num} - {category.title()}\", level=2)\n            for clause in cat_clauses:\n                doc.add_heading(clause[\"title\"], level=3)\n                doc.add_paragraph(clause[\"content\"])\n            article_num += 1\n\n        doc.add_page_break()\n        signatures = doc.add_paragraph()\n        signatures.alignment = WD_ALIGN_PARAGRAPH.CENTER\n        signatures.add_run(\"Fait en deux exemplaires originaux\\n\\n\").bold = True\n        signatures.add_run(f\"Pour le Prestataire\\n\\n\\n_________________________\\n\\n\")\n        signatures.add_run(f\"Pour le Client : {variables['raison_sociale']}\\n\\n\\n_________________________\")\n\n        output_path = tempfile.mktemp(suffix=\".docx\")\n        doc.save(output_path)\n        return output_path\n\n    def convert_to_pdf(self, docx_path: str) -> str:\n        pdf_path = docx_path.replace(\".docx\", \".pdf\")\n        html_content = self._docx_to_html(docx_path)\n        weasyprint.HTML(string=html_content).write_pdf(pdf_path)\n        return pdf_path",
+            filename: "contract_generator.py",
+          },
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, HTTPException\nfrom langfuse import Langfuse\nfrom models import ContractRequest\nfrom crm_connector import CRMConnector\nfrom deal_analyzer import analyze_deal_for_clauses\nfrom clause_engine import ClauseEngine\nfrom variable_engine import prepare_variables, validate_variables\nfrom contract_generator import ContractGenerator\nimport psycopg2\nimport os\nimport time\n\napp = FastAPI(title=\"Agent Generation Contrats\")\nlangfuse = Langfuse()\ncrm = CRMConnector()\n\n@app.post(\"/api/generate-contract\")\nasync def generate_contract(request: ContractRequest):\n    trace = langfuse.trace(name=\"contract-generation\", input=request.dict())\n    start_time = time.time()\n\n    try:\n        client_data = await crm.get_client_data(request.client_id)\n        trace.span(name=\"crm-extraction\", input={\"client_id\": request.client_id})\n\n        deal_context = await crm.get_deal_context(request.client_id)\n        analysis = await analyze_deal_for_clauses(deal_context, client_data)\n        trace.span(name=\"llm-analysis\", output=analysis)\n\n        conn = psycopg2.connect(os.getenv(\"DATABASE_URL\"))\n        engine = ClauseEngine(conn)\n        clauses = engine.select_clauses(\n            client_data, request, analysis.get(\"clauses_recommandees\", [])\n        )\n\n        variables = prepare_variables(client_data, request)\n        errors = validate_variables(variables, [\"raison_sociale\", \"siret\", \"montant_ht\"])\n        if errors:\n            raise HTTPException(400, detail={\"errors\": errors})\n\n        generator = ContractGenerator(templates_dir=\"./templates\")\n        docx_path = generator.generate_docx(\n            request.contract_type.value, variables, clauses\n        )\n        pdf_path = generator.convert_to_pdf(docx_path)\n\n        duration = time.time() - start_time\n        trace.span(name=\"generation-complete\", output={\n            \"duration_seconds\": duration,\n            \"clauses_count\": len(clauses),\n            \"pdf_path\": pdf_path,\n        })\n\n        return {\n            \"status\": \"success\",\n            \"pdf_url\": f\"/downloads/{os.path.basename(pdf_path)}\",\n            \"clauses_included\": len(clauses),\n            \"generation_time\": f\"{duration:.1f}s\",\n            \"review_checklist\": analysis.get(\"risques_identifies\", []),\n        }\n    except Exception as e:\n        trace.span(name=\"error\", output={\"error\": str(e)})\n        raise HTTPException(500, detail=str(e))",
+            filename: "main.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les contrats contiennent des donnees personnelles sensibles (noms, adresses, SIRET, coordonnees). Les donnees sont chiffrees en transit (TLS 1.3) et au repos (AES-256). Les documents generes sont stockes dans un bucket S3 chiffre avec acces restreint par role IAM. Les donnees envoyees au LLM sont anonymisees : les SIRET et numeros de telephone sont pseudonymises avant l'appel API. Conformite RGPD assuree avec droit a l'effacement des contrats et donnees associees sur demande. Retention limitee a 5 ans conformement aux obligations legales.",
+      auditLog: "Chaque generation de contrat est integralement tracee : identifiant unique de generation, horodatage, utilisateur demandeur, client concerne, modele utilise, variables injectees, clauses selectionnees (avec justification de selection), temps de generation, et statut de validation. Tous les appels au LLM sont logges dans Langfuse avec les prompts et reponses. Les modifications post-generation sont versionees. Retention des logs de 24 mois minimum.",
+      humanInTheLoop: "Chaque contrat genere passe obligatoirement par une etape de validation humaine avant envoi au client. Les contrats depassant un seuil de montant configurable (par defaut 50 000 EUR) necessitent une double validation (commercial + juridique). Les clauses ajoutees par recommandation IA sont marquees visuellement dans le document pour attirer l'attention du relecteur. Un workflow d'approbation est integre avec notifications par email et Slack.",
+      monitoring: "Dashboard temps reel dans Langfuse : nombre de contrats generes par jour, temps moyen de generation, taux d'erreurs de validation, repartition par type de contrat, top des clauses les plus utilisees. Alertes configurees sur : temps de generation superieur a 60 secondes, taux d'erreur superieur a 5%, echec de connexion CRM. Rapport hebdomadaire automatique envoye a l'equipe juridique.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (demande de contrat depuis le CRM) -> Node HTTP Request (extraction donnees client CRM) -> Node Code (preparation des variables) -> Node HTTP Request (analyse LLM Claude pour selection clauses) -> Node Postgres (recuperation clauses) -> Node Code (assemblage contrat et validation) -> Node HTTP Request (generation PDF) -> Node IF (validation OK ?) -> Branch OK : Node Email (envoi au relecteur) + Node Slack (notification) -> Branch Erreur : Node Slack (alerte equipe).",
+      nodes: ["Webhook (demande CRM)", "HTTP Request (CRM API)", "Code (preparation variables)", "HTTP Request (Claude LLM)", "Postgres (clauses)", "Code (assemblage)", "HTTP Request (generation PDF)", "IF (validation)", "Email (envoi relecteur)", "Slack (notification)"],
+      triggerType: "Webhook (demande depuis CRM ou formulaire interne)",
+    },
+    estimatedTime: "8-12h",
+    difficulty: "Moyen",
+    sectors: ["B2B SaaS", "Services", "Audit", "Assurance"],
+    metiers: ["Conformite", "Commercial"],
+    functions: ["Legal", "Sales"],
+    metaTitle: "Agent IA de Generation de Contrats -- Guide Complet",
+    metaDescription:
+      "Automatisez la generation de contrats commerciaux avec un agent IA connecte a votre CRM. Modeles, clauses intelligentes et PDF en 10 minutes. Tutoriel complet.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-audit-securite-code",
+    title: "Agent IA d'Audit de Securite de Code",
+    subtitle: "Analysez automatiquement votre code source pour detecter les vulnerabilites OWASP et les failles de securite",
+    problem:
+      "Les audits de securite du code sont traditionnellement realises de maniere ponctuelle, souvent uniquement avant les mises en production majeures. Les revues manuelles sont lentes (plusieurs jours pour une application moyenne), couteuses (consultants specialises) et inconsistantes (dependantes de l'expertise individuelle du revieweur). Les developpeurs introduisent des vulnerabilites sans le savoir : injections SQL, failles XSS, gestion incorrecte des secrets, dependances obsoletes avec des CVE connues. Les outils SAST classiques generent trop de faux positifs et ne comprennent pas le contexte metier du code, ce qui conduit les equipes a ignorer les alertes.",
+    value:
+      "Un agent IA analyse chaque Pull Request en temps reel et identifie les vulnerabilites du Top 10 OWASP : injections SQL, XSS, authentification cassee, exposition de donnees sensibles, mauvaise configuration de securite. L'agent comprend le contexte du code grace a l'analyse AST (Abstract Syntax Tree) et fournit non seulement l'alerte mais aussi une explication detaillee de la faille, un exemple d'exploitation, et un snippet de code corrige. Les dependances sont verifiees contre les bases CVE. Le taux de faux positifs est reduit de 80% par rapport aux outils SAST classiques grace a la comprehension contextuelle du LLM. La securite devient continue plutot que ponctuelle.",
+    inputs: [
+      "Code source des Pull Requests (diff et fichiers complets)",
+      "Historique des vulnerabilites detectees et corrigees",
+      "Configuration des regles de securite specifiques au projet",
+      "Base de donnees CVE pour les dependances (NVD, GitHub Advisory)",
+      "Fichiers de configuration (Dockerfile, CI/CD, env) pour analyse de la surface d'attaque",
+    ],
+    outputs: [
+      "Rapport de securite detaille par Pull Request avec niveau de severite",
+      "Commentaires inline sur les lignes de code vulnerables dans la PR",
+      "Suggestions de correction avec snippets de code prets a l'emploi",
+      "Score de securite global du repository avec evolution temporelle",
+      "Tableau de bord des vulnerabilites par categorie OWASP et par equipe",
+    ],
+    risks: [
+      "Faux negatifs : vulnerabilites critiques non detectees par le LLM",
+      "Faux positifs excessifs entrainant une fatigue d'alerte chez les developpeurs",
+      "Exposition du code source proprietaire au fournisseur LLM cloud",
+      "Latence d'analyse bloquant le pipeline CI/CD",
+      "Hallucination du LLM sur des vulnerabilites inexistantes ou des corrections incorrectes",
+    ],
+    roiIndicatif:
+      "Detection de 85% des vulnerabilites supplementaires avant mise en production. Reduction de 60% du temps de revue de securite manuelle. Diminution de 90% des incidents de securite en production. ROI estime : prevention de 3 a 5 incidents de securite majeurs par an, representant chacun un cout moyen de 50 000 a 200 000 EUR.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "AWS Lambda", category: "Hosting" },
+      { name: "Datadog", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + CodeLlama", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: "+-------------+     +----------------+     +-------------+\n|  GitHub     |---->|  Webhook API   |---->|  Agent LLM  |\n|  (PR Event) |     |  (Lambda)      |     |  (Analyse)  |\n+-------------+     +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  AST Parser    |<----|  Moteur de  |\n                    |  + CVE DB      |     |  Detection  |\n                    +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  GitHub API    |<----|  Rapporteur |\n                    |  (Commentaires)|     |  (Resultats)|\n                    +----------------+     +-------------+",
+    tutorial: [
+      {
+        title: "Integration Git et reception des Pull Requests",
+        content:
+          "La premiere etape consiste a configurer un webhook GitHub (ou GitLab) pour recevoir les evenements de Pull Request. Chaque fois qu'une PR est ouverte ou mise a jour, votre agent recoit le diff du code modifie et peut demarrer l'analyse de securite automatiquement.\n\nCreez une application GitHub ou un webhook de repository qui envoie les evenements 'pull_request' a votre API. Le webhook inclut les metadonnees de la PR (auteur, branche, description) et un lien vers le diff. Vous devez ensuite utiliser l'API GitHub pour recuperer le contenu complet des fichiers modifies, car le diff seul ne suffit pas pour comprendre le contexte.\n\nConfigurez l'authentification avec un token GitHub App pour acceder aux repositories prives. Le token doit avoir les permissions 'contents:read' et 'pull_requests:write' pour lire le code et poster des commentaires de revue.\n\nInstallez les dependances Python. Nous utilisons tree-sitter pour l'analyse AST multi-langages (Python, JavaScript, TypeScript, Java, Go), LangChain pour l'orchestration de l'agent, et les clients GitHub et OpenAI.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: "pip install fastapi uvicorn langchain openai httpx python-dotenv pydantic tree-sitter tree-sitter-python tree-sitter-javascript psycopg2-binary datadog-api-client PyGithub",
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, Request, HTTPException\nfrom github import Github, GithubIntegration\nimport hmac\nimport hashlib\nimport os\nimport json\n\napp = FastAPI(title=\"Agent Audit Securite Code\")\n\ndef verify_github_signature(payload: bytes, signature: str) -> bool:\n    secret = os.getenv(\"GITHUB_WEBHOOK_SECRET\").encode()\n    expected = \"sha256=\" + hmac.new(secret, payload, hashlib.sha256).hexdigest()\n    return hmac.compare_digest(expected, signature)\n\n@app.post(\"/webhook/github\")\nasync def github_webhook(request: Request):\n    payload = await request.body()\n    signature = request.headers.get(\"X-Hub-Signature-256\", \"\")\n\n    if not verify_github_signature(payload, signature):\n        raise HTTPException(403, \"Signature invalide\")\n\n    event = request.headers.get(\"X-GitHub-Event\")\n    data = json.loads(payload)\n\n    if event == \"pull_request\" and data[\"action\"] in [\"opened\", \"synchronize\"]:\n        pr_number = data[\"pull_request\"][\"number\"]\n        repo_name = data[\"repository\"][\"full_name\"]\n        base_sha = data[\"pull_request\"][\"base\"][\"sha\"]\n        head_sha = data[\"pull_request\"][\"head\"][\"sha\"]\n\n        await analyze_pull_request(repo_name, pr_number, base_sha, head_sha)\n\n    return {\"status\": \"ok\"}\n\nasync def get_pr_files(repo_name: str, pr_number: int) -> list[dict]:\n    g = Github(os.getenv(\"GITHUB_TOKEN\"))\n    repo = g.get_repo(repo_name)\n    pr = repo.get_pull(pr_number)\n    files = []\n    for f in pr.get_files():\n        if f.status != \"removed\" and f.filename.endswith(\n            (\".py\", \".js\", \".ts\", \".java\", \".go\", \".rb\", \".php\")\n        ):\n            content = repo.get_contents(f.filename, ref=pr.head.sha)\n            files.append({\n                \"filename\": f.filename,\n                \"patch\": f.patch,\n                \"content\": content.decoded_content.decode(\"utf-8\"),\n                \"additions\": f.additions,\n                \"language\": f.filename.rsplit(\".\", 1)[-1],\n            })\n    return files",
+            filename: "webhook_handler.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse AST et detection des patterns de vulnerabilites",
+        content:
+          "L'analyse AST (Abstract Syntax Tree) est la cle pour reduire les faux positifs. Plutot que d'analyser le code comme du texte brut, nous le parsons en arbre syntaxique pour comprendre la structure : quelles fonctions sont appelees, comment les donnees circulent des entrees utilisateur vers les requetes base de donnees, ou sont geres les secrets.\n\nNous utilisons tree-sitter, un parseur incremental multi-langages, pour generer l'AST de chaque fichier. Le parseur identifie les noeuds critiques : appels de fonctions de base de donnees, manipulation de HTML, lecture de variables d'environnement, imports de bibliotheques cryptographiques, gestion des entrees utilisateur.\n\nLe moteur de detection combine deux approches : une analyse statique basee sur des patterns connus (regles codees en dur pour les injections SQL, XSS, etc.) et une analyse contextuelle par le LLM qui comprend la logique metier du code. L'analyse statique est rapide et precise pour les patterns simples, tandis que le LLM excelle sur les vulnerabilites subtiles qui necessitent de comprendre le flux de donnees.\n\nChaque vulnerabilite detectee est classee selon le framework OWASP Top 10 avec un niveau de severite (critique, haute, moyenne, basse, informationnelle). Le contexte complet est fourni : ligne de code concernee, explication de la faille, scenario d'exploitation, et proposition de correction.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import tree_sitter_python as tspython\nimport tree_sitter_javascript as tsjavascript\nfrom tree_sitter import Language, Parser\nfrom dataclasses import dataclass\nfrom enum import Enum\n\nclass Severity(str, Enum):\n    CRITICAL = \"critique\"\n    HIGH = \"haute\"\n    MEDIUM = \"moyenne\"\n    LOW = \"basse\"\n    INFO = \"informationnelle\"\n\nclass OWASPCategory(str, Enum):\n    INJECTION = \"A03:2021 - Injection\"\n    BROKEN_AUTH = \"A07:2021 - Identification et authentification\"\n    SENSITIVE_DATA = \"A02:2021 - Defaillances cryptographiques\"\n    XSS = \"A03:2021 - Injection (XSS)\"\n    MISCONFIG = \"A05:2021 - Mauvaise configuration de securite\"\n    VULNERABLE_DEPS = \"A06:2021 - Composants vulnerables et obsoletes\"\n    BROKEN_ACCESS = \"A01:2021 - Controle d'acces defaillant\"\n\n@dataclass\nclass Vulnerability:\n    file: str\n    line: int\n    severity: Severity\n    category: OWASPCategory\n    title: str\n    description: str\n    exploit_scenario: str\n    fix_suggestion: str\n    code_snippet: str\n    fixed_code: str\n\nclass ASTAnalyzer:\n    def __init__(self):\n        self.py_language = Language(tspython.language())\n        self.js_language = Language(tsjavascript.language())\n        self.parser = Parser()\n\n    def analyze_python(self, code: str, filename: str) -> list[dict]:\n        self.parser.language = self.py_language\n        tree = self.parser.parse(bytes(code, \"utf-8\"))\n        findings = []\n\n        self._check_sql_injection(tree.root_node, code, filename, findings)\n        self._check_hardcoded_secrets(tree.root_node, code, filename, findings)\n        self._check_unsafe_deserialization(tree.root_node, code, filename, findings)\n        self._check_command_injection(tree.root_node, code, filename, findings)\n\n        return findings\n\n    def _check_sql_injection(self, node, code: str, filename: str, findings: list):\n        if node.type == \"call\":\n            func_text = code[node.start_byte:node.end_byte]\n            if any(kw in func_text.lower() for kw in [\"execute(\", \"raw(\", \"rawquery(\"]):\n                if \"f\\\"\" in func_text or \"format(\" in func_text or \"%s\" not in func_text:\n                    if \".format(\" in func_text or \"f\\\"\" in func_text or \"f'\" in func_text:\n                        findings.append({\n                            \"type\": \"sql_injection\",\n                            \"line\": node.start_point[0] + 1,\n                            \"file\": filename,\n                            \"code\": func_text,\n                            \"severity\": \"critique\",\n                        })\n        for child in node.children:\n            self._check_sql_injection(child, code, filename, findings)",
+            filename: "ast_analyzer.py",
+          },
+          {
+            language: "python",
+            code: "import re\nfrom ast_analyzer import Vulnerability, Severity, OWASPCategory\n\nSECRET_PATTERNS = [\n    (r'(?i)(password|passwd|pwd|secret|token|api_key|apikey)\\s*=\\s*[\"\\'][^\"\\']{8,}[\"\\']', \"Secret code en dur\"),\n    (r'(?i)(aws_access_key_id|aws_secret_access_key)\\s*=\\s*[\"\\'][A-Za-z0-9/+=]{20,}[\"\\']', \"Cle AWS en dur\"),\n    (r'(?i)bearer\\s+[A-Za-z0-9\\-._~+/]+=*', \"Token Bearer en dur\"),\n    (r'-----BEGIN (RSA |EC )?PRIVATE KEY-----', \"Cle privee dans le code\"),\n]\n\nUNSAFE_FUNCTIONS = {\n    \"python\": {\n        \"eval(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"exec(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"pickle.loads(\": (\"Deserialisation non securisee\", Severity.HIGH),\n        \"yaml.load(\": (\"Deserialisation YAML non securisee\", Severity.HIGH),\n        \"subprocess.call(shell=True\": (\"Injection de commande OS\", Severity.CRITICAL),\n        \"os.system(\": (\"Injection de commande OS\", Severity.CRITICAL),\n        \"__import__(\": (\"Import dynamique non securise\", Severity.MEDIUM),\n    },\n    \"javascript\": {\n        \"eval(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"innerHTML\": (\"Risque de XSS\", Severity.HIGH),\n        \"document.write(\": (\"Risque de XSS\", Severity.HIGH),\n        \"dangerouslySetInnerHTML\": (\"Risque de XSS dans React\", Severity.HIGH),\n        \"child_process.exec(\": (\"Injection de commande OS\", Severity.CRITICAL),\n    },\n}\n\ndef scan_for_secrets(code: str, filename: str) -> list[Vulnerability]:\n    vulnerabilities = []\n    lines = code.split(\"\\n\")\n    for i, line in enumerate(lines):\n        for pattern, description in SECRET_PATTERNS:\n            if re.search(pattern, line):\n                vulnerabilities.append(Vulnerability(\n                    file=filename,\n                    line=i + 1,\n                    severity=Severity.CRITICAL,\n                    category=OWASPCategory.SENSITIVE_DATA,\n                    title=description,\n                    description=f\"Un secret semble etre code en dur dans le fichier. \"\n                                f\"Les secrets doivent etre stockes dans des variables d'environnement \"\n                                f\"ou un gestionnaire de secrets (Vault, AWS Secrets Manager).\",\n                    exploit_scenario=f\"Un attaquant ayant acces au code source (fuite, depot public) \"\n                                     f\"peut extraire le secret et l'utiliser pour acceder aux systemes proteges.\",\n                    fix_suggestion=f\"Deplacez le secret dans une variable d'environnement \"\n                                   f\"et utilisez os.getenv() pour le lire.\",\n                    code_snippet=line.strip(),\n                    fixed_code=\"# Utiliser une variable d'environnement\\nimport os\\nvalue = os.getenv('SECRET_NAME')\",\n                ))\n    return vulnerabilities",
+            filename: "pattern_scanner.py",
+          },
+        ],
+      },
+      {
+        title: "Analyse contextuelle par LLM et generation des rapports",
+        content:
+          "L'analyse contextuelle par LLM est le differenciateur principal de cet agent par rapport aux outils SAST classiques. Le LLM comprend la logique metier du code et peut identifier des vulnerabilites subtiles que les regles statiques ne detectent pas : validation insuffisante des roles dans un middleware d'autorisation, fuite de donnees sensibles via des logs trop verbeux, conditions de course dans la gestion de sessions.\n\nL'agent envoie au LLM le code complet des fichiers modifies avec le contexte des fichiers adjacents (imports, classes parentes, middleware). Le prompt est structure pour guider l'analyse selon les categories OWASP et exiger des reponses structurees en JSON avec tous les champs necessaires au rapport.\n\nPour chaque vulnerabilite detectee, le LLM genere une explication pedagogique destinee au developpeur : pourquoi c'est dangereux, comment un attaquant pourrait l'exploiter, et un snippet de code corrige pret a copier-coller. Cette approche educative ameliore la securite a long terme en formant les developpeurs.\n\nLe rapport de securite est publie directement comme commentaire de revue sur la Pull Request GitHub. Les vulnerabilites critiques et hautes bloquent automatiquement le merge via un check status. Les vulnerabilites moyennes et basses sont des avertissements informatifs.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from langchain.chat_models import ChatOpenAI\nfrom langchain.prompts import ChatPromptTemplate\nimport json\nfrom ast_analyzer import Vulnerability, Severity, OWASPCategory\n\nSECURITY_PROMPT = ChatPromptTemplate.from_messages([\n    (\"system\", \"\"\"Tu es un expert en securite applicative specialise dans l'audit de code.\nAnalyse le code source fourni et identifie les vulnerabilites de securite.\n\nPour chaque vulnerabilite trouvee, reponds en JSON avec ce schema :\n{{\n  \"vulnerabilities\": [\n    {{\n      \"line\": <numero de ligne>,\n      \"severity\": \"critique\" | \"haute\" | \"moyenne\" | \"basse\",\n      \"category\": \"<categorie OWASP>\",\n      \"title\": \"<titre court>\",\n      \"description\": \"<explication detaillee en francais>\",\n      \"exploit_scenario\": \"<scenario d'exploitation>\",\n      \"fix_suggestion\": \"<explication de la correction>\",\n      \"fixed_code\": \"<code corrige>\"\n    }}\n  ],\n  \"security_score\": <score de 0 a 100>,\n  \"summary\": \"<resume en francais>\"\n}}\n\nConcentre-toi sur : injections SQL/NoSQL, XSS, authentification/autorisation,\nexposition de donnees sensibles, configuration de securite, composants vulnerables.\nNe signale que les vrais problemes, evite les faux positifs.\"\"\"),\n    (\"human\", \"\"\"Fichier : {filename} (langage : {language})\n\nDiff de la PR :\n```\n{patch}\n```\n\nContenu complet du fichier :\n```{language}\n{content}\n```\n\nContexte du projet : {project_context}\n\nAnalyse les modifications et le fichier complet pour detecter les vulnerabilites.\"\"\")\n])\n\nclass LLMSecurityAnalyzer:\n    def __init__(self):\n        self.llm = ChatOpenAI(model=\"gpt-4.1\", temperature=0, max_tokens=4096)\n        self.chain = SECURITY_PROMPT | self.llm\n\n    async def analyze_file(self, file_data: dict, project_context: str) -> dict:\n        result = await self.chain.ainvoke({\n            \"filename\": file_data[\"filename\"],\n            \"language\": file_data[\"language\"],\n            \"patch\": file_data[\"patch\"],\n            \"content\": file_data[\"content\"],\n            \"project_context\": project_context,\n        })\n        return json.loads(result.content)\n\n    async def analyze_pr(self, files: list[dict], project_context: str) -> list[dict]:\n        all_vulns = []\n        total_score = 0\n        for f in files:\n            analysis = await self.analyze_file(f, project_context)\n            for vuln in analysis.get(\"vulnerabilities\", []):\n                vuln[\"file\"] = f[\"filename\"]\n                all_vulns.append(vuln)\n            total_score += analysis.get(\"security_score\", 100)\n\n        avg_score = total_score // max(len(files), 1)\n        return {\n            \"vulnerabilities\": sorted(all_vulns, key=lambda v: [\"critique\", \"haute\", \"moyenne\", \"basse\"].index(v[\"severity\"])),\n            \"security_score\": avg_score,\n            \"files_analyzed\": len(files),\n            \"total_vulnerabilities\": len(all_vulns),\n        }",
+            filename: "llm_analyzer.py",
+          },
+          {
+            language: "python",
+            code: "from github import Github\nimport os\n\nclass GitHubReporter:\n    def __init__(self):\n        self.g = Github(os.getenv(\"GITHUB_TOKEN\"))\n\n    def post_review(self, repo_name: str, pr_number: int, analysis: dict):\n        repo = self.g.get_repo(repo_name)\n        pr = repo.get_pull(pr_number)\n\n        score = analysis[\"security_score\"]\n        vulns = analysis[\"vulnerabilities\"]\n        critiques = [v for v in vulns if v[\"severity\"] == \"critique\"]\n        hautes = [v for v in vulns if v[\"severity\"] == \"haute\"]\n\n        status = \"APPROVE\" if not critiques and not hautes else \"REQUEST_CHANGES\"\n        icon = \"\\u2705\" if status == \"APPROVE\" else \"\\u274c\"\n\n        body = f\"## {icon} Rapport d'Audit de Securite\\n\\n\"\n        body += f\"**Score de securite : {score}/100**\\n\\n\"\n        body += f\"| Severite | Nombre |\\n|---|---|\\n\"\n        body += f\"| Critique | {len(critiques)} |\\n\"\n        body += f\"| Haute | {len(hautes)} |\\n\"\n        body += f\"| Moyenne | {len([v for v in vulns if v['severity'] == 'moyenne'])} |\\n\"\n        body += f\"| Basse | {len([v for v in vulns if v['severity'] == 'basse'])} |\\n\\n\"\n\n        for vuln in vulns:\n            severity_badge = {\"critique\": \"\\U0001f534\", \"haute\": \"\\U0001f7e0\", \"moyenne\": \"\\U0001f7e1\", \"basse\": \"\\U0001f535\"}\n            badge = severity_badge.get(vuln[\"severity\"], \"\")\n            body += f\"### {badge} {vuln['title']}\\n\"\n            body += f\"**Fichier :** `{vuln['file']}` ligne {vuln['line']}\\n\"\n            body += f\"**Categorie :** {vuln['category']}\\n\\n\"\n            body += f\"{vuln['description']}\\n\\n\"\n            body += f\"**Scenario d'exploitation :** {vuln['exploit_scenario']}\\n\\n\"\n            body += f\"**Correction suggeree :**\\n```\\n{vuln['fixed_code']}\\n```\\n\\n---\\n\\n\"\n\n        comments = []\n        for vuln in vulns:\n            if vuln.get(\"line\"):\n                comments.append({\n                    \"path\": vuln[\"file\"],\n                    \"line\": vuln[\"line\"],\n                    \"body\": f\"**{vuln['severity'].upper()}** - {vuln['title']}\\n\\n{vuln['description']}\\n\\nCorrection :\\n```\\n{vuln['fixed_code']}\\n```\",\n                })\n\n        pr.create_review(body=body, event=status, comments=comments)\n\n        commit = repo.get_commit(pr.head.sha)\n        state = \"failure\" if critiques or hautes else \"success\"\n        commit.create_status(\n            state=state,\n            target_url=f\"https://votre-dashboard.com/pr/{pr_number}\",\n            description=f\"Score: {score}/100 - {len(vulns)} vulnerabilite(s) detectee(s)\",\n            context=\"security-audit/ai-agent\",\n        )",
+            filename: "github_reporter.py",
+          },
+        ],
+      },
+      {
+        title: "Integration CI/CD et deploiement en production",
+        content:
+          "L'integration dans votre pipeline CI/CD est essentielle pour que l'audit de securite soit systematique et non contournable. Configurez l'agent comme un check obligatoire sur vos branches protegees : aucune PR ne peut etre mergee si des vulnerabilites critiques ou hautes sont detectees.\n\nDeployez l'API sur AWS Lambda pour beneficier du scaling automatique. Les analyses de securite peuvent etre couteuses en temps (30 secondes a 2 minutes par PR selon la taille), mais Lambda gere les executions paralleles si plusieurs PR sont ouvertes simultanement. Configurez un timeout de 5 minutes et 512 Mo de memoire.\n\nLa verification des dependances est automatisee via l'analyse des fichiers requirements.txt, package.json, go.mod et pom.xml. L'agent interroge la base NVD (National Vulnerability Database) et GitHub Advisory pour identifier les CVE connues et recommander les mises a jour.\n\nMettez en place le monitoring avec Datadog : tracez chaque analyse (duree, nombre de vulnerabilites, score), creez des dashboards d'evolution de la securite par repository et par equipe, et configurez des alertes si le score moyen de securite descend sous un seuil configurable. Un rapport hebdomadaire est genere automatiquement pour le RSSI.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from fastapi import FastAPI\nfrom webhook_handler import github_webhook, get_pr_files\nfrom ast_analyzer import ASTAnalyzer\nfrom pattern_scanner import scan_for_secrets, UNSAFE_FUNCTIONS\nfrom llm_analyzer import LLMSecurityAnalyzer\nfrom github_reporter import GitHubReporter\nfrom datadog_api_client import Configuration, ApiClient\nfrom datadog_api_client.v2.api.metrics_api import MetricsApi\nimport time\nimport os\n\napp = FastAPI(title=\"Agent Audit Securite Code\")\nast_analyzer = ASTAnalyzer()\nllm_analyzer = LLMSecurityAnalyzer()\nreporter = GitHubReporter()\n\nasync def analyze_pull_request(repo_name: str, pr_number: int, base_sha: str, head_sha: str):\n    start_time = time.time()\n\n    files = await get_pr_files(repo_name, pr_number)\n    if not files:\n        return\n\n    all_static_findings = []\n    for f in files:\n        secrets = scan_for_secrets(f[\"content\"], f[\"filename\"])\n        all_static_findings.extend(secrets)\n\n        if f[\"language\"] == \"py\":\n            ast_findings = ast_analyzer.analyze_python(f[\"content\"], f[\"filename\"])\n            all_static_findings.extend(ast_findings)\n\n    project_context = f\"Repository: {repo_name}, Langages: {set(f['language'] for f in files)}\"\n    llm_analysis = await llm_analyzer.analyze_pr(files, project_context)\n\n    combined_vulns = llm_analysis[\"vulnerabilities\"]\n    for finding in all_static_findings:\n        if hasattr(finding, \"__dict__\"):\n            combined_vulns.append(vars(finding))\n        else:\n            combined_vulns.append(finding)\n\n    seen = set()\n    unique_vulns = []\n    for v in combined_vulns:\n        key = (v.get(\"file\", \"\"), v.get(\"line\", 0), v.get(\"title\", \"\"))\n        if key not in seen:\n            seen.add(key)\n            unique_vulns.append(v)\n\n    final_analysis = {\n        \"vulnerabilities\": unique_vulns,\n        \"security_score\": llm_analysis[\"security_score\"],\n        \"files_analyzed\": len(files),\n        \"total_vulnerabilities\": len(unique_vulns),\n    }\n\n    reporter.post_review(repo_name, pr_number, final_analysis)\n\n    duration = time.time() - start_time\n    send_metrics(repo_name, pr_number, final_analysis, duration)\n\ndef send_metrics(repo_name: str, pr_number: int, analysis: dict, duration: float):\n    configuration = Configuration()\n    with ApiClient(configuration) as api_client:\n        api = MetricsApi(api_client)\n        # Metriques : score, nombre de vulnerabilites, duree d'analyse\n        print(f\"[Metrics] Repo={repo_name} PR={pr_number} Score={analysis['security_score']} \"\n              f\"Vulns={analysis['total_vulnerabilities']} Duration={duration:.1f}s\")",
+            filename: "main.py",
+          },
+          {
+            language: "yaml",
+            code: "# Configuration GitHub Actions pour integrer l'audit de securite\nname: Security Audit\n\non:\n  pull_request:\n    types: [opened, synchronize]\n\njobs:\n  security-scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n\n      - name: Declencher l'audit de securite IA\n        run: |\n          curl -X POST ${{ secrets.SECURITY_AGENT_URL }}/webhook/github \\\n            -H \"Content-Type: application/json\" \\\n            -H \"X-GitHub-Event: pull_request\" \\\n            -H \"X-Hub-Signature-256: $(echo -n '${{ toJSON(github.event) }}' | openssl dgst -sha256 -hmac ${{ secrets.WEBHOOK_SECRET }} | cut -d' ' -f2)\" \\\n            -d '${{ toJSON(github.event) }}'\n\n      - name: Attendre le resultat de l'audit\n        run: |\n          for i in $(seq 1 30); do\n            STATUS=$(gh api repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/statuses | jq -r '.[] | select(.context==\"security-audit/ai-agent\") | .state' | head -1)\n            if [ \"$STATUS\" = \"success\" ] || [ \"$STATUS\" = \"failure\" ]; then\n              echo \"Audit termine avec statut: $STATUS\"\n              [ \"$STATUS\" = \"success\" ] && exit 0 || exit 1\n            fi\n            echo \"Audit en cours... tentative $i/30\"\n            sleep 10\n          done\n          echo \"Timeout de l'audit de securite\"\n          exit 1\n        env:\n          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
+            filename: ".github/workflows/security-audit.yml",
+          },
+          {
+            language: "python",
+            code: "import httpx\nfrom dataclasses import dataclass\n\n@dataclass\nclass CVEResult:\n    cve_id: str\n    severity: str\n    package: str\n    affected_versions: str\n    fixed_version: str\n    description: str\n\nasync def check_python_deps(requirements_content: str) -> list[CVEResult]:\n    vulnerabilities = []\n    lines = requirements_content.strip().split(\"\\n\")\n\n    for line in lines:\n        line = line.strip()\n        if not line or line.startswith(\"#\"):\n            continue\n        parts = line.split(\"==\")\n        if len(parts) != 2:\n            continue\n        package, version = parts[0].strip(), parts[1].strip()\n\n        async with httpx.AsyncClient() as client:\n            response = await client.get(\n                f\"https://api.github.com/advisories\",\n                params={\"ecosystem\": \"pip\", \"package\": package},\n                headers={\"Accept\": \"application/vnd.github+json\"},\n            )\n            if response.status_code == 200:\n                advisories = response.json()\n                for adv in advisories:\n                    for vuln in adv.get(\"vulnerabilities\", []):\n                        if is_version_affected(version, vuln.get(\"vulnerable_version_range\", \"\")):\n                            vulnerabilities.append(CVEResult(\n                                cve_id=adv.get(\"cve_id\", \"N/A\"),\n                                severity=adv.get(\"severity\", \"unknown\"),\n                                package=package,\n                                affected_versions=vuln.get(\"vulnerable_version_range\", \"\"),\n                                fixed_version=vuln.get(\"first_patched_version\", {}).get(\"identifier\", \"N/A\"),\n                                description=adv.get(\"summary\", \"\"),\n                            ))\n    return vulnerabilities",
+            filename: "dependency_checker.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Le code source est une propriete intellectuelle sensible. Pour les deployments on-premise, utilisez Ollama avec CodeLlama pour que le code ne quitte jamais votre infrastructure. En mode cloud, les appels au LLM sont effectues via des endpoints conformes SOC 2 avec chiffrement TLS 1.3. Aucun code n'est stocke cote LLM (zero data retention). Les rapports de vulnerabilites sont stockes dans PostgreSQL avec chiffrement AES-256 et acces restreint par role RBAC. Retention des rapports limitee a 24 mois avec purge automatique.",
+      auditLog: "Chaque analyse de PR est integralement tracee : horodatage, repository, numero de PR, auteur, fichiers analyses, vulnerabilites detectees (avec ligne et severite), score de securite, decision (approve/block), duree d'analyse, version du modele LLM utilise. Les logs sont stockes dans PostgreSQL avec export possible vers un SIEM (Splunk, ELK). Retention de 36 mois pour conformite ISO 27001.",
+      humanInTheLoop: "Les vulnerabilites critiques declenchent une notification immediate au RSSI et au lead developpeur via Slack et email. Un processus d'exception permet a un responsable securite habilite de forcer le merge d'une PR bloquee avec justification obligatoire (documentee dans l'audit log). Les faux positifs peuvent etre marques comme tels par le developpeur, creant une regle d'exclusion soumise a validation du RSSI.",
+      monitoring: "Dashboard Datadog temps reel : score de securite moyen par repository et par equipe, evolution temporelle des vulnerabilites, top 10 des categories OWASP les plus frequentes, temps moyen d'analyse par PR, taux de faux positifs rapportes. Alertes configurees : score de securite moyen sous 70/100, vulnerabilite critique non corrigee depuis plus de 48h, echec de l'agent sur une PR. Rapport hebdomadaire automatique pour le RSSI avec tendances et recommandations.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (evenement GitHub PR) -> Node Code (extraction des fichiers modifies via GitHub API) -> Node Code (analyse AST et scan de patterns) -> Node HTTP Request (analyse LLM contextuelle) -> Node Merge (combinaison des resultats statiques et LLM) -> Node IF (vulnerabilites critiques ?) -> Branch critique : Node GitHub API (commenter PR + bloquer merge) + Node Slack (alerte RSSI) -> Branch OK : Node GitHub API (approuver PR) -> Node Postgres (sauvegarder rapport).",
+      nodes: ["Webhook (GitHub PR)", "Code (extraction fichiers)", "Code (analyse AST)", "HTTP Request (LLM analyse)", "Merge (resultats)", "IF (severite critique)", "GitHub API (commentaire PR)", "Slack (alerte RSSI)", "GitHub API (approbation)", "Postgres (sauvegarde rapport)"],
+      triggerType: "Webhook (evenement pull_request GitHub)",
+    },
+    estimatedTime: "14-20h",
+    difficulty: "Expert",
+    sectors: ["B2B SaaS", "Banque", "Tous secteurs"],
+    metiers: ["IT", "DevOps"],
+    functions: ["IT"],
+    metaTitle: "Agent IA d'Audit de Securite de Code -- Guide Complet",
+    metaDescription:
+      "Deployez un agent IA pour auditer automatiquement la securite de votre code sur chaque Pull Request. Detection OWASP, analyse AST et corrections automatiques.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-resume-documents",
+    title: "Agent IA de Resume de Documents",
+    subtitle: "Resumez automatiquement des documents longs (rapports, contrats, etudes) en quelques secondes",
+    problem:
+      "Les professionnels de la banque, de l'assurance et de l'audit passent en moyenne 3 a 4 heures par jour a lire et synthetiser des documents longs : rapports financiers de 100+ pages, contrats juridiques complexes, etudes reglementaires, notes de conformite. Les informations cles sont noyees dans des paragraphes denses, ce qui retarde les prises de decision et augmente le risque d'omission d'une clause critique ou d'un risque cache. Les outils de recherche classiques (Ctrl+F) ne suffisent pas car ils ne comprennent pas le contexte semantique du document.",
+    value:
+      "Un agent IA ingere automatiquement les documents (PDF, Word, scans via OCR), les decoupe en sections logiques, extrait les points cles, et genere des resumes structures avec des bullet points hierarchises. Pour chaque document, l'agent identifie les risques, obligations, dates limites et montants importants. Il peut comparer plusieurs documents entre eux et produire des tableaux de synthese comparative. Les analystes economisent 3 a 4 heures par jour et la qualite des syntheses est homogene et auditable.",
+    inputs: [
+      "Documents PDF (rapports financiers, contrats, etudes)",
+      "Documents Word (.docx, .doc)",
+      "Documents scannes (images, PDF scannes via OCR)",
+      "Modeles de resume personnalises (templates)",
+      "Criteres d'extraction specifiques (risques, obligations, montants)",
+    ],
+    outputs: [
+      "Resume structure avec bullet points hierarchises",
+      "Liste des risques et obligations identifies",
+      "Tableau comparatif multi-documents",
+      "Extraction des dates limites et montants cles",
+      "Document de synthese exportable (PDF, Word, Markdown)",
+    ],
+    risks: [
+      "Omission d'une clause critique dans le resume",
+      "Hallucination du LLM inventant des informations absentes du document",
+      "Mauvaise interpretation de termes juridiques ou financiers techniques",
+      "Qualite degradee sur les documents scannes de mauvaise qualite (OCR)",
+      "Non-conformite RGPD si les documents contiennent des donnees personnelles",
+    ],
+    roiIndicatif:
+      "Economie de 3 a 4 heures par analyste par jour. Reduction de 60% des erreurs d'omission dans les revues documentaires. Acceleration de 5x du temps de traitement des dossiers de conformite.",
+    recommendedStack: [
+      { name: "Claude 3.5 Sonnet", category: "LLM" },
+      { name: "n8n", category: "Orchestration" },
+      { name: "Supabase", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+    ],
+    architectureDiagram: "+-------------+     +----------------+     +-------------+\n|  Documents  |---->|  Ingestion     |---->|  OCR +       |\n|  (PDF/Word/ |     |  Pipeline      |     |  Extraction  |\n|   Scans)    |     |  (n8n)         |     |  (Tesseract) |\n+-------------+     +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  Supabase      |<----|  Chunking   |\n                    |  (Stockage +   |     |  Semantique |\n                    |   Embeddings)  |     +------+------+\n                    +----------------+            |\n                                           +------v------+\n                                           |  Agent LLM  |\n                                           |  (Resume)   |\n                                           +------+------+\n                                                  |\n                                           +------v------+\n                                           |  Export     |\n                                           |  (PDF/Word) |\n                                           +-------------+",
+    tutorial: [
+      {
+        title: "Ingestion de documents et OCR",
+        content:
+          "La premiere etape consiste a mettre en place un pipeline d'ingestion capable de traiter differents formats de documents. Le systeme doit accepter des PDF natifs, des documents Word, et des scans necessitant un traitement OCR.\n\nPour les PDF natifs, utilisez la bibliotheque PyMuPDF (fitz) qui extrait le texte avec une excellente preservation de la structure (titres, paragraphes, tableaux). Pour les documents Word, python-docx permet d'extraire le contenu en preservant la hierarchie des titres.\n\nLes documents scannes necessitent un pre-traitement OCR. Tesseract, combine avec un pre-traitement d'image via Pillow, offre de bons resultats pour les documents en francais. Pour les scans de mauvaise qualite, ajoutez une etape de nettoyage d'image (binarisation, desinclinaison, suppression du bruit).\n\nConfigurez un endpoint d'upload dans votre API FastAPI qui detecte automatiquement le type de document et applique le pipeline de traitement adapte. Stockez les documents originaux et le texte extrait dans Supabase pour un acces ulterieur.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import fitz  # PyMuPDF\nfrom docx import Document\nimport pytesseract\nfrom PIL import Image\nimport io\nfrom pathlib import Path\n\ndef extract_text_from_pdf(file_bytes: bytes) -> dict:\n    \"\"\"Extrait le texte d'un PDF natif avec structure.\"\"\"\n    doc = fitz.open(stream=file_bytes, filetype=\"pdf\")\n    pages = []\n    for page_num, page in enumerate(doc):\n        text = page.get_text(\"text\")\n        if len(text.strip()) < 50:\n            # Page probablement scannee, appliquer OCR\n            pix = page.get_pixmap(dpi=300)\n            img = Image.open(io.BytesIO(pix.tobytes(\"png\")))\n            text = pytesseract.image_to_string(img, lang=\"fra\")\n        pages.append({\"page\": page_num + 1, \"content\": text})\n    return {\"total_pages\": len(pages), \"pages\": pages}\n\ndef extract_text_from_docx(file_bytes: bytes) -> dict:\n    \"\"\"Extrait le texte d'un document Word avec hierarchie.\"\"\"\n    doc = Document(io.BytesIO(file_bytes))\n    sections = []\n    current_section = {\"title\": \"Introduction\", \"content\": []}\n    for para in doc.paragraphs:\n        if para.style.name.startswith(\"Heading\"):\n            if current_section[\"content\"]:\n                sections.append(current_section)\n            current_section = {\"title\": para.text, \"content\": []}\n        else:\n            if para.text.strip():\n                current_section[\"content\"].append(para.text)\n    sections.append(current_section)\n    return {\"sections\": sections}",
+            filename: "document_ingestion.py",
+          },
+        ],
+      },
+      {
+        title: "Strategie de decoupage (chunking) semantique",
+        content:
+          "Le decoupage des documents en morceaux (chunks) est une etape critique pour la qualite du resume. Un mauvais decoupage peut couper une idee en deux, perdre le contexte, ou generer des resumes incoherents. La strategie optimale combine decoupage structurel et semantique.\n\nLe decoupage structurel utilise les titres, sous-titres et sauts de section du document pour creer des chunks naturels. Chaque section conserve son contexte hierarchique (titre du chapitre, titre de la section) comme metadonnee.\n\nPour les documents sans structure claire, utilisez un decoupage par fenetre glissante avec chevauchement. Une taille de chunk de 1500-2000 tokens avec un chevauchement de 200 tokens offre un bon equilibre entre contexte et precision.\n\nStockez chaque chunk dans Supabase avec ses metadonnees (position dans le document, titre de section, page) et un embedding vectoriel pour permettre la recherche semantique ulterieure. L'embedding est genere via le modele all-MiniLM-L6-v2 de sentence-transformers, performant et rapide.\n\nImplementez un systeme de poids par section : les introductions, conclusions et sections executives recoivent un poids plus eleve car elles contiennent generalement les informations les plus importantes du document.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from dataclasses import dataclass\nfrom sentence_transformers import SentenceTransformer\nimport re\n\n@dataclass\nclass DocumentChunk:\n    content: str\n    section_title: str\n    page_number: int\n    chunk_index: int\n    weight: float\n    embedding: list[float] = None\n\nembedding_model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\nSECTION_WEIGHTS = {\n    \"resume\": 1.5, \"synthese\": 1.5, \"executive\": 1.5,\n    \"conclusion\": 1.3, \"introduction\": 1.2, \"recommandation\": 1.3,\n    \"risque\": 1.4, \"obligation\": 1.4,\n}\n\ndef compute_weight(section_title: str) -> float:\n    title_lower = section_title.lower()\n    for keyword, weight in SECTION_WEIGHTS.items():\n        if keyword in title_lower:\n            return weight\n    return 1.0\n\ndef chunk_document(pages: list[dict], max_tokens: int = 1500, overlap: int = 200) -> list[DocumentChunk]:\n    chunks = []\n    current_text = \"\"\n    current_title = \"Document\"\n    chunk_idx = 0\n    for page in pages:\n        paragraphs = page[\"content\"].split(\"\\n\\n\")\n        for para in paragraphs:\n            # Detecter les titres de section\n            if re.match(r\"^[A-Z0-9][.)]?\\s+[A-Z]\", para) and len(para) < 200:\n                if current_text.strip():\n                    chunk = DocumentChunk(\n                        content=current_text.strip(),\n                        section_title=current_title,\n                        page_number=page[\"page\"],\n                        chunk_index=chunk_idx,\n                        weight=compute_weight(current_title),\n                    )\n                    chunk.embedding = embedding_model.encode(chunk.content).tolist()\n                    chunks.append(chunk)\n                    chunk_idx += 1\n                current_title = para.strip()\n                current_text = \"\"\n            else:\n                current_text += para + \"\\n\\n\"\n    if current_text.strip():\n        chunk = DocumentChunk(\n            content=current_text.strip(),\n            section_title=current_title,\n            page_number=pages[-1][\"page\"],\n            chunk_index=chunk_idx,\n            weight=compute_weight(current_title),\n        )\n        chunk.embedding = embedding_model.encode(chunk.content).tolist()\n        chunks.append(chunk)\n    return chunks",
+            filename: "chunking.py",
+          },
+        ],
+      },
+      {
+        title: "Prompts de resume et extraction d'informations cles",
+        content:
+          "La qualite du resume depend directement de la qualite des prompts envoyes au LLM. Utilisez une approche en deux passes : d'abord un resume par chunk avec extraction des informations cles, puis une synthese globale qui consolide tous les resumes partiels.\n\nLe prompt de premiere passe demande au LLM de resumer chaque chunk en identifiant : les faits principaux, les chiffres cles, les risques mentionnes, les obligations ou engagements, et les dates limites. Le format de sortie est structure en JSON pour faciliter l'agregation.\n\nLa deuxieme passe recoit tous les resumes partiels et produit un resume global coherent. Le prompt insiste sur la deduplication (un meme fait peut apparaitre dans plusieurs chunks) et la hierarchisation par importance. Le resume final est structure avec un executive summary, des bullet points par theme, et une section risques/alertes.\n\nPour la comparaison multi-documents, un troisieme prompt analyse les resumes de plusieurs documents cote a cote et produit un tableau comparatif. Cette fonctionnalite est particulierement utile pour comparer des offres commerciales, des contrats concurrents, ou des versions successives d'un meme document.\n\nCalibrez la temperature du LLM a 0.1 pour maximiser la fidelite au document source. Toute information du resume doit etre tracable a un passage precis du document original.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import anthropic\nimport json\nfrom typing import Optional\n\nclient = anthropic.Anthropic()\n\nCHUNK_SUMMARY_PROMPT = \"\"\"Tu es un analyste expert en synthese de documents professionnels.\nResume le passage suivant en extrayant les informations cles.\n\nSection: {section_title}\nContenu:\n---\n{content}\n---\n\nRetourne un JSON avec cette structure exacte:\n{{\n  \"resume\": \"Resume en 2-3 phrases\",\n  \"faits_cles\": [\"fait 1\", \"fait 2\"],\n  \"chiffres\": [\"montant ou statistique 1\"],\n  \"risques\": [\"risque identifie 1\"],\n  \"obligations\": [\"obligation ou engagement 1\"],\n  \"dates_limites\": [\"date et contexte 1\"],\n  \"importance\": \"haute/moyenne/basse\"\n}}\"\"\"\n\nGLOBAL_SUMMARY_PROMPT = \"\"\"Tu es un analyste senior. A partir des resumes partiels ci-dessous,\nproduis un resume global structure du document.\n\nResumes partiels:\n{partial_summaries}\n\nProduis un resume structure avec:\n1. **Synthese executive** (3-5 phrases)\n2. **Points cles** (bullet points hierarchises)\n3. **Chiffres importants** (tableau)\n4. **Risques et alertes** (liste priorisee)\n5. **Obligations et echeances** (liste chronologique)\n6. **Recommandations** (si applicables)\n\nReste strictement fidele au contenu des documents. Ne genere aucune information non presente dans les resumes partiels.\"\"\"\n\nasync def summarize_chunk(chunk: dict) -> dict:\n    prompt = CHUNK_SUMMARY_PROMPT.format(\n        section_title=chunk[\"section_title\"],\n        content=chunk[\"content\"][:3000],\n    )\n    message = client.messages.create(\n        model=\"claude-3-5-sonnet-20241022\",\n        max_tokens=1024,\n        temperature=0.1,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return json.loads(message.content[0].text)\n\nasync def generate_global_summary(partial_summaries: list[dict]) -> str:\n    formatted = json.dumps(partial_summaries, ensure_ascii=False, indent=2)\n    prompt = GLOBAL_SUMMARY_PROMPT.format(partial_summaries=formatted)\n    message = client.messages.create(\n        model=\"claude-3-5-sonnet-20241022\",\n        max_tokens=4096,\n        temperature=0.1,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return message.content[0].text",
+            filename: "summarization.py",
+          },
+        ],
+      },
+      {
+        title: "Formatage des sorties et deploiement",
+        content:
+          "Le resume genere doit etre exporte dans des formats exploitables par les utilisateurs finaux. Implementez trois formats de sortie : PDF professionnel avec mise en page soignee, document Word editable, et Markdown pour integration dans des outils collaboratifs.\n\nPour la generation PDF, utilisez la bibliotheque WeasyPrint qui convertit du HTML/CSS en PDF. Creez un template HTML avec le branding de l'entreprise, une table des matieres automatique, et une mise en page adaptee a l'impression. Les tableaux comparatifs sont particulierement importants a bien formater.\n\nDeployez l'API sur Vercel avec un endpoint d'upload et un endpoint de telechargement. L'upload declenche le pipeline complet (ingestion, chunking, resume, export) et retourne un identifiant de job. Le client poll l'endpoint de statut jusqu'a completion.\n\nMettez en place le monitoring avec Langfuse pour tracer chaque etape du pipeline : temps d'extraction, nombre de chunks, cout LLM par document, qualite estimee du resume. Configurez des alertes si le temps de traitement depasse un seuil ou si le taux d'erreur OCR est anormalement eleve.\n\nPour les tests, constituez un jeu de 20 documents annotes manuellement et mesurez le taux de couverture des informations cles (rappel) et la precision du resume (absence d'hallucinations). Visez un rappel superieur a 90% et une precision de 95%.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from fastapi import FastAPI, UploadFile, BackgroundTasks\nfrom fastapi.responses import FileResponse\nimport uuid\nfrom supabase import create_client\nimport os\n\napp = FastAPI()\nsupabase = create_client(os.getenv(\"SUPABASE_URL\"), os.getenv(\"SUPABASE_KEY\"))\n\njobs: dict = {}\n\n@app.post(\"/api/summarize\")\nasync def upload_document(file: UploadFile, background_tasks: BackgroundTasks):\n    job_id = str(uuid.uuid4())\n    file_bytes = await file.read()\n    jobs[job_id] = {\"status\": \"processing\", \"filename\": file.filename}\n    # Stocker le document original dans Supabase\n    supabase.storage.from_(\"documents\").upload(\n        path=\"{}/{}\".format(job_id, file.filename),\n        file=file_bytes,\n    )\n    background_tasks.add_task(process_document, job_id, file_bytes, file.filename)\n    return {\"job_id\": job_id, \"status\": \"processing\"}\n\nasync def process_document(job_id: str, file_bytes: bytes, filename: str):\n    try:\n        # 1. Extraction du texte\n        if filename.endswith(\".pdf\"):\n            extracted = extract_text_from_pdf(file_bytes)\n        elif filename.endswith(\".docx\"):\n            extracted = extract_text_from_docx(file_bytes)\n        else:\n            raise ValueError(\"Format non supporte\")\n        # 2. Chunking\n        chunks = chunk_document(extracted[\"pages\"])\n        # 3. Resume par chunk\n        partial_summaries = []\n        for chunk in chunks:\n            summary = await summarize_chunk(chunk.__dict__)\n            partial_summaries.append(summary)\n        # 4. Resume global\n        global_summary = await generate_global_summary(partial_summaries)\n        # 5. Sauvegarde\n        supabase.table(\"summaries\").insert({\n            \"job_id\": job_id,\n            \"filename\": filename,\n            \"summary\": global_summary,\n            \"partial_summaries\": partial_summaries,\n            \"chunk_count\": len(chunks),\n        }).execute()\n        jobs[job_id] = {\"status\": \"completed\", \"summary\": global_summary}\n    except Exception as e:\n        jobs[job_id] = {\"status\": \"error\", \"error\": str(e)}\n\n@app.get(\"/api/summarize/{job_id}\")\nasync def get_summary_status(job_id: str):\n    if job_id not in jobs:\n        return {\"status\": \"not_found\"}\n    return jobs[job_id]",
+            filename: "api_server.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les documents peuvent contenir des donnees personnelles sensibles (noms, adresses, numeros de comptes, RIB). Avant envoi au LLM, un module de detection PII (base sur Presidio de Microsoft) anonymise les donnees personnelles en les remplacant par des tokens generiques. Les documents originaux sont chiffres en AES-256 au repos dans Supabase. Politique de retention configurable par client avec purge automatique. Conformite RGPD avec registre de traitement.",
+      auditLog: "Chaque traitement de document est trace de bout en bout : horodatage d'upload, hash SHA-256 du document original, nombre de pages et chunks, temps de traitement par etape, cout LLM consomme, identifiant de l'analyste, resume genere (versionne). Logs immutables stockes dans une table d'audit Supabase avec retention de 24 mois.",
+      humanInTheLoop: "Pour les documents critiques (contrats > 1M EUR, rapports reglementaires), le resume genere est soumis a validation par un analyste senior avant diffusion. Un workflow de validation avec commentaires permet de corriger et enrichir le resume. Le mode revision compare le resume IA avec les annotations humaines pour ameliorer le modele en continu.",
+      monitoring: "Dashboard Langfuse : temps de traitement moyen par type de document, cout LLM par resume, taux d'erreur OCR, taux de validation humaine, score de couverture des informations cles, volume de documents traites par jour, alertes sur les anomalies de qualite et les depassements de couts.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (upload document) -> Node Code (detection format PDF/Word/scan) -> Node Switch (format) -> Branch PDF: Node Code (extraction PyMuPDF) -> Branch Word: Node Code (extraction python-docx) -> Branch Scan: Node HTTP Request (OCR Tesseract) -> Node Code (chunking semantique) -> Node Loop (pour chaque chunk) -> Node HTTP Request (API Claude - resume chunk) -> Node Code (agregation resumes partiels) -> Node HTTP Request (API Claude - resume global) -> Node Code (formatage export) -> Node Supabase (sauvegarde) -> Node Email (notification analyste).",
+      nodes: ["Webhook (upload)", "Code (detection format)", "Switch (PDF/Word/Scan)", "Code (extraction texte)", "HTTP Request (OCR)", "Code (chunking)", "Loop (chunks)", "HTTP Request (Claude resume)", "Code (agregation)", "HTTP Request (Claude synthese)", "Code (export PDF/Word)", "Supabase (sauvegarde)", "Email (notification)"],
+      triggerType: "Webhook (upload de document)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Facile",
+    sectors: ["Banque", "Assurance", "Audit", "Services"],
+    metiers: ["Finance", "Conformite", "Risk Management"],
+    functions: ["Finance"],
+    metaTitle: "Agent IA de Resume de Documents -- Guide Complet",
+    metaDescription:
+      "Resumez automatiquement des documents longs (rapports, contrats, etudes) grace a un agent IA. Pipeline OCR, chunking semantique et resume structure. Tutoriel complet avec code.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
+  {
+    slug: "agent-creation-fiches-produit",
+    title: "Agent IA de Creation de Fiches Produit",
+    subtitle: "Generez des fiches produit SEO-optimisees automatiquement a partir de donnees brutes fournisseur",
+    problem:
+      "Les equipes e-commerce doivent creer des fiches produit uniques et SEO-optimisees pour des centaines, voire des milliers de references (SKUs). Les donnees fournisseurs arrivent sous forme de fichiers CSV bruts avec des descriptions techniques minimalistes, souvent en anglais. Le copier-coller de ces donnees genere du contenu duplique penalise par Google, des descriptions generiques qui ne convertissent pas, et une incapacite a maintenir un ton de marque coherent sur l'ensemble du catalogue. Un redacteur produit manuellement 4 a 5 fiches par heure, creant un goulot d'etranglement majeur lors des lancements de collections ou de l'integration de nouveaux fournisseurs.",
+    value:
+      "Un agent IA ingere les donnees brutes fournisseur (CSV, flux API), les images produit et les descriptions concurrentes, puis genere automatiquement des fiches produit completes et uniques. Chaque fiche comprend un titre SEO-optimise, une description marketing engageante, des bullet points techniques, des balises meta (title, description), et des donnees structurees Schema.org. L'agent maintient le ton de voix de la marque de maniere coherente sur l'ensemble du catalogue. Le pipeline permet de generer plus de 100 fiches produit par heure contre 5 manuellement, avec un score SEO superieur de 40% en moyenne.",
+    inputs: [
+      "Fichiers CSV de donnees fournisseur (references, specs techniques)",
+      "Images produit (pour analyse visuelle optionnelle)",
+      "Guide de ton de marque et exemples de fiches existantes",
+      "Mots-cles SEO cibles par categorie de produit",
+      "Descriptions concurrentes (pour differentiation)",
+    ],
+    outputs: [
+      "Titre produit SEO-optimise (H1)",
+      "Description marketing engageante (200-400 mots)",
+      "Bullet points techniques structures",
+      "Balises meta (meta title, meta description)",
+      "Donnees structurees Schema.org (JSON-LD)",
+      "Suggestions de mots-cles secondaires et liens internes",
+    ],
+    risks: [
+      "Descriptions generiques ou repetitives entre produits similaires",
+      "Informations techniques incorrectes inventees par le LLM",
+      "Ton de marque inconsistant sur un large volume de fiches",
+      "Sur-optimisation SEO (keyword stuffing) penalisee par Google",
+      "Non-conformite reglementaire sur les allegations produit (cosmetique, alimentaire)",
+    ],
+    roiIndicatif:
+      "Generation de 100+ fiches produit par heure contre 5 manuellement (gain de productivite 20x). Amelioration de 40% du score SEO moyen des pages produit. Augmentation de 25% du taux de conversion grace a des descriptions plus engageantes.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "n8n", category: "Orchestration" },
+      { name: "Supabase", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+      { name: "Langfuse", category: "Monitoring" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n self-hosted", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: "+-------------+     +----------------+     +-------------+\n|  Donnees    |---->|  Pipeline      |---->|  Enrichiss. |\n|  Fournisseur|     |  Ingestion     |     |  Donnees    |\n|  (CSV/API)  |     |  (n8n)         |     |  (SEO+Conc) |\n+-------------+     +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  Supabase      |<----|  Agent LLM  |\n                    |  (Catalogue +  |     |  (GPT-4.1)  |\n                    |   Fiches)      |     +------+------+\n                    +----------------+            |\n                                           +------v------+\n                                           |  Validation |\n                                           |  SEO Score  |\n                                           +------+------+\n                                                  |\n                                           +------v------+\n                                           |  Export     |\n                                           |  (CMS/API)  |\n                                           +-------------+",
+    tutorial: [
+      {
+        title: "Ingestion et normalisation des donnees fournisseur",
+        content:
+          "La premiere etape du pipeline consiste a ingerer et normaliser les donnees brutes des fournisseurs. Ces donnees arrivent sous differents formats (CSV, Excel, API) avec des structures heterogenes : chaque fournisseur utilise ses propres noms de colonnes, unites de mesure et conventions.\n\nCreez un module d'ingestion flexible qui mappe automatiquement les colonnes fournisseur vers votre schema produit interne. Utilisez un fichier de configuration YAML par fournisseur pour definir les correspondances de colonnes. Pour les nouveaux fournisseurs, le LLM peut suggerer les mappings automatiquement.\n\nNormalisez les donnees : convertissez les unites (pouces vers cm, oz vers g), standardisez les noms de couleurs, nettoyez les caracteres speciaux, et traduisez les descriptions anglaises en francais si necessaire. Stockez les donnees brutes et normalisees dans Supabase pour tracabilite.\n\nImplementez une validation automatique : verifiez que les champs obligatoires sont presents (nom, prix, categorie), que les valeurs numeriques sont coherentes (poids positif, prix > 0), et que les images existent aux URLs indiquees. Les produits invalides sont mis en quarantaine pour correction manuelle.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import csv\nimport io\nimport yaml\nfrom pydantic import BaseModel, Field, validator\nfrom typing import Optional\n\nclass RawProduct(BaseModel):\n    sku: str\n    name: str\n    description: str = \"\"\n    category: str\n    price: float = Field(gt=0)\n    brand: str = \"\"\n    features: list[str] = []\n    images: list[str] = []\n    weight: Optional[float] = None\n    dimensions: Optional[str] = None\n    material: Optional[str] = None\n    color: Optional[str] = None\n\n    @validator(\"name\")\n    def name_not_empty(cls, v):\n        if not v.strip():\n            raise ValueError(\"Le nom du produit ne peut pas etre vide\")\n        return v.strip()\n\ndef load_supplier_mapping(supplier_id: str) -> dict:\n    \"\"\"Charge le mapping de colonnes pour un fournisseur.\"\"\"\n    with open(\"mappings/{}.yaml\".format(supplier_id)) as f:\n        return yaml.safe_load(f)\n\ndef ingest_csv(file_bytes: bytes, supplier_id: str) -> list[RawProduct]:\n    \"\"\"Ingere un CSV fournisseur et retourne des produits normalises.\"\"\"\n    mapping = load_supplier_mapping(supplier_id)\n    reader = csv.DictReader(io.StringIO(file_bytes.decode(\"utf-8-sig\")))\n    products = []\n    errors = []\n    for row_num, row in enumerate(reader, start=2):\n        try:\n            mapped = {}\n            for our_field, supplier_field in mapping[\"columns\"].items():\n                mapped[our_field] = row.get(supplier_field, \"\")\n            # Normaliser le prix\n            if \"price\" in mapped:\n                mapped[\"price\"] = float(str(mapped[\"price\"]).replace(\",\", \".\").replace(\" \", \"\"))\n            # Normaliser les features\n            if \"features\" in mapped and isinstance(mapped[\"features\"], str):\n                mapped[\"features\"] = [f.strip() for f in mapped[\"features\"].split(\"|\") if f.strip()]\n            product = RawProduct(**mapped)\n            products.append(product)\n        except Exception as e:\n            errors.append({\"row\": row_num, \"error\": str(e)})\n    return products",
+            filename: "ingestion.py",
+          },
+        ],
+      },
+      {
+        title: "Generation de descriptions produit avec le LLM",
+        content:
+          "Le coeur du systeme est le prompt de generation de fiches produit. Le prompt doit produire un contenu unique, engageant et fidele aux donnees techniques du produit. La cle est de fournir au LLM un contexte riche : donnees produit, guide de ton de marque, exemples de fiches existantes, et mots-cles SEO cibles.\n\nStructurez le prompt en sections claires : d'abord les donnees brutes du produit, puis les directives de ton de marque (formel, decontracte, technique), les mots-cles SEO a integrer naturellement, et enfin le format de sortie attendu en JSON strict.\n\nPour eviter les descriptions repetitives entre produits similaires, incluez dans le prompt les descriptions deja generees pour les produits de la meme categorie. Le LLM utilisera cette information pour varier le vocabulaire et les angles d'accroche.\n\nImplementez un systeme de templates par categorie de produit. Un vetement ne se decrit pas comme un composant electronique. Chaque template definit les attributs a mettre en avant, le vocabulaire sectoriel, et les structures de phrases adaptees.\n\nLe format de sortie JSON garantit une integration facile avec n'importe quel CMS (Shopify, WooCommerce, PrestaShop, Magento). Chaque champ est valide par un schema Pydantic avant export.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import openai\nimport json\nfrom pydantic import BaseModel\n\nclient = openai.OpenAI()\n\nclass ProductSheet(BaseModel):\n    seo_title: str\n    meta_title: str\n    meta_description: str\n    short_description: str\n    long_description: str\n    bullet_points: list[str]\n    keywords: list[str]\n    schema_org: dict\n\nGENERATION_PROMPT = \"\"\"Tu es un redacteur e-commerce expert en SEO francophone.\nGenere une fiche produit complete et unique a partir des donnees ci-dessous.\n\n## Donnees produit\n- Nom: {name}\n- Categorie: {category}\n- Marque: {brand}\n- Prix: {price} EUR\n- Caracteristiques: {features}\n- Materiau: {material}\n- Couleur: {color}\n- Dimensions: {dimensions}\n\n## Directives de marque\n{brand_guidelines}\n\n## Mots-cles SEO a integrer\n{seo_keywords}\n\n## Fiches existantes dans la meme categorie (pour varier le style)\n{existing_descriptions}\n\n## Consignes\n1. Le titre SEO doit contenir le mot-cle principal et faire moins de 60 caracteres\n2. La meta description doit faire entre 120 et 155 caracteres\n3. La description courte doit faire 1-2 phrases accrocheuses\n4. La description longue doit faire 200-400 mots, structuree en paragraphes\n5. Genere 5-8 bullet points techniques\n6. Integre les mots-cles naturellement, sans keyword stuffing\n7. Ne jamais inventer de caracteristiques non presentes dans les donnees\n8. Utiliser le vouvoiement\n\nRetourne un JSON avec: seo_title, meta_title, meta_description,\nshort_description, long_description, bullet_points, keywords, schema_org\"\"\"\n\ndef generate_product_sheet(\n    product: dict,\n    brand_guidelines: str,\n    seo_keywords: list[str],\n    existing_descriptions: list[str] = None,\n) -> ProductSheet:\n    existing = \"\\n---\\n\".join(existing_descriptions[:3]) if existing_descriptions else \"Aucune\"\n    prompt = GENERATION_PROMPT.format(\n        name=product[\"name\"],\n        category=product[\"category\"],\n        brand=product.get(\"brand\", \"N/A\"),\n        price=product[\"price\"],\n        features=\", \".join(product.get(\"features\", [])),\n        material=product.get(\"material\", \"N/A\"),\n        color=product.get(\"color\", \"N/A\"),\n        dimensions=product.get(\"dimensions\", \"N/A\"),\n        brand_guidelines=brand_guidelines,\n        seo_keywords=\", \".join(seo_keywords),\n        existing_descriptions=existing,\n    )\n    response = client.chat.completions.create(\n        model=\"gpt-4.1\",\n        temperature=0.7,\n        response_format={\"type\": \"json_object\"},\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    data = json.loads(response.choices[0].message.content)\n    return ProductSheet(**data)",
+            filename: "product_generator.py",
+          },
+        ],
+      },
+      {
+        title: "Optimisation SEO et validation qualite",
+        content:
+          "Une fois les fiches generees, un pipeline de validation automatique verifie la qualite SEO et la coherence du contenu. Ce pipeline agit comme un redacteur en chef automatise qui accepte, rejette ou demande une revision de chaque fiche.\n\nLe score SEO est calcule sur plusieurs criteres : presence du mot-cle principal dans le titre (H1), la meta description et le premier paragraphe, densite de mots-cles entre 1% et 3%, longueur de la meta description (120-155 caracteres), unicite du contenu (comparaison avec les fiches existantes via similarite cosinus).\n\nLa detection de contenu duplique est critique pour eviter les penalites Google. Calculez un embedding de chaque description generee et comparez-le avec les descriptions existantes dans votre catalogue. Si la similarite cosinus depasse 0.85, la fiche est rejetee et regeneree avec des directives de diversification renforcees.\n\nVerifiez egalement la fidelite aux donnees source : aucune caracteristique technique du resume ne doit etre absente des donnees fournisseur originales. Un module de fact-checking compare les bullet points generes avec les features brutes du produit.\n\nPour les secteurs reglementes (cosmetique, alimentaire, sante), ajoutez une couche de verification des allegations. Certaines formulations sont interdites sans certification (bio, hypoallergenique, therapeutique). Une liste noire de termes par categorie est appliquee automatiquement.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "from sentence_transformers import SentenceTransformer\nimport numpy as np\nfrom dataclasses import dataclass\n\nembedding_model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\n@dataclass\nclass SEOScore:\n    total: float\n    keyword_in_title: bool\n    keyword_in_meta: bool\n    meta_length_ok: bool\n    keyword_density: float\n    uniqueness: float\n    issues: list[str]\n\ndef compute_seo_score(\n    sheet: dict,\n    target_keyword: str,\n    existing_embeddings: list[list[float]],\n) -> SEOScore:\n    issues = []\n    score = 0.0\n    # 1. Mot-cle dans le titre\n    kw_in_title = target_keyword.lower() in sheet[\"seo_title\"].lower()\n    if kw_in_title:\n        score += 20\n    else:\n        issues.append(\"Mot-cle principal absent du titre SEO\")\n    # 2. Mot-cle dans la meta description\n    kw_in_meta = target_keyword.lower() in sheet[\"meta_description\"].lower()\n    if kw_in_meta:\n        score += 15\n    else:\n        issues.append(\"Mot-cle principal absent de la meta description\")\n    # 3. Longueur meta description\n    meta_len = len(sheet[\"meta_description\"])\n    meta_ok = 120 <= meta_len <= 155\n    if meta_ok:\n        score += 15\n    else:\n        issues.append(\"Meta description: {} chars (attendu: 120-155)\".format(meta_len))\n    # 4. Densite de mots-cles\n    full_text = sheet[\"long_description\"].lower()\n    word_count = len(full_text.split())\n    kw_count = full_text.count(target_keyword.lower())\n    density = (kw_count / max(word_count, 1)) * 100\n    if 1.0 <= density <= 3.0:\n        score += 20\n    else:\n        issues.append(\"Densite mot-cle: {:.1f}% (attendu: 1-3%)\".format(density))\n    # 5. Unicite (similarite cosinus avec descriptions existantes)\n    desc_embedding = embedding_model.encode(sheet[\"long_description\"])\n    if existing_embeddings:\n        similarities = [\n            float(np.dot(desc_embedding, e) / (np.linalg.norm(desc_embedding) * np.linalg.norm(e)))\n            for e in existing_embeddings\n        ]\n        max_sim = max(similarities)\n        uniqueness = 1.0 - max_sim\n    else:\n        uniqueness = 1.0\n    if uniqueness > 0.15:\n        score += 30\n    else:\n        issues.append(\"Contenu trop similaire a une fiche existante (sim: {:.2f})\".format(1 - uniqueness))\n    return SEOScore(\n        total=score,\n        keyword_in_title=kw_in_title,\n        keyword_in_meta=kw_in_meta,\n        meta_length_ok=meta_ok,\n        keyword_density=density,\n        uniqueness=uniqueness,\n        issues=issues,\n    )",
+            filename: "seo_validator.py",
+          },
+        ],
+      },
+      {
+        title: "Pipeline de traitement en masse et deploiement",
+        content:
+          "Le pipeline de traitement en masse permet de generer des centaines de fiches produit en un seul batch. Le systeme gere la file d'attente, le rate limiting des API, la reprise sur erreur, et l'export vers le CMS cible.\n\nUtilisez un systeme de file d'attente base sur Supabase (table de jobs avec statut) pour gerer les batches. Chaque produit est un job independant qui peut etre retraite en cas d'echec. Le worker traite les produits en parallele (5-10 simultanes) tout en respectant les limites de taux de l'API OpenAI.\n\nL'export vers le CMS est automatise via les API natives. Pour Shopify, utilisez l'API GraphQL Admin pour creer ou mettre a jour les produits. Pour WooCommerce, utilisez l'API REST. Pour PrestaShop, le webservice XML. Le module d'export est pluggable pour supporter n'importe quel CMS.\n\nDeployez le dashboard de gestion sur Vercel. L'interface permet de lancer un batch, suivre la progression en temps reel, previsualiser les fiches generees, approuver ou rejeter individuellement, et declencher la publication vers le CMS.\n\nMettez en place le monitoring Langfuse pour suivre les metriques cles : nombre de fiches generees par jour, score SEO moyen, taux de rejet au premier passage, cout moyen par fiche (tokens LLM), et temps de traitement par batch. Configurez des alertes si le score SEO moyen descend sous 70/100.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: "import asyncio\nfrom supabase import create_client\nimport os\nfrom datetime import datetime\n\nsupabase = create_client(os.getenv(\"SUPABASE_URL\"), os.getenv(\"SUPABASE_KEY\"))\n\nasync def process_batch(batch_id: str, products: list[dict], config: dict):\n    \"\"\"Traite un batch de produits en parallele.\"\"\"\n    semaphore = asyncio.Semaphore(5)  # Max 5 produits simultanes\n    brand_guidelines = config[\"brand_guidelines\"]\n    existing_descriptions = []\n    existing_embeddings = []\n    results = {\"success\": 0, \"failed\": 0, \"rejected_seo\": 0}\n\n    async def process_single(product: dict):\n        async with semaphore:\n            try:\n                # Recuperer les mots-cles SEO pour la categorie\n                seo_data = supabase.table(\"seo_keywords\").select(\"*\").eq(\n                    \"category\", product[\"category\"]\n                ).execute()\n                keywords = [k[\"keyword\"] for k in seo_data.data] if seo_data.data else []\n                # Generer la fiche produit\n                sheet = generate_product_sheet(\n                    product, brand_guidelines, keywords, existing_descriptions[-5:]\n                )\n                # Valider le score SEO\n                seo_score = compute_seo_score(\n                    sheet.model_dump(), keywords[0] if keywords else product[\"name\"],\n                    existing_embeddings,\n                )\n                if seo_score.total < 60:\n                    # Regenerer avec directives renforcees\n                    sheet = generate_product_sheet(\n                        product, brand_guidelines + \"\\nATTENTION: \" + \"; \".join(seo_score.issues),\n                        keywords, existing_descriptions[-5:]\n                    )\n                    seo_score = compute_seo_score(\n                        sheet.model_dump(), keywords[0] if keywords else product[\"name\"],\n                        existing_embeddings,\n                    )\n                # Sauvegarder\n                supabase.table(\"product_sheets\").insert({\n                    \"batch_id\": batch_id,\n                    \"sku\": product[\"sku\"],\n                    \"sheet\": sheet.model_dump(),\n                    \"seo_score\": seo_score.total,\n                    \"seo_issues\": seo_score.issues,\n                    \"status\": \"generated\",\n                    \"created_at\": datetime.utcnow().isoformat(),\n                }).execute()\n                existing_descriptions.append(sheet.long_description)\n                results[\"success\"] += 1\n            except Exception as e:\n                supabase.table(\"product_sheets\").insert({\n                    \"batch_id\": batch_id,\n                    \"sku\": product[\"sku\"],\n                    \"status\": \"error\",\n                    \"error\": str(e),\n                }).execute()\n                results[\"failed\"] += 1\n\n    tasks = [process_single(p) for p in products]\n    await asyncio.gather(*tasks)\n    # Mettre a jour le statut du batch\n    supabase.table(\"batches\").update({\n        \"status\": \"completed\",\n        \"results\": results,\n        \"completed_at\": datetime.utcnow().isoformat(),\n    }).eq(\"id\", batch_id).execute()\n    return results",
+            filename: "batch_processor.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les donnees fournisseurs peuvent contenir des informations commerciales confidentielles (prix d'achat, marges, conditions negociees). Ces donnees sont stockees chiffrees dans Supabase et ne sont jamais envoyees au LLM. Seules les informations publiques du produit (nom, description, specs techniques) sont transmises a l'API. Les cles API sont stockees dans un vault securise (Supabase Vault). Conformite RGPD si les donnees contiennent des informations de contacts fournisseurs.",
+      auditLog: "Chaque fiche produit generee est versionnee avec : horodatage de generation, donnees source utilisees (hash), modele LLM et version, prompt utilise (versionne), score SEO avant et apres validation, identifiant de l'operateur ayant approuve la publication, et horodatage de publication vers le CMS. Retention de 24 mois avec export CSV automatique.",
+      humanInTheLoop: "Les fiches dont le score SEO est inferieur a 70/100 ou dont le contenu est signale comme potentiellement inexact sont routees vers une file de validation humaine. Un redacteur peut editer, approuver ou rejeter chaque fiche via le dashboard. Les fiches des categories reglementees (cosmetique, alimentaire) necessitent systematiquement une validation humaine avant publication.",
+      monitoring: "Dashboard Langfuse et Supabase : volume de fiches generees par jour, score SEO moyen par categorie, taux de rejet au premier passage, taux de validation humaine, cout LLM moyen par fiche, temps de traitement par batch, comparaison de performance entre modeles LLM, alertes sur les degradations de qualite et les anomalies de cout.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (upload CSV fournisseur) -> Node Code (parsing et normalisation CSV) -> Node Supabase (sauvegarde produits bruts) -> Node Loop (pour chaque produit) -> Node HTTP Request (API GPT-4.1 - generation fiche) -> Node Code (validation SEO et unicite) -> Node Switch (score SEO >= 70 ?) -> Branch OK: Node Supabase (sauvegarde fiche validee) -> Branch KO: Node HTTP Request (regeneration avec directives) -> Node Supabase (sauvegarde finale) -> Node HTTP Request (export vers CMS Shopify/WooCommerce) -> Node Email (rapport de batch).",
+      nodes: ["Webhook (upload CSV)", "Code (parsing CSV)", "Supabase (produits bruts)", "Loop (produits)", "HTTP Request (GPT-4.1 generation)", "Code (validation SEO)", "Switch (score SEO)", "HTTP Request (regeneration)", "Supabase (fiches validees)", "HTTP Request (export CMS)", "Email (rapport batch)"],
+      triggerType: "Webhook (upload fichier fournisseur)",
+    },
+    estimatedTime: "4-8h",
+    difficulty: "Facile",
+    sectors: ["E-commerce", "Retail", "Distribution"],
+    metiers: ["Marketing Digital", "Marketing Strategique"],
+    functions: ["Marketing"],
+    metaTitle: "Agent IA de Creation de Fiches Produit SEO -- Guide Complet",
+    metaDescription:
+      "Generez automatiquement des fiches produit SEO-optimisees a partir de donnees fournisseurs. Pipeline de generation en masse, validation qualite et export CMS. Tutoriel complet avec code.",
+    createdAt: "2026-02-07",
+    updatedAt: "2026-02-07",
+  },
 ];
