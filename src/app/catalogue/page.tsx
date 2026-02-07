@@ -25,6 +25,11 @@ const SUGGESTIONS = [
   "onboarding RH",
   "détection fraude",
   "achats fournisseurs",
+  "maintenance prédictive",
+  "knowledge management",
+  "prédiction churn",
+  "modération contenu",
+  "conformité audit",
 ];
 
 function CatalogueContent() {

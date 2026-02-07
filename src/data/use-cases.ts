@@ -6781,4 +6781,1354 @@ async def ask(req: QuestionRequest):
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
+  {
+    slug: "agent-audit-interne",
+    title: "Agent d'Audit Interne Automatisé",
+    subtitle: "Automatisez vos audits de conformité et de processus internes grâce à l'IA",
+    problem:
+      "Les audits internes sont chronophages, mobilisent des ressources qualifiées pendant des semaines, et ne couvrent souvent qu'un échantillon limité des processus. Les non-conformités sont détectées tardivement, augmentant les risques réglementaires et financiers.",
+    value:
+      "Un agent IA analyse en continu les documents, processus et données internes pour identifier les écarts de conformité, les anomalies et les risques. Il génère automatiquement des rapports d'audit structurés avec recommandations priorisées, permettant une couverture exhaustive et une détection proactive.",
+    inputs: [
+      "Documents de procédures internes (PDF, Word)",
+      "Référentiels réglementaires (ISO 27001, RGPD, SOX)",
+      "Logs d'activité et traces d'audit existantes",
+      "Données financières et opérationnelles",
+      "Historique des audits précédents",
+    ],
+    outputs: [
+      "Rapport d'audit structuré (conformités, non-conformités, observations)",
+      "Score de conformité par processus (0-100%)",
+      "Liste de non-conformités avec niveau de criticité",
+      "Recommandations correctives priorisées",
+      "Tableau de bord de suivi des plans d'action",
+    ],
+    risks: [
+      "Faux positifs générant une surcharge de travail pour les équipes",
+      "Interprétation incorrecte de textes réglementaires complexes",
+      "Risque de biais dans l'évaluation de la conformité",
+      "Dépendance excessive à l'automatisation pour des jugements nécessitant l'expertise humaine",
+    ],
+    roiIndicatif:
+      "Réduction de 70% du temps de réalisation d'un audit. Couverture des processus passant de 20% à 95%. Détection des non-conformités 3x plus rapide.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "ChromaDB", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Documents  │────▶│  Agent LLM   │────▶│  Rapport    │
+│  & Données  │     │  (Analyse)   │     │  d'audit    │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+                    ┌──────▼───────┐
+                    │  Vector DB   │
+                    │ (Référentiels│
+                    │  & Normes)   │
+                    └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances nécessaires et configurez votre environnement. Vous aurez besoin d'un accès API Anthropic et d'une base vectorielle pour stocker les référentiels réglementaires.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain chromadb python-dotenv pdfplumber`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+CHROMA_PERSIST_DIR=./chroma_audit_db
+AUDIT_OUTPUT_DIR=./rapports_audit`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Indexation des référentiels réglementaires",
+        content:
+          "Indexez vos référentiels de conformité (ISO, RGPD, procédures internes) dans une base vectorielle. L'agent utilisera ces référentiels comme base de comparaison lors de l'analyse.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.document_loaders import PyPDFLoader, DirectoryLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+# Charger les référentiels réglementaires
+loader = DirectoryLoader("./referentiels", glob="**/*.pdf", loader_cls=PyPDFLoader)
+docs = loader.load()
+
+# Découpage en chunks pour indexation
+splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+chunks = splitter.split_documents(docs)
+
+# Créer la base vectorielle
+embeddings = OpenAIEmbeddings()
+vectorstore = Chroma.from_documents(
+    chunks, embeddings, persist_directory="./chroma_audit_db"
+)
+vectorstore.persist()
+print(f"{len(chunks)} chunks indexés depuis {len(docs)} pages.")`,
+            filename: "index_referentiels.py",
+          },
+        ],
+      },
+      {
+        title: "Agent d'analyse de conformité",
+        content:
+          "Construisez l'agent qui compare les documents et processus internes aux référentiels réglementaires. Il produit une analyse structurée avec score de conformité, non-conformités détectées et recommandations.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from pydantic import BaseModel, Field
+from typing import List
+import json
+
+class NonConformite(BaseModel):
+    description: str = Field(description="Description de la non-conformité")
+    reference: str = Field(description="Article ou norme de référence")
+    criticite: str = Field(description="Critique, Majeure, Mineure")
+    recommandation: str = Field(description="Action corrective recommandée")
+
+class AuditResult(BaseModel):
+    processus: str = Field(description="Nom du processus audité")
+    score_conformite: int = Field(ge=0, le=100)
+    conformites: List[str] = Field(description="Points conformes identifiés")
+    non_conformites: List[NonConformite] = Field(description="Non-conformités détectées")
+    observations: List[str] = Field(description="Observations et pistes d'amélioration")
+
+client = anthropic.Anthropic()
+
+def audit_processus(document: str, referentiel_context: str) -> AuditResult:
+    prompt = f"""Tu es un auditeur interne expert. Analyse le document suivant
+en le comparant aux référentiels réglementaires fournis.
+
+DOCUMENT À AUDITER :
+{document}
+
+RÉFÉRENTIELS APPLICABLES :
+{referentiel_context}
+
+Produis un rapport d'audit structuré au format JSON avec :
+- processus : nom du processus
+- score_conformite : score de 0 à 100
+- conformites : liste des points conformes
+- non_conformites : liste avec description, reference, criticite (Critique/Majeure/Mineure), recommandation
+- observations : pistes d'amélioration"""
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=4096,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    result_json = json.loads(response.content[0].text)
+    return AuditResult(**result_json)`,
+            filename: "agent_audit.py",
+          },
+        ],
+      },
+      {
+        title: "Génération du rapport et API",
+        content:
+          "Exposez l'agent via une API REST qui accepte un document à auditer, interroge les référentiels, et retourne un rapport complet. Le rapport peut être exporté en PDF pour diffusion aux parties prenantes.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI, UploadFile
+from agent_audit import audit_processus, AuditResult
+import pdfplumber
+
+app = FastAPI()
+
+@app.post("/api/audit")
+async def run_audit(file: UploadFile, referentiel: str = "ISO27001"):
+    # Extraction du texte du document
+    with pdfplumber.open(file.file) as pdf:
+        document_text = "\\n".join([p.extract_text() for p in pdf.pages])
+
+    # Recherche des référentiels pertinents
+    ref_docs = vectorstore.similarity_search(document_text, k=5)
+    ref_context = "\\n".join([d.page_content for d in ref_docs])
+
+    # Analyse de conformité
+    result = audit_processus(document_text, ref_context)
+
+    return {
+        "processus": result.processus,
+        "score": result.score_conformite,
+        "conformites": result.conformites,
+        "non_conformites": [nc.model_dump() for nc in result.non_conformites],
+        "observations": result.observations
+    }`,
+            filename: "api_audit.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les documents d'audit peuvent contenir des données sensibles (noms d'employés, données financières). Anonymisation automatique via Presidio avant envoi au LLM. Les rapports générés sont stockés chiffrés avec accès restreint par rôle.",
+      auditLog: "Chaque analyse est tracée : document audité (hash), référentiels utilisés, score de conformité, nombre de non-conformités, horodatage, utilisateur ayant lancé l'audit, coût API. Piste d'audit complète pour les régulateurs.",
+      humanInTheLoop: "Les non-conformités critiques détectées par l'agent sont systématiquement validées par un auditeur humain avant publication du rapport. Le rapport final requiert une approbation du responsable conformité.",
+      monitoring: "Dashboard de suivi : nombre d'audits réalisés/mois, score moyen de conformité par département, tendance des non-conformités, temps de résolution des plans d'action, alertes en cas de score < 60%.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Trigger planifié (cron mensuel) → Node Google Drive (récupération documents) → Node HTTP Request (extraction texte) → Node HTTP Request (API LLM audit) → Node IF (score < seuil) → Node Email (alerte non-conformité) → Node Google Sheets (suivi).",
+      nodes: ["Schedule Trigger", "Google Drive (documents)", "HTTP Request (extraction)", "HTTP Request (LLM audit)", "IF (score < seuil)", "Email (alertes)", "Google Sheets (suivi)"],
+      triggerType: "Schedule (cron mensuel ou à la demande)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Moyen",
+    sectors: ["Finance", "Industrie", "Services", "Santé"],
+    metiers: ["Audit Interne", "Conformité", "Direction Qualité"],
+    functions: ["Compliance"],
+    metaTitle: "Agent IA d'Audit Interne Automatisé — Guide Complet",
+    metaDescription:
+      "Automatisez vos audits internes avec un agent IA. Analyse de conformité, détection de non-conformités et rapports structurés. Tutoriel pas-à-pas avec stack complète.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-pricing-optimisation",
+    title: "Agent d'Optimisation Tarifaire",
+    subtitle: "Ajustez dynamiquement vos prix en fonction du marché, de la concurrence et de la demande",
+    problem:
+      "La tarification des services est souvent basée sur l'intuition ou des grilles figées. Les entreprises de services perdent du revenu en sous-évaluant certaines prestations ou perdent des contrats en surévaluant d'autres. L'analyse manuelle de la concurrence et de la demande est trop lente pour réagir aux évolutions du marché.",
+    value:
+      "Un agent IA analyse en temps réel les données de marché, la concurrence, l'historique des ventes et la demande pour recommander des ajustements tarifaires optimaux. Il simule l'impact de chaque changement de prix sur le chiffre d'affaires et les marges.",
+    inputs: [
+      "Historique des ventes et tarifs pratiqués",
+      "Données concurrentielles (prix publics, positionnement)",
+      "Données de demande (saisonnalité, tendances sectorielles)",
+      "Coûts de revient et marges cibles",
+      "Segments clients et élasticité prix observée",
+    ],
+    outputs: [
+      "Recommandation tarifaire par service/prestation",
+      "Simulation d'impact sur le CA et la marge",
+      "Positionnement concurrentiel (matrice prix/valeur)",
+      "Alertes de prix anormaux (trop haut ou trop bas)",
+      "Rapport hebdomadaire de veille tarifaire",
+    ],
+    risks: [
+      "Recommandations de prix trop agressives aliénant les clients existants",
+      "Données concurrentielles incomplètes ou obsolètes",
+      "Non-prise en compte de facteurs qualitatifs (relation client, stratégie long terme)",
+      "Risque juridique sur les pratiques de prix dynamiques dans certains secteurs",
+    ],
+    roiIndicatif:
+      "Augmentation moyenne de 12% des marges. Réduction de 40% du temps d'analyse tarifaire. Amélioration de 18% du taux de conversion des propositions commerciales.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Mistral Large", category: "LLM", isFree: false },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Données    │────▶│  Agent LLM   │────▶│ Recomman-   │
+│  marché &   │     │  (Analyse &  │     │ dations     │
+│  ventes     │     │  Simulation) │     │ tarifaires  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+                    ┌──────▼───────┐
+                    │  Base SQL    │
+                    │ (Historique  │
+                    │  prix/ventes)│
+                    └──────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez votre base de données avec l'historique des prix et des ventes. Un minimum de 6 mois de données est recommandé pour des recommandations fiables.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain psycopg2-binary pandas numpy python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+OPENAI_API_KEY=sk-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/pricing_db`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Modèle de données et collecte",
+        content:
+          "Structurez vos données de prix, ventes et concurrence. Le modèle doit permettre l'analyse historique et la comparaison avec le marché.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pandas as pd
+from sqlalchemy import create_engine, text
+from pydantic import BaseModel, Field
+from typing import List, Optional
+import os
+
+engine = create_engine(os.getenv("DATABASE_URL"))
+
+class PricingData(BaseModel):
+    service: str = Field(description="Nom du service ou prestation")
+    prix_actuel: float = Field(description="Prix actuel en euros")
+    cout_revient: float = Field(description="Coût de revient")
+    volume_ventes_mensuel: int = Field(description="Volume de ventes mensuel")
+    prix_concurrent_min: Optional[float] = None
+    prix_concurrent_max: Optional[float] = None
+    prix_concurrent_median: Optional[float] = None
+
+def charger_donnees_pricing() -> List[PricingData]:
+    query = text("""
+        SELECT s.nom as service, s.prix_actuel, s.cout_revient,
+               COUNT(v.id) as volume_ventes_mensuel,
+               MIN(c.prix) as prix_concurrent_min,
+               MAX(c.prix) as prix_concurrent_max,
+               PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY c.prix) as prix_concurrent_median
+        FROM services s
+        LEFT JOIN ventes v ON v.service_id = s.id AND v.date >= NOW() - INTERVAL '30 days'
+        LEFT JOIN concurrents_prix c ON c.service_ref = s.categorie
+        GROUP BY s.id, s.nom, s.prix_actuel, s.cout_revient
+    """)
+    with engine.connect() as conn:
+        df = pd.read_sql(query, conn)
+    return [PricingData(**row) for row in df.to_dict(orient="records")]`,
+            filename: "data_pricing.py",
+          },
+        ],
+      },
+      {
+        title: "Agent d'optimisation tarifaire",
+        content:
+          "L'agent analyse les données de pricing, compare avec la concurrence, et produit des recommandations tarifaires argumentées avec simulation d'impact financier.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+from pydantic import BaseModel, Field
+from typing import List
+import json
+
+class RecommandationPrix(BaseModel):
+    service: str
+    prix_actuel: float
+    prix_recommande: float
+    variation_pct: float = Field(description="Variation en pourcentage")
+    impact_ca_estime: float = Field(description="Impact estimé sur le CA mensuel en euros")
+    impact_marge_estime: float = Field(description="Impact estimé sur la marge mensuelle en euros")
+    justification: str = Field(description="Argumentaire de la recommandation")
+    risque: str = Field(description="Risques associés à cette modification")
+    priorite: str = Field(description="Haute, Moyenne, Basse")
+
+class AnalyseTarifaire(BaseModel):
+    recommandations: List[RecommandationPrix]
+    synthese: str = Field(description="Synthèse globale de l'analyse")
+    impact_ca_total: float
+    impact_marge_total: float
+
+client = OpenAI()
+
+def analyser_pricing(donnees: list, contexte_marche: str = "") -> AnalyseTarifaire:
+    donnees_json = json.dumps([d.model_dump() for d in donnees], ensure_ascii=False)
+
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0.2,
+        messages=[
+            {"role": "system", "content": """Tu es un expert en stratégie tarifaire pour des entreprises de services B2B.
+Analyse les données de pricing fournies et produis des recommandations d'optimisation.
+
+Règles :
+- Ne jamais recommander un prix inférieur au coût de revient + 15% de marge minimale
+- Tenir compte du positionnement concurrentiel
+- Prioriser les services à fort volume pour maximiser l'impact
+- Justifier chaque recommandation avec des données chiffrées
+- Produire le résultat au format JSON conforme au schéma demandé"""},
+            {"role": "user", "content": f"Données pricing :\\n{donnees_json}\\n\\nContexte marché :\\n{contexte_marche}"}
+        ],
+        response_format={"type": "json_object"}
+    )
+    result = json.loads(response.choices[0].message.content)
+    return AnalyseTarifaire(**result)`,
+            filename: "agent_pricing.py",
+          },
+        ],
+      },
+      {
+        title: "API et tableau de bord",
+        content:
+          "Exposez l'agent via une API REST et créez un endpoint de simulation pour tester différents scénarios tarifaires avant mise en production.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from data_pricing import charger_donnees_pricing
+from agent_pricing import analyser_pricing, AnalyseTarifaire
+
+app = FastAPI()
+
+@app.get("/api/pricing/analyse")
+async def get_analyse() -> dict:
+    donnees = charger_donnees_pricing()
+    analyse = analyser_pricing(donnees)
+    return analyse.model_dump()
+
+@app.post("/api/pricing/simulation")
+async def simuler_prix(service: str, nouveau_prix: float) -> dict:
+    donnees = charger_donnees_pricing()
+    service_data = next((d for d in donnees if d.service == service), None)
+    if not service_data:
+        return {"error": "Service non trouvé"}
+
+    variation = ((nouveau_prix - service_data.prix_actuel) / service_data.prix_actuel) * 100
+    # Estimation simplifiée de l'élasticité prix
+    elasticite = -1.2  # coefficient d'élasticité moyen services B2B
+    impact_volume = service_data.volume_ventes_mensuel * (1 + (variation / 100) * elasticite)
+    impact_ca = impact_volume * nouveau_prix - service_data.volume_ventes_mensuel * service_data.prix_actuel
+
+    return {
+        "service": service,
+        "prix_actuel": service_data.prix_actuel,
+        "prix_simule": nouveau_prix,
+        "variation_pct": round(variation, 1),
+        "volume_estime": round(impact_volume),
+        "impact_ca_mensuel": round(impact_ca, 2)
+    }`,
+            filename: "api_pricing.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données tarifaires sont confidentielles. L'agent ne reçoit que des données agrégées sans information client nominative. Les prix concurrentiels proviennent de sources publiques uniquement. Les recommandations sont stockées chiffrées avec accès limité à la direction commerciale.",
+      auditLog: "Chaque recommandation tarifaire est tracée : services analysés, recommandations produites, décision prise (acceptée/rejetée/modifiée), impact réel mesuré à 30 jours, utilisateur ayant validé. Historique complet pour analyse de la performance du modèle.",
+      humanInTheLoop: "Toute modification de prix supérieure à 10% requiert une validation du directeur commercial. Les recommandations sont présentées comme des suggestions avec justification — la décision finale reste humaine. Comité de revue tarifaire mensuel.",
+      monitoring: "Tableau de bord : écart entre prix recommandé et prix appliqué, impact réel vs impact estimé, taux d'acceptation des recommandations, évolution des marges par service, alertes si un concurrent modifie significativement ses prix.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Schedule Trigger (hebdomadaire) → Node PostgreSQL (extraction données ventes) → Node HTTP Request (scraping prix concurrents) → Node HTTP Request (API LLM analyse) → Node IF (variation > seuil) → Node Slack (notification direction commerciale) → Node Google Sheets (historique recommandations).",
+      nodes: ["Schedule Trigger", "PostgreSQL (données ventes)", "HTTP Request (veille concurrentielle)", "HTTP Request (LLM analyse)", "IF (variation > seuil)", "Slack (notification)", "Google Sheets (historique)"],
+      triggerType: "Schedule (cron hebdomadaire)",
+    },
+    estimatedTime: "4-6h",
+    difficulty: "Moyen",
+    sectors: ["Services", "Conseil", "SaaS", "Industrie"],
+    metiers: ["Direction Commerciale", "Revenue Manager", "Direction Générale"],
+    functions: ["Commercial"],
+    metaTitle: "Agent IA d'Optimisation Tarifaire — Guide Complet",
+    metaDescription:
+      "Optimisez dynamiquement vos prix avec un agent IA. Analyse concurrentielle, simulation d'impact et recommandations tarifaires. Tutoriel pas-à-pas pour entreprises de services.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-moderation-contenu",
+    title: "Agent de Modération de Contenu",
+    subtitle: "Modérez automatiquement les contenus générés par les utilisateurs avec l'IA",
+    problem:
+      "Les plateformes e-commerce et médias reçoivent des milliers d'avis, commentaires et contenus utilisateurs quotidiennement. La modération manuelle est coûteuse, lente et inconsistante. Des contenus inappropriés, frauduleux ou diffamatoires passent entre les mailles du filet et nuisent à la réputation de la marque.",
+    value:
+      "Un agent IA analyse chaque contenu utilisateur en temps réel, détecte les contenus inappropriés (haine, spam, faux avis, diffamation), classifie par type de violation, et prend une action automatique (publier, masquer, escalader). La modération est instantanée, cohérente et traçable.",
+    inputs: [
+      "Contenu textuel (avis, commentaires, messages)",
+      "Métadonnées utilisateur (historique, réputation)",
+      "Règles de modération et charte communautaire",
+      "Contexte du contenu (produit, article, page concernée)",
+      "Historique des modérations précédentes",
+    ],
+    outputs: [
+      "Décision de modération (publier, masquer, escalader, supprimer)",
+      "Type de violation détectée (spam, haine, faux avis, hors-sujet, etc.)",
+      "Score de confiance de la décision",
+      "Explication de la décision pour l'utilisateur",
+      "Statistiques de modération (dashboard temps réel)",
+    ],
+    risks: [
+      "Censure excessive de contenus légitimes (faux positifs)",
+      "Non-détection de contenus subtilement toxiques ou ironiques",
+      "Biais culturels ou linguistiques dans la modération",
+      "Non-conformité avec les obligations légales de modération (DSA européen)",
+    ],
+    roiIndicatif:
+      "Réduction de 85% du temps de modération manuelle. Temps de réaction passant de 4h à < 10 secondes. Diminution de 60% des contenus inappropriés publiés.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "Redis", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Contenu    │────▶│  Agent LLM   │────▶│  Action     │
+│  utilisateur│     │ (Modération) │     │ (publier/   │
+│  (UGC)      │     │              │     │  masquer)   │
+└─────────────┘     └──────┬───────┘     └──────┬──────┘
+                           │                     │
+                    ┌──────▼───────┐     ┌──────▼──────┐
+                    │  Redis       │     │  Dashboard  │
+                    │  (cache +    │     │  modération │
+                    │  file queue) │     │             │
+                    └──────────────┘     └─────────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez l'accès API. Redis est utilisé comme file d'attente pour gérer les pics de volume de contenus à modérer.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain redis python-dotenv fastapi uvicorn`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+REDIS_URL=redis://localhost:6379/0
+MODERATION_THRESHOLD=0.8
+AUTO_PUBLISH_THRESHOLD=0.95`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Définition des règles de modération",
+        content:
+          "Formalisez votre charte de modération dans un format structuré. L'agent s'appuiera sur ces règles pour prendre ses décisions de manière cohérente et explicable.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from pydantic import BaseModel, Field
+from typing import List, Optional
+from enum import Enum
+
+class ViolationType(str, Enum):
+    SPAM = "spam"
+    HATE_SPEECH = "discours_haineux"
+    FAKE_REVIEW = "faux_avis"
+    DEFAMATION = "diffamation"
+    OFF_TOPIC = "hors_sujet"
+    INAPPROPRIATE = "contenu_inapproprie"
+    PERSONAL_INFO = "donnees_personnelles"
+    NONE = "aucune_violation"
+
+class ModerationAction(str, Enum):
+    PUBLISH = "publier"
+    HIDE = "masquer"
+    ESCALATE = "escalader"
+    DELETE = "supprimer"
+
+class ModerationResult(BaseModel):
+    action: ModerationAction
+    violation_type: ViolationType
+    confidence: float = Field(ge=0, le=1)
+    explanation_interne: str = Field(description="Explication pour les modérateurs")
+    explanation_utilisateur: Optional[str] = Field(description="Message à afficher à l'utilisateur si contenu rejeté")
+
+CHARTE_MODERATION = """
+RÈGLES DE MODÉRATION :
+1. PUBLIER : Contenu respectueux, constructif, en lien avec le sujet
+2. MASQUER : Contenu potentiellement problématique nécessitant vérification
+3. ESCALADER : Contenu ambigu ou cas limite nécessitant jugement humain
+4. SUPPRIMER : Violation claire (spam, haine, données personnelles exposées)
+
+CRITÈRES DE DÉTECTION :
+- Spam : liens commerciaux, contenu promotionnel déguisé, texte répétitif
+- Faux avis : langage excessivement positif/négatif sans détails concrets
+- Haine : insultes, discrimination, menaces
+- Données personnelles : numéros de téléphone, adresses, emails dans le contenu
+"""`,
+            filename: "moderation_rules.py",
+          },
+        ],
+      },
+      {
+        title: "Agent de modération",
+        content:
+          "Implémentez l'agent qui analyse chaque contenu, applique les règles de modération et retourne une décision structurée avec justification. L'agent gère le contexte (produit, historique utilisateur) pour une modération plus fine.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from moderation_rules import ModerationResult, CHARTE_MODERATION, ViolationType, ModerationAction
+import json
+
+client = anthropic.Anthropic()
+
+def moderer_contenu(
+    contenu: str,
+    contexte: str = "",
+    historique_utilisateur: str = ""
+) -> ModerationResult:
+    prompt = f"""Tu es un agent de modération de contenu professionnel.
+Analyse le contenu suivant selon la charte de modération.
+
+{CHARTE_MODERATION}
+
+CONTENU À MODÉRER :
+\"{contenu}\"
+
+CONTEXTE (produit/page) :
+{contexte}
+
+HISTORIQUE UTILISATEUR :
+{historique_utilisateur}
+
+Réponds au format JSON avec :
+- action : publier, masquer, escalader, supprimer
+- violation_type : spam, discours_haineux, faux_avis, diffamation, hors_sujet, contenu_inapproprie, donnees_personnelles, aucune_violation
+- confidence : score de confiance entre 0 et 1
+- explanation_interne : justification détaillée pour les modérateurs
+- explanation_utilisateur : message pour l'utilisateur si contenu rejeté (null si publié)"""
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    result = json.loads(response.content[0].text)
+    return ModerationResult(**result)
+
+def moderer_batch(contenus: list) -> list:
+    """Modération en batch pour les gros volumes"""
+    return [moderer_contenu(c["text"], c.get("context", "")) for c in contenus]`,
+            filename: "agent_moderation.py",
+          },
+        ],
+      },
+      {
+        title: "API temps réel avec file d'attente",
+        content:
+          "Déployez l'API de modération avec une file d'attente Redis pour absorber les pics de trafic. Les contenus sont modérés de manière asynchrone avec notification du résultat.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+import redis
+import json
+from agent_moderation import moderer_contenu
+
+app = FastAPI()
+r = redis.from_url("redis://localhost:6379/0")
+
+class ContentRequest(BaseModel):
+    content_id: str
+    text: str
+    context: str = ""
+    user_id: str = ""
+
+@app.post("/api/moderate")
+async def moderate(req: ContentRequest):
+    # Modération synchrone pour les contenus individuels
+    result = moderer_contenu(req.text, req.context)
+
+    # Stockage du résultat et mise à jour des stats
+    r.hset(f"moderation:{req.content_id}", mapping={
+        "action": result.action.value,
+        "violation": result.violation_type.value,
+        "confidence": str(result.confidence),
+        "explanation": result.explanation_interne
+    })
+
+    # Incrémenter les compteurs pour le dashboard
+    r.incr(f"stats:moderation:{result.action.value}")
+    r.incr("stats:moderation:total")
+
+    return {
+        "content_id": req.content_id,
+        "action": result.action.value,
+        "violation_type": result.violation_type.value,
+        "confidence": result.confidence,
+        "explanation_utilisateur": result.explanation_utilisateur
+    }
+
+@app.get("/api/moderate/stats")
+async def get_stats():
+    total = int(r.get("stats:moderation:total") or 0)
+    return {
+        "total": total,
+        "published": int(r.get("stats:moderation:publier") or 0),
+        "hidden": int(r.get("stats:moderation:masquer") or 0),
+        "escalated": int(r.get("stats:moderation:escalader") or 0),
+        "deleted": int(r.get("stats:moderation:supprimer") or 0)
+    }`,
+            filename: "api_moderation.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les contenus utilisateurs sont traités sans stockage long terme dans le LLM. Les données personnelles détectées dans les contenus (emails, téléphones) sont automatiquement masquées avant traitement. Conformité DSA et RGPD assurée avec droit de recours pour les utilisateurs.",
+      auditLog: "Chaque décision de modération est tracée : contenu ID, action prise, type de violation, score de confiance, modèle utilisé, horodatage. Les contestations utilisateurs sont liées à la décision initiale. Rétention des logs 2 ans pour conformité légale.",
+      humanInTheLoop: "Les contenus avec un score de confiance < 0.8 sont systématiquement escaladés vers un modérateur humain. Les utilisateurs peuvent contester une décision de modération, déclenchant une revue humaine. Les modérateurs peuvent corriger les décisions de l'agent pour améliorer le modèle.",
+      monitoring: "Dashboard temps réel : volume de contenus modérés/heure, répartition des décisions, taux d'escalade, temps de traitement moyen, taux de contestation, précision mesurée (vs revue humaine), alertes si le taux d'escalade dépasse 20%.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Webhook (nouveau contenu UGC) → Node HTTP Request (API LLM modération) → Node Switch (action: publier/masquer/escalader) → Branch publier: Node HTTP Request (API plateforme: publier) → Branch masquer: Node HTTP Request (API: masquer) + Node Email (notification utilisateur) → Branch escalader: Node Slack (alerte modérateur humain).",
+      nodes: ["Webhook (nouveau contenu)", "HTTP Request (LLM modération)", "Switch (action)", "HTTP Request (publier)", "HTTP Request (masquer)", "Email (notification)", "Slack (escalade modérateur)"],
+      triggerType: "Webhook (nouveau contenu UGC)",
+    },
+    estimatedTime: "3-5h",
+    difficulty: "Facile",
+    sectors: ["E-commerce", "Media", "Marketplace", "Réseaux sociaux"],
+    metiers: ["Community Manager", "Trust & Safety", "Direction Digitale"],
+    functions: ["Marketing"],
+    metaTitle: "Agent IA de Modération de Contenu — Guide Complet",
+    metaDescription:
+      "Modérez automatiquement les avis, commentaires et contenus utilisateurs avec un agent IA. Détection de spam, haine et faux avis. Tutoriel pas-à-pas pour e-commerce et médias.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-enrichissement-donnees",
+    title: "Agent d'Enrichissement de Données CRM",
+    subtitle: "Enrichissez automatiquement vos contacts CRM avec des données externes qualifiées",
+    problem:
+      "Les bases CRM contiennent souvent des fiches contacts incomplètes : poste manquant, entreprise non renseignée, taille et secteur inconnus. Les commerciaux perdent du temps à rechercher manuellement ces informations, et la segmentation marketing est approximative faute de données fiables.",
+    value:
+      "Un agent IA enrichit automatiquement chaque fiche contact avec des données publiques : profil LinkedIn, informations entreprise (taille, CA, secteur), technologie utilisée, actualités récentes. Les fiches CRM deviennent complètes et exploitables pour la segmentation et la personnalisation.",
+    inputs: [
+      "Fiche contact CRM (nom, email, entreprise partielle)",
+      "Domaine email professionnel",
+      "Données LinkedIn publiques",
+      "Bases de données entreprises (Societe.com, Pappers)",
+      "Sources d'actualités sectorielles",
+    ],
+    outputs: [
+      "Fiche contact enrichie (poste, département, ancienneté)",
+      "Fiche entreprise complète (taille, CA, secteur, localisation)",
+      "Stack technologique détectée (pour les SaaS/IT)",
+      "Score de fiabilité des données (0-100%)",
+      "Signaux d'affaires (levée de fonds, recrutement, déménagement)",
+    ],
+    risks: [
+      "Données obsolètes ou incorrectes dégradant la qualité CRM",
+      "Non-conformité RGPD sur la collecte de données personnelles",
+      "Scraping de sources non autorisées (violation des CGU)",
+      "Confusion entre homonymes (mauvais rattachement de profil)",
+    ],
+    roiIndicatif:
+      "Taux de complétion des fiches CRM passant de 30% à 85%. Réduction de 90% du temps d'enrichissement manuel. Amélioration de 25% du taux de réponse aux campagnes grâce à une meilleure segmentation.",
+    recommendedStack: [
+      { name: "OpenAI GPT-4.1", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Llama 3", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Contact    │────▶│  Agent LLM   │────▶│  CRM        │
+│  CRM        │     │ (Enrichisse- │     │  (fiche     │
+│  (partiel)  │     │  ment)       │     │  enrichie)  │
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │ LinkedIn  │ │ Pappers  │ │ Google   │
+       │ (profil)  │ │ (société)│ │ (actus)  │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez les accès aux APIs de données. L'API Pappers (données entreprises françaises) offre un plan gratuit suffisant pour un MVP. Pour LinkedIn, utilisez les données publiques via l'API officielle ou des services tiers conformes.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install openai langchain requests psycopg2-binary python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+OPENAI_API_KEY=sk-...
+PAPPERS_API_KEY=...
+DATABASE_URL=postgresql://user:pass@localhost:5432/crm_db
+ENRICHMENT_BATCH_SIZE=50`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Collecte de données externes",
+        content:
+          "Créez des connecteurs pour récupérer les données depuis les sources externes. Chaque connecteur retourne des données structurées et un score de fiabilité.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import requests
+import os
+from pydantic import BaseModel, Field
+from typing import Optional
+
+class CompanyInfo(BaseModel):
+    nom: str
+    siren: Optional[str] = None
+    forme_juridique: Optional[str] = None
+    effectif: Optional[str] = None
+    chiffre_affaires: Optional[float] = None
+    secteur_activite: Optional[str] = None
+    code_naf: Optional[str] = None
+    adresse: Optional[str] = None
+    date_creation: Optional[str] = None
+    dirigeant: Optional[str] = None
+    fiabilite: float = Field(ge=0, le=1, description="Score de fiabilité")
+
+def enrichir_entreprise_pappers(nom_entreprise: str) -> Optional[CompanyInfo]:
+    """Recherche d'informations entreprise via l'API Pappers"""
+    api_key = os.getenv("PAPPERS_API_KEY")
+    response = requests.get(
+        "https://api.pappers.fr/v2/recherche",
+        params={"q": nom_entreprise, "api_token": api_key, "par_page": 3}
+    )
+    if response.status_code != 200 or not response.json().get("resultats"):
+        return None
+
+    entreprise = response.json()["resultats"][0]
+    return CompanyInfo(
+        nom=entreprise.get("nom_entreprise", nom_entreprise),
+        siren=entreprise.get("siren"),
+        forme_juridique=entreprise.get("forme_juridique"),
+        effectif=entreprise.get("effectif"),
+        chiffre_affaires=entreprise.get("chiffre_affaires"),
+        secteur_activite=entreprise.get("libelle_code_naf"),
+        code_naf=entreprise.get("code_naf"),
+        adresse=entreprise.get("siege", {}).get("adresse_ligne_1"),
+        date_creation=entreprise.get("date_creation"),
+        dirigeant=entreprise.get("representants", [{}])[0].get("nom_complet") if entreprise.get("representants") else None,
+        fiabilite=0.9 if entreprise.get("siren") else 0.5
+    )
+
+def extraire_domaine_email(email: str) -> str:
+    """Extrait le domaine professionnel d'une adresse email"""
+    domaines_generiques = ["gmail.com", "yahoo.fr", "hotmail.com", "outlook.com", "free.fr"]
+    domaine = email.split("@")[1] if "@" in email else ""
+    return domaine if domaine not in domaines_generiques else ""`,
+            filename: "data_connectors.py",
+          },
+        ],
+      },
+      {
+        title: "Agent d'enrichissement intelligent",
+        content:
+          "L'agent orchestre les différentes sources de données, résout les ambiguïtés (homonymes, entreprises similaires), et produit une fiche enrichie consolidée avec score de fiabilité par champ.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from openai import OpenAI
+from data_connectors import enrichir_entreprise_pappers, extraire_domaine_email, CompanyInfo
+from pydantic import BaseModel, Field
+from typing import Optional, List
+import json
+
+class ContactEnrichi(BaseModel):
+    nom: str
+    email: str
+    poste_estime: Optional[str] = None
+    departement_estime: Optional[str] = None
+    entreprise: Optional[CompanyInfo] = None
+    signaux_affaires: List[str] = Field(default_factory=list)
+    score_completude: float = Field(ge=0, le=1)
+    sources_utilisees: List[str] = Field(default_factory=list)
+
+client = OpenAI()
+
+def enrichir_contact(nom: str, email: str, entreprise_nom: str = "") -> ContactEnrichi:
+    # Étape 1 : Détecter le domaine
+    domaine = extraire_domaine_email(email)
+    entreprise_recherche = entreprise_nom or domaine.split(".")[0] if domaine else ""
+
+    # Étape 2 : Enrichissement entreprise via Pappers
+    company_info = None
+    sources = []
+    if entreprise_recherche:
+        company_info = enrichir_entreprise_pappers(entreprise_recherche)
+        if company_info:
+            sources.append("Pappers")
+
+    # Étape 3 : Estimation du poste via LLM (basé sur le contexte)
+    context_parts = [f"Nom: {nom}", f"Email: {email}"]
+    if company_info:
+        context_parts.append(f"Entreprise: {company_info.nom} ({company_info.secteur_activite})")
+        context_parts.append(f"Effectif: {company_info.effectif}")
+
+    response = client.chat.completions.create(
+        model="gpt-4.1",
+        temperature=0.1,
+        messages=[
+            {"role": "system", "content": """Tu es un expert en intelligence commerciale B2B.
+À partir des informations partielles fournies, estime le poste probable et le département du contact.
+Réponds en JSON : {"poste_estime": "...", "departement_estime": "...", "signaux_affaires": ["..."], "confidence": 0.X}
+Si tu ne peux pas estimer, mets null."""},
+            {"role": "user", "content": "\\n".join(context_parts)}
+        ],
+        response_format={"type": "json_object"}
+    )
+    llm_result = json.loads(response.choices[0].message.content)
+    sources.append("LLM (estimation)")
+
+    # Calcul du score de complétude
+    champs_remplis = sum([
+        bool(llm_result.get("poste_estime")),
+        bool(llm_result.get("departement_estime")),
+        bool(company_info),
+        bool(company_info and company_info.chiffre_affaires),
+        bool(company_info and company_info.effectif),
+    ])
+    score = champs_remplis / 5
+
+    return ContactEnrichi(
+        nom=nom,
+        email=email,
+        poste_estime=llm_result.get("poste_estime"),
+        departement_estime=llm_result.get("departement_estime"),
+        entreprise=company_info,
+        signaux_affaires=llm_result.get("signaux_affaires", []),
+        score_completude=score,
+        sources_utilisees=sources
+    )`,
+            filename: "agent_enrichissement.py",
+          },
+        ],
+      },
+      {
+        title: "API et enrichissement batch",
+        content:
+          "Exposez l'agent via une API REST avec support du traitement en batch pour enrichir les contacts CRM existants. L'endpoint batch traite les contacts par lots pour optimiser les appels API.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
+from agent_enrichissement import enrichir_contact
+
+app = FastAPI()
+
+class ContactInput(BaseModel):
+    nom: str
+    email: str
+    entreprise: str = ""
+
+class BatchRequest(BaseModel):
+    contacts: List[ContactInput]
+
+@app.post("/api/enrich")
+async def enrich_single(contact: ContactInput):
+    result = enrichir_contact(contact.nom, contact.email, contact.entreprise)
+    return result.model_dump()
+
+@app.post("/api/enrich/batch")
+async def enrich_batch(request: BatchRequest):
+    results = []
+    for contact in request.contacts:
+        try:
+            result = enrichir_contact(contact.nom, contact.email, contact.entreprise)
+            results.append({"status": "success", "data": result.model_dump()})
+        except Exception as e:
+            results.append({"status": "error", "contact": contact.nom, "error": str(e)})
+
+    enriched = sum(1 for r in results if r["status"] == "success")
+    return {
+        "total": len(request.contacts),
+        "enriched": enriched,
+        "errors": len(request.contacts) - enriched,
+        "results": results
+    }`,
+            filename: "api_enrichissement.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Enrichissement exclusivement basé sur des données publiques et des APIs conformes RGPD. Consentement requis pour le traitement des données personnelles. Les contacts peuvent exercer leur droit d'accès et de suppression. Aucune donnée personnelle n'est envoyée au LLM — seules les estimations contextuelles sont demandées.",
+      auditLog: "Chaque enrichissement tracé : contact ID (hashé), sources consultées, données ajoutées, score de fiabilité, horodatage, coût API. Registre des traitements conforme à l'article 30 du RGPD. Traçabilité complète de la provenance de chaque donnée.",
+      humanInTheLoop: "Les enrichissements avec un score de fiabilité < 0.6 sont signalés pour validation humaine. Les commerciaux peuvent corriger les données enrichies, améliorant la précision future. Revue trimestrielle de la qualité des enrichissements par le responsable CRM.",
+      monitoring: "Dashboard : nombre de contacts enrichis/jour, taux de complétion moyen, score de fiabilité moyen, répartition par source, coût par enrichissement, alertes si le taux d'erreur API dépasse 5%, évolution de la qualité CRM dans le temps.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Trigger CRM (nouveau contact ou import batch) → Node HTTP Request (API Pappers enrichissement entreprise) → Node HTTP Request (LLM estimation poste) → Node IF (score fiabilité > seuil) → Node CRM (mise à jour fiche) → Node Slack (notification commercial si contact high-value).",
+      nodes: ["CRM Trigger (nouveau contact)", "HTTP Request (Pappers)", "HTTP Request (LLM estimation)", "IF (fiabilité > seuil)", "CRM Update (fiche enrichie)", "Slack (notification)"],
+      triggerType: "CRM Trigger (nouveau contact ou batch planifié)",
+    },
+    estimatedTime: "3-5h",
+    difficulty: "Facile",
+    sectors: ["SaaS", "Services", "Conseil", "B2B"],
+    metiers: ["Sales Ops", "Marketing Ops", "Direction Commerciale"],
+    functions: ["Commercial"],
+    metaTitle: "Agent IA d'Enrichissement de Données CRM — Guide Complet",
+    metaDescription:
+      "Enrichissez automatiquement vos contacts CRM avec un agent IA. Données entreprise, estimation de poste et signaux d'affaires. Tutoriel pas-à-pas conforme RGPD.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
+  {
+    slug: "agent-prediction-churn",
+    title: "Agent de Prédiction du Churn Client",
+    subtitle: "Identifiez les clients à risque de départ et déclenchez des actions de rétention proactives",
+    problem:
+      "Les entreprises détectent le churn trop tard, quand le client a déjà décidé de partir. Les signaux faibles (baisse d'usage, tickets non résolus, retards de paiement) sont dispersés dans différents systèmes et rarement analysés de manière consolidée. Le coût d'acquisition d'un nouveau client étant 5 à 7 fois supérieur à la rétention, chaque départ évitable représente une perte significative.",
+    value:
+      "Un agent IA analyse en continu les données d'usage, de support, de facturation et d'engagement pour calculer un score de risque de churn par client. Il identifie les signaux faibles, prédit les départs à 30/60/90 jours, et recommande des actions de rétention personnalisées pour chaque compte à risque.",
+    inputs: [
+      "Données d'usage produit (connexions, fonctionnalités utilisées, fréquence)",
+      "Historique des tickets support (volume, satisfaction, temps de résolution)",
+      "Données de facturation (retards, litiges, downgrades)",
+      "Données d'engagement (ouverture emails, participation événements, NPS)",
+      "Historique des churns passés (pour entraînement du modèle)",
+    ],
+    outputs: [
+      "Score de risque de churn par client (0-100)",
+      "Probabilité de churn à 30, 60, 90 jours",
+      "Top 3 des facteurs de risque par client",
+      "Recommandation d'action de rétention personnalisée",
+      "Tableau de bord des comptes à risque avec priorisation",
+    ],
+    risks: [
+      "Faux positifs générant des actions de rétention inutiles et coûteuses",
+      "Faux négatifs manquant des départs évitables",
+      "Effet Hawthorne : l'attention portée au client peut modifier son comportement",
+      "Biais du modèle favorisant certains segments clients au détriment d'autres",
+    ],
+    roiIndicatif:
+      "Réduction du taux de churn de 15% à 20%. Augmentation de la LTV moyenne de 25%. ROI de 300% sur les actions de rétention ciblées. Détection des comptes à risque 45 jours plus tôt en moyenne.",
+    recommendedStack: [
+      { name: "Anthropic Claude Sonnet 4.5", category: "LLM" },
+      { name: "LangChain", category: "Orchestration" },
+      { name: "PostgreSQL", category: "Database" },
+      { name: "Vercel", category: "Hosting" },
+    ],
+    lowCostAlternatives: [
+      { name: "Ollama + Mistral", category: "LLM", isFree: true },
+      { name: "SQLite", category: "Database", isFree: true },
+      { name: "n8n", category: "Orchestration", isFree: true },
+      { name: "Railway", category: "Hosting", isFree: true },
+    ],
+    architectureDiagram: `┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Données    │────▶│  Agent LLM   │────▶│  Actions    │
+│  client     │     │  (Scoring &  │     │  rétention  │
+│  (multi-src)│     │  Prédiction) │     │  (CRM/Slack)│
+└─────────────┘     └──────┬───────┘     └─────────────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+       ┌───────────┐ ┌──────────┐ ┌──────────┐
+       │  Usage    │ │ Support  │ │ Billing  │
+       │  Analytics│ │ Tickets  │ │  Data    │
+       └───────────┘ └──────────┘ └──────────┘`,
+    tutorial: [
+      {
+        title: "Prérequis et configuration",
+        content:
+          "Installez les dépendances et configurez l'accès à vos différentes sources de données client. Un minimum de 12 mois d'historique est recommandé pour un modèle de prédiction fiable.",
+        codeSnippets: [
+          {
+            language: "bash",
+            code: `pip install anthropic langchain psycopg2-binary pandas scikit-learn python-dotenv`,
+            filename: "terminal",
+          },
+          {
+            language: "python",
+            code: `# .env
+ANTHROPIC_API_KEY=sk-ant-...
+DATABASE_URL=postgresql://user:pass@localhost:5432/analytics_db
+CHURN_RISK_THRESHOLD=70
+ALERT_CHANNEL_WEBHOOK=https://hooks.slack.com/services/...`,
+            filename: ".env",
+          },
+        ],
+      },
+      {
+        title: "Collecte et agrégation des signaux",
+        content:
+          "Consolidez les données de plusieurs sources (usage, support, facturation) en un profil client unifié. Chaque signal est normalisé et horodaté pour permettre l'analyse de tendance.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import pandas as pd
+from sqlalchemy import create_engine, text
+from pydantic import BaseModel, Field
+from typing import List, Optional
+from datetime import datetime
+import os
+
+engine = create_engine(os.getenv("DATABASE_URL"))
+
+class SignalClient(BaseModel):
+    client_id: str
+    nom_client: str
+    mrr: float = Field(description="Revenu mensuel récurrent en euros")
+    anciennete_mois: int
+    # Signaux d'usage
+    connexions_30j: int = 0
+    variation_usage_pct: float = Field(default=0, description="Variation d'usage vs mois précédent")
+    fonctionnalites_actives: int = 0
+    dernier_login_jours: int = 0
+    # Signaux support
+    tickets_ouverts_30j: int = 0
+    tickets_non_resolus: int = 0
+    nps_dernier: Optional[int] = None
+    satisfaction_moyenne: Optional[float] = None
+    # Signaux facturation
+    retards_paiement_90j: int = 0
+    litiges_ouverts: int = 0
+    downgrade_recent: bool = False
+    # Signaux engagement
+    emails_ouverts_pct_30j: float = 0
+    participation_events: int = 0
+
+def collecter_signaux_client(client_id: str) -> SignalClient:
+    query = text("""
+        WITH usage_data AS (
+            SELECT client_id,
+                   COUNT(*) as connexions_30j,
+                   COUNT(DISTINCT feature_name) as fonctionnalites_actives,
+                   EXTRACT(DAY FROM NOW() - MAX(login_date)) as dernier_login_jours
+            FROM user_events
+            WHERE client_id = :cid AND event_date >= NOW() - INTERVAL '30 days'
+            GROUP BY client_id
+        ),
+        support_data AS (
+            SELECT client_id,
+                   COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days') as tickets_30j,
+                   COUNT(*) FILTER (WHERE status = 'open') as tickets_non_resolus,
+                   AVG(satisfaction_score) as satisfaction_moyenne
+            FROM support_tickets WHERE client_id = :cid
+            GROUP BY client_id
+        ),
+        billing_data AS (
+            SELECT client_id, mrr,
+                   COUNT(*) FILTER (WHERE payment_status = 'late' AND due_date >= NOW() - INTERVAL '90 days') as retards_90j,
+                   COUNT(*) FILTER (WHERE type = 'dispute' AND status = 'open') as litiges
+            FROM billing WHERE client_id = :cid
+            GROUP BY client_id, mrr
+        )
+        SELECT c.id as client_id, c.nom as nom_client, c.created_at,
+               COALESCE(u.connexions_30j, 0) as connexions_30j,
+               COALESCE(u.fonctionnalites_actives, 0) as fonctionnalites_actives,
+               COALESCE(u.dernier_login_jours, 999) as dernier_login_jours,
+               COALESCE(s.tickets_30j, 0) as tickets_ouverts_30j,
+               COALESCE(s.tickets_non_resolus, 0) as tickets_non_resolus,
+               s.satisfaction_moyenne,
+               COALESCE(b.mrr, 0) as mrr,
+               COALESCE(b.retards_90j, 0) as retards_paiement_90j,
+               COALESCE(b.litiges, 0) as litiges_ouverts
+        FROM clients c
+        LEFT JOIN usage_data u ON u.client_id = c.id
+        LEFT JOIN support_data s ON s.client_id = c.id
+        LEFT JOIN billing_data b ON b.client_id = c.id
+        WHERE c.id = :cid
+    """)
+    with engine.connect() as conn:
+        row = conn.execute(query, {"cid": client_id}).fetchone()
+
+    anciennete = (datetime.now() - row.created_at).days // 30
+    return SignalClient(
+        client_id=row.client_id,
+        nom_client=row.nom_client,
+        mrr=row.mrr,
+        anciennete_mois=anciennete,
+        connexions_30j=row.connexions_30j,
+        fonctionnalites_actives=row.fonctionnalites_actives,
+        dernier_login_jours=int(row.dernier_login_jours),
+        tickets_ouverts_30j=row.tickets_ouverts_30j,
+        tickets_non_resolus=row.tickets_non_resolus,
+        satisfaction_moyenne=row.satisfaction_moyenne,
+        retards_paiement_90j=row.retards_paiement_90j,
+        litiges_ouverts=row.litiges_ouverts
+    )`,
+            filename: "data_signals.py",
+          },
+        ],
+      },
+      {
+        title: "Agent de scoring et recommandation",
+        content:
+          "L'agent analyse les signaux consolidés, calcule un score de risque, identifie les facteurs principaux et recommande des actions de rétention spécifiques à chaque situation client.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `import anthropic
+from data_signals import SignalClient
+from pydantic import BaseModel, Field
+from typing import List
+import json
+
+class ChurnPrediction(BaseModel):
+    client_id: str
+    score_risque: int = Field(ge=0, le=100, description="Score de risque de churn")
+    probabilite_30j: float = Field(ge=0, le=1)
+    probabilite_60j: float = Field(ge=0, le=1)
+    probabilite_90j: float = Field(ge=0, le=1)
+    facteurs_risque: List[str] = Field(description="Top facteurs de risque identifiés")
+    action_recommandee: str = Field(description="Action de rétention recommandée")
+    urgence: str = Field(description="Critique, Haute, Moyenne, Basse")
+    argumentaire: str = Field(description="Argumentaire pour le CSM")
+
+client = anthropic.Anthropic()
+
+def predire_churn(signaux: SignalClient) -> ChurnPrediction:
+    signaux_json = signaux.model_dump_json()
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5-20250514",
+        max_tokens=2048,
+        messages=[
+            {"role": "user", "content": f"""Tu es un expert en Customer Success et rétention client B2B SaaS.
+Analyse les signaux suivants pour ce client et produis une prédiction de churn.
+
+SIGNAUX CLIENT :
+{signaux_json}
+
+RÈGLES D'ANALYSE :
+- Connexions en baisse forte (> -30%) = signal critique
+- Tickets non résolus > 3 = signal fort
+- Retard de paiement = signal fort
+- Dernier login > 14 jours = signal d'alerte
+- NPS < 7 = insatisfaction
+- Downgrade récent = intention de départ probable
+
+Produis un JSON avec :
+- score_risque (0-100)
+- probabilite_30j, probabilite_60j, probabilite_90j (entre 0 et 1)
+- facteurs_risque (top 3 facteurs)
+- action_recommandee (action précise et personnalisée)
+- urgence (Critique si score > 80, Haute si > 60, Moyenne si > 40, Basse sinon)
+- argumentaire (script pour le CSM : ce qu'il doit dire/faire)"""}
+        ]
+    )
+    result = json.loads(response.content[0].text)
+    result["client_id"] = signaux.client_id
+    return ChurnPrediction(**result)
+
+def analyser_portefeuille(clients_ids: list) -> list:
+    """Analyse un portefeuille complet de clients"""
+    from data_signals import collecter_signaux_client
+    predictions = []
+    for cid in clients_ids:
+        signaux = collecter_signaux_client(cid)
+        prediction = predire_churn(signaux)
+        predictions.append(prediction)
+    # Tri par score de risque décroissant
+    predictions.sort(key=lambda p: p.score_risque, reverse=True)
+    return predictions`,
+            filename: "agent_churn.py",
+          },
+        ],
+      },
+      {
+        title: "API et alertes automatiques",
+        content:
+          "Déployez l'API de prédiction avec des alertes Slack automatiques pour les comptes à risque. Le système s'exécute quotidiennement et notifie les CSM des comptes nécessitant une intervention urgente.",
+        codeSnippets: [
+          {
+            language: "python",
+            code: `from fastapi import FastAPI
+from agent_churn import predire_churn, analyser_portefeuille
+from data_signals import collecter_signaux_client
+import requests
+import os
+
+app = FastAPI()
+SLACK_WEBHOOK = os.getenv("ALERT_CHANNEL_WEBHOOK")
+RISK_THRESHOLD = int(os.getenv("CHURN_RISK_THRESHOLD", 70))
+
+@app.get("/api/churn/client/{client_id}")
+async def get_churn_risk(client_id: str):
+    signaux = collecter_signaux_client(client_id)
+    prediction = predire_churn(signaux)
+    return prediction.model_dump()
+
+@app.post("/api/churn/scan")
+async def scan_portfolio():
+    """Scan complet du portefeuille client"""
+    from sqlalchemy import create_engine, text
+    engine = create_engine(os.getenv("DATABASE_URL"))
+    with engine.connect() as conn:
+        ids = [r[0] for r in conn.execute(text("SELECT id FROM clients WHERE status = 'active'")).fetchall()]
+
+    predictions = analyser_portefeuille(ids)
+    high_risk = [p for p in predictions if p.score_risque >= RISK_THRESHOLD]
+
+    # Alertes Slack pour les comptes critiques
+    if high_risk and SLACK_WEBHOOK:
+        blocks = []
+        for p in high_risk[:10]:
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*{p.client_id}* — Score: {p.score_risque}/100 ({p.urgence})\\n"
+                            f"Facteurs: {', '.join(p.facteurs_risque)}\\n"
+                            f"Action: {p.action_recommandee}"
+                }
+            })
+        requests.post(SLACK_WEBHOOK, json={
+            "text": f"🚨 {len(high_risk)} comptes à risque de churn détectés",
+            "blocks": blocks
+        })
+
+    return {
+        "total_clients": len(ids),
+        "high_risk": len(high_risk),
+        "predictions": [p.model_dump() for p in predictions[:20]]
+    }`,
+            filename: "api_churn.py",
+          },
+        ],
+      },
+    ],
+    enterprise: {
+      piiHandling: "Les données client sont traitées de manière agrégée — seuls les signaux comportementaux anonymisés sont envoyés au LLM, jamais les données personnelles (nom, email, téléphone). Le scoring est stocké en base interne avec accès restreint aux équipes Customer Success et Direction.",
+      auditLog: "Chaque prédiction est tracée : client ID (hashé), score de risque, facteurs identifiés, action recommandée, action effectivement prise par le CSM, résultat à 90 jours (churn effectif ou rétention). Permet le calcul de la précision du modèle et son amélioration continue.",
+      humanInTheLoop: "Le score de churn est un outil d'aide à la décision — le CSM décide de l'action finale. Les comptes stratégiques (MRR > seuil) nécessitent une validation du Head of CS avant action. Revue hebdomadaire des comptes à risque en comité CS.",
+      monitoring: "Dashboard Customer Success : distribution des scores de risque, évolution du taux de churn réel vs prédit, précision du modèle (matrice de confusion), MRR at risk, taux de rétention des comptes alertés, coût API quotidien, alertes si le taux de churn réel dépasse la prédiction de plus de 5 points.",
+    },
+    n8nWorkflow: {
+      description: "Workflow n8n : Schedule Trigger (quotidien 8h) → Node PostgreSQL (extraction signaux clients actifs) → Node HTTP Request (API LLM scoring churn) → Node IF (score > seuil) → Branch critique: Node Slack (alerte CSM) + Node CRM (créer tâche rétention) → Branch normal: Node Google Sheets (suivi).",
+      nodes: ["Schedule Trigger (quotidien)", "PostgreSQL (signaux clients)", "HTTP Request (LLM scoring)", "IF (score > seuil)", "Slack (alerte CSM)", "CRM (tâche rétention)", "Google Sheets (suivi)"],
+      triggerType: "Schedule (cron quotidien à 8h00)",
+    },
+    estimatedTime: "5-8h",
+    difficulty: "Moyen",
+    sectors: ["SaaS", "Telecom", "Assurance", "Services B2B"],
+    metiers: ["Customer Success", "Direction Commerciale", "Direction Générale"],
+    functions: ["Commercial"],
+    metaTitle: "Agent IA de Prédiction du Churn Client — Guide Complet",
+    metaDescription:
+      "Prédisez le churn client avec un agent IA. Scoring de risque, détection de signaux faibles et actions de rétention personnalisées. Tutoriel pas-à-pas pour SaaS et services B2B.",
+    createdAt: "2025-02-07",
+    updatedAt: "2025-02-07",
+  },
 ];
