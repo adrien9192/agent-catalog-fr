@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface NewsletterSignupProps {
-  variant?: "hero" | "inline" | "footer";
+  variant?: "hero" | "inline" | "footer" | "compact";
 }
 
 export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) {
@@ -65,6 +65,33 @@ export function NewsletterSignup({ variant = "inline" }: NewsletterSignupProps) 
         <p className="mt-2 text-xs text-muted-foreground text-center">
           Gratuit. Désinscription en un clic. Pas de spam, promis.
         </p>
+      </div>
+    );
+  }
+
+  if (variant === "compact") {
+    return (
+      <div>
+        {status === "success" ? (
+          <p className="text-xs text-emerald-600 font-medium">{message}</p>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="votre@email.com"
+              required
+              className="flex-1 min-w-0 rounded-md border border-input bg-background px-3 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <Button type="submit" size="sm" disabled={status === "loading"} className="text-xs h-7 px-3">
+              {status === "loading" ? "..." : "OK"}
+            </Button>
+          </form>
+        )}
+        {status === "error" && (
+          <p className="mt-1 text-xs text-destructive">{message}</p>
+        )}
       </div>
     );
   }

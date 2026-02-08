@@ -35,11 +35,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+const WORKFLOW_COUNT = useCases.filter((u) => u.n8nTutorial && u.n8nTutorial.length > 0).length || useCases.length;
 
 export default async function UseCasePage({ params }: PageProps) {
   const { slug } = await params;
   const uc = useCases.find((u) => u.slug === slug);
   if (!uc) notFound();
+
+  const midTutorialIndex = uc.n8nTutorial ? Math.floor(uc.n8nTutorial.length / 2) : 0;
 
   return (
     <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
@@ -52,6 +55,7 @@ export default async function UseCasePage({ params }: PageProps) {
         ]}
       />
       <StickyCTABar title={uc.title} difficulty={uc.difficulty} />
+
       {/* Breadcrumb */}
       <nav className="mb-6 text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground">Accueil</Link>
@@ -61,13 +65,32 @@ export default async function UseCasePage({ params }: PageProps) {
         <span className="text-foreground">{uc.title}</span>
       </nav>
 
+      {/* Fast-track banner for "pressés" */}
+      {uc.n8nTutorial && (
+        <div className="mb-8 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm">Pas le temps de configurer ? Obtenez ce workflow prêt à importer.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Import en 1 clic dans n8n + accès aux {WORKFLOW_COUNT}+ workflows du catalogue.
+              <span className="font-medium text-foreground"> Essai gratuit 14 jours.</span>
+            </p>
+          </div>
+          <Link
+            href="/demande?plan=pro"
+            className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            Obtenir le workflow Pro
+          </Link>
+        </div>
+      )}
+
       {/* Header */}
       <header className="mb-10">
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <DifficultyBadge difficulty={uc.difficulty} />
           {uc.estimatedTime && (
             <Badge variant="outline" className="text-xs">
-              ⏱ {uc.estimatedTime}
+              {uc.estimatedTime}
             </Badge>
           )}
           {uc.functions.map((fn) => (
@@ -102,6 +125,9 @@ export default async function UseCasePage({ params }: PageProps) {
           )}
           <a href="#tutoriel" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">
             {uc.n8nTutorial ? "Tutoriel n8n" : "Tutoriel"}
+          </a>
+          <a href="#obtenir" className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs text-primary font-medium hover:bg-primary/10 transition-colors">
+            Obtenir le workflow
           </a>
         </nav>
       </div>
@@ -176,14 +202,14 @@ export default async function UseCasePage({ params }: PageProps) {
             </div>
           )}
 
-          {/* 3. Tutoriel n8n (primary) or code tutorial (fallback) */}
+          {/* 3. Tutorial */}
           <section id="tutoriel">
             {uc.n8nTutorial && uc.n8nTutorial.length > 0 ? (
               <>
                 <div className="mb-6">
                   <h2 className="text-2xl font-bold mb-2">Tutoriel n8n — pas à pas</h2>
                   <p className="text-sm text-muted-foreground">
-                    Suivez ce guide nœud par nœud pour construire le workflow dans n8n.
+                    Suivez ce guide noeud par noeud pour construire le workflow dans n8n.
                     Chaque étape inclut les instructions de configuration, les adaptations possibles et la gestion des erreurs.
                   </p>
                 </div>
@@ -195,7 +221,7 @@ export default async function UseCasePage({ params }: PageProps) {
                     <div className="flex flex-wrap items-center gap-1.5 mb-3">
                       {uc.n8nWorkflow.nodes.map((node, i) => (
                         <div key={i} className="flex items-center gap-1">
-                          {i > 0 && <span className="text-muted-foreground text-xs">→</span>}
+                          {i > 0 && <span className="text-muted-foreground text-xs">&rarr;</span>}
                           <Badge variant="outline" className="text-xs font-mono">
                             {node}
                           </Badge>
@@ -211,132 +237,149 @@ export default async function UseCasePage({ params }: PageProps) {
                 {/* N8n tutorial steps */}
                 <div className="space-y-6">
                   {uc.n8nTutorial.map((step, i) => (
-                    <div key={i} className="rounded-xl border overflow-hidden">
-                      {/* Step header */}
-                      <div className="flex items-center gap-3 border-b bg-muted/40 px-4 py-3 sm:px-6">
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
-                          {i + 1}
-                        </span>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-lg" aria-hidden="true">{step.nodeIcon}</span>
-                          <h3 className="font-semibold truncate">{step.nodeLabel}</h3>
-                          <Badge variant="secondary" className="text-[10px] shrink-0 hidden sm:inline-flex">{step.nodeType}</Badge>
+                    <div key={i}>
+                      <div className="rounded-xl border overflow-hidden">
+                        {/* Step header */}
+                        <div className="flex items-center gap-3 border-b bg-muted/40 px-4 py-3 sm:px-6">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
+                            {i + 1}
+                          </span>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-lg" aria-hidden="true">{step.nodeIcon}</span>
+                            <h3 className="font-semibold truncate">{step.nodeLabel}</h3>
+                            <Badge variant="secondary" className="text-[10px] shrink-0 hidden sm:inline-flex">{step.nodeType}</Badge>
+                          </div>
+                        </div>
+
+                        <div className="p-4 sm:p-6 space-y-4">
+                          {/* Description */}
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            {step.description}
+                          </p>
+
+                          {/* Expected output */}
+                          {step.expectedOutput && (
+                            <div className="rounded-lg border border-chart-2/30 bg-chart-2/5 p-3">
+                              <p className="text-xs font-semibold mb-1.5 text-chart-2">Résultat attendu :</p>
+                              <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap">{step.expectedOutput}</pre>
+                            </div>
+                          )}
+
+                          {/* Variants or single configuration */}
+                          {step.variants && step.variants.length > 0 ? (
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                                <span className="text-primary">&#9655;</span> Choisissez votre outil
+                              </h4>
+                              <p className="text-xs text-muted-foreground">{step.configuration}</p>
+                              <div className="space-y-2">
+                                {step.variants.map((variant, vi) => (
+                                  <details key={vi} className="group/variant rounded-lg border overflow-hidden">
+                                    <summary className="cursor-pointer flex items-center gap-2 px-4 py-2.5 hover:bg-muted/40 transition-colors select-none">
+                                      <span className="text-base" aria-hidden="true">{variant.toolIcon}</span>
+                                      <span className="text-sm font-medium">{variant.toolName}</span>
+                                      {variant.isFree && (
+                                        <Badge variant="secondary" className="text-[10px] ml-1">Gratuit</Badge>
+                                      )}
+                                      <span className="ml-auto text-xs text-muted-foreground group-open/variant:hidden">Voir la config</span>
+                                      <span className="ml-auto text-xs text-muted-foreground hidden group-open/variant:inline">Masquer</span>
+                                    </summary>
+                                    <div className="border-t px-4 py-3 space-y-3">
+                                      <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
+                                        <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
+                                          {variant.configuration}
+                                        </pre>
+                                      </div>
+                                      {variant.errorHandling && (
+                                        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-muted-foreground leading-relaxed">
+                                          <p className="font-semibold text-foreground mb-1">Erreurs fréquentes :</p>
+                                          {variant.errorHandling.split("\n").map((line, li) => (
+                                            <p key={li} className="mb-0.5 last:mb-0">{line}</p>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </details>
+                                ))}
+                              </div>
+                              {step.errorHandling && (
+                                <details className="group">
+                                  <summary className="cursor-pointer text-sm font-semibold flex items-center gap-1.5 select-none">
+                                    <span className="text-destructive">&#9888;</span> Erreurs générales
+                                    <span className="ml-auto text-xs text-muted-foreground group-open:hidden">Afficher</span>
+                                    <span className="ml-auto text-xs text-muted-foreground hidden group-open:inline">Masquer</span>
+                                  </summary>
+                                  <div className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground leading-relaxed">
+                                    {step.errorHandling.split("\n").map((line, li) => (
+                                      <p key={li} className="mb-1 last:mb-0">{line}</p>
+                                    ))}
+                                  </div>
+                                </details>
+                              )}
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                                  <span className="text-primary">&#9655;</span> Configuration
+                                </h4>
+                                <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
+                                  <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
+                                    {step.configuration}
+                                  </pre>
+                                </div>
+                              </div>
+                              {step.customization && (
+                                <div>
+                                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                                    <span className="text-primary">&#9881;</span> Adapter à votre contexte
+                                  </h4>
+                                  <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground leading-relaxed">
+                                    {step.customization.split("\n").map((line, li) => (
+                                      <p key={li} className="mb-1 last:mb-0">{line}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {step.errorHandling && (
+                                <details className="group">
+                                  <summary className="cursor-pointer text-sm font-semibold flex items-center gap-1.5 select-none">
+                                    <span className="text-destructive">&#9888;</span> Erreurs fréquentes et solutions
+                                    <span className="ml-auto text-xs text-muted-foreground group-open:hidden">Afficher</span>
+                                    <span className="ml-auto text-xs text-muted-foreground hidden group-open:inline">Masquer</span>
+                                  </summary>
+                                  <div className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground leading-relaxed">
+                                    {step.errorHandling.split("\n").map((line, li) => (
+                                      <p key={li} className="mb-1 last:mb-0">{line}</p>
+                                    ))}
+                                  </div>
+                                </details>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
 
-                      <div className="p-4 sm:p-6 space-y-4">
-                        {/* Description */}
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          {step.description}
-                        </p>
-
-                        {/* Expected output */}
-                        {step.expectedOutput && (
-                          <div className="rounded-lg border border-chart-2/30 bg-chart-2/5 p-3">
-                            <p className="text-xs font-semibold mb-1.5 text-chart-2">Résultat attendu :</p>
-                            <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap">{step.expectedOutput}</pre>
-                          </div>
-                        )}
-
-                        {/* Variants (when available) or single configuration */}
-                        {step.variants && step.variants.length > 0 ? (
-                          <div className="space-y-3">
-                            <h4 className="text-sm font-semibold flex items-center gap-1.5">
-                              <span className="text-primary">&#9655;</span> Choisissez votre outil
-                            </h4>
-                            <p className="text-xs text-muted-foreground">{step.configuration}</p>
-                            <div className="space-y-2">
-                              {step.variants.map((variant, vi) => (
-                                <details key={vi} className="group/variant rounded-lg border overflow-hidden">
-                                  <summary className="cursor-pointer flex items-center gap-2 px-4 py-2.5 hover:bg-muted/40 transition-colors select-none">
-                                    <span className="text-base" aria-hidden="true">{variant.toolIcon}</span>
-                                    <span className="text-sm font-medium">{variant.toolName}</span>
-                                    {variant.isFree && (
-                                      <Badge variant="secondary" className="text-[10px] ml-1">Gratuit</Badge>
-                                    )}
-                                    <span className="ml-auto text-xs text-muted-foreground group-open/variant:hidden">Voir la config</span>
-                                    <span className="ml-auto text-xs text-muted-foreground hidden group-open/variant:inline">Masquer</span>
-                                  </summary>
-                                  <div className="border-t px-4 py-3 space-y-3">
-                                    <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
-                                      <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
-                                        {variant.configuration}
-                                      </pre>
-                                    </div>
-                                    {variant.errorHandling && (
-                                      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-muted-foreground leading-relaxed">
-                                        <p className="font-semibold text-foreground mb-1">Erreurs fréquentes :</p>
-                                        {variant.errorHandling.split("\n").map((line, li) => (
-                                          <p key={li} className="mb-0.5 last:mb-0">{line}</p>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                </details>
-                              ))}
+                      {/* Mid-tutorial CTA — inserted after the middle node */}
+                      {i === midTutorialIndex && uc.n8nTutorial && uc.n8nTutorial.length > 3 && (
+                        <div className="my-6 rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-r from-primary/5 to-transparent p-5 sm:p-6">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">Ce workflow existe en version prête à importer</p>
+                              <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                                Importez-le en 1 clic dans n8n au lieu de configurer {uc.n8nTutorial.length} noeuds manuellement.
+                                Il ne reste qu&apos;à brancher vos clés API.
+                              </p>
                             </div>
-                            {/* General error handling for the step */}
-                            {step.errorHandling && (
-                              <details className="group">
-                                <summary className="cursor-pointer text-sm font-semibold flex items-center gap-1.5 select-none">
-                                  <span className="text-destructive">&#9888;</span> Erreurs générales
-                                  <span className="ml-auto text-xs text-muted-foreground group-open:hidden">Afficher</span>
-                                  <span className="ml-auto text-xs text-muted-foreground hidden group-open:inline">Masquer</span>
-                                </summary>
-                                <div className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground leading-relaxed">
-                                  {step.errorHandling.split("\n").map((line, li) => (
-                                    <p key={li} className="mb-1 last:mb-0">{line}</p>
-                                  ))}
-                                </div>
-                              </details>
-                            )}
+                            <Link
+                              href="/demande?plan=pro"
+                              className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                            >
+                              Essai gratuit 14 jours
+                            </Link>
                           </div>
-                        ) : (
-                          <>
-                            {/* Single configuration (no variants) */}
-                            <div>
-                              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                                <span className="text-primary">&#9655;</span> Configuration
-                              </h4>
-                              <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
-                                <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
-                                  {step.configuration}
-                                </pre>
-                              </div>
-                            </div>
-
-                            {/* Customization */}
-                            {step.customization && (
-                              <div>
-                                <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                                  <span className="text-primary">&#9881;</span> Adapter à votre contexte
-                                </h4>
-                                <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground leading-relaxed">
-                                  {step.customization.split("\n").map((line, li) => (
-                                    <p key={li} className="mb-1 last:mb-0">{line}</p>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Error handling */}
-                            {step.errorHandling && (
-                              <details className="group">
-                                <summary className="cursor-pointer text-sm font-semibold flex items-center gap-1.5 select-none">
-                                  <span className="text-destructive">&#9888;</span> Erreurs fréquentes et solutions
-                                  <span className="ml-auto text-xs text-muted-foreground group-open:hidden">Afficher</span>
-                                  <span className="ml-auto text-xs text-muted-foreground hidden group-open:inline">Masquer</span>
-                                </summary>
-                                <div className="mt-2 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-muted-foreground leading-relaxed">
-                                  {step.errorHandling.split("\n").map((line, li) => (
-                                    <p key={li} className="mb-1 last:mb-0">{line}</p>
-                                  ))}
-                                </div>
-                              </details>
-                            )}
-                          </>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -416,21 +459,134 @@ export default async function UseCasePage({ params }: PageProps) {
             )}
           </section>
 
-          {/* Contextual CTA */}
+          {/* Blurred JSON preview */}
+          {uc.n8nTutorial && (
+            <div className="rounded-xl border overflow-hidden">
+              <div className="border-b bg-muted/40 px-4 py-3 sm:px-6 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">&#128274;</span>
+                  <h3 className="font-semibold text-sm">Workflow n8n — fichier JSON importable</h3>
+                </div>
+                <Badge variant="secondary" className="text-[10px]">Pro</Badge>
+              </div>
+              <div className="relative p-4 sm:p-6">
+                <div className="overflow-hidden rounded-lg border bg-[#1e1e2e] p-4 max-h-32 select-none" style={{ filter: "blur(3px)", WebkitUserSelect: "none" }}>
+                  <pre className="text-xs font-mono text-[#cdd6f4] whitespace-pre-wrap" aria-hidden="true">
+{`{
+  "name": "${uc.title} — Workflow n8n",
+  "nodes": [
+    { "type": "n8n-nodes-base.webhook", "position": [250, 300], "parameters": { "path": "triage-ticket", "httpMethod": "POST" } },
+    { "type": "n8n-nodes-base.httpRequest", "position": [500, 300], "parameters": { "url": "https://api.openai.com/v1/..." } },
+    { "type": "n8n-nodes-base.switch", "position": [750, 300], "parameters": { "rules": [...] } },
+    ...
+  ],
+  "connections": { ... }
+}`}
+                  </pre>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Link
+                    href="/demande?plan=pro"
+                    className="rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
+                  >
+                    Débloquer le workflow JSON &rarr;
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* DIY vs Pro comparison table */}
+          <section id="obtenir">
+            <h2 className="text-2xl font-bold mb-4">Construire soi-même ou gagner du temps ?</h2>
+            <div className="overflow-x-auto rounded-xl border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/30">
+                    <th className="text-left p-3 sm:p-4 font-medium text-muted-foreground w-1/3"></th>
+                    <th className="text-center p-3 sm:p-4 font-semibold">Gratuit (DIY)</th>
+                    <th className="text-center p-3 sm:p-4 font-semibold text-primary bg-primary/5">Pro — 29&euro;/mois</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="p-3 sm:p-4 text-muted-foreground">Tutoriel pas à pas</td>
+                    <td className="p-3 sm:p-4 text-center">&#10003;</td>
+                    <td className="p-3 sm:p-4 text-center bg-primary/5">&#10003;</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-3 sm:p-4 text-muted-foreground">Workflow JSON importable</td>
+                    <td className="p-3 sm:p-4 text-center text-muted-foreground">&#10007;</td>
+                    <td className="p-3 sm:p-4 text-center bg-primary/5 font-medium">Import en 1 clic</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-3 sm:p-4 text-muted-foreground">Temps de mise en place</td>
+                    <td className="p-3 sm:p-4 text-center">~{uc.estimatedTime || "2-4h"}</td>
+                    <td className="p-3 sm:p-4 text-center bg-primary/5 font-medium">~5 min</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-3 sm:p-4 text-muted-foreground">Templates n8n exportables</td>
+                    <td className="p-3 sm:p-4 text-center text-muted-foreground">&#10007;</td>
+                    <td className="p-3 sm:p-4 text-center bg-primary/5 font-medium">&#10003;</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-3 sm:p-4 text-muted-foreground">Accès au catalogue complet</td>
+                    <td className="p-3 sm:p-4 text-center">Tutoriels uniquement</td>
+                    <td className="p-3 sm:p-4 text-center bg-primary/5 font-medium">{WORKFLOW_COUNT}+ workflows</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="p-3 sm:p-4 text-muted-foreground">Nouveaux workflows chaque mois</td>
+                    <td className="p-3 sm:p-4 text-center text-muted-foreground">&#10007;</td>
+                    <td className="p-3 sm:p-4 text-center bg-primary/5 font-medium">Accès anticipé</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 sm:p-4 text-muted-foreground">Guide personnalisé</td>
+                    <td className="p-3 sm:p-4 text-center text-muted-foreground">&#10007;</td>
+                    <td className="p-3 sm:p-4 text-center bg-primary/5 font-medium">1 par mois</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* ROI anchored to price */}
+            <div className="mt-4 rounded-lg border bg-muted/30 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="flex-1">
+                <p className="text-sm font-medium">{uc.roiIndicatif}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  L&apos;abonnement Pro coûte 29&euro;/mois — soit moins de 1&euro; par jour pour automatiser ce processus.
+                </p>
+              </div>
+              <Link
+                href="/demande?plan=pro"
+                className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                Essai gratuit 14 jours
+              </Link>
+            </div>
+          </section>
+
+          {/* Final contextual CTA */}
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex-1">
-                <p className="font-semibold">Vous voulez ce workflow connecté à vos outils, avec vos règles métier ?</p>
+                <p className="font-semibold">Vous avez lu le tutoriel — il ne reste plus qu&apos;à le brancher</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  On configure le workflow pour vous en 48h : connexion à votre CRM, vos catégories, vos SLA, vos canaux de notification.
+                  Obtenez le workflow JSON prêt à importer + accès à tous les workflows du catalogue.
+                  Sans engagement. Annulation en un clic.
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2">
                 <Link
-                  href="/demande"
-                  className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  href="/demande?plan=pro"
+                  className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Demander la configuration
+                  Commencer l&apos;essai gratuit
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Comparer tous les plans &rarr;
                 </Link>
               </div>
             </div>
@@ -456,7 +612,7 @@ export default async function UseCasePage({ params }: PageProps) {
                     <div className="flex flex-wrap gap-1.5">
                       {uc.n8nWorkflow.nodes.map((node, i) => (
                         <div key={i} className="flex items-center gap-1">
-                          {i > 0 && <span className="text-muted-foreground text-xs">→</span>}
+                          {i > 0 && <span className="text-muted-foreground text-xs">&rarr;</span>}
                           <Badge variant="outline" className="text-xs font-mono">
                             {node}
                           </Badge>
@@ -492,8 +648,14 @@ export default async function UseCasePage({ params }: PageProps) {
                 </div>
                 {uc.estimatedTime && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Temps estimé</span>
-                    <span className="font-medium">{uc.estimatedTime}</span>
+                    <span className="text-muted-foreground">DIY</span>
+                    <span>{uc.estimatedTime}</span>
+                  </div>
+                )}
+                {uc.n8nTutorial && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Avec Pro</span>
+                    <span className="font-medium text-primary">~5 min</span>
                   </div>
                 )}
               </CardContent>
@@ -514,38 +676,51 @@ export default async function UseCasePage({ params }: PageProps) {
                   <a href="#tutoriel" className="block text-muted-foreground hover:text-foreground transition-colors">
                     {uc.n8nTutorial ? "Tutoriel n8n" : "Tutoriel"}
                   </a>
-                  {!uc.n8nTutorial && uc.n8nWorkflow && (
-                    <a href="#workflow-n8n" className="block text-muted-foreground hover:text-foreground transition-colors">Workflow n8n</a>
-                  )}
+                  <a href="#obtenir" className="block text-primary font-medium hover:text-primary/80 transition-colors">
+                    Obtenir le workflow &rarr;
+                  </a>
                 </nav>
               </CardContent>
             </Card>
 
+            {/* Sidebar Pro CTA */}
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="pt-6 space-y-3">
-                <p className="text-sm font-semibold">On le configure pour vous ?</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Workflow connecté à vos outils, vos règles métier, vos SLA. Prêt en 48h.
-                </p>
+                <div className="flex items-baseline justify-between">
+                  <p className="text-sm font-semibold">Plan Pro</p>
+                  <p className="text-lg font-bold">29&euro;<span className="text-xs font-normal text-muted-foreground">/mois</span></p>
+                </div>
+                <ul className="space-y-1.5 text-xs text-muted-foreground">
+                  <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> Ce workflow prêt à importer</li>
+                  <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> {WORKFLOW_COUNT}+ workflows inclus</li>
+                  <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> Templates n8n exportables</li>
+                  <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> Nouveaux workflows chaque mois</li>
+                </ul>
                 <Link
-                  href="/demande"
+                  href="/demande?plan=pro"
                   className="block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Demander la configuration
+                  Essai gratuit 14 jours
                 </Link>
-                <Link
-                  href="/pricing"
-                  className="block text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Voir les plans &rarr;
-                </Link>
+                <p className="text-center text-[10px] text-muted-foreground">Sans carte bancaire. Annulation en un clic.</p>
+              </CardContent>
+            </Card>
+
+            {/* Email capture for not-ready visitors */}
+            <Card>
+              <CardContent className="pt-6 space-y-2">
+                <p className="text-sm font-semibold">Pas encore prêt ?</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Recevez ce workflow + nos meilleurs tutos IA chaque semaine. Gratuit.
+                </p>
+                <NewsletterSignup variant="compact" />
               </CardContent>
             </Card>
           </div>
         </aside>
       </div>
 
-      {/* Cross-links: ROI + Comparisons */}
+      {/* Cross-links */}
       <div className="mt-12 grid gap-4 sm:grid-cols-2">
         <Link
           href="/calculateur-roi"
