@@ -64,12 +64,24 @@ export default async function UseCasePage({ params }: PageProps) {
       answer: `Oui. Le workflow fonctionne avec n8n (gratuit et open-source). Chaque étape du tutoriel propose plusieurs alternatives pour les connecteurs. Vous pouvez l'adapter à tout outil disposant d'une API.`,
     },
     {
+      question: "Combien de temps pour mettre en place ?",
+      answer: `En suivant le tutoriel pas à pas, comptez environ ${uc.estimatedTime || "2-4h"} de configuration. Avec l'abonnement Pro, le workflow est prêt à importer en 5 minutes — il ne reste qu'à brancher vos clés API.`,
+    },
+    {
+      question: "Quels LLM sont compatibles ?",
+      answer: `Le workflow fonctionne avec OpenAI (GPT-4o), Anthropic (Claude), Mistral, et tout modèle compatible via Ollama en local. Chaque étape LLM du tutoriel propose les alternatives avec leur configuration spécifique.`,
+    },
+    {
       question: "29\u20AC/mois c'est trop juste pour tester",
       answer: `L'essai est 100% gratuit pendant 14 jours, sans carte bancaire. Vous pouvez importer et tester ce workflow immédiatement. Si ça ne vous convient pas, vous n'avez rien à annuler \u2014 l'essai s'arrête tout seul.`,
     },
     {
+      question: "Mes données sont-elles sécurisées ?",
+      answer: `n8n s'auto-héberge sur votre propre serveur — vos données ne transitent jamais par nos systèmes. Pour les appels LLM, vous utilisez vos propres clés API. Nous n'avons accès ni à vos données ni à vos workflows.`,
+    },
+    {
       question: "Je préfère construire moi-même avec le tutoriel gratuit",
-      answer: `C'est tout à fait possible \u2014 le tutoriel ci-dessus est complet et fonctionnel. Comptez environ ${uc.estimatedTime || "2-4h"} de configuration. L'abonnement Pro vous fait gagner ce temps : le même workflow, prêt à importer en 5 minutes, avec les mises à jour incluses.`,
+      answer: `C'est tout à fait possible \u2014 le tutoriel ci-dessus est complet et fonctionnel. L'abonnement Pro vous fait gagner ce temps : le même workflow, prêt à importer en 5 minutes, avec les mises à jour incluses.`,
     },
   ];
   const faqItems = uc.faq && uc.faq.length > 0 ? uc.faq : defaultFAQ;
@@ -182,6 +194,39 @@ export default async function UseCasePage({ params }: PageProps) {
         </nav>
       </div>
 
+      {/* Mobile-only Pro card + email capture (sidebar is hidden on mobile) */}
+      <div className="lg:hidden mb-8 space-y-4">
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">Gagnez du temps avec Pro</p>
+              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> Ce workflow prêt à importer</li>
+                <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> {WORKFLOW_COUNT}+ workflows inclus</li>
+                <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> Nouveaux workflows chaque mois</li>
+              </ul>
+            </div>
+            <Link
+              href="/pricing"
+              className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Voir les tarifs
+            </Link>
+          </div>
+          <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+            Essai gratuit 14 jours — sans carte bancaire
+          </p>
+        </div>
+        <div className="rounded-xl border p-4">
+          <p className="text-sm font-semibold mb-1">Nouveaux workflows IA chaque semaine</p>
+          <p className="text-xs text-muted-foreground mb-3">
+            Recevez nos meilleurs tutos et workflows directement par email. Gratuit, sans spam.
+          </p>
+          <NewsletterSignup variant="compact" />
+        </div>
+      </div>
+
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="reading-width space-y-10 lg:mx-0 lg:max-w-none">
           {/* 1. Storytelling */}
@@ -242,7 +287,7 @@ export default async function UseCasePage({ params }: PageProps) {
                     <span className="text-xs font-medium text-primary">Traité par l&apos;agent IA{uc.beforeAfter.afterDuration ? ` en ${uc.beforeAfter.afterDuration}` : ""}</span>
                   </div>
                   <div className="p-4 sm:p-5 space-y-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Après — Classification IA</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Après — {uc.beforeAfter.afterLabel || "Résultat de l\u0027agent IA"}</p>
                     <div className="space-y-2.5">
                       {uc.beforeAfter.outputFields.map((field, i) => (
                         <div key={i} className="flex items-center gap-2 text-sm">
@@ -272,6 +317,19 @@ export default async function UseCasePage({ params }: PageProps) {
                 </div>
               </div>
             </section>
+          )}
+
+          {/* P13: Micro-engagement — quick ROI estimator (placed early for max impact) */}
+          {uc.n8nTutorial && (
+            <QuickROIEstimator
+              {...(uc.roiEstimator ? {
+                label: uc.roiEstimator.label,
+                unitLabel: uc.roiEstimator.unitLabel,
+                timePerUnitMinutes: uc.roiEstimator.timePerUnitMinutes,
+                timeWithAISeconds: uc.roiEstimator.timeWithAISeconds,
+                options: uc.roiEstimator.options,
+              } : {})}
+            />
           )}
 
           <Separator />
@@ -390,9 +448,7 @@ export default async function UseCasePage({ params }: PageProps) {
                                     </summary>
                                     <div className="border-t px-4 py-3 space-y-3">
                                       <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
-                                        <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
-                                          {variant.configuration}
-                                        </pre>
+                                        <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">{variant.configuration}</pre>
                                       </div>
                                       {variant.errorHandling && (
                                         <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-xs text-muted-foreground leading-relaxed">
@@ -428,9 +484,7 @@ export default async function UseCasePage({ params }: PageProps) {
                                   <span className="text-primary">&#9655;</span> Configuration
                                 </h4>
                                 <div className="overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4">
-                                  <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
-                                    {step.configuration}
-                                  </pre>
+                                  <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">{step.configuration}</pre>
                                 </div>
                               </div>
                               {step.customization && (
@@ -523,9 +577,7 @@ export default async function UseCasePage({ params }: PageProps) {
                                 </div>
                               )}
                               <div className={`overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4 ${snippet.filename ? "rounded-t-none" : ""}`}>
-                                <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
-                                  {snippet.code}
-                                </pre>
+                                <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">{snippet.code}</pre>
                               </div>
                             </div>
                           ))}
@@ -558,9 +610,7 @@ export default async function UseCasePage({ params }: PageProps) {
                             </div>
                           )}
                           <div className={`overflow-x-auto rounded-lg border bg-[#1e1e2e] p-4 ${snippet.filename ? "rounded-t-none" : ""}`}>
-                            <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">
-                              {snippet.code}
-                            </pre>
+                            <pre className="text-xs sm:text-sm font-mono text-[#cdd6f4] whitespace-pre-wrap">{snippet.code}</pre>
                           </div>
                         </div>
                       ))}
@@ -610,19 +660,6 @@ ${(uc.n8nWorkflow?.nodes || ["Webhook", "HTTP Request", "Switch"]).slice(0, 4).m
                 </div>
               </div>
             </div>
-          )}
-
-          {/* P13: Micro-engagement — quick ROI estimator */}
-          {uc.n8nTutorial && (
-            <QuickROIEstimator
-              {...(uc.roiEstimator ? {
-                label: uc.roiEstimator.label,
-                unitLabel: uc.roiEstimator.unitLabel,
-                timePerUnitMinutes: uc.roiEstimator.timePerUnitMinutes,
-                timeWithAISeconds: uc.roiEstimator.timeWithAISeconds,
-                options: uc.roiEstimator.options,
-              } : {})}
-            />
           )}
 
           {/* DIY vs Pro comparison table */}
@@ -866,12 +903,12 @@ ${(uc.n8nWorkflow?.nodes || ["Webhook", "HTTP Request", "Switch"]).slice(0, 4).m
               </CardContent>
             </Card>
 
-            {/* P8: Email capture with lead magnet */}
+            {/* P8: Email capture — honest copy */}
             <Card>
               <CardContent className="pt-6 space-y-2">
-                <p className="text-sm font-semibold">Recevez ce workflow en PDF</p>
+                <p className="text-sm font-semibold">Nouveaux workflows IA chaque semaine</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Le schéma complet de ce workflow + nos meilleurs tutos IA chaque semaine. Gratuit, sans spam.
+                  Recevez nos meilleurs tutos et workflows directement par email. Gratuit, sans spam.
                 </p>
                 <NewsletterSignup variant="compact" />
               </CardContent>
@@ -880,7 +917,7 @@ ${(uc.n8nWorkflow?.nodes || ["Webhook", "HTTP Request", "Switch"]).slice(0, 4).m
         </aside>
       </div>
 
-      {/* Cross-links */}
+      {/* Cross-links — contextual based on use case */}
       <div className="mt-12 grid gap-4 sm:grid-cols-2">
         <Link
           href="/calculateur-roi"
@@ -890,20 +927,47 @@ ${(uc.n8nWorkflow?.nodes || ["Webhook", "HTTP Request", "Switch"]).slice(0, 4).m
             Calculez le ROI de cet agent
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Estimez les gains de temps et d&apos;argent avec notre calculateur gratuit.
+            Estimez les gains de temps et d&apos;argent pour &laquo; {uc.title} &raquo;.
           </p>
         </Link>
-        <Link
-          href="/comparatif/agent-ia-vs-chatbot"
-          className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
-        >
-          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
-            Agent IA vs Chatbot : le comparatif
-          </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Comprenez les différences et choisissez la bonne solution.
-          </p>
-        </Link>
+        {uc.sectors[0] && (
+          <Link
+            href={`/secteur/${uc.sectors[0].toLowerCase().replace(/\s+/g, "-")}`}
+            className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+          >
+            <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+              Tous les workflows {uc.sectors[0]}
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Découvrez les autres agents IA pour le secteur {uc.sectors[0]}.
+            </p>
+          </Link>
+        )}
+        {uc.difficulty === "Facile" ? (
+          <Link
+            href="/comparatif/no-code-vs-pro-code-ia"
+            className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+          >
+            <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+              No-code vs Pro-code pour l&apos;IA
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Comprenez quelle approche correspond le mieux à votre projet.
+            </p>
+          </Link>
+        ) : (
+          <Link
+            href="/comparatif/n8n-vs-make-vs-zapier"
+            className="group rounded-xl border p-4 sm:p-5 transition-all hover:shadow-sm hover:border-primary/30"
+          >
+            <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
+              n8n vs Make vs Zapier : le comparatif
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Choisissez la plateforme d&apos;automatisation adaptée à votre besoin.
+            </p>
+          </Link>
+        )}
       </div>
 
       {/* Related guides */}

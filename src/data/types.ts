@@ -65,6 +65,7 @@ export interface BeforeAfterExample {
   inputText: string;
   outputFields: { label: string; value: string }[];
   beforeContext?: string;
+  afterLabel?: string;
   afterDuration?: string;
   afterSummary?: string;
 }

@@ -68,6 +68,7 @@ export const useCases: UseCase[] = [
         { label: "Confiance", value: "0.94" },
       ],
       beforeContext: "client@exemple.fr · il y a 3 min",
+      afterLabel: "Classification IA",
       afterDuration: "2 secondes",
       afterSummary: "Ticket classé, priorisé et assigné automatiquement",
     },
