@@ -53,7 +53,7 @@ export const useCases: UseCase[] = [
     storytelling: {
       sector: "E-commerce",
       persona: "Sarah, Responsable Support chez un e-commerçant (35 salariés)",
-      painPoint: "Son équipe de 4 agents reçoit 180 tickets par jour. Chaque matin, Sarah passe 45 minutes à trier manuellement les urgences. Un client VIP en panne depuis 2 jours ? Noyé entre une question sur les frais de port et une demande de mot de passe. Résultat : des SLA explosés, des clients frustrés, et une équipe épuisée.",
+      painPoint: "Son équipe de 4 agents reçoit 180 tickets par jour. Chaque matin, Sarah passé 45 minutes à trier manuellement les urgences. Un client VIP en panne depuis 2 jours ? Noyé entre une question sur les frais de port et une demande de mot de passé. Résultat : des SLA explosés, des clients frustrés, et une équipe épuisée.",
       story: "Sarah a mis en place ce workflow n8n un vendredi après-midi. Le lundi matin, les tickets étaient déjà triés automatiquement à son arrivée. Les urgences techniques remontaient directement à l'équipe dev sur Slack. Les questions facturation allaient au service comptable. Et pour chaque ticket, l'IA proposait un brouillon de réponse.",
       result: "En 3 semaines : temps de première réponse passé de 4h à 23 min. Taux de satisfaction client remonté de 72% à 91%. Sarah a réaffecté 1 agent à temps plein sur des tâches à valeur ajoutée (fidélisation, upsell).",
     },
@@ -236,7 +236,7 @@ def test_billing_ticket():
         nodeType: "Webhook",
         nodeIcon: "🔗",
         description: "Ce nœud reçoit les tickets entrants. Votre système de support (Zendesk, Freshdesk, Crisp, ou un formulaire web) enverra un POST à cette URL chaque fois qu'un nouveau ticket est créé.",
-        configuration: `1. Ajoutez un nœud "Webhook" sur le canvas\n2. Méthode HTTP : POST\n3. Path : /triage-ticket\n4. Authentication : Header Auth\n5. Nom du header : X-API-Key\n6. Valeur : créez un mot de passe aléatoire (ex: via generate-random.org)\n7. Response Mode : "Last Node" (la réponse sera le résultat final du workflow)\n8. Cliquez sur "Listen for Test Event", puis envoyez un ticket test depuis votre outil`,
+        configuration: `1. Ajoutez un nœud "Webhook" sur le canvas\n2. Méthode HTTP : POST\n3. Path : /triage-ticket\n4. Authentication : Header Auth\n5. Nom du header : X-API-Key\n6. Valeur : créez un mot de passé aléatoire (ex: via generate-random.org)\n7. Response Mode : "Last Node" (la réponse sera le résultat final du workflow)\n8. Cliquez sur "Listen for Test Event", puis envoyez un ticket test depuis votre outil`,
         expectedOutput: `{ "id": "T-4892", "content": "Mon application plante quand je clique sur Valider ma commande...", "email": "client@exemple.fr", "name": "Jean Dupont" }`,
         customization: `• Si vous utilisez Zendesk : configurez un webhook dans Admin > Extensions > Webhooks pointant vers l'URL du Webhook n8n\n• Si vous utilisez Freshdesk : allez dans Admin > Automations > Rules et ajoutez une action "Trigger Webhook"\n• Si vous utilisez un formulaire web : faites un fetch() POST vers l'URL avec le body JSON {content, email, name}\n• Adaptez le Header Auth en fonction de la sécurité requise dans votre contexte`,
         errorHandling: `• Erreur 404 : vérifiez que le workflow est bien activé (toggle en haut à droite)\n• Erreur 401 : le header X-API-Key ne correspond pas — vérifiez la valeur dans votre outil source\n• Pas de données reçues : testez d'abord avec "Test workflow" et envoyez un JSON manuel via Postman ou curl`,
@@ -289,7 +289,7 @@ def test_billing_ticket():
         nodeIcon: "⚙️",
         description: "Ce nœud JavaScript construit le prompt qui sera envoyé au LLM. Il combine le contenu du ticket avec les données CRM pour créer un prompt structuré qui guide la classification.",
         expectedOutput: `{ "prompt": "Tu es un agent de triage support client expert. Analyse le ticket ci-dessous... [contenu du ticket]", "ticketId": "T-4892" }`,
-        configuration: `1. Ajoutez un nœud "Code"\n2. Langage : JavaScript\n3. Collez le code suivant :\n\nconst ticket = $('Webhook').item.json;\nconst crm = $('HTTP Request — Contexte CRM').item.json;\n\nconst prompt = \`Tu es un agent de triage support client expert.\nAnalyse le ticket ci-dessous et retourne un JSON avec :\n- "categorie": "technique" | "facturation" | "commercial" | "autre"\n- "urgence": "P1" | "P2" | "P3" | "P4"\n- "equipe": le nom de l'équipe cible\n- "suggestion_reponse": une suggestion de réponse au client\n- "confiance": un score de 0 à 1\n\nContexte client CRM : \${crm.name || 'Inconnu'}, Plan: \${crm.plan || 'N/A'}, Ancienneté: \${crm.created_at || 'N/A'}\n\nTicket :\n\${ticket.content}\n\nRéponds UNIQUEMENT en JSON valide, sans explication.\`;\n\nreturn [{ json: { prompt, ticketId: ticket.id || 'unknown' } }];`,
+        configuration: `1. Ajoutez un nœud "Code"\n2. Langage : JavaScript\n3. Collez le code suivant :\n\nconst ticket = $('Webhook').item.json;\nconst crm = $('HTTP Request — Contexte CRM').item.json;\n\nconst prompt = \`Tu es un agent de triage support client expert.\nAnalyse le ticket ci-dessous et retourne un JSON avec :\n- "categorie": "technique" | "facturation" | "commercial" | "autre"\n- "urgence": "P1" | "P2" | "P3" | "P4"\n- "équipe": le nom de l'équipe cible\n- "suggestion_reponse": une suggestion de réponse au client\n- "confiance": un score de 0 à 1\n\nContexte client CRM : \${crm.name || 'Inconnu'}, Plan: \${crm.plan || 'N/A'}, Ancienneté: \${crm.created_at || 'N/A'}\n\nTicket :\n\${ticket.content}\n\nRéponds UNIQUEMENT en JSON valide, sans explication.\`;\n\nreturn [{ json: { prompt, ticketId: ticket.id || 'unknown' } }];`,
         customization: `• Modifiez les catégories ("technique", "facturation"…) pour correspondre à VOS catégories de tickets\n• Ajoutez des catégories spécifiques à votre métier (ex: "livraison", "retour produit" pour du e-commerce)\n• Adaptez les niveaux d'urgence (P1-P4) à votre grille SLA interne\n• Si vous n'avez pas de nœud CRM, remplacez la ligne crm par : const crm = {};`,
         errorHandling: `• "Cannot read property 'json' of undefined" : le nœud précédent n'a pas renvoyé de données — vérifiez la connexion et le nommage exact des nœuds référencés\n• Erreur de syntaxe JS : vérifiez les backticks et les template literals \${}\n• Le prompt est tronqué : vérifiez que le contenu du ticket n'est pas trop long — ajoutez ticket.content.substring(0, 3000) si nécessaire`,
       },
@@ -299,7 +299,7 @@ def test_billing_ticket():
         nodeIcon: "🤖",
         description: "Ce nœud envoie le prompt au LLM et récupère la classification structurée en JSON. C'est le cœur du workflow. Choisissez votre fournisseur LLM ci-dessous.",
         configuration: `Choisissez votre fournisseur LLM ci-dessous.\nTous les providers utilisent un nœud "HTTP Request" avec méthode POST.`,
-        expectedOutput: `{ "choices": [{ "message": { "content": "{ \\"categorie\\": \\"technique\\", \\"urgence\\": \\"P1\\", \\"equipe\\": \\"Équipe Dev\\", \\"suggestion_reponse\\": \\"Nous avons identifié le problème...\\", \\"confiance\\": 0.94 }" } }] }`,
+        expectedOutput: `{ "choices": [{ "message": { "content": "{ \\"categorie\\": \\"technique\\", \\"urgence\\": \\"P1\\", \\"équipe\\": \\"Équipe Dev\\", \\"suggestion_reponse\\": \\"Nous avons identifié le problème...\\", \\"confiance\\": 0.94 }" } }] }`,
         errorHandling: `• Erreur 429 (rate limit) : ajoutez un nœud "Wait" de 1-2s avant cet appel\n• Erreur 500/503 : problème côté provider — ajoutez un nœud "IF" de retry : si erreur, attendez 5s et relancez\n• Réponse non-JSON : reformulez le prompt avec "Réponds UNIQUEMENT en JSON valide, sans explication"`,
         variants: [
           {
@@ -334,7 +334,7 @@ def test_billing_ticket():
         nodeType: "Code",
         nodeIcon: "⚙️",
         description: "Ce nœud extrait et valide le JSON retourné par le LLM. Il s'assure que la réponse est bien structurée avant de continuer le workflow.",
-        expectedOutput: `{ "categorie": "technique", "urgence": "P1", "equipe": "Équipe Dev", "suggestion_reponse": "Nous avons identifié le problème sur la validation de commande...", "confiance": 0.94, "ticketId": "T-4892" }`,
+        expectedOutput: `{ "categorie": "technique", "urgence": "P1", "équipe": "Équipe Dev", "suggestion_reponse": "Nous avons identifié le problème sur la validation de commande...", "confiance": 0.94, "ticketId": "T-4892" }`,
         configuration: `1. Ajoutez un nœud "Code"\n2. Langage : JavaScript\n3. Collez le code suivant :\n\nconst response = $input.item.json;\nconst content = response.choices[0].message.content;\nconst classification = JSON.parse(content);\n\n// Validation basique\nconst validCategories = ['technique', 'facturation', 'commercial', 'autre'];\nconst validUrgences = ['P1', 'P2', 'P3', 'P4'];\n\nif (!validCategories.includes(classification.categorie)) {\n  classification.categorie = 'autre';\n}\nif (!validUrgences.includes(classification.urgence)) {\n  classification.urgence = 'P3';\n}\n\nclassification.ticketId = $('Code — Préparer le prompt').item.json.ticketId;\n\nreturn [{ json: classification }];`,
         customization: `• Adaptez le tableau validCategories à vos catégories métier\n• Adaptez validUrgences à vos niveaux SLA\n• Ajoutez des règles métier : par ex. si le client est "Enterprise" dans le CRM, forcez minimum P2\n• Vous pouvez ajouter un champ "confiance_min" : si classification.confiance < 0.6, routez vers un humain`,
         errorHandling: `• "Unexpected token" (JSON invalide) : le LLM n'a pas retourné du JSON valide — enveloppez le JSON.parse dans un try/catch et renvoyez une classification par défaut (categorie: "autre", urgence: "P3")\n• "Cannot read property 'choices'" : la réponse OpenAI a un format inattendu — loggez response pour débugger\n• Classification incohérente : ajoutez des console.log() pour inspecter les données à chaque étape dans l'onglet "Output" de n8n`,
@@ -347,7 +347,7 @@ def test_billing_ticket():
         expectedOutput: `Le ticket est redirigé vers la sortie 0 (P1 → urgence critique). Les données passent intactes au nœud suivant connecté à cette sortie.`,
         configuration: `1. Ajoutez un nœud "Switch"\n2. Mode : "Rules"\n3. Routing Rules :\n   — Rule 0 : {{ $json.urgence }} equals "P1" → Output 0 (Urgences critiques)\n   — Rule 1 : {{ $json.urgence }} equals "P2" → Output 1 (Urgences hautes)\n   — Fallback : Output 2 (P3/P4, traitement normal)\n4. Connectez chaque sortie vers les actions appropriées`,
         customization: `• Ajoutez des règles basées sur la catégorie en plus de l'urgence : par ex. "facturation" → équipe Finance, "technique" → équipe Tech\n• Vous pouvez utiliser un nœud "Switch" supplémentaire après chaque sortie pour un routage plus fin\n• Pour une logique plus complexe : remplacez le Switch par un nœud "Code" qui retourne l'index de sortie`,
-        errorHandling: `• Aucune sortie déclenchée : vérifiez que la valeur de $json.urgence correspond exactement à vos règles (majuscules, espaces)\n• Tout passe par le Fallback : le champ "urgence" est peut-être nommé différemment — inspectez l'output du nœud précédent`,
+        errorHandling: `• Aucune sortie déclenchée : vérifiez que la valeur de $json.urgence correspond exactement à vos règles (majuscules, espaces)\n• Tout passé par le Fallback : le champ "urgence" est peut-être nommé différemment — inspectez l'output du nœud précédent`,
       },
       {
         nodeLabel: "Mise à jour du ticket",
@@ -385,14 +385,14 @@ def test_billing_ticket():
             toolName: "Google Sheets (sans outil)",
             toolIcon: "📊",
             isFree: true,
-            configuration: `1. Ajoutez un nœud "Google Sheets"\n2. Operation : Append Row\n3. Document : sélectionnez ou créez un fichier "Triage IA"\n4. Sheet : "Tickets"\n5. Mapping :\n   — Colonne A (Date) : {{ $now.format('yyyy-MM-dd HH:mm') }}\n   — Colonne B (Ticket ID) : {{ $json.ticketId }}\n   — Colonne C (Catégorie) : {{ $json.categorie }}\n   — Colonne D (Urgence) : {{ $json.urgence }}\n   — Colonne E (Équipe) : {{ $json.equipe }}\n   — Colonne F (Suggestion) : {{ $json.suggestion_reponse }}\n   — Colonne G (Confiance) : {{ $json.confiance }}\n6. Authentication : credential "Google Sheets OAuth2"\n\nCréez d'abord les en-têtes dans votre Sheet : Date | Ticket ID | Catégorie | Urgence | Équipe | Suggestion | Confiance`,
+            configuration: `1. Ajoutez un nœud "Google Sheets"\n2. Operation : Append Row\n3. Document : sélectionnez ou créez un fichier "Triage IA"\n4. Sheet : "Tickets"\n5. Mapping :\n   — Colonne A (Date) : {{ $now.format('yyyy-MM-dd HH:mm') }}\n   — Colonne B (Ticket ID) : {{ $json.ticketId }}\n   — Colonne C (Catégorie) : {{ $json.categorie }}\n   — Colonne D (Urgence) : {{ $json.urgence }}\n   — Colonne E (Équipe) : {{ $json.équipe }}\n   — Colonne F (Suggestion) : {{ $json.suggestion_reponse }}\n   — Colonne G (Confiance) : {{ $json.confiance }}\n6. Authentication : credential "Google Sheets OAuth2"\n\nCréez d'abord les en-têtes dans votre Sheet : Date | Ticket ID | Catégorie | Urgence | Équipe | Suggestion | Confiance`,
             errorHandling: `• "Sheet not found" : vérifiez que le nom de la feuille correspond exactement\n• "Quota exceeded" : vous dépassez 300 requêtes/minute — peu probable en usage normal`,
           },
           {
             toolName: "Notion",
             toolIcon: "📝",
             isFree: true,
-            configuration: `1. Ajoutez un nœud "Notion"\n2. Resource : Database Page\n3. Operation : Create\n4. Database : sélectionnez votre base de données "Tickets Support"\n5. Properties :\n   — Titre : Ticket {{ $json.ticketId }}\n   — Catégorie (Select) : {{ $json.categorie }}\n   — Urgence (Select) : {{ $json.urgence }}\n   — Équipe (Select) : {{ $json.equipe }}\n   — Suggestion (Rich Text) : {{ $json.suggestion_reponse }}\n   — Confiance (Number) : {{ $json.confiance }}\n   — Date (Date) : {{ $now }}\n6. Authentication : credential "Notion API"\n\nCréez d'abord une base Notion avec ces propriétés. Partagez-la avec votre intégration n8n.`,
+            configuration: `1. Ajoutez un nœud "Notion"\n2. Resource : Database Page\n3. Operation : Create\n4. Database : sélectionnez votre base de données "Tickets Support"\n5. Properties :\n   — Titre : Ticket {{ $json.ticketId }}\n   — Catégorie (Select) : {{ $json.categorie }}\n   — Urgence (Select) : {{ $json.urgence }}\n   — Équipe (Select) : {{ $json.équipe }}\n   — Suggestion (Rich Text) : {{ $json.suggestion_reponse }}\n   — Confiance (Number) : {{ $json.confiance }}\n   — Date (Date) : {{ $now }}\n6. Authentication : credential "Notion API"\n\nCréez d'abord une base Notion avec ces propriétés. Partagez-la avec votre intégration n8n.`,
             errorHandling: `• "Could not find database" : partagez la base avec l'intégration — dans Notion, clic ··· > Connections > ajoutez votre intégration\n• Erreur de type : vérifiez que les types de propriétés correspondent (Select, Number, etc.)`,
           },
         ],
@@ -408,27 +408,27 @@ def test_billing_ticket():
           {
             toolName: "Slack",
             toolIcon: "💜",
-            configuration: `1. Ajoutez un nœud "Slack" (nœud natif n8n)\n2. Resource : Message\n3. Operation : Send\n4. Channel : #support-triage\n5. Text :\nNouveau ticket classifié par l'IA\nCatégorie : {{ $json.categorie }}\nUrgence : {{ $json.urgence }}\nÉquipe : {{ $json.equipe }}\nSuggestion : {{ $json.suggestion_reponse }}\nTicket : {{ $json.ticketId }}\n6. Authentication : créez un credential "Slack OAuth2"\n\nPour les P1 : créez un 2e nœud Slack sur le canal #urgences avec la mention @channel\nPour créer le bot : api.slack.com > Your Apps > Create New App > Bot Token Scopes : chat:write`,
+            configuration: `1. Ajoutez un nœud "Slack" (nœud natif n8n)\n2. Resource : Message\n3. Operation : Send\n4. Channel : #support-triage\n5. Text :\nNouveau ticket classifié par l'IA\nCatégorie : {{ $json.categorie }}\nUrgence : {{ $json.urgence }}\nÉquipe : {{ $json.équipe }}\nSuggestion : {{ $json.suggestion_reponse }}\nTicket : {{ $json.ticketId }}\n6. Authentication : créez un credential "Slack OAuth2"\n\nPour les P1 : créez un 2e nœud Slack sur le canal #urgences avec la mention @channel\nPour créer le bot : api.slack.com > Your Apps > Create New App > Bot Token Scopes : chat:write`,
             errorHandling: `• "channel_not_found" : le bot n'a pas accès au canal — tapez /invite @votre-bot dans le canal\n• "not_authed" : token invalide — recréez le credential\n• Message vide : vérifiez l'output du nœud précédent`,
           },
           {
             toolName: "Microsoft Teams",
             toolIcon: "🟣",
-            configuration: `1. Ajoutez un nœud "Microsoft Teams" (nœud natif n8n)\n2. Resource : Channel Message\n3. Operation : Create\n4. Team : sélectionnez votre équipe\n5. Channel : Support Triage\n6. Message :\nNouveau ticket classifié par l'IA\nCatégorie : {{ $json.categorie }}\nUrgence : {{ $json.urgence }}\nÉquipe : {{ $json.equipe }}\nSuggestion : {{ $json.suggestion_reponse }}\n7. Authentication : credential "Microsoft Teams OAuth2"\n\nPrérequis : un compte Microsoft 365 avec accès Teams`,
+            configuration: `1. Ajoutez un nœud "Microsoft Teams" (nœud natif n8n)\n2. Resource : Channel Message\n3. Operation : Create\n4. Team : sélectionnez votre équipe\n5. Channel : Support Triage\n6. Message :\nNouveau ticket classifié par l'IA\nCatégorie : {{ $json.categorie }}\nUrgence : {{ $json.urgence }}\nÉquipe : {{ $json.équipe }}\nSuggestion : {{ $json.suggestion_reponse }}\n7. Authentication : credential "Microsoft Teams OAuth2"\n\nPrérequis : un compte Microsoft 365 avec accès Teams`,
             errorHandling: `• Erreur 403 : le bot n'a pas les permissions — dans Azure AD, ajoutez les permissions ChannelMessage.Send\n• "Team not found" : vérifiez que le credential a accès au bon tenant`,
           },
           {
             toolName: "Email (Gmail)",
             toolIcon: "📧",
             isFree: true,
-            configuration: `1. Ajoutez un nœud "Gmail" (nœud natif n8n)\n2. Operation : Send Email\n3. To : support-equipe@votre-entreprise.com\n4. Subject : [{{ $json.urgence }}] Nouveau ticket — {{ $json.categorie }}\n5. Email Type : HTML\n6. Message :\n<h3>Nouveau ticket classifié par l'IA</h3>\n<p><b>Catégorie :</b> {{ $json.categorie }}</p>\n<p><b>Urgence :</b> {{ $json.urgence }}</p>\n<p><b>Équipe :</b> {{ $json.equipe }}</p>\n<p><b>Suggestion :</b> {{ $json.suggestion_reponse }}</p>\n<p><b>Ticket :</b> {{ $json.ticketId }}</p>\n7. Authentication : credential "Gmail OAuth2"\n\nAlternative SMTP : utilisez le nœud "Send Email" avec vos paramètres SMTP (OVH, Infomaniak, etc.)`,
+            configuration: `1. Ajoutez un nœud "Gmail" (nœud natif n8n)\n2. Operation : Send Email\n3. To : support-équipe@votre-entreprise.com\n4. Subject : [{{ $json.urgence }}] Nouveau ticket — {{ $json.categorie }}\n5. Email Type : HTML\n6. Message :\n<h3>Nouveau ticket classifié par l'IA</h3>\n<p><b>Catégorie :</b> {{ $json.categorie }}</p>\n<p><b>Urgence :</b> {{ $json.urgence }}</p>\n<p><b>Équipe :</b> {{ $json.équipe }}</p>\n<p><b>Suggestion :</b> {{ $json.suggestion_reponse }}</p>\n<p><b>Ticket :</b> {{ $json.ticketId }}</p>\n7. Authentication : credential "Gmail OAuth2"\n\nAlternative SMTP : utilisez le nœud "Send Email" avec vos paramètres SMTP (OVH, Infomaniak, etc.)`,
             errorHandling: `• "Invalid grant" : le token Gmail a expiré — reconnectez le credential\n• Email dans les spams : utilisez un domaine vérifié et ajoutez un SPF/DKIM`,
           },
           {
             toolName: "Discord",
             toolIcon: "🎮",
             isFree: true,
-            configuration: `1. Ajoutez un nœud "Discord" (nœud natif n8n)\n2. Operation : Send Message\n3. Via : Webhook\n4. Webhook URL : créez un webhook dans votre canal Discord (Paramètres du canal > Intégrations > Webhooks)\n5. Message :\nNouveau ticket classifié par l'IA\nCatégorie : {{ $json.categorie }}\nUrgence : {{ $json.urgence }}\nÉquipe : {{ $json.equipe }}\nSuggestion : {{ $json.suggestion_reponse }}\nTicket : {{ $json.ticketId }}\n\nPour les P1 : ajoutez @everyone au début du message`,
+            configuration: `1. Ajoutez un nœud "Discord" (nœud natif n8n)\n2. Operation : Send Message\n3. Via : Webhook\n4. Webhook URL : créez un webhook dans votre canal Discord (Paramètres du canal > Intégrations > Webhooks)\n5. Message :\nNouveau ticket classifié par l'IA\nCatégorie : {{ $json.categorie }}\nUrgence : {{ $json.urgence }}\nÉquipe : {{ $json.équipe }}\nSuggestion : {{ $json.suggestion_reponse }}\nTicket : {{ $json.ticketId }}\n\nPour les P1 : ajoutez @everyone au début du message`,
             errorHandling: `• Erreur 404 : le webhook a été supprimé — recréez-le dans les paramètres du canal\n• "Rate limited" : Discord limite à 5 messages/5s par webhook — peu probable en usage normal`,
           },
           {
@@ -629,7 +629,7 @@ async def process_lead(lead: dict):
     storytelling: {
       sector: "B2B SaaS",
       persona: "Marc, Directeur Commercial chez un éditeur SaaS (45 salariés)",
-      painPoint: "Son équipe de 6 commerciaux reçoit 120 leads par semaine via le site web et LinkedIn. Chaque commercial passe 2h par jour à rechercher des informations sur les prospects, vérifier leur adéquation avec l'ICP et scorer manuellement. Résultat : 60% des rendez-vous sont pris avec des leads non qualifiés, le taux de conversion MQL→SQL stagne à 12%, et les meilleurs leads refroidissent faute de réactivité.",
+      painPoint: "Son équipe de 6 commerciaux reçoit 120 leads par semaine via le site web et LinkedIn. Chaque commercial passé 2h par jour à rechercher des informations sur les prospects, vérifier leur adéquation avec l'ICP et scorer manuellement. Résultat : 60% des rendez-vous sont pris avec des leads non qualifiés, le taux de conversion MQL→SQL stagne à 12%, et les meilleurs leads refroidissent faute de réactivité.",
       story: "Marc a déployé ce workflow n8n en connectant HubSpot et l'API Societeinfo. Dès le lundi suivant, chaque nouveau lead était automatiquement enrichi (taille entreprise, secteur, CA, technologies utilisées) et scoré selon les critères BANT de l'équipe. Les commerciaux recevaient sur Slack uniquement les leads scorés au-dessus de 70/100, avec une fiche prospect pré-remplie et des points de discussion personnalisés.",
       result: "En 6 semaines : taux de conversion MQL→SQL passé de 12% à 31%. Temps de qualification réduit de 2h à 10 min par jour et par commercial. 2 commerciaux réaffectés à la prospection outbound grâce au temps libéré. Pipeline commercial en hausse de 40%.",
     },
@@ -864,7 +864,7 @@ def delete_candidate_data(candidate_id: str):
     storytelling: {
       sector: "Services / Conseil",
       persona: "Camille, Responsable Recrutement chez un cabinet de conseil IT (80 salariés)",
-      painPoint: "Camille gère 12 postes ouverts simultanément et reçoit en moyenne 85 CVs par poste. Chaque CV demande 8 minutes de lecture et d'évaluation. Elle passe 3 jours complets par semaine uniquement sur le tri de CVs. Les profils atypiques mais pertinents sont souvent écartés par fatigue de lecture. Le time-to-hire moyen est de 47 jours, et les hiring managers se plaignent de recevoir des shortlists incohérentes.",
+      painPoint: "Camille gère 12 postes ouverts simultanément et reçoit en moyenne 85 CVs par poste. Chaque CV demande 8 minutes de lecture et d'évaluation. Elle passé 3 jours complets par semaine uniquement sur le tri de CVs. Les profils atypiques mais pertinents sont souvent écartés par fatigue de lecture. Le time-to-hire moyen est de 47 jours, et les hiring managers se plaignent de recevoir des shortlists incohérentes.",
       story: "Camille a configuré le workflow n8n pour recevoir les CVs par email, les parser automatiquement et les scorer selon la fiche de poste. Chaque matin, elle trouve dans Google Sheets un classement des candidatures reçues la veille avec scores détaillés, points forts et points d'attention. L'IA a même repéré un profil reconverti du marketing vers le développement qui aurait été écarté au tri manuel.",
       result: "En 1 mois : temps de pré-sélection réduit de 3 jours à 2h par semaine. Time-to-hire passé de 47 à 31 jours. Qualité des shortlists notée 4.2/5 par les hiring managers (vs 3.1/5 avant). Diversité des profils présélectionnés améliorée de 25%.",
     },
@@ -1068,7 +1068,7 @@ def daily_scan():
             if contains_alert_keywords(analysis):
                 resend.Emails.send({
                     "from": "veille@monentreprise.com",
-                    "to": ["strategie@monentreprise.com"],
+                    "to": ["stratégie@monentreprise.com"],
                     "subject": f"Alerte veille: {competitor['name']}",
                     "html": format_alert_email(analysis)
                 })
@@ -1101,7 +1101,7 @@ schedule.every().day.at("07:00").do(daily_scan)`,
     storytelling: {
       sector: "B2B SaaS",
       persona: "Julie, Head of Marketing chez un éditeur SaaS RH (60 salariés)",
-      painPoint: "Julie et son équipe de 3 personnes surveillent 8 concurrents directs. Chaque semaine, un analyste passe 12h à visiter les sites concurrents, lire les articles de presse, vérifier les changements de pricing et scruter LinkedIn. Malgré cet effort, le concurrent principal a lancé une fonctionnalité clé 3 mois avant qu'ils ne le détectent. Le comité de direction se plaint de rapports de veille incomplets et en retard.",
+      painPoint: "Julie et son équipe de 3 personnes surveillent 8 concurrents directs. Chaque semaine, un analyste passé 12h à visiter les sites concurrents, lire les articles de presse, vérifier les changements de pricing et scruter LinkedIn. Malgré cet effort, le concurrent principal a lancé une fonctionnalité clé 3 mois avant qu'ils ne le détectent. Le comité de direction se plaint de rapports de veille incomplets et en retard.",
       story: "Julie a mis en place le workflow n8n un vendredi. Dès le lundi, à 8h30, un rapport automatique apparaissait dans Notion avec les changements détectés sur chaque concurrent : nouvelle page pricing chez le concurrent A, offre d'emploi pour 5 développeurs chez le concurrent B (signal de croissance), article de presse sur une levée de fonds chez le concurrent C. L'IA résumait chaque signal et proposait des implications stratégiques.",
       result: "En 2 mois : détection de signaux concurrentiels accélérée de 3 semaines à 24h. L'analyste a été réaffecté à l'analyse stratégique au lieu de la collecte. Le comité de direction reçoit un rapport structuré chaque lundi matin. 2 actions produit ont été prises en avance grâce à des signaux détectés automatiquement.",
     },
@@ -1129,7 +1129,7 @@ schedule.every().day.at("07:00").do(daily_scan)`,
     faq: [
       {
         question: "Le scraping de sites concurrents est-il légal ?",
-        answer: "Le scraping de données publiquement accessibles est généralement autorisé en France et en Europe (décision LinkedIn vs hiQ Labs, CJUE). Cependant, respectez les fichiers robots.txt, n'accédez pas aux zones protégées par mot de passe, et ne surchargez pas les serveurs. Utilisez un délai entre les requêtes (2-5s). En cas de doute, limitez-vous aux flux RSS et pages publiques.",
+        answer: "Le scraping de données publiquement accessibles est généralement autorisé en France et en Europe (décision LinkedIn vs hiQ Labs, CJUE). Cependant, respectez les fichiers robots.txt, n'accédez pas aux zones protégées par mot de passé, et ne surchargez pas les serveurs. Utilisez un délai entre les requêtes (2-5s). En cas de doute, limitez-vous aux flux RSS et pages publiques.",
       },
       {
         question: "Quel est le coût mensuel de cette veille automatisée ?",
@@ -1535,7 +1535,7 @@ def execute_runbook(runbook_id: str, params: dict) -> dict:
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-redaction-contenu-marketing",
+    slug: "agent-rédaction-contenu-marketing",
     title: "Agent de Rédaction de Contenu Marketing",
     subtitle: "Générez du contenu marketing de qualité à grande échelle",
     problem:
@@ -1905,7 +1905,7 @@ def create_onboarding_checklist(department: str, name: str) -> dict:
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-detection-fraude",
+    slug: "agent-détection-fraude",
     title: "Agent de Détection de Fraude Multi-secteur",
     subtitle: "Détectez les transactions frauduleuses en temps réel sur vos plateformes e-commerce, SaaS et paiements en ligne",
     problem:
@@ -2097,7 +2097,7 @@ def log_decision(transaction_id: str, decision: str, analysis: str):
       piiHandling: "Données bancaires hautement sensibles : tokenisation des numéros de carte, chiffrement AES-256, conformité PCI-DSS. Aucune donnée en clair dans les logs.",
       auditLog: "Audit trail complet exigé par les régulateurs : chaque transaction analysée, score de risque, décision (approuver/bloquer/escalader), justification IA, timestamp.",
       humanInTheLoop: "Les transactions bloquées par l'IA sont systématiquement revues par un analyste fraude dans les 2h. Droit de recours client garanti.",
-      monitoring: "Taux de détection (recall), précision (precision), faux positifs par jour, temps moyen de review humain, conformité réglementaire LCB-FT.",
+      monitoring: "Taux de détection (recall), précision (précision), faux positifs par jour, temps moyen de review humain, conformité réglementaire LCB-FT.",
     },
     n8nWorkflow: {
       description: "Workflow n8n : Webhook (nouvelle transaction) → Code Node (feature engineering) → HTTP Request (modèle ML scoring) → HTTP Request LLM (analyse contexte) → Switch (décision) → DB Update + Alerte.",
@@ -2297,7 +2297,7 @@ Génère une analyse avec tendances et recommandations."""
     enterprise: {
       piiHandling: "Données fournisseurs et prix : confidentialité commerciale stricte. Accès restreint aux acheteurs autorisés. Pas de partage avec des LLM cloud publics sans accord NDA.",
       auditLog: "Chaque comparaison et recommandation tracée : fournisseurs analysés, critères de scoring, prix comparés, recommandation finale, décision acheteur.",
-      humanInTheLoop: "L'IA recommande le meilleur fournisseur mais l'acheteur prend la décision finale. Validation managériale requise au-dessus de 50K€.",
+      humanInTheLoop: "L'IA recommandé le meilleur fournisseur mais l'acheteur prend la décision finale. Validation managériale requise au-dessus de 50K€.",
       monitoring: "Économies réalisées vs prix moyen historique, temps de traitement des demandes d'achat, satisfaction des demandeurs internes, nombre de fournisseurs analysés/semaine.",
     },
     n8nWorkflow: {
@@ -2531,7 +2531,7 @@ async def analyze(file: UploadFile = File(...)):
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-prevision-demande",
+    slug: "agent-prévision-demande",
     title: "Agent de Prévision de Demande",
     subtitle: "Anticipez la demande grâce à l'IA combinant données historiques et signaux externes",
     problem:
@@ -2751,7 +2751,7 @@ async def forecast(req: ForecastRequest):
     problem:
       "Les retours clients sont éparpillés entre les avis en ligne, les tickets support, les enquêtes NPS et les réseaux sociaux. Les équipes produit n'ont pas le temps de tout lire et passent à côté de signaux critiques sur l'expérience utilisateur.",
     value:
-      "Un agent IA collecte et agrège les retours clients de toutes les sources, effectue une analyse de sentiment fine, identifie les thèmes récurrents et génère des recommandations produit priorisées par impact business.",
+      "Un agent IA collecte et agrège les retours clients de toutes les sources, effectue une analyse de sentiment fine, identifié les thèmes récurrents et génère des recommandations produit priorisées par impact business.",
     inputs: [
       "Avis clients (App Store, Google, Trustpilot)",
       "Tickets support et conversations chat",
@@ -2977,7 +2977,7 @@ async def get_report(days: int = 30):
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-veille-reglementaire",
+    slug: "agent-veille-réglementaire",
     title: "Agent de Veille Réglementaire",
     subtitle: "Surveillez les évolutions réglementaires et évaluez leur impact sur votre organisation",
     problem:
@@ -3224,7 +3224,7 @@ async def scan():
     problem:
       "Les comptes-rendus de réunion sont rarement rédigés, souvent incomplets et publiés trop tard. Les décisions prises et les actions assignées se perdent, entraînant des suivis inefficaces et des responsabilités floues.",
     value:
-      "Un agent IA transcrit automatiquement vos réunions (audio/vidéo), identifie les décisions clés, extrait les actions avec leurs responsables et échéances, et distribue un compte-rendu structuré dans les 5 minutes suivant la fin de la réunion.",
+      "Un agent IA transcrit automatiquement vos réunions (audio/vidéo), identifié les décisions clés, extrait les actions avec leurs responsables et échéances, et distribue un compte-rendu structuré dans les 5 minutes suivant la fin de la réunion.",
     inputs: [
       "Enregistrement audio/vidéo de la réunion",
       "Liste des participants et leurs rôles",
@@ -3668,7 +3668,7 @@ async def sla_dashboard():
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-generation-propositions-commerciales",
+    slug: "agent-génération-propositions-commerciales",
     title: "Agent de Génération de Propositions Commerciales",
     subtitle: "Générez automatiquement des propositions commerciales personnalisées et des devis sur mesure",
     problem:
@@ -3911,24 +3911,24 @@ async def generate_proposal(deal_id: str):
     storytelling: {
       sector: "B2B SaaS",
       persona: "Julien, Directeur Commercial chez un editeur SaaS (60 salaries)",
-      painPoint: "Son equipe de 8 commerciaux passe en moyenne 4h par proposition commerciale. Avec 15 opportunites actives par semaine, c'est 60h de redaction manuelle. Les propositions sont souvent des copier-coller mal adaptes au prospect. Resultat : un taux de conversion de seulement 18% et des deals perdus faute de reactivite sur les appels d'offres.",
-      story: "Julien a deploye le workflow n8n un mercredi. Des le lendemain, quand une nouvelle opportunite est arrivee dans HubSpot, une proposition personnalisee de 12 pages etait generee en 25 minutes — avec le bon pricing, les arguments adaptes au secteur du prospect et un email d'accompagnement pret a envoyer.",
-      result: "En 2 mois : temps de redaction passe de 4h a 30 min par proposition. Taux de conversion remonte de 18% a 27%. L'equipe repond desormais a 3x plus d'appels d'offres. Julien a pu reaffecter un commercial a temps plein sur la prospection.",
+      painPoint: "Son équipe de 8 commerciaux passé en moyenne 4h par proposition commerciale. Avec 15 opportunites actives par semaine, c'est 60h de rédaction manuelle. Les propositions sont souvent des copier-coller mal adaptes au prospect. Resultat : un taux de conversion de seulement 18% et des deals perdus faute de réactivité sur les appels d'offres.",
+      story: "Julien a déployé le workflow n8n un mercredi. Des le lendemain, quand une nouvelle opportunite est arrivee dans HubSpot, une proposition personnalisee de 12 pages etait générée en 25 minutes — avec le bon pricing, les arguments adaptes au secteur du prospect et un email d'accompagnement pret a envoyer.",
+      result: "En 2 mois : temps de rédaction passé de 4h a 30 min par proposition. Taux de conversion remonté de 18% a 27%. L'équipe repond désormais a 3x plus d'appels d'offres. Julien a pu réaffecter un commercial a temps plein sur la prospection.",
     },
     beforeAfter: {
       inputLabel: "Nouvelle opportunite CRM",
-      inputText: "Entreprise : LogiTrans SA | Secteur : Transport & Logistique | Taille : 200 salaries | Besoin : Digitalisation de la gestion de flotte | Budget estime : 80-120K EUR | Contact : Marie Lefort, DSI | Enjeux : reduction des couts de maintenance, conformite reglementaire, visibilite temps reel",
+      inputText: "Entreprise : LogiTrans SA | Secteur : Transport & Logistique | Taille : 200 salaries | Besoin : Digitalisation de la gestion de flotte | Budget estime : 80-120K EUR | Contact : Marie Lefort, DSI | Enjeux : réduction des couts de maintenance, conformité réglementaire, visibilite temps reel",
       outputFields: [
         { label: "Executive Summary", value: "Proposition personnalisee pour LogiTrans SA — solution de gestion de flotte intelligente integrant IoT et IA predictive" },
-        { label: "Pricing recommande", value: "Pack Premium a 95 000 EUR (remise volume -8% appliquee) — ROI estime 14 mois" },
-        { label: "Arguments cles", value: "3 cas clients transport presentes, conformite reglementaire integree, reduction maintenance -25%" },
+        { label: "Pricing recommandé", value: "Pack Premium a 95 000 EUR (remise volume -8% appliquee) — ROI estime 14 mois" },
+        { label: "Arguments cles", value: "3 cas clients transport présentés, conformité réglementaire intégrée, réduction maintenance -25%" },
         { label: "Email d'accompagnement", value: "Objet : Votre projet de digitalisation flotte — Proposition LogiTrans SA. Corps personnalise avec les enjeux identifies." },
         { label: "Confiance", value: "0.91" },
       ],
       beforeContext: "HubSpot Deal #4521 · Pipeline Enterprise · Etape Qualification",
       afterLabel: "Generation IA",
       afterDuration: "25 minutes",
-      afterSummary: "Proposition complete generee, pricing optimise et email pret a envoyer",
+      afterSummary: "Proposition complète générée, pricing optimise et email pret a envoyer",
     },
     roiEstimator: {
       label: "Combien de propositions commerciales redigez-vous par semaine ?",
@@ -3940,29 +3940,29 @@ async def generate_proposal(deal_id: str):
     faq: [
       {
         question: "L'agent peut-il s'integrer a mon CRM (HubSpot, Salesforce, Pipedrive) ?",
-        answer: "Oui, le workflow n8n se connecte nativement a HubSpot, Salesforce et Pipedrive. Le declencheur est un webhook sur la creation ou le changement de statut d'une opportunite. Les donnees prospect sont recuperees automatiquement via l'API du CRM. Pour d'autres CRM, un webhook generique ou un export CSV sont possibles.",
+        answer: "Oui, le workflow n8n se connecte nativement a HubSpot, Salesforce et Pipedrive. Le declencheur est un webhook sur la creation ou le changement de statut d'une opportunite. Les données prospect sont recuperees automatiquement via l'API du CRM. Pour d'autres CRM, un webhook generique ou un export CSV sont possibles.",
       },
       {
-        question: "Quel est le cout par proposition generee ?",
+        question: "Quel est le cout par proposition générée ?",
         answer: "Avec GPT-4o-mini, comptez environ 0.02 EUR par proposition. Avec Claude Sonnet 4.5, environ 0.05 EUR. Avec Ollama en local, le cout est de 0 EUR (hors electricite). Pour 50 propositions par mois, le budget API est inferieur a 3 EUR.",
       },
       {
-        question: "Les donnees de pricing et les conditions commerciales sont-elles securisees ?",
-        answer: "Les grilles tarifaires et conditions commerciales ne sont pas stockees par le LLM. Elles sont injectees dans le prompt a chaque execution et ne persistent pas. Pour plus de securite, vous pouvez utiliser Ollama en local ou un LLM heberge dans votre infrastructure.",
+        question: "Les données de pricing et les conditions commerciales sont-elles sécurisées ?",
+        answer: "Les grilles tarifaires et conditions commerciales ne sont pas stockees par le LLM. Elles sont injectees dans le prompt a chaque exécution et ne persistent pas. Pour plus de sécurité, vous pouvez utiliser Ollama en local ou un LLM hébergé dans votre infrastructure.",
       },
       {
-        question: "Quelle est la qualite des propositions generees par rapport a une redaction manuelle ?",
-        answer: "Les propositions generees couvrent 90% du contenu attendu des la premiere version. Les commerciaux ajustent generalement le ton et ajoutent des anecdotes personnelles. Le gain principal est sur la structure, le pricing et la personnalisation sectorielle, qui sont systematiquement corrects.",
+        question: "Quelle est la qualité des propositions generees par rapport a une rédaction manuelle ?",
+        answer: "Les propositions generees couvrent 90% du contenu attendu des la première version. Les commerciaux ajustent generalement le ton et ajoutent des anecdotes personnelles. Le gain principal est sur la structure, le pricing et la personnalisation sectorielle, qui sont systematiquement corrects.",
       },
       {
         question: "L'agent respecte-t-il notre charte graphique et nos templates de proposition ?",
-        answer: "Oui, le workflow utilise vos propres templates HTML/DOCX. L'agent genere le contenu textuel et le pricing, puis les injecte dans votre template via Jinja2 ou un moteur de template. La mise en forme reste identique a vos propositions actuelles.",
+        answer: "Oui, le workflow utilise vos propres templates HTML/DOCX. L'agent généré le contenu textuel et le pricing, puis les injecte dans votre template via Jinja2 ou un moteur de template. La mise en forme reste identique a vos propositions actuelles.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces API a votre CRM (HubSpot, Salesforce, Pipedrive) pour recuperer les donnees prospect",
+      "Acces API a votre CRM (HubSpot, Salesforce, Pipedrive) pour recuperer les données prospect",
       "Un template de proposition commerciale au format HTML ou DOCX",
     ],
     createdAt: "2026-02-07",
@@ -4104,7 +4104,7 @@ def analyze_survey_sentiment(comments: list) -> list:
         messages=[{
             "role": "user",
             "content": f"""Analyse ces commentaires anonymisés de pulse survey.
-Pour chaque commentaire, identifie:
+Pour chaque commentaire, identifié:
 1. Le sentiment (positif/neutre/négatif)
 2. Les thèmes (management, charge de travail, évolution, rémunération, ambiance)
 3. Les signaux faibles de désengagement
@@ -4202,9 +4202,9 @@ async def engagement_dashboard(department: str = None):
     storytelling: {
       sector: "Services",
       persona: "Camille, DRH dans un cabinet de conseil (120 salaries)",
-      painPoint: "Camille fait une enquete d'engagement annuelle sur Google Forms. Les resultats arrivent 3 semaines apres, quand c'est deja trop tard. En 2025, 4 consultants seniors sont partis sans signal prealable. Cout : 120K EUR en recrutement et 6 mois de productivite perdue. Elle n'a aucune visibilite sur le moral des equipes entre deux enquetes.",
-      story: "Camille a deploye le workflow n8n avec des pulse surveys hebdomadaires de 3 questions. Chaque lundi a 8h, le systeme collecte les reponses anonymisees de la semaine precedente, analyse le sentiment et genere un tableau de bord par equipe. Des la 2e semaine, une alerte a signale une baisse d'engagement dans l'equipe Data.",
-      result: "En 4 mois : anticipation de 3 departs sur 4 (les managers ont pu agir a temps). Score d'engagement global remonte de 6.2 a 7.8/10. Turnover reduit de 22% a 14%. Camille recoit chaque lundi un rapport synthetique avec les actions recommandees pour chaque manager.",
+      painPoint: "Camille fait une enquete d'engagement annuelle sur Google Forms. Les résultats arrivent 3 semaines apres, quand c'est deja trop tard. En 2025, 4 consultants seniors sont partis sans signal prealable. Cout : 120K EUR en recrutement et 6 mois de productivite perdue. Elle n'a aucune visibilite sur le moral des equipes entre deux enquetes.",
+      story: "Camille a déployé le workflow n8n avec des pulse surveys hebdomadaires de 3 questions. Chaque lundi a 8h, le système collecte les reponses anonymisees de la semaine precedente, analyse le sentiment et généré un tableau de bord par équipe. Des la 2e semaine, une alerte a signale une baisse d'engagement dans l'équipe Data.",
+      result: "En 4 mois : anticipation de 3 departs sur 4 (les managers ont pu agir a temps). Score d'engagement global remonté de 6.2 a 7.8/10. Turnover réduit de 22% a 14%. Camille reçoit chaque lundi un rapport synthetique avec les actions recommandees pour chaque manager.",
     },
     beforeAfter: {
       inputLabel: "Pulse survey hebdomadaire (anonymise)",
@@ -4212,14 +4212,14 @@ async def engagement_dashboard(department: str = None):
       outputFields: [
         { label: "Sentiment", value: "Negatif — Score -0.72" },
         { label: "Themes detectes", value: "Charge de travail (critique), Management (alerte), Evolution de carriere (insatisfaction)" },
-        { label: "Risque d'attrition equipe", value: "Eleve — 73% (seuil alerte depasse)" },
-        { label: "Actions recommandees", value: "1. Entretien manager-equipe sur la charge projet 2. Point carriere individuel avec HRBP 3. Revoir la repartition des deadlines" },
-        { label: "Urgence", value: "Haute — Intervention recommandee cette semaine" },
+        { label: "Risque d'attrition équipe", value: "Eleve — 73% (seuil alerte depasse)" },
+        { label: "Actions recommandees", value: "1. Entretien manager-équipe sur la charge projet 2. Point carriere individuel avec HRBP 3. Revoir la repartition des deadlines" },
+        { label: "Urgence", value: "Haute — Intervention recommandée cette semaine" },
       ],
       beforeContext: "Equipe Data · 8 repondants sur 10 · Semaine du 3 fevrier",
       afterLabel: "Analyse IA",
       afterDuration: "15 secondes",
-      afterSummary: "Sentiment analyse, risque d'attrition evalue et actions recommandees au manager",
+      afterSummary: "Sentiment analyse, risque d'attrition évalué et actions recommandees au manager",
     },
     roiEstimator: {
       label: "Combien de collaborateurs votre entreprise compte-t-elle ?",
@@ -4231,7 +4231,7 @@ async def engagement_dashboard(department: str = None):
     faq: [
       {
         question: "Comment garantir l'anonymat total des reponses des collaborateurs ?",
-        answer: "Les reponses sont anonymisees a la source via un hash irreversible. Les analyses sont toujours agreees par equipe de 5 personnes minimum pour empecher la re-identification. Le LLM ne recoit jamais de noms, emails ou identifiants. Un accord CSE est recommande avant deploiement.",
+        answer: "Les reponses sont anonymisees a la source via un hash irreversible. Les analyses sont toujours agreees par équipe de 5 personnes minimum pour empecher la re-identification. Le LLM ne reçoit jamais de noms, emails ou identifiants. Un accord CSE est recommandé avant déploiement.",
       },
       {
         question: "Quel est le cout mensuel de fonctionnement ?",
@@ -4239,34 +4239,34 @@ async def engagement_dashboard(department: str = None):
       },
       {
         question: "L'outil respecte-t-il le RGPD et le droit du travail francais ?",
-        answer: "Oui, a condition de : 1) Anonymiser les donnees avant traitement, 2) Obtenir un accord CSE/CE, 3) Informer les collaborateurs du dispositif, 4) Ne jamais utiliser les resultats pour des decisions individuelles. L'analyse se fait au niveau equipe, jamais individuel.",
+        answer: "Oui, a condition de : 1) Anonymiser les données avant traitement, 2) Obtenir un accord CSE/CE, 3) Informer les collaborateurs du dispositif, 4) Ne jamais utiliser les résultats pour des decisions individuelles. L'analyse se fait au niveau équipe, jamais individuel.",
       },
       {
-        question: "Quelle est la fiabilite de la prediction d'attrition ?",
-        answer: "La prediction combine les scores de pulse survey, les donnees RH agreees (absenteisme, anciennete) et l'analyse de sentiment. Apres 3 mois de donnees, la precision atteint 70-75% pour identifier les equipes a risque. Ce n'est pas un outil de prediction individuelle mais un signal d'alerte equipe.",
+        question: "Quelle est la fiabilité de la prediction d'attrition ?",
+        answer: "La prediction combine les scores de pulse survey, les données RH agreees (absenteisme, anciennete) et l'analyse de sentiment. Apres 3 mois de données, la précision atteint 70-75% pour identifier les equipes a risque. Ce n'est pas un outil de prediction individuelle mais un signal d'alerte équipe.",
       },
       {
         question: "L'agent peut-il s'integrer a notre SIRH existant (Lucca, PayFit, BambooHR) ?",
-        answer: "Oui, via les APIs de votre SIRH. n8n dispose de connecteurs natifs pour Lucca et BambooHR. Pour PayFit, utilisez un noeud HTTP Request avec l'API REST. Les donnees recuperees sont : anciennete, absences, formations suivies (toujours agreees par equipe).",
+        answer: "Oui, via les APIs de votre SIRH. n8n dispose de connecteurs natifs pour Lucca et BambooHR. Pour PayFit, utilisez un noeud HTTP Request avec l'API REST. Les données recuperees sont : anciennete, absences, formations suivies (toujours agreees par équipe).",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
       "Un outil de pulse survey (Typeform, Google Forms, ou Slack directement)",
-      "Accord du CSE/CE pour le deploiement du dispositif d'analyse d'engagement",
+      "Accord du CSE/CE pour le déploiement du dispositif d'analyse d'engagement",
     ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-evaluation-fournisseurs",
+    slug: "agent-évaluation-fournisseurs",
     title: "Agent d'Évaluation des Fournisseurs",
     subtitle: "Évaluez vos fournisseurs automatiquement avec des scorecards, une détection de risques et des notations ESG",
     problem:
       "L'évaluation des fournisseurs est manuelle, chronophage et souvent incomplète. Les acheteurs jonglent entre des dizaines de critères (qualité, délais, prix, conformité, ESG) sans vision consolidée. Les risques supply chain sont détectés trop tard.",
     value:
-      "Un agent IA génère des scorecards fournisseurs automatiques en agrégeant les données de performance, les audits qualité, les actualités et les notations ESG. Il détecte les risques supply chain en temps réel et recommande des actions correctives.",
+      "Un agent IA génère des scorecards fournisseurs automatiques en agrégeant les données de performance, les audits qualité, les actualités et les notations ESG. Il détecte les risques supply chain en temps réel et recommandé des actions correctives.",
     inputs: [
       "Données de performance fournisseur (ERP, qualité, délais)",
       "Rapports d'audit et certifications",
@@ -4521,24 +4521,24 @@ async def compare_suppliers(supplier_ids: List[str], category: str):
     storytelling: {
       sector: "Industrie",
       persona: "Antoine, Responsable Achats dans une ETI industrielle (350 salaries)",
-      painPoint: "Antoine gere un panel de 180 fournisseurs. L'evaluation annuelle prend 3 semaines a son equipe de 4 acheteurs : collecte manuelle des donnees qualite, recherche d'actualites, scoring Excel. Les notations ESG sont approximatives. L'an dernier, un fournisseur strategique a fait faillite sans qu'aucun signal n'ait ete detecte — 2 mois d'arret de production.",
-      story: "Antoine a deploye le workflow n8n pour automatiser l'evaluation mensuelle. Le 1er de chaque mois, le systeme collecte les donnees de performance ERP, scanne les actualites de chaque fournisseur et genere des scorecards consolides. Lors du 2e mois, une alerte a signale des articles de presse sur des difficultes financieres d'un fournisseur cle.",
-      result: "En 6 mois : temps d'evaluation passe de 3 semaines a 2 jours. Detection anticipee de 2 risques supply chain majeurs. Score qualite moyen du panel ameliore de 12%. Antoine a pu renforcer les audits sur les fournisseurs a risque et identifier 3 alternatives credibles.",
+      painPoint: "Antoine gère un panel de 180 fournisseurs. L'évaluation annuelle prend 3 semaines a son équipe de 4 acheteurs : collecte manuelle des données qualité, recherche d'actualites, scoring Excel. Les notations ESG sont approximatives. L'an dernier, un fournisseur stratégique a fait faillite sans qu'aucun signal n'ait ete détecté — 2 mois d'arret de production.",
+      story: "Antoine a déployé le workflow n8n pour automatiser l'évaluation mensuelle. Le 1er de chaque mois, le système collecte les données de performance ERP, scanne les actualites de chaque fournisseur et généré des scorecards consolides. Lors du 2e mois, une alerte a signale des articles de presse sur des difficultes financières d'un fournisseur cle.",
+      result: "En 6 mois : temps d'évaluation passé de 3 semaines a 2 jours. Detection anticipee de 2 risques supply chain majeurs. Score qualité moyen du panel amélioré de 12%. Antoine a pu renforcer les audits sur les fournisseurs a risque et identifier 3 alternatives credibles.",
     },
     beforeAfter: {
-      inputLabel: "Fournisseur a evaluer",
+      inputLabel: "Fournisseur a évaluer",
       inputText: "Fournisseur : MetalPro SAS | SIRET : 442 197 853 00021 | Categorie : Pieces metalliques usinées | Donnees ERP 12 mois : Qualite 78/100, Livraison a temps 85%, Defauts 2.3%, Delai moyen 18 jours | Certifications : ISO 9001, ISO 14001 | Actualite recente : Article Les Echos sur un plan social de 40 postes",
       outputFields: [
         { label: "Score global", value: "62/100 — En baisse (etait 74 il y a 3 mois)" },
-        { label: "Risque supply chain", value: "Eleve — Signal financier detecte (plan social)" },
+        { label: "Risque supply chain", value: "Eleve — Signal financier détecté (plan social)" },
         { label: "Notation ESG", value: "C — ISO 14001 valide mais pas de reporting carbone" },
         { label: "Recommandation", value: "Surveiller — Renforcer les audits, activer le sourcing alternatif" },
-        { label: "Actions prioritaires", value: "1. Audit qualite sur site sous 30 jours 2. Identifier 2 fournisseurs alternatifs 3. Securiser 3 mois de stock tampon" },
+        { label: "Actions prioritaires", value: "1. Audit qualité sur site sous 30 jours 2. Identifier 2 fournisseurs alternatifs 3. Securiser 3 mois de stock tampon" },
       ],
       beforeContext: "Panel fournisseurs · Evaluation mensuelle · Fevrier 2026",
       afterLabel: "Scoring IA",
       afterDuration: "45 secondes",
-      afterSummary: "Scorecard genere, risque detecte et plan d'action recommande",
+      afterSummary: "Scorecard généré, risque détecté et plan d'action recommandé",
     },
     roiEstimator: {
       label: "Combien de fournisseurs evaluez-vous par an ?",
@@ -4550,29 +4550,29 @@ async def compare_suppliers(supplier_ids: List[str], category: str):
     faq: [
       {
         question: "L'agent peut-il se connecter a notre ERP (SAP, Oracle, Sage) ?",
-        answer: "Oui, via les APIs REST de votre ERP. n8n dispose de connecteurs natifs pour SAP et Oracle. Pour Sage, utilisez un noeud HTTP Request. Alternativement, exportez les donnees fournisseurs en CSV dans un Google Sheet que le workflow lira automatiquement.",
+        answer: "Oui, via les APIs REST de votre ERP. n8n dispose de connecteurs natifs pour SAP et Oracle. Pour Sage, utilisez un noeud HTTP Request. Alternativement, exportez les données fournisseurs en CSV dans un Google Sheet que le workflow lira automatiquement.",
       },
       {
         question: "Quel est le cout de fonctionnement mensuel ?",
         answer: "Pour 100 fournisseurs evalues par mois : environ 5 EUR en API LLM + 0 EUR pour NewsAPI (plan gratuit 100 requetes/jour). Avec Ollama en local, seul le cout NewsAPI reste. Le budget total est inferieur a 10 EUR/mois.",
       },
       {
-        question: "Les donnees fournisseurs envoyees au LLM sont-elles confidentielles ?",
-        answer: "Les donnees de performance (scores, taux) sont des metriques agreees sans informations sensibles. Les conditions tarifaires et prix ne sont jamais envoyes au LLM. Pour une securite maximale, utilisez Ollama en local ou un LLM heberge dans votre infrastructure.",
+        question: "Les données fournisseurs envoyees au LLM sont-elles confidentielles ?",
+        answer: "Les données de performance (scores, taux) sont des metriques agreees sans informations sensibles. Les conditions tarifaires et prix ne sont jamais envoyes au LLM. Pour une sécurité maximale, utilisez Ollama en local ou un LLM hébergé dans votre infrastructure.",
       },
       {
-        question: "Comment l'agent evalue-t-il les criteres ESG des fournisseurs ?",
-        answer: "L'agent combine : 1) les certifications declarees (ISO 14001, EcoVadis), 2) les actualites liees a l'environnement et au social, 3) les donnees publiques disponibles (rapports RSE). La notation est indicative et doit etre confirmee par un audit ESG formel pour les fournisseurs strategiques.",
+        question: "Comment l'agent évalué-t-il les critères ESG des fournisseurs ?",
+        answer: "L'agent combine : 1) les certifications declarees (ISO 14001, EcoVadis), 2) les actualites liees a l'environnement et au social, 3) les données publiques disponibles (rapports RSE). La notation est indicative et doit etre confirmee par un audit ESG formel pour les fournisseurs strategiques.",
       },
       {
-        question: "L'agent detecte-t-il les risques supply chain en temps reel ?",
-        answer: "Le workflow tourne par defaut chaque mois, mais peut etre configure pour scanner les actualites quotidiennement. Les alertes sur des mots-cles critiques (faillite, greve, rappel produit, cyberattaque) declenchent une notification immediate au responsable achats, meme entre les evaluations mensuelles.",
+        question: "L'agent détecté-t-il les risques supply chain en temps reel ?",
+        answer: "Le workflow tourne par defaut chaque mois, mais peut etre configure pour scanner les actualites quotidiennement. Les alertes sur des mots-cles critiques (faillite, greve, rappel produit, cyberattaque) declenchent une notification immédiate au responsable achats, meme entre les evaluations mensuelles.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces aux donnees de performance fournisseur (ERP ou export CSV)",
+      "Acces aux données de performance fournisseur (ERP ou export CSV)",
       "Un compte NewsAPI (gratuit, 100 requetes/jour) pour la veille actualites",
     ],
     createdAt: "2026-02-07",
@@ -5276,7 +5276,7 @@ def calculate_optimal_price(product: dict, sales: pd.DataFrame, competitors: lis
         messages=[{
             "role": "user",
             "content": f"""Tu es un expert en pricing e-commerce et retail.
-Analyse les données et recommande le prix optimal.
+Analyse les données et recommandé le prix optimal.
 
 Produit: {product['product_name']}
 - Prix actuel: {product['current_price']}EUR
@@ -5674,7 +5674,7 @@ async def trigger_reindex(space_key: str = "ALL"):
     problem:
       "Les entreprises industrielles et de distribution peinent à maîtriser leurs consommations énergétiques. Les factures augmentent, les réglementations se durcissent (décret tertiaire, taxonomie EU) et les données de consommation sont sous-exploitées. Les ajustements manuels sont trop lents face aux variations de prix de l'énergie.",
     value:
-      "Un agent IA analyse les consommations énergétiques en temps réel (électricité, gaz, eau), identifie les gaspillages, ajuste automatiquement les usages (HVAC, éclairage, process) et optimise les achats d'énergie en fonction des tarifs dynamiques. L'empreinte carbone est réduite sans impact sur la productivité.",
+      "Un agent IA analyse les consommations énergétiques en temps réel (électricité, gaz, eau), identifié les gaspillages, ajuste automatiquement les usages (HVAC, éclairage, process) et optimise les achats d'énergie en fonction des tarifs dynamiques. L'empreinte carbone est réduite sans impact sur la productivité.",
     inputs: [
       "Données de consommation en temps réel (compteurs intelligents, sous-compteurs)",
       "Tarifs énergétiques dynamiques (RTE, marché spot)",
@@ -5819,7 +5819,7 @@ def analyze_and_optimize(consumption: pd.DataFrame, prices: dict, weather: list,
         messages=[{
             "role": "user",
             "content": f"""Tu es un expert en efficacité énergétique industrielle et tertiaire.
-Analyse les données de consommation et recommande des optimisations.
+Analyse les données de consommation et recommandé des optimisations.
 
 Consommation (24h par zone):
 {consumption_summary}
@@ -6218,7 +6218,7 @@ async def get_today_routes():
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-conformite-fiscale",
+    slug: "agent-conformité-fiscale",
     title: "Agent de Conformité Fiscale et Optimisation TVA",
     subtitle: "Automatisez la catégorisation TVA, la surveillance réglementaire et les déclarations fiscales grâce à l'IA",
     problem:
@@ -6733,7 +6733,7 @@ TEST_OUTPUT_DIR=./generated_tests`,
       {
         title: "Analyse de diff et génération de tests",
         content:
-          "L'agent analyse le diff d'une pull request, identifie les fonctions modifiées et génère des cas de test couvrant les chemins nominaux, les edge cases et les régressions potentielles.",
+          "L'agent analyse le diff d'une pull request, identifié les fonctions modifiées et génère des cas de test couvrant les chemins nominaux, les edge cases et les régressions potentielles.",
         codeSnippets: [
           {
             language: "python",
@@ -6763,7 +6763,7 @@ Diff:
 Spécifications: {spec if spec else "Non fournies"}
 
 Retourne un JSON avec:
-- test_plan: liste de cas de test (description, type: unit/integration/e2e)
+- test_plan: liste de cas de test (description, type: unit/intégration/e2e)
 - test_code: code pytest exécutable
 - edge_cases: scénarios limites identifiés
 - regression_risks: risques de régression sur les modules existants
@@ -6899,7 +6899,7 @@ async def handle_pr(webhook: PRWebhook):
     problem:
       "Les achats indirects représentent 15 à 30% des dépenses d'une entreprise mais sont rarement renégociés faute de temps et de données comparatives. Des millions d'euros de savings sont laissés sur la table chaque année : contrats reconduits tacitement, prix jamais challengés, fournisseurs alternatifs non évalués.",
     value:
-      "Un agent IA analyse vos contrats en cours, effectue un benchmark tarifaire automatique, identifie les opportunités de savings et mène des négociations autonomes par email avec les fournisseurs. Il présente des recommandations avec options à valider par le décideur.",
+      "Un agent IA analyse vos contrats en cours, effectue un benchmark tarifaire automatique, identifié les opportunités de savings et mène des négociations autonomes par email avec les fournisseurs. Il présente des recommandations avec options à valider par le décideur.",
     inputs: [
       "Contrats fournisseurs en cours (PDF, ERP)",
       "Historique des dépenses par catégorie d'achats",
@@ -7008,7 +7008,7 @@ Retourne un JSON avec:
       {
         title: "Benchmark et stratégie de négociation",
         content:
-          "L'agent compare vos prix actuels aux données de marché, identifie les écarts et génère une stratégie de négociation adaptée à chaque fournisseur avec des arguments chiffrés.",
+          "L'agent compare vos prix actuels aux données de marché, identifié les écarts et génère une stratégie de négociation adaptée à chaque fournisseur avec des arguments chiffrés.",
         codeSnippets: [
           {
             language: "python",
@@ -7540,7 +7540,7 @@ import pdfplumber
 app = FastAPI()
 
 @app.post("/api/audit")
-async def run_audit(file: UploadFile, referentiel: str = "ISO27001"):
+async def run_audit(file: UploadFile, référentiel: str = "ISO27001"):
     # Extraction du texte du document
     with pdfplumber.open(file.file) as pdf:
         document_text = "\\n".join([p.extract_text() for p in pdf.pages])
@@ -7733,8 +7733,8 @@ class AnalyseTarifaire(BaseModel):
 
 client = OpenAI()
 
-def analyser_pricing(donnees: list, contexte_marche: str = "") -> AnalyseTarifaire:
-    donnees_json = json.dumps([d.model_dump() for d in donnees], ensure_ascii=False)
+def analyser_pricing(données: list, contexte_marche: str = "") -> AnalyseTarifaire:
+    donnees_json = json.dumps([d.model_dump() for d in données], ensure_ascii=False)
 
     response = client.chat.completions.create(
         model="gpt-4.1",
@@ -7774,14 +7774,14 @@ app = FastAPI()
 
 @app.get("/api/pricing/analyse")
 async def get_analyse() -> dict:
-    donnees = charger_donnees_pricing()
-    analyse = analyser_pricing(donnees)
+    données = charger_donnees_pricing()
+    analyse = analyser_pricing(données)
     return analyse.model_dump()
 
 @app.post("/api/pricing/simulation")
 async def simuler_prix(service: str, nouveau_prix: float) -> dict:
-    donnees = charger_donnees_pricing()
-    service_data = next((d for d in donnees if d.service == service), None)
+    données = charger_donnees_pricing()
+    service_data = next((d for d in données if d.service == service), None)
     if not service_data:
         return {"error": "Service non trouvé"}
 
@@ -7826,21 +7826,21 @@ async def simuler_prix(service: str, nouveau_prix: float) -> dict:
     storytelling: {
       sector: "Services B2B",
       persona: "Marc, Directeur Commercial chez un cabinet de conseil IT (80 salaries)",
-      painPoint: "Marc gere un catalogue de 45 prestations dont les prix n'ont pas ete revus depuis 18 mois. Son equipe applique des remises de 15% a 30% sans logique coherente. Resultat : certaines missions sont vendues a perte tandis que d'autres sont surevaluees et perdent face a la concurrence. Il estime a 200 000 EUR le manque a gagner annuel lie a une tarification approximative.",
-      story: "Marc a deploye le workflow n8n un lundi matin. Des le mercredi, il recevait sur Slack un rapport complet : 12 prestations sous-evaluees de 8% a 22% par rapport au marche, 5 prestations surevaluees freinant les ventes, et une simulation d'impact financier pour chaque ajustement recommande.",
-      result: "En 2 mois : marge brute passee de 32% a 41%. Taux de conversion des propositions commerciales ameliore de 18%. L'equipe commerciale dispose desormais d'une grille tarifaire dynamique mise a jour chaque semaine, avec des argumentaires de prix personnalises par segment client.",
+      painPoint: "Marc gère un catalogue de 45 prestations dont les prix n'ont pas ete revus depuis 18 mois. Son équipe applique des remises de 15% a 30% sans logique cohérente. Resultat : certaines missions sont vendues a perte tandis que d'autres sont surevaluees et perdent face a la concurrence. Il estime a 200 000 EUR le manque a gagner annuel lie a une tarification approximative.",
+      story: "Marc a déployé le workflow n8n un lundi matin. Des le mercredi, il recevait sur Slack un rapport complet : 12 prestations sous-evaluees de 8% a 22% par rapport au marche, 5 prestations surevaluees freinant les ventes, et une simulation d'impact financier pour chaque ajustement recommandé.",
+      result: "En 2 mois : marge brute passée de 32% a 41%. Taux de conversion des propositions commerciales amélioré de 18%. L'équipe commerciale dispose désormais d'une grille tarifaire dynamique mise a jour chaque semaine, avec des argumentaires de prix personnalises par segment client.",
     },
     beforeAfter: {
       inputLabel: "Donnees tarifaires a analyser",
       inputText: "Service: Audit cybersecurite PME\nPrix actuel: 4 500 EUR\nCout de revient: 2 800 EUR\nVolume mensuel: 12 missions\nPrix concurrent min: 3 800 EUR\nPrix concurrent max: 7 200 EUR\nPrix concurrent median: 5 100 EUR",
       outputFields: [
-        { label: "Prix recommande", value: "5 200 EUR (+15.6%)" },
+        { label: "Prix recommandé", value: "5 200 EUR (+15.6%)" },
         { label: "Impact CA mensuel", value: "+8 400 EUR" },
         { label: "Impact marge mensuelle", value: "+8 400 EUR" },
-        { label: "Positionnement", value: "Milieu de marche (conforme a la qualite percue)" },
-        { label: "Priorite", value: "Haute - fort volume, sous-evalue vs concurrence" },
+        { label: "Positionnement", value: "Milieu de marche (conforme a la qualité percue)" },
+        { label: "Priorite", value: "Haute - fort volume, sous-évalué vs concurrence" },
       ],
-      beforeContext: "Grille tarifaire interne - derniere mise a jour il y a 14 mois",
+      beforeContext: "Grille tarifaire interne - dernière mise a jour il y a 14 mois",
       afterLabel: "Analyse tarifaire IA",
       afterDuration: "8 secondes",
       afterSummary: "Recommandation chiffree avec simulation d'impact et positionnement concurrentiel",
@@ -7854,30 +7854,30 @@ async def simuler_prix(service: str, nouveau_prix: float) -> dict:
     },
     faq: [
       {
-        question: "L'agent peut-il se connecter a mon ERP pour recuperer les donnees de vente ?",
-        answer: "Oui. Le workflow n8n supporte nativement les connexions aux ERP via API REST (SAP, Odoo, Sage) ou via des requetes SQL directes sur votre base de donnees. Vous pouvez aussi importer les donnees depuis un fichier Excel ou Google Sheets si votre ERP ne dispose pas d'API.",
+        question: "L'agent peut-il se connecter a mon ERP pour recuperer les données de vente ?",
+        answer: "Oui. Le workflow n8n supporte nativement les connexions aux ERP via API REST (SAP, Odoo, Sage) ou via des requetes SQL directes sur votre base de données. Vous pouvez aussi importer les données depuis un fichier Excel ou Google Sheets si votre ERP ne dispose pas d'API.",
       },
       {
-        question: "Combien coute l'execution du workflow par analyse ?",
-        answer: "Le cout depend du LLM utilise. Avec GPT-4o-mini, comptez environ 0.005 EUR par service analyse. Pour un catalogue de 50 services, l'analyse complete coute moins de 0.25 EUR. Avec Ollama (gratuit), le cout est nul mais le temps de traitement est plus long.",
+        question: "Combien coute l'exécution du workflow par analyse ?",
+        answer: "Le cout depend du LLM utilise. Avec GPT-4o-mini, comptez environ 0.005 EUR par service analyse. Pour un catalogue de 50 services, l'analyse complète coute moins de 0.25 EUR. Avec Ollama (gratuit), le cout est nul mais le temps de traitement est plus long.",
       },
       {
-        question: "Les donnees tarifaires confidentielles sont-elles protegees ?",
-        answer: "Oui. Avec Ollama, les donnees restent entierement sur votre machine. Avec les API cloud (OpenAI, Anthropic, Mistral), les donnees ne sont pas utilisees pour l'entrainement selon leurs politiques de confidentialite. Pour les entreprises sensibles, nous recommandons Ollama ou Mistral (heberge en Europe, conforme RGPD).",
+        question: "Les données tarifaires confidentielles sont-elles protégées ?",
+        answer: "Oui. Avec Ollama, les données restent entièrement sur votre machine. Avec les API cloud (OpenAI, Anthropic, Mistral), les données ne sont pas utilisees pour l'entraînement selon leurs politiques de confidentialite. Pour les entreprises sensibles, nous recommandons Ollama ou Mistral (hébergé en Europe, conforme RGPD).",
       },
       {
-        question: "Quelle est la fiabilite des recommandations tarifaires ?",
-        answer: "Les recommandations sont basees sur vos donnees reelles (couts, volumes, prix concurrents). L'IA ne remplace pas la decision humaine : chaque recommandation est une suggestion argumentee avec simulation d'impact. Nous recommandons de valider toute modification superieure a 10% avec le directeur commercial avant application.",
+        question: "Quelle est la fiabilité des recommandations tarifaires ?",
+        answer: "Les recommandations sont basees sur vos données reelles (couts, volumes, prix concurrents). L'IA ne remplace pas la decision humaine : chaque recommandation est une suggestion argumentee avec simulation d'impact. Nous recommandons de valider toute modification superieure a 10% avec le directeur commercial avant application.",
       },
       {
         question: "Comment l'agent collecte-t-il les prix concurrents ?",
-        answer: "Le workflow inclut un noeud de veille concurrentielle qui peut scraper les sites publics des concurrents ou utiliser des API de veille tarifaire (import.io, Apify). Vous pouvez aussi alimenter manuellement un Google Sheets avec les prix releves par votre equipe commerciale.",
+        answer: "Le workflow inclut un noeud de veille concurrentielle qui peut scraper les sites publics des concurrents ou utiliser des API de veille tarifaire (import.io, Apify). Vous pouvez aussi alimenter manuellement un Google Sheets avec les prix releves par votre équipe commerciale.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces a vos donnees de vente (base SQL, ERP, ou fichier Excel/Google Sheets)",
+      "Acces a vos données de vente (base SQL, ERP, ou fichier Excel/Google Sheets)",
       "Optionnel : acces aux sites concurrents ou API de veille tarifaire",
     ],
     createdAt: "2025-02-07",
@@ -8147,24 +8147,24 @@ async def get_stats():
     storytelling: {
       sector: "E-commerce / Marketplace",
       persona: "Camille, Community Manager chez une marketplace de mode (120 salaries)",
-      painPoint: "La plateforme recoit 800 avis produits par jour. Camille et son equipe de 2 moderateurs passent 4 heures par jour a lire chaque avis. Malgre cela, des faux avis promotionnels et des commentaires haineux passent entre les mailles. Un avis diffamatoire reste en ligne 3 jours avant detection, provoquant un bad buzz sur Twitter.",
+      painPoint: "La plateforme reçoit 800 avis produits par jour. Camille et son équipe de 2 moderateurs passent 4 heures par jour a lire chaque avis. Malgre cela, des faux avis promotionnels et des commentaires haineux passent entre les mailles. Un avis diffamatoire reste en ligne 3 jours avant détection, provoquant un bad buzz sur Twitter.",
       story: "Camille a configure le workflow n8n un vendredi. Des le lundi suivant, chaque avis etait analyse en moins de 3 secondes : les contenus positifs publies automatiquement, les contenus douteux mis en file d'attente pour revue, et les violations claires supprimees avec notification a l'utilisateur.",
-      result: "En 1 mois : temps de moderation reduit de 4h a 30 min par jour. Zero contenu haineux publie. Taux de faux avis detectes passe de 60% a 97%. Camille a pu reaffecter un moderateur a l'animation communautaire, augmentant l'engagement de 35%.",
+      result: "En 1 mois : temps de moderation réduit de 4h a 30 min par jour. Zero contenu haineux publie. Taux de faux avis detectes passé de 60% a 97%. Camille a pu réaffecter un moderateur a l'animation communautaire, augmentant l'engagement de 35%.",
     },
     beforeAfter: {
       inputLabel: "Avis client soumis",
-      inputText: "Ce produit est une ARNAQUE totale !! Le vendeur est un escroc, j'ai recu un article completement different de la photo. Appelez le 06 12 34 56 78 pour vous plaindre directement a ce voleur. NE COMMANDEZ PAS ICI !!!",
+      inputText: "Ce produit est une ARNAQUE totale !! Le vendeur est un escroc, j'ai reçu un article complètement different de la photo. Appelez le 06 12 34 56 78 pour vous plaindre directement a ce voleur. NE COMMANDEZ PAS ICI !!!",
       outputFields: [
         { label: "Action", value: "Masquer (en attente de revue)" },
         { label: "Violations", value: "Diffamation + Donnees personnelles (numero de telephone)" },
         { label: "Confiance", value: "0.92" },
         { label: "Explication interne", value: "Termes diffamatoires ('escroc', 'voleur'), numero de telephone personnel expose, ton agressif. Contenu a revoir par un moderateur humain." },
-        { label: "Message utilisateur", value: "Votre avis a ete mis en attente car il contient des termes contraires a notre charte. Merci de reformuler sans insultes ni donnees personnelles." },
+        { label: "Message utilisateur", value: "Votre avis a ete mis en attente car il contient des termes contraires a notre charte. Merci de reformuler sans insultes ni données personnelles." },
       ],
       beforeContext: "Avis soumis il y a 12 secondes — produit: Robe ete fleurie ref. RF-2847",
       afterLabel: "Moderation IA",
       afterDuration: "2 secondes",
-      afterSummary: "Contenu analyse, violation detectee, masque et utilisateur notifie",
+      afterSummary: "Contenu analyse, violation détectée, masque et utilisateur notifie",
     },
     roiEstimator: {
       label: "Combien de contenus utilisateurs recevez-vous par jour ?",
@@ -8175,16 +8175,16 @@ async def get_stats():
     },
     faq: [
       {
-        question: "L'agent detecte-t-il le sarcasme et l'ironie en francais ?",
-        answer: "Les LLM modernes (Claude, GPT-4) sont performants sur la detection du sarcasme en francais, avec un taux de detection superieur a 85%. Le prompt est optimise pour analyser le contexte global du message, pas seulement les mots-cles. Les cas ambigus sont automatiquement escalades vers un moderateur humain.",
+        question: "L'agent détecté-t-il le sarcasme et l'ironie en francais ?",
+        answer: "Les LLM modernes (Claude, GPT-4) sont performants sur la détection du sarcasme en francais, avec un taux de détection superieur a 85%. Le prompt est optimise pour analyser le contexte global du message, pas seulement les mots-cles. Les cas ambigus sont automatiquement escalades vers un moderateur humain.",
       },
       {
         question: "Combien coute la moderation IA par contenu ?",
-        answer: "Avec GPT-4o-mini : environ 0.001 EUR par contenu modere. Pour 500 contenus/jour, cela represente 0.50 EUR/jour soit 15 EUR/mois. Avec Ollama (gratuit, local), le cout est nul mais necessite un serveur avec GPU pour gerer de gros volumes.",
+        answer: "Avec GPT-4o-mini : environ 0.001 EUR par contenu modere. Pour 500 contenus/jour, cela represente 0.50 EUR/jour soit 15 EUR/mois. Avec Ollama (gratuit, local), le cout est nul mais nécessité un serveur avec GPU pour gérer de gros volumes.",
       },
       {
         question: "Le workflow est-il conforme au DSA (Digital Services Act) europeen ?",
-        answer: "Le workflow integre les exigences du DSA : tracabilite des decisions de moderation, droit de recours pour les utilisateurs, notification motivee en cas de suppression, et conservation des logs pendant 2 ans. Vous devez neanmoins adapter la charte de moderation a votre contexte specifique.",
+        answer: "Le workflow intégré les exigences du DSA : tracabilite des decisions de moderation, droit de recours pour les utilisateurs, notification motivee en cas de suppression, et conservation des logs pendant 2 ans. Vous devez neanmoins adapter la charte de moderation a votre contexte spécifique.",
       },
       {
         question: "Quel est le taux de faux positifs (contenus legitimes bloques) ?",
@@ -8192,20 +8192,20 @@ async def get_stats():
       },
       {
         question: "L'agent peut-il moderer des images et des videos ?",
-        answer: "Le workflow actuel est optimise pour le texte. Pour la moderation d'images, vous pouvez ajouter un noeud supplementaire appelant l'API de moderation d'images d'OpenAI ou Google Cloud Vision. La moderation video necessite une etape de frame extraction prealable.",
+        answer: "Le workflow actuel est optimise pour le texte. Pour la moderation d'images, vous pouvez ajouter un noeud supplementaire appelant l'API de moderation d'images d'OpenAI ou Google Cloud Vision. La moderation video nécessité une étape de frame extraction prealable.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
       "Acces API a votre plateforme de publication (Shopify, WordPress, Magento, API custom)",
-      "Une charte de moderation formalisee avec vos regles specifiques",
+      "Une charte de moderation formalisee avec vos regles spécifiques",
     ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-enrichissement-donnees",
+    slug: "agent-enrichissement-données",
     title: "Agent d'Enrichissement de Données CRM",
     subtitle: "Enrichissez automatiquement vos contacts CRM avec des données externes qualifiées",
     problem:
@@ -8303,7 +8303,7 @@ class CompanyInfo(BaseModel):
     adresse: Optional[str] = None
     date_creation: Optional[str] = None
     dirigeant: Optional[str] = None
-    fiabilite: float = Field(ge=0, le=1, description="Score de fiabilité")
+    fiabilité: float = Field(ge=0, le=1, description="Score de fiabilité")
 
 def enrichir_entreprise_pappers(nom_entreprise: str) -> Optional[CompanyInfo]:
     """Recherche d'informations entreprise via l'API Pappers"""
@@ -8312,10 +8312,10 @@ def enrichir_entreprise_pappers(nom_entreprise: str) -> Optional[CompanyInfo]:
         "https://api.pappers.fr/v2/recherche",
         params={"q": nom_entreprise, "api_token": api_key, "par_page": 3}
     )
-    if response.status_code != 200 or not response.json().get("resultats"):
+    if response.status_code != 200 or not response.json().get("résultats"):
         return None
 
-    entreprise = response.json()["resultats"][0]
+    entreprise = response.json()["résultats"][0]
     return CompanyInfo(
         nom=entreprise.get("nom_entreprise", nom_entreprise),
         siren=entreprise.get("siren"),
@@ -8327,7 +8327,7 @@ def enrichir_entreprise_pappers(nom_entreprise: str) -> Optional[CompanyInfo]:
         adresse=entreprise.get("siege", {}).get("adresse_ligne_1"),
         date_creation=entreprise.get("date_creation"),
         dirigeant=entreprise.get("representants", [{}])[0].get("nom_complet") if entreprise.get("representants") else None,
-        fiabilite=0.9 if entreprise.get("siren") else 0.5
+        fiabilité=0.9 if entreprise.get("siren") else 0.5
     )
 
 def extraire_domaine_email(email: str) -> str:
@@ -8493,9 +8493,9 @@ async def enrich_batch(request: BatchRequest):
     storytelling: {
       sector: "SaaS B2B",
       persona: "Julie, Sales Ops Manager chez un editeur SaaS (50 salaries)",
-      painPoint: "Le CRM contient 12 000 contacts dont 70% ont des fiches incompletes : poste manquant, taille d'entreprise inconnue, secteur non renseigne. Les commerciaux passent 20 minutes par prospect a rechercher ces informations sur LinkedIn et Google avant chaque appel. La segmentation marketing est approximative, et les campagnes de prospection ont un taux de reponse de seulement 2%.",
+      painPoint: "Le CRM contient 12 000 contacts dont 70% ont des fiches incompletes : poste manquant, taille d'entreprise inconnue, secteur non renseigne. Les commerciaux passent 20 minutes par prospect a rechercher ces informations sur LinkedIn et Google avant chaque appel. La segmentation marketing est approximative, et les campagnes de prospection ont un taux de réponse de seulement 2%.",
       story: "Julie a configure le workflow n8n pour enrichir automatiquement les nouveaux contacts. Chaque fois qu'un lead entre dans HubSpot, l'agent recherche l'entreprise sur Pappers, estime le poste du contact, et met a jour la fiche CRM en 8 secondes.",
-      result: "En 6 semaines : taux de completion des fiches CRM passe de 30% a 88%. Temps de preparation avant appel reduit de 20 a 2 minutes. Taux de reponse des campagnes email ameliore de 2% a 5.5% grace a une segmentation precise. L'equipe commerciale a gagne 15 heures par semaine.",
+      result: "En 6 semaines : taux de completion des fiches CRM passé de 30% a 88%. Temps de preparation avant appel réduit de 20 a 2 minutes. Taux de réponse des campagnes email amélioré de 2% a 5.5% grace a une segmentation précise. L'équipe commerciale a gagne 15 heures par semaine.",
     },
     beforeAfter: {
       inputLabel: "Nouveau contact CRM",
@@ -8504,13 +8504,13 @@ async def enrich_batch(request: BatchRequest):
         { label: "Entreprise", value: "Nexvia SAS — Conseil en transformation digitale" },
         { label: "Poste estime", value: "Directeur des Operations (confiance: 0.78)" },
         { label: "Taille", value: "50-99 salaries — CA: 8.2M EUR" },
-        { label: "Secteur", value: "Conseil en systemes et logiciels informatiques (NAF 6202A)" },
+        { label: "Secteur", value: "Conseil en systèmes et logiciels informatiques (NAF 6202A)" },
         { label: "Score completude", value: "85% (4 champs sur 5 enrichis)" },
       ],
-      beforeContext: "Contact cree il y a 3 minutes via formulaire web",
+      beforeContext: "Contact créé il y a 3 minutes via formulaire web",
       afterLabel: "Enrichissement IA",
       afterDuration: "8 secondes",
-      afterSummary: "Fiche completee automatiquement avec donnees Pappers et estimation LLM",
+      afterSummary: "Fiche completee automatiquement avec données Pappers et estimation LLM",
     },
     roiEstimator: {
       label: "Combien de nouveaux contacts ajoutez-vous par semaine dans votre CRM ?",
@@ -8522,15 +8522,15 @@ async def enrich_batch(request: BatchRequest):
     faq: [
       {
         question: "L'enrichissement est-il conforme au RGPD ?",
-        answer: "Oui. L'agent utilise exclusivement des donnees publiques : registre des entreprises (Pappers/Infogreffe), informations societaires publiques, et estimation contextuelle par IA. Aucune donnee personnelle privee n'est collectee. Vous devez neanmoins disposer d'une base legale (interet legitime B2B) pour le traitement et informer les contacts.",
+        answer: "Oui. L'agent utilise exclusivement des données publiques : registre des entreprises (Pappers/Infogreffe), informations societaires publiques, et estimation contextuelle par IA. Aucune donnee personnelle privee n'est collectee. Vous devez neanmoins disposer d'une base legale (interet legitime B2B) pour le traitement et informer les contacts.",
       },
       {
-        question: "Quelle est la fiabilite des donnees enrichies ?",
-        answer: "Les donnees entreprise provenant de Pappers (SIRENE) ont une fiabilite superieure a 95%. Les estimations de poste par le LLM ont une precision d'environ 75-80%. Chaque enrichissement est accompagne d'un score de fiabilite. Les enrichissements avec un score inferieur a 0.6 sont signales pour verification humaine.",
+        question: "Quelle est la fiabilité des données enrichies ?",
+        answer: "Les données entreprise provenant de Pappers (SIRENE) ont une fiabilité superieure a 95%. Les estimations de poste par le LLM ont une précision d'environ 75-80%. Chaque enrichissement est accompagne d'un score de fiabilité. Les enrichissements avec un score inferieur a 0.6 sont signales pour verification humaine.",
       },
       {
         question: "Combien coute l'enrichissement par contact ?",
-        answer: "API Pappers : gratuit jusqu'a 100 requetes/mois, puis 0.02 EUR/requete. LLM (GPT-4o-mini) : environ 0.001 EUR par contact. Total : environ 0.02 EUR par contact enrichi. Avec Ollama (LLM gratuit) et l'API Pappers gratuite, les 100 premiers contacts/mois sont entierement gratuits.",
+        answer: "API Pappers : gratuit jusqu'a 100 requetes/mois, puis 0.02 EUR/requete. LLM (GPT-4o-mini) : environ 0.001 EUR par contact. Total : environ 0.02 EUR par contact enrichi. Avec Ollama (LLM gratuit) et l'API Pappers gratuite, les 100 premiers contacts/mois sont entièrement gratuits.",
       },
       {
         question: "L'agent fonctionne-t-il avec mon CRM (HubSpot, Salesforce, Pipedrive) ?",
@@ -8538,7 +8538,7 @@ async def enrich_batch(request: BatchRequest):
       },
       {
         question: "Que se passe-t-il en cas d'homonyme (meme nom d'entreprise) ?",
-        answer: "L'agent utilise le domaine de l'email professionnel comme premier critere de correspondance, ce qui elimine la majorite des homonymes. Si le domaine est generique (gmail, yahoo), l'agent recherche par nom d'entreprise et signale les cas ambigus avec un score de fiabilite reduit pour verification humaine.",
+        answer: "L'agent utilise le domaine de l'email professionnel comme premier critère de correspondance, ce qui elimine la majorite des homonymes. Si le domaine est generique (gmail, yahoo), l'agent recherche par nom d'entreprise et signale les cas ambigus avec un score de fiabilité réduit pour verification humaine.",
       },
     ],
     prerequisites: [
@@ -8557,7 +8557,7 @@ async def enrich_batch(request: BatchRequest):
     problem:
       "Les entreprises détectent le churn trop tard, quand le client a déjà décidé de partir. Les signaux faibles (baisse d'usage, tickets non résolus, retards de paiement) sont dispersés dans différents systèmes et rarement analysés de manière consolidée. Le coût d'acquisition d'un nouveau client étant 5 à 7 fois supérieur à la rétention, chaque départ évitable représente une perte significative.",
     value:
-      "Un agent IA analyse en continu les données d'usage, de support, de facturation et d'engagement pour calculer un score de risque de churn par client. Il identifie les signaux faibles, prédit les départs à 30/60/90 jours, et recommande des actions de rétention personnalisées pour chaque compte à risque.",
+      "Un agent IA analyse en continu les données d'usage, de support, de facturation et d'engagement pour calculer un score de risque de churn par client. Il identifié les signaux faibles, prédit les départs à 30/60/90 jours, et recommandé des actions de rétention personnalisées pour chaque compte à risque.",
     inputs: [
       "Données d'usage produit (connexions, fonctionnalités utilisées, fréquence)",
       "Historique des tickets support (volume, satisfaction, temps de résolution)",
@@ -8732,7 +8732,7 @@ def collecter_signaux_client(client_id: str) -> SignalClient:
       {
         title: "Agent de scoring et recommandation",
         content:
-          "L'agent analyse les signaux consolidés, calcule un score de risque, identifie les facteurs principaux et recommande des actions de rétention spécifiques à chaque situation client.",
+          "L'agent analyse les signaux consolidés, calcule un score de risque, identifié les facteurs principaux et recommandé des actions de rétention spécifiques à chaque situation client.",
         codeSnippets: [
           {
             language: "python",
@@ -8888,9 +8888,9 @@ async def scan_portfolio():
     storytelling: {
       sector: "SaaS B2B",
       persona: "Thomas, Head of Customer Success chez un SaaS de gestion RH (200 salaries)",
-      painPoint: "Thomas gere un portefeuille de 450 clients representant 2.8M EUR de MRR. Son equipe de 6 CSM detecte les clients a risque trop tard : en moyenne 15 jours avant le churn effectif. Le taux de churn mensuel est de 3.2%, soit 90 000 EUR de MRR perdu chaque mois. Les signaux (baisse d'usage, tickets non resolus, NPS en chute) sont disperses dans 4 outils differents.",
-      story: "Thomas a deploye le workflow n8n qui scanne quotidiennement les signaux de chaque client. Le premier lundi, il a recu une alerte : 12 comptes a risque identifies, dont 3 en urgence critique. Pour chaque compte, un argumentaire personnalise etait propose au CSM.",
-      result: "En 3 mois : taux de churn mensuel reduit de 3.2% a 1.8%. 180 000 EUR de MRR sauve grace aux actions de retention ciblees. Detection des comptes a risque 45 jours plus tot en moyenne. Le NPS est passe de 32 a 48.",
+      painPoint: "Thomas gère un portefeuille de 450 clients representant 2.8M EUR de MRR. Son équipe de 6 CSM détecté les clients a risque trop tard : en moyenne 15 jours avant le churn effectif. Le taux de churn mensuel est de 3.2%, soit 90 000 EUR de MRR perdu chaque mois. Les signaux (baisse d'usage, tickets non resolus, NPS en chute) sont disperses dans 4 outils differents.",
+      story: "Thomas a déployé le workflow n8n qui scanne quotidiennement les signaux de chaque client. Le premier lundi, il a reçu une alerte : 12 comptes a risque identifies, dont 3 en urgence critique. Pour chaque compte, un argumentaire personnalise etait propose au CSM.",
+      result: "En 3 mois : taux de churn mensuel réduit de 3.2% a 1.8%. 180 000 EUR de MRR sauve grace aux actions de retention ciblees. Detection des comptes a risque 45 jours plus tot en moyenne. Le NPS est passé de 32 a 48.",
     },
     beforeAfter: {
       inputLabel: "Signaux client a analyser",
@@ -8899,7 +8899,7 @@ async def scan_portfolio():
         { label: "Score de risque", value: "87/100 — Urgence CRITIQUE" },
         { label: "Probabilite churn 30j", value: "62%" },
         { label: "Top facteurs", value: "Chute d'usage -73%, tickets non resolus, NPS bas" },
-        { label: "Action recommandee", value: "Appel du CSM sous 24h avec proposition de session de formation + resolution tickets prioritaire" },
+        { label: "Action recommandée", value: "Appel du CSM sous 24h avec proposition de session de formation + resolution tickets prioritaire" },
         { label: "MRR a risque", value: "4 200 EUR/mois — 50 400 EUR/an" },
       ],
       beforeContext: "Scan quotidien des 450 clients actifs — analyse a 08h00",
@@ -8916,30 +8916,30 @@ async def scan_portfolio():
     },
     faq: [
       {
-        question: "De combien de donnees historiques ai-je besoin pour que les predictions soient fiables ?",
-        answer: "Un minimum de 12 mois d'historique est recommande pour que le modele identifie les patterns de churn recurrents. Avec 6 mois, les predictions restent exploitables mais moins precises. L'agent s'ameliore au fil du temps en integrant les retours des CSM sur la pertinence des alertes.",
+        question: "De combien de données historiques ai-je besoin pour que les predictions soient fiables ?",
+        answer: "Un minimum de 12 mois d'historique est recommandé pour que le modèle identifié les patterns de churn recurrents. Avec 6 mois, les predictions restent exploitables mais moins precises. L'agent s'amélioré au fil du temps en integrant les retours des CSM sur la pertinence des alertes.",
       },
       {
         question: "Le scoring fonctionne-t-il pour les entreprises non-SaaS (services, retail) ?",
-        answer: "Oui, en adaptant les signaux surveilles. Pour le retail : frequence d'achat, panier moyen, reclamations. Pour les services B2B : renouvellements, satisfaction enquete, volume de prestations. Le prompt LLM est parametrable selon votre modele d'affaires.",
+        answer: "Oui, en adaptant les signaux surveilles. Pour le retail : fréquence d'achat, panier moyen, reclamations. Pour les services B2B : renouvellements, satisfaction enquete, volume de prestations. Le prompt LLM est parametrable selon votre modèle d'affaires.",
       },
       {
-        question: "Combien coute l'execution quotidienne du workflow ?",
+        question: "Combien coute l'exécution quotidienne du workflow ?",
         answer: "Pour 500 clients scannes quotidiennement avec GPT-4o-mini : environ 0.50 EUR/jour soit 15 EUR/mois. Avec Ollama (gratuit, local) : 0 EUR mais un temps de traitement plus long (environ 30 min pour 500 clients vs 5 min avec API cloud).",
       },
       {
-        question: "Les donnees clients sont-elles envoyees au LLM ?",
-        answer: "Non. Seuls les signaux agregerent et anonymises sont envoyes (ex: 'connexions: 12, tickets: 4'). Le nom du client, les contacts, et les donnees personnelles ne sont jamais transmis au LLM. Le scoring est stocke en base interne avec acces restreint.",
+        question: "Les données clients sont-elles envoyees au LLM ?",
+        answer: "Non. Seuls les signaux agregerent et anonymises sont envoyes (ex: 'connexions: 12, tickets: 4'). Le nom du client, les contacts, et les données personnelles ne sont jamais transmis au LLM. Le scoring est stocke en base interne avec acces restreint.",
       },
       {
-        question: "Comment mesurer la precision des predictions de churn ?",
-        answer: "Le workflow inclut un mecanisme de feedback : chaque prediction est comparee au resultat reel a 90 jours. Le dashboard affiche la matrice de confusion (vrais/faux positifs et negatifs), le taux de precision et de rappel. Objectif : precision > 75% et rappel > 80%.",
+        question: "Comment mesurer la précision des predictions de churn ?",
+        answer: "Le workflow inclut un mecanisme de feedback : chaque prediction est comparee au résultat reel a 90 jours. Le dashboard affiche la matrice de confusion (vrais/faux positifs et negatifs), le taux de précision et de rappel. Objectif : précision > 75% et rappel > 80%.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces a votre base de donnees client (PostgreSQL, MySQL, ou API SaaS)",
+      "Acces a votre base de données client (PostgreSQL, MySQL, ou API SaaS)",
       "Minimum 6 mois d'historique client (usage, support, facturation)",
     ],
     createdAt: "2025-02-07",
@@ -8952,7 +8952,7 @@ async def scan_portfolio():
     problem:
       "Les équipes marketing et CX sont incapables de traiter manuellement le volume croissant de feedbacks clients provenant de multiples canaux (emails, chat en direct, réseaux sociaux, avis en ligne). Les sentiments négatifs passent inaperçus pendant des jours, les tendances émergentes sont détectées trop tard, et les rapports manuels sont biaisés par l'échantillonnage humain. Résultat : des crises réputationnelles évitables et des opportunités d'amélioration manquées.",
     value:
-      "Un agent IA collecte et analyse en temps réel les feedbacks de tous les canaux, détecte le sentiment (positif, négatif, neutre, mixte), identifie les thèmes récurrents et les signaux faibles, et génère des alertes immédiates pour les situations critiques. Les équipes disposent d'un tableau de bord unifié avec des tendances et recommandations actionnables.",
+      "Un agent IA collecte et analyse en temps réel les feedbacks de tous les canaux, détecte le sentiment (positif, négatif, neutre, mixte), identifié les thèmes récurrents et les signaux faibles, et génère des alertes immédiates pour les situations critiques. Les équipes disposent d'un tableau de bord unifié avec des tendances et recommandations actionnables.",
     inputs: [
       "Emails et tickets support client",
       "Conversations de chat en direct (Intercom, Zendesk Chat)",
@@ -9085,7 +9085,7 @@ class EmailCollector:
       {
         title: "Agent d'analyse de sentiment",
         content:
-          "L'agent analyse chaque message, détecte le sentiment, identifie les thèmes abordés et extrait les insights actionnables. Il utilise un prompt structuré pour produire une analyse cohérente et comparable entre les canaux.",
+          "L'agent analyse chaque message, détecte le sentiment, identifié les thèmes abordés et extrait les insights actionnables. Il utilise un prompt structuré pour produire une analyse cohérente et comparable entre les canaux.",
         codeSnippets: [
           {
             language: "python",
@@ -9229,24 +9229,24 @@ async def get_tendances(jours: int = 7):
     storytelling: {
       sector: "Hotellerie",
       persona: "Sophie, Directrice Experience Client d'une chaine hoteliere (15 etablissements, 400 salaries)",
-      painPoint: "Sophie recoit plus de 2 000 feedbacks par semaine repartis sur 8 canaux differents : Google Reviews, Booking, TripAdvisor, emails, enquetes NPS, Twitter, Instagram, et formulaires de contact. Son equipe de 3 personnes n'arrive a analyser que 20% des retours. Un pic de commentaires negatifs sur la climatisation d'un hotel n'a ete detecte qu'apres 3 semaines, coutant 12 000 EUR en compensations.",
-      story: "Sophie a deploye le workflow n8n qui collecte et analyse automatiquement les feedbacks de tous les canaux toutes les 15 minutes. Le premier jour, l'agent a detecte un pic de sentiments negatifs lie au petit-dejeuner de l'hotel de Lyon — 8 avis negatifs en 48h, tous mentionnant le manque de choix vegetarien.",
-      result: "En 2 mois : temps de detection des problemes reduit de 3 semaines a 2 heures. Score NPS global passe de 42 a 57. Taux de reponse aux avis en ligne augmente de 35% a 92%. L'equipe recoit un rapport hebdomadaire automatique avec les tendances et actions prioritaires.",
+      painPoint: "Sophie reçoit plus de 2 000 feedbacks par semaine repartis sur 8 canaux differents : Google Reviews, Booking, TripAdvisor, emails, enquetes NPS, Twitter, Instagram, et formulaires de contact. Son équipe de 3 personnes n'arrive a analyser que 20% des retours. Un pic de commentaires negatifs sur la climatisation d'un hotel n'a ete détecté qu'apres 3 semaines, coutant 12 000 EUR en compensations.",
+      story: "Sophie a déployé le workflow n8n qui collecte et analyse automatiquement les feedbacks de tous les canaux toutes les 15 minutes. Le premier jour, l'agent a détecté un pic de sentiments negatifs lie au petit-dejeuner de l'hotel de Lyon — 8 avis negatifs en 48h, tous mentionnant le manque de choix vegetarien.",
+      result: "En 2 mois : temps de détection des problèmes réduit de 3 semaines a 2 heures. Score NPS global passé de 42 a 57. Taux de réponse aux avis en ligne augmente de 35% a 92%. L'équipe reçoit un rapport hebdomadaire automatique avec les tendances et actions prioritaires.",
     },
     beforeAfter: {
-      inputLabel: "Feedback client recu (Twitter)",
-      inputText: "@HotelChainFR Sejour catastrophique a Lyon. Chambre sale, climatisation en panne depuis 3 jours, et le personnel a l'air de s'en moquer completement. Jamais vu ca pour un 4 etoiles. #decu #hotel",
+      inputLabel: "Feedback client reçu (Twitter)",
+      inputText: "@HotelChainFR Sejour catastrophique a Lyon. Chambre sale, climatisation en panne depuis 3 jours, et le personnel a l'air de s'en moquer complètement. Jamais vu ca pour un 4 etoiles. #decu #hotel",
       outputFields: [
         { label: "Sentiment", value: "-0.85 — Tres negatif" },
         { label: "Themes", value: "Proprete, Climatisation, Attitude du personnel" },
         { label: "Emotions", value: "Frustration, Deception, Colere" },
-        { label: "Urgence", value: "OUI — intervention immediate requise" },
+        { label: "Urgence", value: "OUI — intervention immédiate requise" },
         { label: "Action suggeree", value: "Reponse publique d'excuses sous 1h + escalade au directeur de l'hotel Lyon + geste commercial" },
       ],
       beforeContext: "@HotelChainFR · tweet public · 847 abonnes · il y a 12 min",
       afterLabel: "Analyse IA",
       afterDuration: "3 secondes",
-      afterSummary: "Sentiment analyse, themes identifies, alerte urgente declenchee",
+      afterSummary: "Sentiment analyse, themes identifies, alerte urgente déclenchée",
     },
     roiEstimator: {
       label: "Combien de feedbacks clients recevez-vous par semaine (tous canaux) ?",
@@ -9258,19 +9258,19 @@ async def get_tendances(jours: int = 7):
     faq: [
       {
         question: "L'agent peut-il analyser des feedbacks dans plusieurs langues ?",
-        answer: "Oui. Les LLM modernes (Claude, GPT-4) supportent plus de 50 langues. L'agent detecte automatiquement la langue du feedback et produit l'analyse en francais. Ideal pour les entreprises internationales recevant des avis en anglais, allemand, espagnol, etc.",
+        answer: "Oui. Les LLM modernes (Claude, GPT-4) supportent plus de 50 langues. L'agent détecté automatiquement la langue du feedback et produit l'analyse en francais. Ideal pour les entreprises internationales recevant des avis en anglais, allemand, espagnol, etc.",
       },
       {
         question: "Combien coute l'analyse de sentiment par message ?",
         answer: "Avec GPT-4o-mini : environ 0.001 EUR par message. Pour 2 000 feedbacks/semaine, le cout est d'environ 8 EUR/mois. Avec Ollama (gratuit), le cout est nul mais le temps de traitement est de 5-10s par message au lieu de 2-3s.",
       },
       {
-        question: "Comment les donnees personnelles sont-elles protegees ?",
-        answer: "Les messages sont anonymises avant envoi au LLM : noms, emails, numeros de telephone et identifiants client sont masques par des expressions regulieres. Seul le contenu textuel nettoye est transmis a l'API. Les donnees brutes restent en base interne.",
+        question: "Comment les données personnelles sont-elles protégées ?",
+        answer: "Les messages sont anonymises avant envoi au LLM : noms, emails, numeros de telephone et identifiants client sont masques par des expressions regulieres. Seul le contenu textuel nettoye est transmis a l'API. Les données brutes restent en base interne.",
       },
       {
-        question: "L'agent detecte-t-il fiablement le sarcasme ?",
-        answer: "Le taux de detection du sarcasme est d'environ 80-85% avec les modeles recents. Le prompt est optimise pour analyser le contexte global et non les mots isoles. Les cas ambigus (ironie subtile, humour) sont signales avec un label 'mixte' pour revue humaine.",
+        question: "L'agent détecté-t-il fiablement le sarcasme ?",
+        answer: "Le taux de détection du sarcasme est d'environ 80-85% avec les modèles recents. Le prompt est optimise pour analyser le contexte global et non les mots isoles. Les cas ambigus (ironie subtile, humour) sont signales avec un label 'mixte' pour revue humaine.",
       },
       {
         question: "Peut-on connecter l'agent a Google Reviews et Trustpilot ?",
@@ -9287,13 +9287,13 @@ async def get_tendances(jours: int = 7):
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-generation-rapports-esg",
+    slug: "agent-génération-rapports-esg",
     title: "Agent de Génération de Rapports ESG",
     subtitle: "Automatisez la collecte de données et la génération de rapports ESG/RSE conformes aux réglementations",
     problem:
       "La génération de rapports ESG (Environnement, Social, Gouvernance) est un processus annuel fastidieux qui mobilise des dizaines de collaborateurs pendant des mois. Les données sont dispersées dans de multiples départements (RH, opérations, achats, finance), souvent dans des formats hétérogènes (tableurs, ERP, emails). Les réglementations évoluent rapidement (CSRD, taxonomie européenne) et les erreurs de reporting exposent l'entreprise à des sanctions réglementaires et un risque réputationnel majeur.",
     value:
-      "Un agent IA orchestre la collecte automatique des données ESG depuis les différents systèmes d'information, vérifie leur cohérence, calcule les indicateurs clés (émissions carbone, diversité, gouvernance), et génère des rapports conformes aux standards GRI, CSRD et taxonomie européenne. Le temps de production du rapport annuel passe de 3 mois à 2 semaines.",
+      "Un agent IA orchestre la collecte automatique des données ESG depuis les différents systèmes d'information, vérifie leur cohérence, calcule les indicateurs clés (émissions carbone, diversité, gouvernance), et génère des rapports conformes aux standards GRI, CSRD et taxonomie européenne. Le temps de production du rapport annuel passé de 3 mois à 2 semaines.",
     inputs: [
       "Données RH (effectifs, diversité, formation, accidents du travail)",
       "Données environnementales (consommation énergie, eau, déchets, émissions)",
@@ -9383,7 +9383,7 @@ class IndicateurESG(BaseModel):
     nom: str
     valeur: float
     unite: str
-    annee: int
+    année: int
     source: str
     methode_calcul: str
     valeur_n_moins_1: Optional[float] = None
@@ -9398,11 +9398,11 @@ class DonneesESG(BaseModel):
 def collecter_donnees_rh() -> List[IndicateurESG]:
     """Collecte les indicateurs sociaux depuis le SIRH"""
     sirh_url = os.getenv("SIRH_API_URL")
-    annee = int(os.getenv("YEAR_REPORTING"))
+    année = int(os.getenv("YEAR_REPORTING"))
 
-    effectifs = requests.get(f"{sirh_url}/effectifs?year={annee}").json()
-    formation = requests.get(f"{sirh_url}/formation?year={annee}").json()
-    securite = requests.get(f"{sirh_url}/securite?year={annee}").json()
+    effectifs = requests.get(f"{sirh_url}/effectifs?year={année}").json()
+    formation = requests.get(f"{sirh_url}/formation?year={année}").json()
+    sécurité = requests.get(f"{sirh_url}/sécurité?year={année}").json()
 
     indicateurs = [
         IndicateurESG(
@@ -9411,7 +9411,7 @@ def collecter_donnees_rh() -> List[IndicateurESG]:
             nom="Effectif total",
             valeur=effectifs["total"],
             unite="ETP",
-            annee=annee,
+            année=année,
             source="SIRH",
             methode_calcul="Comptage ETP au 31/12"
         ),
@@ -9421,7 +9421,7 @@ def collecter_donnees_rh() -> List[IndicateurESG]:
             nom="Part de femmes dans le management",
             valeur=effectifs["pct_femmes_management"],
             unite="%",
-            annee=annee,
+            année=année,
             source="SIRH",
             methode_calcul="Femmes managers / Total managers x 100"
         ),
@@ -9431,7 +9431,7 @@ def collecter_donnees_rh() -> List[IndicateurESG]:
             nom="Heures de formation par salarié",
             valeur=formation["heures_par_salarie"],
             unite="heures/ETP",
-            annee=annee,
+            année=année,
             source="SIRH",
             methode_calcul="Total heures formation / Effectif moyen"
         ),
@@ -9439,9 +9439,9 @@ def collecter_donnees_rh() -> List[IndicateurESG]:
             code_gri="GRI 403-9",
             categorie="S",
             nom="Taux de fréquence des accidents",
-            valeur=securite["taux_frequence"],
+            valeur=sécurité["taux_frequence"],
             unite="pour 1M heures",
-            annee=annee,
+            année=année,
             source="SIRH",
             methode_calcul="(Nb accidents AT / Heures travaillées) x 1 000 000"
         ),
@@ -9450,9 +9450,9 @@ def collecter_donnees_rh() -> List[IndicateurESG]:
 
 def collecter_donnees_environnement() -> List[IndicateurESG]:
     """Collecte les indicateurs environnementaux"""
-    annee = int(os.getenv("YEAR_REPORTING"))
+    année = int(os.getenv("YEAR_REPORTING"))
     # Lecture depuis un fichier Excel consolidé par les opérations
-    df = pd.read_excel("data/donnees_environnement.xlsx", sheet_name=str(annee))
+    df = pd.read_excel("data/donnees_environnement.xlsx", sheet_name=str(année))
 
     indicateurs = [
         IndicateurESG(
@@ -9461,7 +9461,7 @@ def collecter_donnees_environnement() -> List[IndicateurESG]:
             nom="Émissions GES Scope 1",
             valeur=df.loc[df["indicateur"] == "scope1", "valeur"].values[0],
             unite="tCO2eq",
-            annee=annee,
+            année=année,
             source="Bilan Carbone",
             methode_calcul="Méthode Bilan Carbone ADEME - émissions directes"
         ),
@@ -9471,7 +9471,7 @@ def collecter_donnees_environnement() -> List[IndicateurESG]:
             nom="Émissions GES Scope 2",
             valeur=df.loc[df["indicateur"] == "scope2", "valeur"].values[0],
             unite="tCO2eq",
-            annee=annee,
+            année=année,
             source="Bilan Carbone",
             methode_calcul="Méthode location-based - électricité et chaleur"
         ),
@@ -9481,7 +9481,7 @@ def collecter_donnees_environnement() -> List[IndicateurESG]:
             nom="Consommation énergétique totale",
             valeur=df.loc[df["indicateur"] == "energie_totale", "valeur"].values[0],
             unite="MWh",
-            annee=annee,
+            année=année,
             source="Factures énergie",
             methode_calcul="Somme des consommations électricité + gaz + carburants"
         ),
@@ -9494,7 +9494,7 @@ def collecter_donnees_environnement() -> List[IndicateurESG]:
       {
         title: "Agent de génération de rapport",
         content:
-          "L'agent LLM prend en entrée les indicateurs consolidés et génère le contenu rédactionnel du rapport ESG. Il structure le rapport selon le standard CSRD, rédige les commentaires d'analyse, et identifie les points d'amélioration.",
+          "L'agent LLM prend en entrée les indicateurs consolidés et génère le contenu rédactionnel du rapport ESG. Il structure le rapport selon le standard CSRD, rédige les commentaires d'analyse, et identifié les points d'amélioration.",
         codeSnippets: [
           {
             language: "python",
@@ -9513,7 +9513,7 @@ class SectionRapport(BaseModel):
 
 class RapportESG(BaseModel):
     titre: str
-    annee: int
+    année: int
     sections: List[SectionRapport]
     synthese_executive: str
     score_conformite_csrd: float = Field(ge=0, le=100)
@@ -9521,9 +9521,9 @@ class RapportESG(BaseModel):
 
 client = OpenAI()
 
-def generer_rapport(donnees: DonneesESG) -> RapportESG:
+def generer_rapport(données: DonneesESG) -> RapportESG:
     indicateurs_json = json.dumps(
-        [ind.model_dump() for ind in donnees.indicateurs],
+        [ind.model_dump() for ind in données.indicateurs],
         ensure_ascii=False, indent=2
     )
 
@@ -9536,10 +9536,10 @@ def generer_rapport(donnees: DonneesESG) -> RapportESG:
 Tu génères des rapports conformes à la directive CSRD et aux standards GRI.
 Tu ne dois JAMAIS inventer de chiffres. Utilise uniquement les données fournies.
 Si un indicateur est manquant, signale-le explicitement comme lacune."""},
-            {"role": "user", "content": f"""Génère un rapport ESG structuré pour l'année {donnees.annee_reporting}.
+            {"role": "user", "content": f"""Génère un rapport ESG structuré pour l'année {données.annee_reporting}.
 
-ENTREPRISE : {donnees.entreprise}
-COMPLÉTUDE DES DONNÉES : {donnees.completude_pct}%
+ENTREPRISE : {données.entreprise}
+COMPLÉTUDE DES DONNÉES : {données.completude_pct}%
 
 INDICATEURS :
 {indicateurs_json}
@@ -9577,43 +9577,43 @@ import os
 
 app = FastAPI()
 
-@app.post("/api/esg/generer")
+@app.post("/api/esg/générer")
 async def generer_rapport_esg():
-    annee = int(os.getenv("YEAR_REPORTING"))
+    année = int(os.getenv("YEAR_REPORTING"))
 
     # Collecte depuis toutes les sources
     indicateurs = []
     indicateurs.extend(collecter_donnees_rh())
     indicateurs.extend(collecter_donnees_environnement())
 
-    donnees = DonneesESG(
+    données = DonneesESG(
         entreprise="Mon Entreprise SAS",
-        annee_reporting=annee,
+        annee_reporting=année,
         indicateurs=indicateurs,
         completude_pct=round(len(indicateurs) / 30 * 100, 1)
     )
 
-    rapport = generer_rapport(donnees)
+    rapport = generer_rapport(données)
 
     # Génération PDF
     env = Environment(loader=FileSystemLoader("templates"))
     template = env.get_template("rapport_esg.html")
     html_content = template.render(rapport=rapport.model_dump())
 
-    pdf_path = f"output/rapport_esg_{annee}.pdf"
+    pdf_path = f"output/rapport_esg_{année}.pdf"
     HTML(string=html_content).write_pdf(pdf_path)
 
     return {
         "rapport": rapport.model_dump(),
-        "pdf_url": f"/api/esg/download/{annee}",
-        "completude": donnees.completude_pct
+        "pdf_url": f"/api/esg/download/{année}",
+        "completude": données.completude_pct
     }
 
-@app.get("/api/esg/download/{annee}")
-async def download_rapport(annee: int):
-    pdf_path = f"output/rapport_esg_{annee}.pdf"
+@app.get("/api/esg/download/{année}")
+async def download_rapport(année: int):
+    pdf_path = f"output/rapport_esg_{année}.pdf"
     return FileResponse(pdf_path, media_type="application/pdf",
-                       filename=f"rapport_esg_{annee}.pdf")`,
+                       filename=f"rapport_esg_{année}.pdf")`,
             filename: "api_esg.py",
           },
         ],
@@ -9641,59 +9641,59 @@ async def download_rapport(annee: int):
     storytelling: {
       sector: "Industrie",
       persona: "Claire, Responsable RSE d'un groupe industriel (1 200 salaries, 3 sites)",
-      painPoint: "Claire coordonne la production du rapport ESG annuel. Les donnees proviennent de 6 departements differents dans des formats heterogenes : tableurs Excel du service RH, releves de compteurs energetiques en PDF, donnees fournisseurs dans l'ERP. Chaque annee, elle mobilise 8 collaborateurs pendant 3 mois. L'annee derniere, une erreur de consolidation des emissions Scope 2 a ete detectee par l'auditeur, necessitant 2 semaines de correction.",
-      story: "Claire a configure le workflow n8n pour collecter automatiquement les donnees depuis le SIRH, les Google Sheets des operations, et l'ERP chaque mois. Le LLM genere une premiere version du rapport avec les indicateurs GRI calcules, les commentaires analytiques, et les recommandations.",
-      result: "Le rapport annuel a ete produit en 3 semaines au lieu de 3 mois. Zero erreur de consolidation grace a la collecte automatisee. Claire a reaffecte 2 collaborateurs a des projets d'amelioration RSE. Le score de conformite CSRD est passe de 68% a 91%.",
+      painPoint: "Claire coordonne la production du rapport ESG annuel. Les données proviennent de 6 departements differents dans des formats heterogenes : tableurs Excel du service RH, releves de compteurs energetiques en PDF, données fournisseurs dans l'ERP. Chaque année, elle mobilise 8 collaborateurs pendant 3 mois. L'année dernière, une erreur de consolidation des emissions Scope 2 a ete détectée par l'auditeur, necessitant 2 semaines de correction.",
+      story: "Claire a configure le workflow n8n pour collecter automatiquement les données depuis le SIRH, les Google Sheets des operations, et l'ERP chaque mois. Le LLM généré une première version du rapport avec les indicateurs GRI calcules, les commentaires analytiques, et les recommandations.",
+      result: "Le rapport annuel a ete produit en 3 semaines au lieu de 3 mois. Zero erreur de consolidation grace a la collecte automatisee. Claire a réaffecté 2 collaborateurs a des projets d'amélioration RSE. Le score de conformité CSRD est passé de 68% a 91%.",
     },
     beforeAfter: {
       inputLabel: "Donnees ESG a consolider",
       inputText: "Indicateur: Emissions GES Scope 1\nCode GRI: GRI 305-1\nValeur 2024: 1 847 tCO2eq\nValeur 2023: 2 105 tCO2eq\nSource: Bilan Carbone ADEME\nMethode: Emissions directes (combustion gaz + flotte vehicules)",
       outputFields: [
         { label: "Evolution N/N-1", value: "-12.3% (objectif -10% atteint)" },
-        { label: "Conformite CSRD", value: "Conforme — methode de calcul documentee" },
-        { label: "Commentaire genere", value: "La reduction des emissions Scope 1 de 12.3% resulte principalement du remplacement de 30% de la flotte diesel par des vehicules electriques et de l'optimisation du chauffage gaz des sites industriels." },
+        { label: "Conformite CSRD", value: "Conforme — méthode de calcul documentee" },
+        { label: "Commentaire généré", value: "La réduction des emissions Scope 1 de 12.3% resulte principalement du remplacement de 30% de la flotte diesel par des vehicules electriques et de l'optimisation du chauffage gaz des sites industriels." },
         { label: "Point fort", value: "Objectif climat depasse de 2.3 points" },
         { label: "Recommandation", value: "Etendre le remplacement de flotte aux 70% restants pour viser -25% en 2025" },
       ],
-      beforeContext: "Collecte mensuelle automatique — donnees environnementales site principal",
+      beforeContext: "Collecte mensuelle automatique — données environnementales site principal",
       afterLabel: "Generation IA",
       afterDuration: "15 secondes",
-      afterSummary: "Indicateur analyse, evolution calculee, commentaire redige et recommandation formulee",
+      afterSummary: "Indicateur analyse, evolution calculee, commentaire rédigé et recommandation formulee",
     },
     roiEstimator: {
       label: "Combien d'indicateurs ESG/RSE devez-vous reporter annuellement ?",
-      unitLabel: "Collecte et redaction manuelle / indicateur",
+      unitLabel: "Collecte et rédaction manuelle / indicateur",
       timePerUnitMinutes: 60,
       timeWithAISeconds: 20,
       options: [20, 50, 100, 200, 300],
     },
     faq: [
       {
-        question: "L'agent genere-t-il des rapports conformes a la directive CSRD ?",
-        answer: "L'agent structure le rapport selon les standards ESRS (European Sustainability Reporting Standards) requis par la CSRD. Il mappe chaque indicateur aux codes GRI correspondants et signale les lacunes de donnees. Neanmoins, la conformite finale doit etre validee par un auditeur externe — l'agent est un outil de production, pas de certification.",
+        question: "L'agent généré-t-il des rapports conformes a la directive CSRD ?",
+        answer: "L'agent structure le rapport selon les standards ESRS (European Sustainability Reporting Standards) requis par la CSRD. Il mappe chaque indicateur aux codes GRI correspondants et signale les lacunes de données. Neanmoins, la conformité finale doit etre validee par un auditeur externe — l'agent est un outil de production, pas de certification.",
       },
       {
         question: "Comment l'agent evite-t-il le greenwashing ?",
-        answer: "Le prompt est configure pour interdire toute invention de chiffres. L'agent ne rapporte que les donnees fournies, signale explicitement les indicateurs manquants, et formule des commentaires factuels bases sur les evolutions chiffrees. Toute affirmation positive est conditionnee a des donnees verifiables.",
+        answer: "Le prompt est configure pour interdire toute invention de chiffres. L'agent ne rapporte que les données fournies, signale explicitement les indicateurs manquants, et formule des commentaires factuels bases sur les evolutions chiffrees. Toute affirmation positive est conditionnee a des données verifiables.",
       },
       {
-        question: "Quel est le cout de generation d'un rapport ESG complet ?",
-        answer: "Pour un rapport de 100 indicateurs avec GPT-4o-mini : environ 0.50 EUR par generation. Avec GPT-4 pour une qualite redactionnelle superieure : environ 5 EUR. La collecte de donnees (API SIRH, ERP) n'a pas de cout supplementaire. Total annuel : moins de 60 EUR vs 50 000 EUR+ en conseil externe.",
+        question: "Quel est le cout de génération d'un rapport ESG complet ?",
+        answer: "Pour un rapport de 100 indicateurs avec GPT-4o-mini : environ 0.50 EUR par génération. Avec GPT-4 pour une qualité redactionnelle superieure : environ 5 EUR. La collecte de données (API SIRH, ERP) n'a pas de cout supplementaire. Total annuel : moins de 60 EUR vs 50 000 EUR+ en conseil externe.",
       },
       {
-        question: "Les donnees RH sensibles sont-elles protegees ?",
-        answer: "Oui. Seules les donnees agregees et statistiques sont transmises au LLM : effectifs totaux, pourcentages, moyennes. Aucune donnee nominative (noms, salaires individuels, evaluations personnelles) n'est envoyee. Les donnees brutes restent dans le SIRH avec acces restreint.",
+        question: "Les données RH sensibles sont-elles protégées ?",
+        answer: "Oui. Seules les données agregees et statistiques sont transmises au LLM : effectifs totaux, pourcentages, moyennes. Aucune donnee nominative (noms, salaires individuels, evaluations personnelles) n'est envoyee. Les données brutes restent dans le SIRH avec acces restreint.",
       },
       {
-        question: "L'agent peut-il generer le rapport en PDF ?",
-        answer: "Oui. Le workflow inclut un noeud de generation PDF via un template HTML/CSS (Jinja2 + WeasyPrint). Le rapport est genere au format PDF professionnel avec mise en page, graphiques et tableaux. Il peut aussi etre exporte en Google Docs ou Word pour revue collaborative.",
+        question: "L'agent peut-il générer le rapport en PDF ?",
+        answer: "Oui. Le workflow inclut un noeud de génération PDF via un template HTML/CSS (Jinja2 + WeasyPrint). Le rapport est généré au format PDF professionnel avec mise en page, graphiques et tableaux. Il peut aussi etre exporte en Google Docs ou Word pour revue collaborative.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces aux sources de donnees ESG (SIRH, ERP, Google Sheets des operations)",
-      "Le referentiel GRI/CSRD applicable a votre entreprise",
+      "Acces aux sources de données ESG (SIRH, ERP, Google Sheets des operations)",
+      "Le référentiel GRI/CSRD applicable a votre entreprise",
     ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
@@ -9705,7 +9705,7 @@ async def download_rapport(annee: int):
     problem:
       "Les équipes marketing gèrent des campagnes publicitaires sur de multiples plateformes (Google Ads, Meta Ads, LinkedIn Ads) avec des budgets croissants mais une optimisation manuelle chronophage et réactive. Les ajustements de budget, d'enchères et de ciblage sont faits trop tard, les données de performance sont consultées en silos par plateforme, et les corrélations cross-canal restent invisibles. Résultat : un ROAS sous-optimal et un gaspillage de budget estimé entre 20% et 40%.",
     value:
-      "Un agent IA analyse en temps réel les performances de toutes vos campagnes publicitaires, identifie les créas et audiences les plus performantes, réalloue automatiquement les budgets entre plateformes et campagnes, et ajuste les enchères pour maximiser le ROAS. L'optimisation cross-canal permet de détecter des synergies invisibles à l'oeil humain.",
+      "Un agent IA analyse en temps réel les performances de toutes vos campagnes publicitaires, identifié les créas et audiences les plus performantes, réalloue automatiquement les budgets entre plateformes et campagnes, et ajuste les enchères pour maximiser le ROAS. L'optimisation cross-canal permet de détecter des synergies invisibles à l'oeil humain.",
     inputs: [
       "Données de performance Google Ads (impressions, clics, conversions, CPA, ROAS)",
       "Données de performance Meta Ads (reach, engagement, conversions, CPM)",
@@ -9907,7 +9907,7 @@ def collecter_meta_ads(date_from: date, date_to: date) -> List[CampaignMetrics]:
       {
         title: "Agent d'optimisation",
         content:
-          "L'agent analyse les performances cross-canal, identifie les opportunités d'optimisation et génère des recommandations actionnables de réallocation budgétaire et d'ajustement d'enchères.",
+          "L'agent analyse les performances cross-canal, identifié les opportunités d'optimisation et génère des recommandations actionnables de réallocation budgétaire et d'ajustement d'enchères.",
         codeSnippets: [
           {
             language: "python",
@@ -10072,9 +10072,9 @@ def appliquer_recommandation(reco):
     storytelling: {
       sector: "E-commerce",
       persona: "Antoine, Responsable Acquisition chez un e-commercant mode (60 salaries)",
-      painPoint: "Antoine gere un budget publicitaire de 45 000 EUR/mois reparti sur Google Ads, Meta Ads et LinkedIn Ads. Il passe 3 heures chaque matin a analyser les performances de la veille et ajuster les budgets manuellement. Les donnees sont consultees en silos par plateforme. Il estime gaspiller 30% de son budget faute d'optimisation cross-canal en temps reel.",
-      story: "Antoine a deploye le workflow n8n qui collecte quotidiennement les performances de ses 3 plateformes, les consolide et demande au LLM des recommandations d'optimisation. Le premier jour, l'agent a identifie que 40% du budget LinkedIn etait depense sur des audiences avec un CPA 3x superieur a la cible.",
-      result: "En 2 mois : ROAS global ameliore de 2.8 a 4.1 (+46%). CPA moyen reduit de 28 EUR a 19 EUR. 12 000 EUR/mois economises grace a la reallocation budgetaire. Antoine consacre desormais ses matinees a la strategie creative au lieu de l'optimisation manuelle.",
+      painPoint: "Antoine gère un budget publicitaire de 45 000 EUR/mois reparti sur Google Ads, Meta Ads et LinkedIn Ads. Il passé 3 heures chaque matin a analyser les performances de la veille et ajuster les budgets manuellement. Les données sont consultees en silos par plateforme. Il estime gaspiller 30% de son budget faute d'optimisation cross-canal en temps reel.",
+      story: "Antoine a déployé le workflow n8n qui collecte quotidiennement les performances de ses 3 plateformes, les consolide et demande au LLM des recommandations d'optimisation. Le premier jour, l'agent a identifié que 40% du budget LinkedIn etait depense sur des audiences avec un CPA 3x superieur a la cible.",
+      result: "En 2 mois : ROAS global amélioré de 2.8 a 4.1 (+46%). CPA moyen réduit de 28 EUR a 19 EUR. 12 000 EUR/mois economises grace a la reallocation budgetaire. Antoine consacre désormais ses matinees a la stratégie creative au lieu de l'optimisation manuelle.",
     },
     beforeAfter: {
       inputLabel: "Performances campagnes (consolidation cross-canal)",
@@ -10086,7 +10086,7 @@ def appliquer_recommandation(reco):
         { label: "Impact estime", value: "+35% ROAS global — economie de 1 800 EUR/semaine" },
         { label: "Alerte", value: "LinkedIn CPA a 125 EUR — 7x au-dessus du seuil cible de 18 EUR" },
       ],
-      beforeContext: "Consolidation quotidienne — donnees J-1 collectees a 7h00",
+      beforeContext: "Consolidation quotidienne — données J-1 collectees a 7h00",
       afterLabel: "Optimisation IA",
       afterDuration: "12 secondes",
       afterSummary: "Recommandations d'allocation budgetaire avec simulation d'impact cross-canal",
@@ -10101,19 +10101,19 @@ def appliquer_recommandation(reco):
     faq: [
       {
         question: "L'agent peut-il modifier automatiquement les budgets sur Google Ads et Meta ?",
-        answer: "Oui, le workflow supporte le mode 'apply' qui envoie les modifications directement aux API des plateformes. Nous recommandons toutefois de commencer en mode 'dry run' (recommandations Slack sans action) pendant 2 semaines pour valider la qualite des recommandations avant d'activer l'application automatique.",
+        answer: "Oui, le workflow supporte le mode 'apply' qui envoie les modifications directement aux API des plateformes. Nous recommandons toutefois de commencer en mode 'dry run' (recommandations Slack sans action) pendant 2 semaines pour valider la qualité des recommandations avant d'activer l'application automatique.",
       },
       {
-        question: "Comment l'agent gere-t-il l'attribution cross-canal ?",
-        answer: "L'agent consolide les donnees de chaque plateforme et les compare dans un referentiel commun (CPA, ROAS, CPM). Il detecte les correlations cross-canal (ex: une campagne branding Meta ameliore les conversions Google). L'attribution reste celle de chaque plateforme — l'agent ne remplace pas un outil d'attribution dedie comme Funnel.io.",
+        question: "Comment l'agent gère-t-il l'attribution cross-canal ?",
+        answer: "L'agent consolide les données de chaque plateforme et les compare dans un référentiel commun (CPA, ROAS, CPM). Il détecté les correlations cross-canal (ex: une campagne branding Meta amélioré les conversions Google). L'attribution reste celle de chaque plateforme — l'agent ne remplace pas un outil d'attribution dedie comme Funnel.io.",
       },
       {
-        question: "Combien coute l'execution du workflow ?",
+        question: "Combien coute l'exécution du workflow ?",
         answer: "Avec GPT-4o-mini : environ 0.005 EUR par analyse quotidienne. Les appels aux API publicitaires sont gratuits dans les limites de quotas standards. Cout total mensuel : moins de 1 EUR pour le LLM, tres inferieur aux economies realisees.",
       },
       {
         question: "Les tokens d'acces aux plateformes sont-ils securises ?",
-        answer: "Oui. Les credentials sont stockes de maniere chiffree dans n8n et ne sont jamais transmis au LLM. Seules les donnees de performance (anonymisees) sont envoyees au LLM pour analyse. Les tokens OAuth2 sont renouveles automatiquement par n8n.",
+        answer: "Oui. Les credentials sont stockes de maniere chiffree dans n8n et ne sont jamais transmis au LLM. Seules les données de performance (anonymisees) sont envoyees au LLM pour analyse. Les tokens OAuth2 sont renouveles automatiquement par n8n.",
       },
       {
         question: "L'agent fonctionne-t-il avec TikTok Ads et Pinterest Ads ?",
@@ -10124,7 +10124,7 @@ def appliquer_recommandation(reco):
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
       "Acces API developpeur aux plateformes publicitaires (Google Ads, Meta Ads, LinkedIn Ads)",
-      "Un budget publicitaire actif avec au moins 2 semaines d'historique de donnees",
+      "Un budget publicitaire actif avec au moins 2 semaines d'historique de données",
     ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
@@ -10301,7 +10301,7 @@ class Reference(BaseModel):
     pertinence: float = Field(ge=0, le=1)
 
 class ReponseJuridique(BaseModel):
-    reponse: str = Field(description="Réponse détaillée à la question juridique")
+    réponse: str = Field(description="Réponse détaillée à la question juridique")
     references: List[Reference] = Field(description="Documents sources avec extraits")
     niveau_confiance: str = Field(description="élevé, moyen, faible")
     points_attention: List[str] = Field(description="Points nécessitant une vérification humaine")
@@ -10348,7 +10348,7 @@ RÈGLES STRICTES :
 DOCUMENTS PERTINENTS :
 {contexte}
 
-Produis une réponse JSON structurée avec : reponse, references, niveau_confiance, points_attention, suggestions_recherche."""}
+Produis une réponse JSON structurée avec : réponse, references, niveau_confiance, points_attention, suggestions_recherche."""}
         ]
     )
     result = json.loads(response.choices[0].message.content)
@@ -10391,7 +10391,7 @@ async def comparer_clauses(clause_type: str, contrat_ids: list[str]):
     result = rechercher_et_repondre(question, top_k=20)
     return result.model_dump()
 
-@app.post("/api/juridique/conformite")
+@app.post("/api/juridique/conformité")
 async def verifier_conformite(contrat_id: str, reglementation: str):
     """Vérifie la conformité d'un contrat avec une réglementation"""
     question = f"Le contrat {contrat_id} est-il conforme à {reglementation} ? Identifie les clauses manquantes ou non conformes."
@@ -10442,9 +10442,9 @@ def log_requete(question: str, result: ReponseJuridique):
     storytelling: {
       sector: "Finance / Banque",
       persona: "Maitre Lefevre, Directeur Juridique d'une banque regionale (800 salaries)",
-      painPoint: "L'equipe juridique de 12 juristes gere un corpus de 15 000 contrats, 3 000 avis juridiques et des milliers de textes reglementaires. Retrouver un precedent contractuel prend en moyenne 2 heures. Les connaissances critiques sont concentrees chez 3 juristes seniors. Le depart en retraite de l'un d'eux l'annee prochaine menace de perdre 30 ans d'expertise sur les contentieux bancaires.",
-      story: "Maitre Lefevre a deploye le workflow RAG qui indexe l'integralite du corpus juridique. Les juristes peuvent desormais interroger la base en langage naturel : 'Quelles clauses de force majeure avons-nous dans nos contrats de pret aux entreprises depuis 2020 ?'. L'agent retrouve les documents pertinents en 8 secondes avec references precises.",
-      result: "En 3 mois : temps de recherche juridique reduit de 2h a 5 minutes. 3 risques contractuels majeurs detectes dans des contrats anciens. Taux de satisfaction des juristes a 94%. Le savoir de l'equipe senior est desormais accessible a tous les juristes de l'equipe.",
+      painPoint: "L'équipe juridique de 12 juristes gère un corpus de 15 000 contrats, 3 000 avis juridiques et des milliers de textes réglementaires. Retrouver un precedent contractuel prend en moyenne 2 heures. Les connaissances critiques sont concentrees chez 3 juristes seniors. Le depart en retraite de l'un d'eux l'année prochaine menace de perdre 30 ans d'expertise sur les contentieux bancaires.",
+      story: "Maitre Lefevre a déployé le workflow RAG qui indexe l'integralite du corpus juridique. Les juristes peuvent désormais interroger la base en langage naturel : 'Quelles clauses de force majeure avons-nous dans nos contrats de pret aux entreprises depuis 2020 ?'. L'agent retrouve les documents pertinents en 8 secondes avec references precises.",
+      result: "En 3 mois : temps de recherche juridique réduit de 2h a 5 minutes. 3 risques contractuels majeurs detectes dans des contrats anciens. Taux de satisfaction des juristes a 94%. Le savoir de l'équipe senior est désormais accessible a tous les juristes de l'équipe.",
     },
     beforeAfter: {
       inputLabel: "Question du juriste",
@@ -10452,17 +10452,17 @@ def log_requete(question: str, result: ReponseJuridique):
       outputFields: [
         { label: "Documents trouves", value: "7 contrats pertinents identifies sur 15 000" },
         { label: "Synthese", value: "5 contrats plafonnent la responsabilite au montant du contrat, 1 contrat n'a aucune limitation, 1 contrat limite a 50% du montant" },
-        { label: "Incoherence detectee", value: "Le contrat CloudTech SAS (2023) n'a pas de clause de limitation — risque potentiel" },
+        { label: "Incoherence détectée", value: "Le contrat CloudTech SAS (2023) n'a pas de clause de limitation — risque potentiel" },
         { label: "References", value: "Art. 8.2 Contrat Sopra (p.12), Art. 9.1 Contrat Atos (p.15), Art. 7 Contrat CloudTech (absent)" },
         { label: "Recommandation", value: "Ajouter une clause de limitation au contrat CloudTech lors du prochain renouvellement (echeance mars 2025)" },
       ],
-      beforeContext: "Corpus indexe : 15 247 documents — derniere mise a jour il y a 2h",
+      beforeContext: "Corpus indexe : 15 247 documents — dernière mise a jour il y a 2h",
       afterLabel: "Recherche RAG",
       afterDuration: "8 secondes",
-      afterSummary: "7 contrats pertinents retrouves, synthese comparative et incoherence detectee",
+      afterSummary: "7 contrats pertinents retrouves, synthese comparative et incoherence détectée",
     },
     roiEstimator: {
-      label: "Combien de recherches juridiques votre equipe effectue-t-elle par semaine ?",
+      label: "Combien de recherches juridiques votre équipe effectue-t-elle par semaine ?",
       unitLabel: "Recherche manuelle / requete",
       timePerUnitMinutes: 90,
       timeWithAISeconds: 10,
@@ -10471,23 +10471,23 @@ def log_requete(question: str, result: ReponseJuridique):
     faq: [
       {
         question: "Comment l'agent evite-t-il les hallucinations juridiques ?",
-        answer: "L'architecture RAG (Retrieval-Augmented Generation) garantit que l'agent se base uniquement sur les documents de votre corpus. Chaque affirmation est accompagnee d'une reference precise (document, page, paragraphe). Le prompt interdit explicitement l'invention de references. Le score de confiance signale les reponses incertaines pour revue humaine.",
+        answer: "L'architecture RAG (Retrieval-Augmented Generation) garantit que l'agent se base uniquement sur les documents de votre corpus. Chaque affirmation est accompagnee d'une reference précise (document, page, paragraphe). Le prompt interdit explicitement l'invention de references. Le score de confiance signale les reponses incertaines pour revue humaine.",
       },
       {
         question: "Les contrats confidentiels sont-ils securises ?",
-        answer: "Avec Ollama (local), aucune donnee ne quitte votre infrastructure. Avec les API cloud, seuls les fragments de texte pertinents (chunks de 500 mots) sont envoyes au LLM — jamais le contrat entier. Pour les entreprises soumises au secret bancaire, nous recommandons Ollama ou Mistral (heberge en France).",
+        answer: "Avec Ollama (local), aucune donnee ne quitte votre infrastructure. Avec les API cloud, seuls les fragments de texte pertinents (chunks de 500 mots) sont envoyes au LLM — jamais le contrat entier. Pour les entreprises soumises au secret bancaire, nous recommandons Ollama ou Mistral (hébergé en France).",
       },
       {
         question: "L'agent peut-il indexer des PDF scannes (images) ?",
-        answer: "Oui. Le workflow inclut une etape d'OCR (Tesseract ou Azure Document Intelligence) pour convertir les PDF scannes en texte exploitable avant indexation. La qualite depend de la lisibilite du scan — les documents anciens ou mal scannes peuvent necessiter une verification manuelle.",
+        answer: "Oui. Le workflow inclut une étape d'OCR (Tesseract ou Azure Document Intelligence) pour convertir les PDF scannes en texte exploitable avant indexation. La qualité depend de la lisibilite du scan — les documents anciens ou mal scannes peuvent necessiter une verification manuelle.",
       },
       {
         question: "Combien de documents peut-on indexer ?",
         answer: "Avec Pinecone (plan gratuit) : jusqu'a 100 000 vecteurs, soit environ 10 000 documents de 10 pages. Avec ChromaDB (gratuit, self-hosted) : pas de limite theorique, depend de la RAM disponible. Pour des corpus de plus de 50 000 documents, Pinecone payant ou pgvector (PostgreSQL) sont recommandes.",
       },
       {
-        question: "L'agent detecte-t-il les evolutions reglementaires impactant les contrats ?",
-        answer: "Le workflow peut etre etendu avec un scan periodique des sources reglementaires (EUR-Lex, Legifrance) pour detecter les nouvelles dispositions impactant vos contrats existants. L'agent compare les nouvelles regles avec les clauses de vos contrats et alerte si une mise en conformite est necessaire.",
+        question: "L'agent détecté-t-il les evolutions réglementaires impactant les contrats ?",
+        answer: "Le workflow peut etre etendu avec un scan periodique des sources réglementaires (EUR-Lex, Legifrance) pour detecter les nouvelles dispositions impactant vos contrats existants. L'agent compare les nouvelles regles avec les clauses de vos contrats et alerte si une mise en conformité est nécessaire.",
       },
     ],
     prerequisites: [
@@ -10847,7 +10847,7 @@ class DemandeCredit(BaseModel):
     consent_token: str  # Token de consentement Open Banking
     identifiant_national: str
 
-@app.post("/api/scoring/evaluer")
+@app.post("/api/scoring/évaluer")
 async def evaluer_demande(demande: DemandeCredit):
     # Vérification fichage BdF préalable
     from collecte_credit import collecter_bureau_credit
@@ -10965,24 +10965,24 @@ def log_decision(demande, decision: DecisionCredit):
     storytelling: {
       sector: "Fintech / Banque",
       persona: "Nadia, Directrice des Risques chez une fintech de pret aux PME (45 salaries)",
-      painPoint: "Nadia traite 120 demandes de credit par mois avec un processus d'instruction qui prend 48 a 72 heures par dossier. 3 analystes passent 80% de leur temps sur la collecte de documents et la saisie de donnees. Le modele de scoring actuel, base sur 8 variables financieres, a un taux de defaut de 4.2% et rejette 35% des demandes dont certaines proviennent de PME solvables mais atypiques (freelances, startups).",
-      story: "Nadia a deploye le workflow qui collecte automatiquement les donnees Open Banking, interroge la Banque de France, et genere un scoring ML enrichi par l'analyse contextuelle du LLM. Le premier mois, l'agent a identifie 18 dossiers precedemment rejetes qui etaient en realite solvables.",
-      result: "En 3 mois : temps d'instruction reduit de 72h a 5 minutes. Taux de defaut ameliore de 4.2% a 2.8% grace au scoring plus precis. Taux d'acceptation augmente de 65% a 78% grace aux donnees alternatives. 2 analystes reaffectes a l'accompagnement client et au recouvrement.",
+      painPoint: "Nadia traite 120 demandes de credit par mois avec un processus d'instruction qui prend 48 a 72 heures par dossier. 3 analystes passent 80% de leur temps sur la collecte de documents et la saisie de données. Le modèle de scoring actuel, base sur 8 variables financières, a un taux de defaut de 4.2% et rejette 35% des demandes dont certaines proviennent de PME solvables mais atypiques (freelances, startups).",
+      story: "Nadia a déployé le workflow qui collecte automatiquement les données Open Banking, interroge la Banque de France, et généré un scoring ML enrichi par l'analyse contextuelle du LLM. Le premier mois, l'agent a identifié 18 dossiers precedemment rejetes qui etaient en realite solvables.",
+      result: "En 3 mois : temps d'instruction réduit de 72h a 5 minutes. Taux de defaut amélioré de 4.2% a 2.8% grace au scoring plus précis. Taux d'acceptation augmente de 65% a 78% grace aux données alternatives. 2 analystes reaffectes a l'accompagnement client et au recouvrement.",
     },
     beforeAfter: {
-      inputLabel: "Demande de credit a evaluer",
+      inputLabel: "Demande de credit a évaluer",
       inputText: "Entreprise: Digital Factory SARL\nSIREN: 912345678\nDemande: 80 000 EUR sur 36 mois\nCA dernier exercice: 520 000 EUR\nResultat net: 42 000 EUR\nTresorerie moyenne: 35 000 EUR\nAnciennete: 3 ans\nSecteur: Conseil informatique",
       outputFields: [
         { label: "Score de credit", value: "742/1000 — Grade B (risque modere)" },
         { label: "Probabilite defaut 12 mois", value: "2.8%" },
-        { label: "Decision", value: "ACCEPTE — montant maximum recommande : 75 000 EUR" },
+        { label: "Decision", value: "ACCEPTE — montant maximum recommandé : 75 000 EUR" },
         { label: "Taux propose", value: "4.2% (vs 3.8% pour Grade A)" },
         { label: "Facteurs cles", value: "CA en croissance +18%, tresorerie stable, ratio endettement sain (0.32)" },
       ],
-      beforeContext: "Demande recue il y a 3 minutes via formulaire en ligne",
+      beforeContext: "Demande reçue il y a 3 minutes via formulaire en ligne",
       afterLabel: "Scoring IA",
       afterDuration: "45 secondes",
-      afterSummary: "Score calcule, decision argumentee et offre personnalisee generee",
+      afterSummary: "Score calcule, decision argumentee et offre personnalisee générée",
     },
     roiEstimator: {
       label: "Combien de demandes de credit traitez-vous par mois ?",
@@ -10994,19 +10994,19 @@ def log_decision(demande, decision: DecisionCredit):
     faq: [
       {
         question: "Le scoring IA est-il conforme a la reglementation bancaire francaise ?",
-        answer: "Le workflow est concu pour respecter les exigences ACPR et RGPD : tracabilite complete des decisions, droit a l'explication pour les demandeurs (article 22 RGPD), non-discrimination, et audit trail. Neanmoins, la validation finale par un comite de credit humain reste obligatoire pour les montants depassant un seuil defini par votre politique de risque.",
+        answer: "Le workflow est concu pour respecter les exigences ACPR et RGPD : tracabilite complète des decisions, droit a l'explication pour les demandeurs (article 22 RGPD), non-discrimination, et audit trail. Neanmoins, la validation finale par un comite de credit humain reste obligatoire pour les montants depassant un seuil defini par votre politique de risque.",
       },
       {
-        question: "Comment le modele evite-t-il les biais discriminatoires ?",
-        answer: "Le modele n'utilise aucune variable sensible (age, genre, origine, situation familiale, code postal seul). Les variables d'entree sont exclusivement financieres et comportementales. Un audit de biais est recommande trimestriellement en comparant les taux d'acceptation par segment demographique.",
+        question: "Comment le modèle evite-t-il les biais discriminatoires ?",
+        answer: "Le modèle n'utilise aucune variable sensible (age, genre, origine, situation familiale, code postal seul). Les variables d'entree sont exclusivement financières et comportementales. Un audit de biais est recommandé trimestriellement en comparant les taux d'acceptation par segment demographique.",
       },
       {
-        question: "Le scoring integre-t-il les donnees Open Banking (DSP2) ?",
-        answer: "Oui. Le workflow se connecte aux agregateurs Open Banking (Budget Insight, Powens) pour recuperer l'historique des transactions sur consentement du demandeur. Ces donnees enrichissent le scoring avec des variables comportementales : regularite des revenus, habitudes d'epargne, charges recurrentes.",
+        question: "Le scoring intégré-t-il les données Open Banking (DSP2) ?",
+        answer: "Oui. Le workflow se connecte aux agregateurs Open Banking (Budget Insight, Powens) pour recuperer l'historique des transactions sur consentement du demandeur. Ces données enrichissent le scoring avec des variables comportementales : regularite des revenus, habitudes d'epargne, charges recurrentes.",
       },
       {
-        question: "Quelle est la precision du modele de scoring ?",
-        answer: "En production, les modeles ML de scoring credit atteignent une AUC de 0.85-0.92. L'ajout de l'analyse contextuelle par le LLM ameliore la detection des cas atypiques (startups, freelances) de 15-20%. Le modele se recalibre automatiquement avec les donnees de defaut reelles tous les trimestres.",
+        question: "Quelle est la précision du modèle de scoring ?",
+        answer: "En production, les modèles ML de scoring credit atteignent une AUC de 0.85-0.92. L'ajout de l'analyse contextuelle par le LLM amélioré la détection des cas atypiques (startups, freelances) de 15-20%. Le modèle se recalibre automatiquement avec les données de defaut reelles tous les trimestres.",
       },
       {
         question: "Combien coute le scoring par dossier ?",
@@ -11017,7 +11017,7 @@ def log_decision(demande, decision: DecisionCredit):
       "Un compte n8n Cloud ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
       "Acces a un agregateur Open Banking (Budget Insight, Powens) avec consentement client",
-      "Acces a l'API Banque de France / Infogreffe pour les donnees entreprise",
+      "Acces a l'API Banque de France / Infogreffe pour les données entreprise",
     ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
@@ -11218,7 +11218,7 @@ AVIS :
 - Titre : {avis.titre or "Sans titre"}
 - Contenu : {avis.contenu}
 
-Évalue le sentiment, identifie les thèmes (produit, service, livraison, prix, SAV, UX),
+Évalue le sentiment, identifié les thèmes (produit, service, livraison, prix, SAV, UX),
 les points clés à adresser, le niveau d'urgence, et si une escalade humaine est nécessaire.
 
 Critères d'escalade :
@@ -11307,7 +11307,7 @@ import os
 from collecte_avis import AvisClient
 from analyse_avis import AnalyseAvis
 
-async def publier_reponse_google(avis: AvisClient, reponse: str):
+async def publier_reponse_google(avis: AvisClient, réponse: str):
     from google.oauth2 import service_account
     credentials = service_account.Credentials.from_service_account_file(
         os.getenv("GOOGLE_BUSINESS_CREDENTIALS"),
@@ -11318,7 +11318,7 @@ async def publier_reponse_google(avis: AvisClient, reponse: str):
         await client.put(
             f"https://mybusiness.googleapis.com/v4/accounts/{account_id}/locations/-/reviews/{avis.avis_id}/reply",
             headers={"Authorization": f"Bearer {credentials.token}"},
-            json={"comment": reponse}
+            json={"comment": réponse}
         )
 
 async def escalader_avis(avis: AvisClient, analyse: AnalyseAvis, reponse_suggeree: str):
@@ -11360,13 +11360,13 @@ async def traiter_avis(avis: AvisClient):
         logger.info(f"Avis {avis.avis_id} déjà répondu, skip.")
         return
     analyse = analyser_avis(avis)
-    reponse = generer_reponse(avis, analyse)
+    réponse = generer_reponse(avis, analyse)
     if analyse.necessite_escalade:
-        await escalader_avis(avis, analyse, reponse)
+        await escalader_avis(avis, analyse, réponse)
         logger.warning(f"Avis {avis.avis_id} escaladé - {analyse.raison_escalade}")
     else:
         if avis.plateforme == "google":
-            await publier_reponse_google(avis, reponse)
+            await publier_reponse_google(avis, réponse)
         logger.info(f"Réponse publiée pour avis {avis.avis_id} ({avis.plateforme})")
 
 async def pipeline_avis():
@@ -11401,15 +11401,15 @@ from datetime import datetime
 def test_avis_positif():
     avis = AvisClient(
         plateforme="google", auteur="Marie L.", note=5,
-        contenu="Service exceptionnel ! Livraison rapide et produit conforme. Je recommande vivement.",
+        contenu="Service exceptionnel ! Livraison rapide et produit conforme. Je recommandé vivement.",
         date_publication=datetime.now(), avis_id="test-001"
     )
     analyse = analyser_avis(avis)
     assert analyse.sentiment == "positif"
     assert not analyse.necessite_escalade
-    reponse = generer_reponse(avis, analyse)
-    assert len(reponse.split()) <= 150
-    assert "Marie" in reponse or "merci" in reponse.lower()
+    réponse = generer_reponse(avis, analyse)
+    assert len(réponse.split()) <= 150
+    assert "Marie" in réponse or "merci" in réponse.lower()
 
 def test_avis_negatif_escalade():
     avis = AvisClient(
@@ -11447,28 +11447,28 @@ def test_avis_negatif_escalade():
     storytelling: {
       sector: "Restauration / Hotellerie",
       persona: "Lea, Responsable Marketing d'une chaine de restaurants (25 etablissements)",
-      painPoint: "Lea recoit 150 avis par semaine sur Google Business, Trustpilot et l'App Store. Son equipe ne repond qu'a 30% des avis, avec un delai moyen de 3 jours. Les avis negatifs sans reponse impactent la note moyenne (3.8/5 en baisse) et le referencement local. Un avis 1 etoile viral a coute 8 000 EUR de manque a gagner estime sur un mois.",
-      story: "Lea a deploye le workflow n8n qui surveille les 3 plateformes toutes les 15 minutes. Chaque nouvel avis est analyse (sentiment, themes) et une reponse personnalisee est generee en respectant le ton chaleureux de la marque. Les avis negatifs critiques declenchent une alerte immediate au directeur de l'etablissement concerne.",
-      result: "En 6 semaines : taux de reponse aux avis passe de 30% a 95%. Delai moyen de reponse reduit de 3 jours a 45 minutes. Note moyenne Google passee de 3.8 a 4.2. Trafic organique via Google Maps augmente de 22%.",
+      painPoint: "Lea reçoit 150 avis par semaine sur Google Business, Trustpilot et l'App Store. Son équipe ne repond qu'a 30% des avis, avec un délai moyen de 3 jours. Les avis negatifs sans réponse impactent la note moyenne (3.8/5 en baisse) et le referencement local. Un avis 1 etoile viral a coute 8 000 EUR de manque a gagner estime sur un mois.",
+      story: "Lea a déployé le workflow n8n qui surveille les 3 plateformes toutes les 15 minutes. Chaque nouvel avis est analyse (sentiment, themes) et une réponse personnalisee est générée en respectant le ton chaleureux de la marque. Les avis negatifs critiques declenchent une alerte immédiate au directeur de l'etablissement concerne.",
+      result: "En 6 semaines : taux de réponse aux avis passé de 30% a 95%. Delai moyen de réponse réduit de 3 jours a 45 minutes. Note moyenne Google passée de 3.8 a 4.2. Trafic organique via Google Maps augmente de 22%.",
     },
     beforeAfter: {
-      inputLabel: "Avis Google recu",
-      inputText: "1 etoile — Tres decu par notre derniere visite. Attente de 40 minutes pour avoir notre plat alors que le restaurant etait a moitie vide. Le serveur avait l'air completement deborde et n'a meme pas presente d'excuses. Le plat etait tiede. Pour le prix, c'est inacceptable.",
+      inputLabel: "Avis Google reçu",
+      inputText: "1 etoile — Tres decu par notre dernière visite. Attente de 40 minutes pour avoir notre plat alors que le restaurant etait a moitie vide. Le serveur avait l'air complètement deborde et n'a meme pas présenté d'excuses. Le plat etait tiede. Pour le prix, c'est inacceptable.",
       outputFields: [
         { label: "Sentiment", value: "Negatif (-0.82) — Themes: attente, service, temperature plat" },
         { label: "Escalade", value: "OUI — alerte envoyee au directeur du restaurant concerne" },
-        { label: "Reponse generee", value: "Cher client, nous sommes sincèrement desoles pour cette experience qui ne reflete pas nos standards. Un delai de 40 minutes est inacceptable et nous prenons votre retour tres au serieux. Notre directeur vous contactera personnellement pour comprendre ce qui s'est passe ce jour-la et vous proposer une invitation. Merci pour votre honnetete." },
+        { label: "Reponse générée", value: "Cher client, nous sommes sincèrement desoles pour cette experience qui ne reflete pas nos standards. Un délai de 40 minutes est inacceptable et nous prenons votre retour tres au serieux. Notre directeur vous contactera personnellement pour comprendre ce qui s'est passé ce jour-la et vous proposer une invitation. Merci pour votre honnetete." },
         { label: "Ton", value: "Empathique, sincere, orienté solution — conforme charte marque" },
         { label: "Action", value: "Contacter le client dans les 24h + investigation interne sur le service du jour" },
       ],
       beforeContext: "Google Business — Restaurant Lyon Bellecour — publie il y a 8 minutes",
       afterLabel: "Reponse IA",
       afterDuration: "4 secondes",
-      afterSummary: "Avis analyse, reponse personnalisee generee et escalade declenchee",
+      afterSummary: "Avis analyse, réponse personnalisee générée et escalade déclenchée",
     },
     roiEstimator: {
       label: "Combien d'avis clients recevez-vous par semaine (tous canaux) ?",
-      unitLabel: "Redaction manuelle / reponse",
+      unitLabel: "Redaction manuelle / réponse",
       timePerUnitMinutes: 8,
       timeWithAISeconds: 5,
       options: [20, 50, 100, 200, 500],
@@ -11484,15 +11484,15 @@ def test_avis_negatif_escalade():
       },
       {
         question: "L'agent peut-il repondre sur Google Business directement ?",
-        answer: "Oui, via l'API Google My Business (Google Business Profile). Le workflow publie la reponse directement sur l'avis. Pour Trustpilot, l'API Business est utilisee. Pour l'App Store, la publication automatique n'est pas supportee — la reponse est envoyee par email pour publication manuelle.",
+        answer: "Oui, via l'API Google My Business (Google Business Profile). Le workflow publie la réponse directement sur l'avis. Pour Trustpilot, l'API Business est utilisee. Pour l'App Store, la publication automatique n'est pas supportee — la réponse est envoyee par email pour publication manuelle.",
       },
       {
         question: "Combien coute le traitement par avis ?",
-        answer: "Avec GPT-4o-mini : environ 0.002 EUR par avis (analyse + generation de reponse). Pour 200 avis/semaine : environ 1.60 EUR/semaine, soit 7 EUR/mois. Tres inferieur au cout d'un community manager dedie (3 000+ EUR/mois).",
+        answer: "Avec GPT-4o-mini : environ 0.002 EUR par avis (analyse + génération de réponse). Pour 200 avis/semaine : environ 1.60 EUR/semaine, soit 7 EUR/mois. Tres inferieur au cout d'un community manager dedie (3 000+ EUR/mois).",
       },
       {
-        question: "L'agent gere-t-il les avis en plusieurs langues ?",
-        answer: "Oui. L'agent detecte automatiquement la langue de l'avis et genere la reponse dans la meme langue. Ideal pour les chaines avec des etablissements dans plusieurs pays ou recevant des avis de touristes etrangers.",
+        question: "L'agent gère-t-il les avis en plusieurs langues ?",
+        answer: "Oui. L'agent détecté automatiquement la langue de l'avis et généré la réponse dans la meme langue. Ideal pour les chaines avec des etablissements dans plusieurs pays ou recevant des avis de touristes etrangers.",
       },
     ],
     prerequisites: [
@@ -11634,11 +11634,11 @@ def collecter_metriques_serveur(hostname: str, heures: int = 24) -> List[Metriqu
         "load_average_5m": f'node_load5{{instance="{hostname}"}}',
     }
     metriques = []
-    resultats = {}
+    résultats = {}
     for nom, query in queries.items():
         data = prom.custom_query_range(query, start_time=debut, end_time=fin, step="5m")
         if data:
-            resultats[nom] = {datetime.fromtimestamp(v[0]): float(v[1]) for v in data[0]["values"]}
+            résultats[nom] = {datetime.fromtimestamp(v[0]): float(v[1]) for v in data[0]["values"]}
 
     # Compter les erreurs dans les logs
     log_errors = es.count(
@@ -11650,17 +11650,17 @@ def collecter_metriques_serveur(hostname: str, heures: int = 24) -> List[Metriqu
         ]}}}
     )["count"]
 
-    timestamps = sorted(resultats.get("cpu_usage_pct", {}).keys())
+    timestamps = sorted(résultats.get("cpu_usage_pct", {}).keys())
     for ts in timestamps:
         metriques.append(MetriqueServeur(
             hostname=hostname,
             timestamp=ts,
-            cpu_usage_pct=resultats.get("cpu_usage_pct", {}).get(ts, 0),
-            memory_usage_pct=resultats.get("memory_usage_pct", {}).get(ts, 0),
-            disk_usage_pct=resultats.get("disk_usage_pct", {}).get(ts, 0),
+            cpu_usage_pct=résultats.get("cpu_usage_pct", {}).get(ts, 0),
+            memory_usage_pct=résultats.get("memory_usage_pct", {}).get(ts, 0),
+            disk_usage_pct=résultats.get("disk_usage_pct", {}).get(ts, 0),
             disk_io_read_mbps=0, disk_io_write_mbps=0,
             network_in_mbps=0, network_out_mbps=0,
-            load_average_5m=resultats.get("load_average_5m", {}).get(ts, 0),
+            load_average_5m=résultats.get("load_average_5m", {}).get(ts, 0),
             nb_erreurs_log_1h=log_errors // max(heures, 1)
         ))
     return metriques`,
@@ -11978,9 +11978,9 @@ def test_pas_de_faux_positif_normal():
     storytelling: {
       sector: "IT / Infrastructure",
       persona: "Romain, Responsable Infrastructure chez un hebergeur cloud (150 salaries, 2 000 serveurs)",
-      painPoint: "L'equipe de Romain gere 2 000 serveurs avec une surveillance basee sur des seuils statiques (CPU > 90%, disque > 85%). Les pannes surviennent sans avertissement : 3 incidents majeurs le trimestre dernier, totalisant 14 heures d'indisponibilite et 280 000 EUR de penalites SLA. Les ops passent 60% de leur temps en mode reactif au lieu de la maintenance preventive.",
-      story: "Romain a deploye le workflow n8n qui collecte les metriques Prometheus toutes les 30 minutes et les analyse avec un modele ML de detection d'anomalies, enrichi par l'analyse contextuelle du LLM. Le premier lundi, l'agent a predit une panne disque imminente sur un serveur de base de donnees 18 heures avant qu'elle ne survienne.",
-      result: "En 4 mois : pannes non planifiees reduites de 65%. MTTR (temps moyen de resolution) reduit de 4h a 45 min. Disponibilite passee de 99.5% a 99.97%. L'equipe ops consacre desormais 70% de son temps a la maintenance preventive. Economies estimees : 420 000 EUR/an en penalites SLA evitees.",
+      painPoint: "L'équipe de Romain gère 2 000 serveurs avec une surveillance basee sur des seuils statiques (CPU > 90%, disque > 85%). Les pannes surviennent sans avertissement : 3 incidents majeurs le trimestre dernier, totalisant 14 heures d'indisponibilite et 280 000 EUR de penalites SLA. Les ops passent 60% de leur temps en mode reactif au lieu de la maintenance preventive.",
+      story: "Romain a déployé le workflow n8n qui collecte les metriques Prometheus toutes les 30 minutes et les analyse avec un modèle ML de détection d'anomalies, enrichi par l'analyse contextuelle du LLM. Le premier lundi, l'agent a predit une panne disque imminente sur un serveur de base de données 18 heures avant qu'elle ne survienne.",
+      result: "En 4 mois : pannes non planifiees reduites de 65%. MTTR (temps moyen de resolution) réduit de 4h a 45 min. Disponibilite passée de 99.5% a 99.97%. L'équipe ops consacre désormais 70% de son temps a la maintenance preventive. Economies estimees : 420 000 EUR/an en penalites SLA evitees.",
     },
     beforeAfter: {
       inputLabel: "Metriques serveur anomaliques",
@@ -11988,14 +11988,14 @@ def test_pas_de_faux_positif_normal():
       outputFields: [
         { label: "Prediction", value: "Panne disque probable dans 12-24h (confiance: 91%)" },
         { label: "Cause racine probable", value: "Degradation progressive du SSD — IOPS et latence anormaux, signes de wear-out" },
-        { label: "Criticite", value: "CRITIQUE — serveur de base de donnees production" },
+        { label: "Criticite", value: "CRITIQUE — serveur de base de données production" },
         { label: "Action preventive", value: "1. Planifier remplacement SSD en heures creuses\n2. Verifier les backups\n3. Preparer le basculement vers le replica" },
         { label: "Impact metier", value: "Risque d'indisponibilite BDD production affectant 100% des utilisateurs" },
       ],
       beforeContext: "Collecte automatique Prometheus — analyse toutes les 30 min",
       afterLabel: "Prediction IA",
       afterDuration: "6 secondes",
-      afterSummary: "Anomalie detectee, panne predite a 12-24h, action preventive recommandee",
+      afterSummary: "Anomalie détectée, panne predite a 12-24h, action preventive recommandée",
     },
     roiEstimator: {
       label: "Combien de serveurs/assets IT surveillez-vous ?",
@@ -12011,25 +12011,25 @@ def test_pas_de_faux_positif_normal():
       },
       {
         question: "Quel est le taux de faux positifs ?",
-        answer: "En configuration initiale, le taux de faux positifs est d'environ 10-15%. Il diminue rapidement a 3-5% apres 2-4 semaines d'apprentissage grace au feedback des ops (alerte pertinente ou non). Le seuil de declenchement est configurable pour ajuster le compromis sensibilite/precision.",
+        answer: "En configuration initiale, le taux de faux positifs est d'environ 10-15%. Il diminue rapidement a 3-5% apres 2-4 semaines d'apprentissage grace au feedback des ops (alerte pertinente ou non). Le seuil de déclenchement est configurable pour ajuster le compromis sensibilite/précision.",
       },
       {
-        question: "L'agent peut-il declencher des actions de remediation automatiques ?",
-        answer: "Le workflow peut executer des commandes de remediation (redemarrage service, rotation de logs, scale-up) via un noeud Execute Command ou SSH. Par securite, nous recommandons de limiter les actions automatiques aux cas non critiques et de garder une validation humaine pour les serveurs de production.",
+        question: "L'agent peut-il déclencher des actions de remediation automatiques ?",
+        answer: "Le workflow peut exécuter des commandes de remediation (redemarrage service, rotation de logs, scale-up) via un noeud Execute Command ou SSH. Par sécurité, nous recommandons de limiter les actions automatiques aux cas non critiques et de garder une validation humaine pour les serveurs de production.",
       },
       {
-        question: "Combien de donnees historiques faut-il pour des predictions fiables ?",
-        answer: "Un minimum de 30 jours de metriques est necessaire pour detecter les patterns normaux. 90 jours sont recommandes pour une precision optimale. Le modele ML de detection d'anomalies s'adapte en continu aux changements de charge.",
+        question: "Combien de données historiques faut-il pour des predictions fiables ?",
+        answer: "Un minimum de 30 jours de metriques est nécessaire pour detecter les patterns normaux. 90 jours sont recommandes pour une précision optimale. Le modèle ML de détection d'anomalies s'adapte en continu aux changements de charge.",
       },
       {
         question: "Le workflow surveille-t-il aussi les applications, pas seulement les serveurs ?",
-        answer: "Oui. En ajoutant les metriques applicatives (temps de reponse, taux d'erreur, queue depth) depuis votre APM (New Relic, Datadog APM, Elastic APM), l'agent peut detecter les degradations applicatives avant qu'elles n'impactent les utilisateurs.",
+        answer: "Oui. En ajoutant les metriques applicatives (temps de réponse, taux d'erreur, queue depth) depuis votre APM (New Relic, Datadog APM, Elastic APM), l'agent peut detecter les degradations applicatives avant qu'elles n'impactent les utilisateurs.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Un systeme de monitoring en place (Prometheus, Datadog, Zabbix) avec API accessible",
+      "Un système de monitoring en place (Prometheus, Datadog, Zabbix) avec API accessible",
       "Optionnel : un outil de ticketing (PagerDuty, ServiceNow, Jira) pour les alertes",
     ],
     createdAt: "2025-02-07",
@@ -12042,7 +12042,7 @@ def test_pas_de_faux_positif_normal():
     problem:
       "La prise de rendez-vous commerciaux est un processus inefficace : les SDR passent 60% de leur temps sur des tâches administratives (relances email, coordination d'agendas, qualification initiale) au lieu de vendre. Les délais de réponse aux demandes entrantes dépassent souvent 24h, entraînant la perte de prospects chauds. La coordination des agendas entre prospects et commerciaux génère des allers-retours interminables.",
     value:
-      "Un agent IA conversationnel gère l'intégralité du processus de prise de rendez-vous : il qualifie le prospect via un échange naturel (email ou chat), identifie le bon interlocuteur commercial selon le profil, propose des créneaux disponibles, et confirme le rendez-vous avec rappels automatiques. Le temps de réponse passe de 24h à moins de 2 minutes.",
+      "Un agent IA conversationnel gère l'intégralité du processus de prise de rendez-vous : il qualifie le prospect via un échange naturel (email ou chat), identifié le bon interlocuteur commercial selon le profil, propose des créneaux disponibles, et confirme le rendez-vous avec rappels automatiques. Le temps de réponse passé de 24h à moins de 2 minutes.",
     inputs: [
       "Demande entrante du prospect (formulaire, email, chatbot)",
       "Données CRM du prospect (si existant)",
@@ -12184,7 +12184,7 @@ def qualifier_prospect(historique_conversation: list, contexte_crm: dict = None)
     else:
         reponse_prospect = contenu
         profil = ProfilBANT()
-    return {"reponse": reponse_prospect, "profil": profil.model_dump()}`,
+    return {"réponse": reponse_prospect, "profil": profil.model_dump()}`,
             filename: "qualification.py",
           },
         ],
@@ -12374,29 +12374,29 @@ sessions = {}
 @app.post("/api/rdv/conversation")
 async def converser(msg: MessageProspect):
     if msg.session_id not in sessions:
-        sessions[msg.session_id] = {"historique": [], "profil": {}, "etape": "qualification"}
+        sessions[msg.session_id] = {"historique": [], "profil": {}, "étape": "qualification"}
     session = sessions[msg.session_id]
     session["historique"].append({"role": "user", "content": msg.message})
 
-    if session["etape"] == "qualification":
-        resultat = qualifier_prospect(session["historique"])
-        session["profil"] = resultat["profil"]
-        session["historique"].append({"role": "assistant", "content": resultat["reponse"]})
+    if session["étape"] == "qualification":
+        résultat = qualifier_prospect(session["historique"])
+        session["profil"] = résultat["profil"]
+        session["historique"].append({"role": "assistant", "content": résultat["réponse"]})
 
-        if resultat["profil"].get("score_qualification", 0) >= 60:
-            commercial = attribuer_commercial(resultat["profil"])
+        if résultat["profil"].get("score_qualification", 0) >= 60:
+            commercial = attribuer_commercial(résultat["profil"])
             session["commercial"] = commercial.model_dump()
             creneaux = obtenir_disponibilites(commercial.calendar_id)
             session["creneaux"] = creneaux
-            session["etape"] = "proposition_creneau"
+            session["étape"] = "proposition_creneau"
             creneaux_texte = "\\n".join([f"- {c['date_lisible']}" for c in creneaux[:5]])
-            reponse_finale = f"{resultat['reponse']}\\n\\nJe vous propose un échange avec {commercial.nom}, spécialiste de votre secteur. Voici les prochains créneaux disponibles :\\n{creneaux_texte}\\n\\nQuel créneau vous conviendrait le mieux ?"
+            reponse_finale = f"{résultat['réponse']}\\n\\nJe vous propose un échange avec {commercial.nom}, spécialiste de votre secteur. Voici les prochains créneaux disponibles :\\n{creneaux_texte}\\n\\nQuel créneau vous conviendrait le mieux ?"
             session["historique"][-1]["content"] = reponse_finale
-            return {"reponse": reponse_finale, "etape": "proposition_creneau", "creneaux": creneaux[:5]}
+            return {"réponse": reponse_finale, "étape": "proposition_creneau", "creneaux": creneaux[:5]}
 
-        return {"reponse": resultat["reponse"], "etape": "qualification", "score": resultat["profil"].get("score_qualification", 0)}
+        return {"réponse": résultat["réponse"], "étape": "qualification", "score": résultat["profil"].get("score_qualification", 0)}
 
-    elif session["etape"] == "proposition_creneau":
+    elif session["étape"] == "proposition_creneau":
         # Confirmer le créneau choisi
         commercial = session["commercial"]
         creneau_choisi = session["creneaux"][0]  # Simplifié: prendre le premier
@@ -12409,10 +12409,10 @@ async def converser(msg: MessageProspect):
             email_prospect=msg.email_prospect or "",
             notes=briefing
         )
-        session["etape"] = "confirme"
+        session["étape"] = "confirme"
         return {
-            "reponse": f"Parfait ! Votre rendez-vous avec {commercial['nom']} est confirmé pour le {creneau_choisi['date_lisible']}. Vous recevrez une invitation par email avec le lien de visioconférence. A bientôt !",
-            "etape": "confirme",
+            "réponse": f"Parfait ! Votre rendez-vous avec {commercial['nom']} est confirmé pour le {creneau_choisi['date_lisible']}. Vous recevrez une invitation par email avec le lien de visioconférence. A bientôt !",
+            "étape": "confirme",
             "event_id": event.get("id")
         }`,
             filename: "api_rdv.py",
@@ -12433,8 +12433,8 @@ def test_qualification_prospect_chaud():
     historique = [
         {"role": "user", "content": "Bonjour, je suis directeur commercial chez TechCorp (150 employés). Nous cherchons une solution de CRM IA pour Q2, budget autour de 50K EUR."},
     ]
-    resultat = qualifier_prospect(historique)
-    profil = resultat["profil"]
+    résultat = qualifier_prospect(historique)
+    profil = résultat["profil"]
     assert profil["score_qualification"] >= 60, "Un prospect avec budget, timeline et autorité devrait scorer haut"
     assert profil["est_decideur"] is True
     assert profil["budget_estime"] is not None
@@ -12443,8 +12443,8 @@ def test_qualification_prospect_froid():
     historique = [
         {"role": "user", "content": "Bonjour, je voulais juste des informations sur vos tarifs."},
     ]
-    resultat = qualifier_prospect(historique)
-    profil = resultat["profil"]
+    résultat = qualifier_prospect(historique)
+    profil = résultat["profil"]
     assert profil["score_qualification"] < 60, "Un prospect sans info BANT devrait scorer bas"
     assert len(profil["informations_manquantes"]) > 0
 
@@ -12452,10 +12452,10 @@ def test_reponse_naturelle():
     historique = [
         {"role": "user", "content": "Salut, je suis intéressé par votre offre."},
     ]
-    resultat = qualifier_prospect(historique)
-    reponse = resultat["reponse"]
-    assert len(reponse) > 20, "La réponse doit être substantielle"
-    assert "vous" in reponse.lower(), "L'agent doit vouvoyer"`,
+    résultat = qualifier_prospect(historique)
+    réponse = résultat["réponse"]
+    assert len(réponse) > 20, "La réponse doit être substantielle"
+    assert "vous" in réponse.lower(), "L'agent doit vouvoyer"`,
             filename: "test_rdv.py",
           },
         ],
@@ -12777,7 +12777,7 @@ def traduire_fichier_json_i18n(
     with open(fichier_source, "r", encoding="utf-8") as f:
         source = json.load(f)
 
-    resultat = {}
+    résultat = {}
     def traduire_recursif(obj, prefix=""):
         if isinstance(obj, str):
             trad = traduire_contenu(obj, langue_cible, type_contenu="ui_string")
@@ -12818,7 +12818,7 @@ def traduire_lot(
     dossier_sortie: str
 ) -> List[Dict]:
     """Traduit un dossier complet de fichiers"""
-    resultats = []
+    résultats = []
     os.makedirs(dossier_sortie, exist_ok=True)
     for fichier in os.listdir(dossier_source):
         chemin = os.path.join(dossier_source, fichier)
@@ -12831,8 +12831,8 @@ def traduire_lot(
                 traduit = traduire_html(f.read(), langue_cible)
             with open(os.path.join(dossier_sortie, fichier), "w", encoding="utf-8") as f:
                 f.write(traduit)
-        resultats.append({"fichier": fichier, "langue": langue_cible, "status": "traduit"})
-    return resultats`,
+        résultats.append({"fichier": fichier, "langue": langue_cible, "status": "traduit"})
+    return résultats`,
             filename: "traduction_lots.py",
           },
         ],
@@ -12863,40 +12863,40 @@ class DemandeTraduction(BaseModel):
 
 @app.post("/api/traduction/traduire")
 async def traduire(demande: DemandeTraduction) -> dict:
-    resultat = traduire_contenu(
+    résultat = traduire_contenu(
         contenu=demande.contenu,
         langue_cible=demande.langue_cible,
         type_contenu=demande.type_contenu,
         contexte_marketing=demande.contexte
     )
     seuil = float(os.getenv("SEUIL_QUALITE_AUTO", 0.85))
-    if resultat.score_qualite_global < seuil or resultat.nb_segments_relecture > 0:
-        await notifier_relecture(resultat)
-        return {**resultat.model_dump(), "status": "en_relecture",
-                "message": f"Qualité {resultat.score_qualite_global:.0%} sous le seuil de {seuil:.0%}. Envoyé en relecture."}
+    if résultat.score_qualite_global < seuil or résultat.nb_segments_relecture > 0:
+        await notifier_relecture(résultat)
+        return {**résultat.model_dump(), "status": "en_relecture",
+                "message": f"Qualité {résultat.score_qualite_global:.0%} sous le seuil de {seuil:.0%}. Envoyé en relecture."}
     if demande.auto_publish:
-        return {**resultat.model_dump(), "status": "publie"}
-    return {**resultat.model_dump(), "status": "traduit"}
+        return {**résultat.model_dump(), "status": "publie"}
+    return {**résultat.model_dump(), "status": "traduit"}
 
 @app.post("/api/traduction/lot")
 async def traduire_en_lot(langues: List[str], contenu: str, type_contenu: str = "page_web"):
-    resultats = {}
+    résultats = {}
     for langue in langues:
-        resultat = traduire_contenu(contenu, langue, type_contenu)
-        resultats[langue] = {
-            "contenu": resultat.contenu_traduit,
-            "score": resultat.score_qualite_global,
-            "adaptations": resultat.adaptations_culturelles
+        résultat = traduire_contenu(contenu, langue, type_contenu)
+        résultats[langue] = {
+            "contenu": résultat.contenu_traduit,
+            "score": résultat.score_qualite_global,
+            "adaptations": résultat.adaptations_culturelles
         }
-    return resultats
+    return résultats
 
-async def notifier_relecture(resultat: ResultatTraduction):
+async def notifier_relecture(résultat: ResultatTraduction):
     webhook = os.getenv("SLACK_WEBHOOK_REVIEW")
-    segments_a_revoir = [s for s in resultat.segments if s.necessite_relecture]
+    segments_a_revoir = [s for s in résultat.segments if s.necessite_relecture]
     message = {
         "blocks": [
-            {"type": "header", "text": {"type": "plain_text", "text": f"Relecture requise - {resultat.langue_cible}"}},
-            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Score qualité :* {resultat.score_qualite_global:.0%}\\n*Segments à revoir :* {len(segments_a_revoir)}"}},
+            {"type": "header", "text": {"type": "plain_text", "text": f"Relecture requise - {résultat.langue_cible}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Score qualité :* {résultat.score_qualite_global:.0%}\\n*Segments à revoir :* {len(segments_a_revoir)}"}},
             {"type": "section", "text": {"type": "mrkdwn", "text": "\\n".join([f"• _{s.source[:80]}..._ → {s.raison_relecture}" for s in segments_a_revoir[:5]])}},
         ]
     }
@@ -12918,28 +12918,28 @@ from traducteur import traduire_contenu
 
 def test_traduction_anglais_qualite():
     contenu = "Notre solution d'intelligence artificielle agentique permet aux entreprises françaises d'automatiser leurs processus métier en toute sécurité."
-    resultat = traduire_contenu(contenu, "en-US", type_contenu="page_web")
-    assert resultat.score_qualite_global >= 0.8
-    assert "agentic AI" in resultat.contenu_traduit, "Le glossaire doit être respecté"
-    assert "French" in resultat.contenu_traduit or "companies" in resultat.contenu_traduit
+    résultat = traduire_contenu(contenu, "en-US", type_contenu="page_web")
+    assert résultat.score_qualite_global >= 0.8
+    assert "agentic AI" in résultat.contenu_traduit, "Le glossaire doit être respecté"
+    assert "French" in résultat.contenu_traduit or "companies" in résultat.contenu_traduit
 
 def test_glossaire_respecte():
     contenu = "L'automatisation intelligente transforme les processus métier."
-    resultat = traduire_contenu(contenu, "de-DE")
-    assert "intelligente Automatisierung" in resultat.contenu_traduit, "Le terme du glossaire DE doit être utilisé"
+    résultat = traduire_contenu(contenu, "de-DE")
+    assert "intelligente Automatisierung" in résultat.contenu_traduit, "Le terme du glossaire DE doit être utilisé"
 
 def test_preservation_formatage_html():
     contenu = "<h1>Bienvenue</h1><p>Découvrez notre <strong>solution IA</strong> pour les entreprises.</p>"
     from traduction_lots import traduire_html
-    resultat = traduire_html(contenu, "en-US")
-    assert "<h1>" in resultat and "</h1>" in resultat, "Les balises HTML doivent être préservées"
-    assert "<strong>" in resultat
+    résultat = traduire_html(contenu, "en-US")
+    assert "<h1>" in résultat and "</h1>" in résultat, "Les balises HTML doivent être préservées"
+    assert "<strong>" in résultat
 
 def test_traduction_japonais():
     contenu = "Contactez-nous pour une démonstration gratuite de notre plateforme."
-    resultat = traduire_contenu(contenu, "ja-JP", type_contenu="page_web")
-    assert resultat.score_qualite_global >= 0.7
-    assert len(resultat.contenu_traduit) > 0`,
+    résultat = traduire_contenu(contenu, "ja-JP", type_contenu="page_web")
+    assert résultat.score_qualite_global >= 0.7
+    assert len(résultat.contenu_traduit) > 0`,
             filename: "test_traduction.py",
           },
         ],
@@ -13091,7 +13091,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "import pytest\nfrom models import EmailAnalysis, EmailCategory, Priority\nfrom classifier import analyze_email\n\ndef test_support_email_classification():\n    email = {\n        \"from\": \"client@example.com\",\n        \"subject\": \"Bug sur la page de paiement\",\n        \"body\": \"Bonjour, je n'arrive plus a finaliser mon achat. L'erreur 500 apparait.\"\n    }\n    result = analyze_email(email, \"FAQ: Les erreurs 500 sont liees au service de paiement.\")\n    assert result.category == EmailCategory.SUPPORT\n    assert result.priority in [Priority.URGENT, Priority.NORMAL]\n    assert result.confidence >= 0.7\n\ndef test_spam_detection():\n    email = {\n        \"from\": \"promo@spam.xyz\",\n        \"subject\": \"GAGNEZ 10000 EUR MAINTENANT\",\n        \"body\": \"Cliquez ici pour recevoir votre prix. Offre limitee.\"\n    }\n    result = analyze_email(email, \"\")\n    assert result.category == EmailCategory.SPAM\n\ndef test_urgent_email_flagged():\n    email = {\n        \"from\": \"directeur@enterprise.fr\",\n        \"subject\": \"URGENT - Systeme en panne\",\n        \"body\": \"Le systeme de production est hors service depuis 2 heures.\"\n    }\n    result = analyze_email(email, \"\")\n    assert result.priority == Priority.URGENT\n    assert result.needs_human_review is True",
+            code: "import pytest\nfrom models import EmailAnalysis, EmailCategory, Priority\nfrom classifier import analyze_email\n\ndef test_support_email_classification():\n    email = {\n        \"from\": \"client@example.com\",\n        \"subject\": \"Bug sur la page de paiement\",\n        \"body\": \"Bonjour, je n'arrive plus a finaliser mon achat. L'erreur 500 apparait.\"\n    }\n    result = analyze_email(email, \"FAQ: Les erreurs 500 sont liees au service de paiement.\")\n    assert result.category == EmailCategory.SUPPORT\n    assert result.priority in [Priority.URGENT, Priority.NORMAL]\n    assert result.confidence >= 0.7\n\ndef test_spam_detection():\n    email = {\n        \"from\": \"promo@spam.xyz\",\n        \"subject\": \"GAGNEZ 10000 EUR MAINTENANT\",\n        \"body\": \"Cliquez ici pour recevoir votre prix. Offre limitee.\"\n    }\n    result = analyze_email(email, \"\")\n    assert result.category == EmailCategory.SPAM\n\ndef test_urgent_email_flagged():\n    email = {\n        \"from\": \"directeur@enterprise.fr\",\n        \"subject\": \"URGENT - Systeme en panne\",\n        \"body\": \"Le système de production est hors service depuis 2 heures.\"\n    }\n    result = analyze_email(email, \"\")\n    assert result.priority == Priority.URGENT\n    assert result.needs_human_review is True",
             filename: "test_classifier.py",
           },
         ],
@@ -13209,7 +13209,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "import anthropic\nfrom models import CallAnalysis\n\nclient = anthropic.Anthropic()\n\ndef analyze_call(transcript: str, evaluation_grid: str, client_context: str) -> CallAnalysis:\n    prompt = (\n        \"Tu es un expert en analyse d'appels commerciaux et support.\\n\"\n        \"Analyse cette transcription et retourne un JSON structure.\\n\\n\"\n        \"Grille d'evaluation:\\n{grid}\\n\\n\"\n        \"Contexte client:\\n{ctx}\\n\\n\"\n        \"Transcription:\\n{transcript}\\n\\n\"\n        \"Retourne un JSON avec: summary, key_points (3-5), \"\n        \"overall_sentiment, objections (avec text, response_given, was_handled), \"\n        \"commitments, next_steps, quality_score (0-100), \"\n        \"coaching_tips, churn_risk\"\n    ).format(\n        grid=evaluation_grid,\n        ctx=client_context,\n        transcript=transcript[:8000]\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return CallAnalysis.model_validate_json(message.content[0].text)",
+            code: "import anthropic\nfrom models import CallAnalysis\n\nclient = anthropic.Anthropic()\n\ndef analyze_call(transcript: str, evaluation_grid: str, client_context: str) -> CallAnalysis:\n    prompt = (\n        \"Tu es un expert en analyse d'appels commerciaux et support.\\n\"\n        \"Analyse cette transcription et retourne un JSON structure.\\n\\n\"\n        \"Grille d'évaluation:\\n{grid}\\n\\n\"\n        \"Contexte client:\\n{ctx}\\n\\n\"\n        \"Transcription:\\n{transcript}\\n\\n\"\n        \"Retourne un JSON avec: summary, key_points (3-5), \"\n        \"overall_sentiment, objections (avec text, response_given, was_handled), \"\n        \"commitments, next_steps, quality_score (0-100), \"\n        \"coaching_tips, churn_risk\"\n    ).format(\n        grid=evaluation_grid,\n        ctx=client_context,\n        transcript=transcript[:8000]\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return CallAnalysis.model_validate_json(message.content[0].text)",
             filename: "analyzer.py",
           },
         ],
@@ -13245,7 +13245,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "import pytest\nfrom models import CallAnalysis, Sentiment\nfrom analyzer import analyze_call\n\nSAMPLE_TRANSCRIPT = (\n    \"[00:00] Commercial: Bonjour, merci d'avoir accepte cet appel.\\n\"\n    \"[00:05] Client: Bonjour, j'aimerais en savoir plus sur votre offre Enterprise.\\n\"\n    \"[00:15] Commercial: Bien sur. Quel est votre budget pour ce projet ?\\n\"\n    \"[00:22] Client: Nous avons un budget de 50000 euros annuels.\\n\"\n    \"[00:30] Commercial: Parfait, notre offre Enterprise est a 45000 par an.\\n\"\n    \"[00:40] Client: C'est interessant mais j'ai une objection sur le delai de mise en place.\\n\"\n    \"[00:50] Commercial: Nous garantissons un deploiement en 4 semaines.\"\n)\n\nEVAL_GRID = \"Criteres: accueil, decouverte des besoins, traitement des objections, closing\"\n\ndef test_call_analysis_structure():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"Client Enterprise, secteur Finance\")\n    assert isinstance(result, CallAnalysis)\n    assert 0 <= result.quality_score <= 100\n    assert len(result.key_points) >= 1\n    assert result.overall_sentiment in list(Sentiment)\n\ndef test_objection_detection():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"\")\n    assert len(result.objections) >= 1\n    assert any(\"delai\" in obj.text.lower() or \"mise en place\" in obj.text.lower() for obj in result.objections)\n\ndef test_commitment_extraction():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"\")\n    assert len(result.commitments) >= 0  # Peut ne pas y avoir d'engagement formel\n    assert len(result.next_steps) >= 1",
+            code: "import pytest\nfrom models import CallAnalysis, Sentiment\nfrom analyzer import analyze_call\n\nSAMPLE_TRANSCRIPT = (\n    \"[00:00] Commercial: Bonjour, merci d'avoir accepte cet appel.\\n\"\n    \"[00:05] Client: Bonjour, j'aimerais en savoir plus sur votre offre Enterprise.\\n\"\n    \"[00:15] Commercial: Bien sur. Quel est votre budget pour ce projet ?\\n\"\n    \"[00:22] Client: Nous avons un budget de 50000 euros annuels.\\n\"\n    \"[00:30] Commercial: Parfait, notre offre Enterprise est a 45000 par an.\\n\"\n    \"[00:40] Client: C'est interessant mais j'ai une objection sur le délai de mise en place.\\n\"\n    \"[00:50] Commercial: Nous garantissons un déploiement en 4 semaines.\"\n)\n\nEVAL_GRID = \"Criteres: accueil, decouverte des besoins, traitement des objections, closing\"\n\ndef test_call_analysis_structure():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"Client Enterprise, secteur Finance\")\n    assert isinstance(result, CallAnalysis)\n    assert 0 <= result.quality_score <= 100\n    assert len(result.key_points) >= 1\n    assert result.overall_sentiment in list(Sentiment)\n\ndef test_objection_detection():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"\")\n    assert len(result.objections) >= 1\n    assert any(\"délai\" in obj.text.lower() or \"mise en place\" in obj.text.lower() for obj in result.objections)\n\ndef test_commitment_extraction():\n    result = analyze_call(SAMPLE_TRANSCRIPT, EVAL_GRID, \"\")\n    assert len(result.commitments) >= 0  # Peut ne pas y avoir d'engagement formel\n    assert len(result.next_steps) >= 1",
             filename: "test_analyzer.py",
           },
         ],
@@ -13274,7 +13274,7 @@ def test_traduction_japonais():
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-generation-rapports",
+    slug: "agent-génération-rapports",
     title: "Agent de Génération Automatique de Rapports",
     subtitle: "Générez automatiquement des rapports hebdomadaires et mensuels à partir de sources de données multiples",
     problem:
@@ -13359,11 +13359,11 @@ def test_traduction_japonais():
       {
         title: "Analyse et commentaires par le LLM",
         content:
-          "Envoyez les KPIs calculés et les données agrégées au LLM pour générer des commentaires analytiques en langage naturel. L'agent identifie les tendances, les risques et les recommandations.",
+          "Envoyez les KPIs calculés et les données agrégées au LLM pour générer des commentaires analytiques en langage naturel. L'agent identifié les tendances, les risques et les recommandations.",
         codeSnippets: [
           {
             language: "python",
-            code: "import anthropic\nimport json\n\nclient = anthropic.Anthropic()\n\ndef generate_analysis(kpis: list[KPI], raw_data_summary: str, previous_report_summary: str) -> dict:\n    kpi_text = \"\\n\".join(\n        \"{name}: {value} {unit} (variation: {var}%, cible: {target})\".format(\n            name=k.name, value=k.value, unit=k.unit,\n            var=round(k.variation_pct, 1) if k.variation_pct else \"N/A\",\n            target=k.target or \"N/A\"\n        )\n        for k in kpis\n    )\n    prompt = (\n        \"Tu es un analyste financier senior. Analyse ces KPIs et genere :\\n\"\n        \"1. Un commentaire executif (3-5 phrases)\\n\"\n        \"2. Les points positifs (max 3)\\n\"\n        \"3. Les points d'attention (max 3)\\n\"\n        \"4. Les recommandations (max 3)\\n\"\n        \"5. Les anomalies detectees\\n\\n\"\n        \"KPIs:\\n{kpis}\\n\\n\"\n        \"Resume des donnees:\\n{data}\\n\\n\"\n        \"Rapport precedent:\\n{previous}\\n\\n\"\n        \"Retourne un JSON structure.\"\n    ).format(kpis=kpi_text, data=raw_data_summary, previous=previous_report_summary)\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return json.loads(message.content[0].text)",
+            code: "import anthropic\nimport json\n\nclient = anthropic.Anthropic()\n\ndef generate_analysis(kpis: list[KPI], raw_data_summary: str, previous_report_summary: str) -> dict:\n    kpi_text = \"\\n\".join(\n        \"{name}: {value} {unit} (variation: {var}%, cible: {target})\".format(\n            name=k.name, value=k.value, unit=k.unit,\n            var=round(k.variation_pct, 1) if k.variation_pct else \"N/A\",\n            target=k.target or \"N/A\"\n        )\n        for k in kpis\n    )\n    prompt = (\n        \"Tu es un analyste financier senior. Analyse ces KPIs et généré :\\n\"\n        \"1. Un commentaire executif (3-5 phrases)\\n\"\n        \"2. Les points positifs (max 3)\\n\"\n        \"3. Les points d'attention (max 3)\\n\"\n        \"4. Les recommandations (max 3)\\n\"\n        \"5. Les anomalies detectees\\n\\n\"\n        \"KPIs:\\n{kpis}\\n\\n\"\n        \"Resume des données:\\n{data}\\n\\n\"\n        \"Rapport precedent:\\n{previous}\\n\\n\"\n        \"Retourne un JSON structure.\"\n    ).format(kpis=kpi_text, data=raw_data_summary, previous=previous_report_summary)\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return json.loads(message.content[0].text)",
             filename: "analysis.py",
           },
         ],
@@ -13387,7 +13387,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "import schedule\nimport time\nimport smtplib\nfrom email.mime.multipart import MIMEMultipart\nfrom email.mime.base import MIMEBase\nfrom email.mime.text import MIMEText\nfrom email import encoders\nfrom datetime import datetime, timedelta\n\ndef run_weekly_report(config: dict):\n    date_to = datetime.now().strftime(\"%Y-%m-%d\")\n    date_from = (datetime.now() - timedelta(days=7)).strftime(\"%Y-%m-%d\")\n    prev_from = (datetime.now() - timedelta(days=14)).strftime(\"%Y-%m-%d\")\n    prev_to = date_from\n    # Collecte des donnees\n    erp = ERPConnector(config[\"erp_dsn\"]).fetch_data(date_from, date_to)\n    prev_erp = ERPConnector(config[\"erp_dsn\"]).fetch_data(prev_from, prev_to)\n    crm = CRMConnector(config[\"crm_url\"], config[\"crm_key\"]).fetch_data(date_from, date_to)\n    # Calcul KPIs\n    kpis = compute_financial_kpis(erp, prev_erp, config[\"targets\"])\n    # Analyse LLM\n    analysis = generate_analysis(kpis, erp.describe().to_string(), \"\")\n    # Graphique\n    chart = create_kpi_chart(kpis)\n    # Generation PDF\n    pdf_bytes = generate_pdf_report(kpis, analysis, chart, date_from + \" au \" + date_to)\n    # Envoi email\n    send_report_email(config[\"recipients\"], pdf_bytes, date_from + \" au \" + date_to)\n\ndef send_report_email(recipients: list[str], pdf_bytes: bytes, period: str):\n    msg = MIMEMultipart()\n    msg[\"Subject\"] = \"Rapport hebdomadaire - \" + period\n    msg[\"From\"] = \"rapports@entreprise.fr\"\n    msg[\"To\"] = \", \".join(recipients)\n    msg.attach(MIMEText(\"Veuillez trouver ci-joint le rapport hebdomadaire.\", \"plain\"))\n    attachment = MIMEBase(\"application\", \"pdf\")\n    attachment.set_payload(pdf_bytes)\n    encoders.encode_base64(attachment)\n    attachment.add_header(\"Content-Disposition\", \"attachment\", filename=\"rapport.pdf\")\n    msg.attach(attachment)\n    with smtplib.SMTP_SSL(\"smtp.entreprise.fr\", 465) as server:\n        server.login(\"rapports@entreprise.fr\", \"password\")\n        server.send_message(msg)\n\nschedule.every().monday.at(\"08:00\").do(run_weekly_report, config=CONFIG)\n\nwhile True:\n    schedule.run_pending()\n    time.sleep(60)",
+            code: "import schedule\nimport time\nimport smtplib\nfrom email.mime.multipart import MIMEMultipart\nfrom email.mime.base import MIMEBase\nfrom email.mime.text import MIMEText\nfrom email import encoders\nfrom datetime import datetime, timedelta\n\ndef run_weekly_report(config: dict):\n    date_to = datetime.now().strftime(\"%Y-%m-%d\")\n    date_from = (datetime.now() - timedelta(days=7)).strftime(\"%Y-%m-%d\")\n    prev_from = (datetime.now() - timedelta(days=14)).strftime(\"%Y-%m-%d\")\n    prev_to = date_from\n    # Collecte des données\n    erp = ERPConnector(config[\"erp_dsn\"]).fetch_data(date_from, date_to)\n    prev_erp = ERPConnector(config[\"erp_dsn\"]).fetch_data(prev_from, prev_to)\n    crm = CRMConnector(config[\"crm_url\"], config[\"crm_key\"]).fetch_data(date_from, date_to)\n    # Calcul KPIs\n    kpis = compute_financial_kpis(erp, prev_erp, config[\"targets\"])\n    # Analyse LLM\n    analysis = generate_analysis(kpis, erp.describe().to_string(), \"\")\n    # Graphique\n    chart = create_kpi_chart(kpis)\n    # Generation PDF\n    pdf_bytes = generate_pdf_report(kpis, analysis, chart, date_from + \" au \" + date_to)\n    # Envoi email\n    send_report_email(config[\"recipients\"], pdf_bytes, date_from + \" au \" + date_to)\n\ndef send_report_email(recipients: list[str], pdf_bytes: bytes, period: str):\n    msg = MIMEMultipart()\n    msg[\"Subject\"] = \"Rapport hebdomadaire - \" + period\n    msg[\"From\"] = \"rapports@entreprise.fr\"\n    msg[\"To\"] = \", \".join(recipients)\n    msg.attach(MIMEText(\"Veuillez trouver ci-joint le rapport hebdomadaire.\", \"plain\"))\n    attachment = MIMEBase(\"application\", \"pdf\")\n    attachment.set_payload(pdf_bytes)\n    encoders.encode_base64(attachment)\n    attachment.add_header(\"Content-Disposition\", \"attachment\", filename=\"rapport.pdf\")\n    msg.attach(attachment)\n    with smtplib.SMTP_SSL(\"smtp.entreprise.fr\", 465) as server:\n        server.login(\"rapports@entreprise.fr\", \"password\")\n        server.send_message(msg)\n\nschedule.every().monday.at(\"08:00\").do(run_weekly_report, config=CONFIG)\n\nwhile True:\n    schedule.run_pending()\n    time.sleep(60)",
             filename: "scheduler.py",
           },
         ],
@@ -13427,24 +13427,24 @@ def test_traduction_japonais():
     storytelling: {
       sector: "Finance / Services",
       persona: "Marc, Directeur Administratif et Financier dans un cabinet de conseil (120 salaries)",
-      painPoint: "Chaque lundi matin, Marc et son controleur de gestion passent 4 heures a consolider les donnees de 5 sources differentes (ERP Sage, CRM HubSpot, fichier RH Excel, outil de facturation, et reporting projet) pour produire le rapport hebdomadaire de direction. Le rapport arrive systematiquement mardi apres-midi au lieu de lundi 9h. Les erreurs de copier-coller representent 12% des chiffres, et le DAF a deja presente un CA faux de 35 000 EUR en comite de direction.",
-      story: "Marc a configure le workflow n8n un vendredi. Le lundi suivant a 8h05, le rapport etait dans sa boite mail, genere automatiquement a partir des 5 sources. Les KPIs etaient calcules, les graphiques generes, et l'IA avait meme ajoute un commentaire alertant sur une baisse de 8% de la marge sur le pole digital — un signal que l'equipe n'avait pas detecte depuis 3 semaines.",
-      result: "En 2 mois : temps de preparation du rapport passe de 4h a 5 minutes de relecture. Zero erreur de chiffres depuis la mise en place. Detection anticipee de 4 anomalies financieres qui auraient ete vues avec 2 a 3 semaines de retard. Le controleur de gestion a pu se recentrer sur l'analyse strategique.",
+      painPoint: "Chaque lundi matin, Marc et son contrôleur de gestion passent 4 heures a consolider les données de 5 sources differentes (ERP Sage, CRM HubSpot, fichier RH Excel, outil de facturation, et reporting projet) pour produire le rapport hebdomadaire de direction. Le rapport arrive systematiquement mardi apres-midi au lieu de lundi 9h. Les erreurs de copier-coller representent 12% des chiffres, et le DAF a deja présenté un CA faux de 35 000 EUR en comite de direction.",
+      story: "Marc a configure le workflow n8n un vendredi. Le lundi suivant a 8h05, le rapport etait dans sa boite mail, généré automatiquement a partir des 5 sources. Les KPIs etaient calcules, les graphiques generes, et l'IA avait meme ajoute un commentaire alertant sur une baisse de 8% de la marge sur le pole digital — un signal que l'équipe n'avait pas détecté depuis 3 semaines.",
+      result: "En 2 mois : temps de preparation du rapport passé de 4h a 5 minutes de relecture. Zero erreur de chiffres depuis la mise en place. Detection anticipee de 4 anomalies financières qui auraient ete vues avec 2 a 3 semaines de retard. Le contrôleur de gestion a pu se recentrer sur l'analyse stratégique.",
     },
     beforeAfter: {
       inputLabel: "Donnees brutes multi-sources",
-      inputText: "ERP Sage : CA semaine = 245 800 EUR, charges = 189 200 EUR | CRM HubSpot : 12 deals signes, pipeline = 890 000 EUR | RH : 118 collaborateurs, 3 departs, 2 arrivees | Facturation : 23 factures emises, 8 en retard (+30 jours) | Projets : taux d'occupation 87%, 3 projets en alerte rentabilite",
+      inputText: "ERP Sage : CA semaine = 245 800 EUR, charges = 189 200 EUR | CRM HubSpot : 12 deals signes, pipeline = 890 000 EUR | RH : 118 collaborateurs, 3 departs, 2 arrivees | Facturation : 23 factures emises, 8 en retard (+30 jours) | Projets : taux d'occupation 87%, 3 projets en alerte rentabilité",
       outputFields: [
         { label: "KPI Chiffre d'affaires", value: "245 800 EUR (+3,2% vs S-1) - Objectif atteint a 102%" },
         { label: "Marge brute", value: "56 600 EUR (23,0%) - Alerte : baisse de 2,1 points vs S-1" },
-        { label: "Commentaire IA", value: "La marge brute se degrade pour la 3e semaine consecutive sur le pole Digital. Recommandation : revoir les staffings des projets P-2024-089 et P-2024-112 dont la rentabilite est sous le seuil de 20%." },
+        { label: "Commentaire IA", value: "La marge brute se dégradé pour la 3e semaine consecutive sur le pole Digital. Recommandation : revoir les staffings des projets P-2024-089 et P-2024-112 dont la rentabilité est sous le seuil de 20%." },
         { label: "Tresorerie", value: "8 factures en retard pour 67 400 EUR — relance automatique suggeree" },
         { label: "Pipeline commercial", value: "890 000 EUR dont 340 000 EUR en phase de negociation finale" },
       ],
       beforeContext: "Donnees consolidees de 5 sources · Periode S04-2025",
       afterLabel: "Generation IA",
       afterDuration: "45 secondes",
-      afterSummary: "Rapport PDF de 8 pages genere avec graphiques, commentaires et alertes",
+      afterSummary: "Rapport PDF de 8 pages généré avec graphiques, commentaires et alertes",
     },
     roiEstimator: {
       label: "Combien de rapports produisez-vous par semaine ?",
@@ -13455,51 +13455,51 @@ def test_traduction_japonais():
     },
     faq: [
       {
-        question: "Quelles sources de donnees puis-je connecter au workflow de generation de rapports ?",
-        answer: "Le workflow supporte toutes les sources accessibles par API ou base de donnees : ERP (Sage, SAP, Odoo), CRM (HubSpot, Salesforce, Pipedrive), bases SQL (PostgreSQL, MySQL), fichiers Google Sheets/Excel, outils de facturation (Pennylane, Sellsy), et outils RH (Lucca, PayFit). Pour les sources sans API, un export CSV automatise via n8n est possible.",
+        question: "Quelles sources de données puis-je connecter au workflow de génération de rapports ?",
+        answer: "Le workflow supporte toutes les sources accessibles par API ou base de données : ERP (Sage, SAP, Odoo), CRM (HubSpot, Salesforce, Pipedrive), bases SQL (PostgreSQL, MySQL), fichiers Google Sheets/Excel, outils de facturation (Pennylane, Sellsy), et outils RH (Lucca, PayFit). Pour les sources sans API, un export CSV automatise via n8n est possible.",
       },
       {
-        question: "Quel est le cout par rapport genere avec ce workflow ?",
-        answer: "Le cout LLM pour l'analyse et les commentaires est d'environ 0,02 a 0,05 EUR par rapport avec Claude Sonnet. Les appels aux sources de donnees sont generalement gratuits (API internes). Le cout total est inferieur a 0,10 EUR par rapport, contre 50 a 100 EUR de cout humain (2-4h de travail DAF/controleur de gestion).",
+        question: "Quel est le cout par rapport généré avec ce workflow ?",
+        answer: "Le cout LLM pour l'analyse et les commentaires est d'environ 0,02 a 0,05 EUR par rapport avec Claude Sonnet. Les appels aux sources de données sont generalement gratuits (API internes). Le cout total est inferieur a 0,10 EUR par rapport, contre 50 a 100 EUR de cout humain (2-4h de travail DAF/contrôleur de gestion).",
       },
       {
-        question: "Comment garantir la fiabilite des chiffres dans le rapport genere ?",
-        answer: "Le LLM ne calcule jamais les KPIs : les calculs sont effectues par le noeud Code de n8n avec des formules deterministes et verificables. Le LLM intervient uniquement pour generer les commentaires analytiques a partir des KPIs deja calcules. Un mecanisme de validation croise les totaux entre les sources et alerte en cas d'incoherence.",
+        question: "Comment garantir la fiabilité des chiffres dans le rapport généré ?",
+        answer: "Le LLM ne calcule jamais les KPIs : les calculs sont effectues par le noeud Code de n8n avec des formules deterministes et verificables. Le LLM intervient uniquement pour générer les commentaires analytiques a partir des KPIs deja calcules. Un mecanisme de validation croise les totaux entre les sources et alerte en cas d'incoherence.",
       },
       {
         question: "Puis-je personnaliser le template et les KPIs du rapport ?",
-        answer: "Oui, le template est entierement configurable dans le noeud Code (HTML/Jinja2). Vous definissez vos propres KPIs, seuils d'alerte, graphiques et mise en page. Le prompt LLM est egalement adaptable pour cibler les commentaires sur vos priorites strategiques (marge, tresorerie, RH, commercial).",
+        answer: "Oui, le template est entièrement configurable dans le noeud Code (HTML/Jinja2). Vous definissez vos propres KPIs, seuils d'alerte, graphiques et mise en page. Le prompt LLM est egalement adaptable pour cibler les commentaires sur vos priorites strategiques (marge, tresorerie, RH, commercial).",
       },
       {
-        question: "Le rapport peut-il etre envoye a des destinataires differents selon les donnees ?",
-        answer: "Oui, le noeud Switch de n8n permet de router le rapport vers differents destinataires. Par exemple : rapport complet au DAF et DG, rapport commercial au directeur des ventes (sans les donnees RH), et rapport operationnel aux chefs de projet (uniquement leur perimetre). Chaque version est generee avec les donnees filtrees correspondantes.",
+        question: "Le rapport peut-il etre envoye a des destinataires differents selon les données ?",
+        answer: "Oui, le noeud Switch de n8n permet de router le rapport vers differents destinataires. Par exemple : rapport complet au DAF et DG, rapport commercial au directeur des ventes (sans les données RH), et rapport opérationnel aux chefs de projet (uniquement leur périmètre). Chaque version est générée avec les données filtrees correspondantes.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'a 5 workflows) ou n8n self-hosted",
       "Une cle API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces API ou base de donnees a vos sources de donnees (ERP, CRM, comptabilite)",
-      "Environ 2h pour configurer le workflow complet et les connecteurs de donnees",
+      "Acces API ou base de données a vos sources de données (ERP, CRM, comptabilite)",
+      "Environ 2h pour configurer le workflow complet et les connecteurs de données",
     ],
     n8nTutorial: [
       {
         nodeLabel: "Cron Trigger",
         nodeType: "Schedule Trigger",
         nodeIcon: "⏰",
-        description: "Ce noeud declenche la generation du rapport automatiquement selon un planning defini. Typiquement le lundi matin a 8h pour un rapport hebdomadaire, ou le 1er de chaque mois pour un rapport mensuel.",
-        configuration: "1. Ajoutez un noeud \"Schedule Trigger\" sur le canvas\n2. Mode : Cron\n3. Expression Cron : 0 8 * * 1 (tous les lundis a 8h)\n4. Timezone : Europe/Paris\n5. Pour un rapport mensuel, utilisez : 0 8 1 * * (le 1er de chaque mois a 8h)\n6. Activez le workflow (toggle en haut a droite) pour que le declenchement automatique fonctionne",
+        description: "Ce noeud déclenché la génération du rapport automatiquement selon un planning defini. Typiquement le lundi matin a 8h pour un rapport hebdomadaire, ou le 1er de chaque mois pour un rapport mensuel.",
+        configuration: "1. Ajoutez un noeud \"Schedule Trigger\" sur le canvas\n2. Mode : Cron\n3. Expression Cron : 0 8 * * 1 (tous les lundis a 8h)\n4. Timezone : Europe/Paris\n5. Pour un rapport mensuel, utilisez : 0 8 1 * * (le 1er de chaque mois a 8h)\n6. Activez le workflow (toggle en haut a droite) pour que le déclenchement automatique fonctionne",
         expectedOutput: "{ \"timestamp\": \"2025-02-10T08:00:00.000+01:00\" }",
-        customization: "Vous pouvez ajouter un 2e trigger Webhook pour declencher le rapport a la demande depuis Slack ou un bouton web. Connectez les deux triggers au meme noeud suivant.",
-        errorHandling: "Le cron ne se declenche que si le workflow est active. Verifiez le toggle en haut a droite. Si le rapport n'est pas genere, verifiez les logs d'execution dans l'onglet Executions.",
+        customization: "Vous pouvez ajouter un 2e trigger Webhook pour déclencher le rapport a la demande depuis Slack ou un bouton web. Connectez les deux triggers au meme noeud suivant.",
+        errorHandling: "Le cron ne se déclenché que si le workflow est active. Verifiez le toggle en haut a droite. Si le rapport n'est pas généré, verifiez les logs d'exécution dans l'onglet Executions.",
       },
       {
-        nodeLabel: "Collecte donnees multi-sources",
+        nodeLabel: "Collecte données multi-sources",
         nodeType: "HTTP Request",
         nodeIcon: "🌐",
-        description: "Ce noeud (ou groupe de noeuds) interroge vos differentes sources de donnees en parallele : ERP pour les donnees financieres, CRM pour le pipeline commercial, base RH pour les effectifs. Chaque source retourne un jeu de donnees structure.",
-        configuration: "1. Ajoutez un noeud \"HTTP Request\" pour chaque source de donnees\n2. Pour un ERP avec API REST :\n   - Methode : GET\n   - URL : https://votre-erp.com/api/v1/ecritures?date_from={{ $now.minus(7, 'days').format('yyyy-MM-dd') }}&date_to={{ $now.format('yyyy-MM-dd') }}\n   - Authentication : Header Auth ou Bearer Token\n3. Pour une base PostgreSQL : utilisez un noeud \"Postgres\" natif\n   - Operation : Execute Query\n   - Query : SELECT * FROM ecritures WHERE date >= NOW() - INTERVAL '7 days'\n4. Connectez toutes les sources en parallele depuis le Cron Trigger\n5. Ajoutez un noeud \"Merge\" apres toutes les sources pour combiner les resultats",
+        description: "Ce noeud (ou groupe de noeuds) interroge vos differentes sources de données en parallele : ERP pour les données financières, CRM pour le pipeline commercial, base RH pour les effectifs. Chaque source retourne un jeu de données structure.",
+        configuration: "1. Ajoutez un noeud \"HTTP Request\" pour chaque source de données\n2. Pour un ERP avec API REST :\n   - Methode : GET\n   - URL : https://votre-erp.com/api/v1/ecritures?date_from={{ $now.minus(7, 'days').format('yyyy-MM-dd') }}&date_to={{ $now.format('yyyy-MM-dd') }}\n   - Authentication : Header Auth ou Bearer Token\n3. Pour une base PostgreSQL : utilisez un noeud \"Postgres\" natif\n   - Operation : Execute Query\n   - Query : SELECT * FROM ecritures WHERE date >= NOW() - INTERVAL '7 days'\n4. Connectez toutes les sources en parallele depuis le Cron Trigger\n5. Ajoutez un noeud \"Merge\" apres toutes les sources pour combiner les résultats",
         expectedOutput: "{ \"erp_data\": [...], \"crm_data\": [...], \"rh_data\": [...] }",
-        errorHandling: "Si une source est indisponible, ajoutez un noeud IF apres chaque source pour verifier que la reponse n'est pas vide. En cas d'erreur, le rapport peut etre genere partiellement avec une mention '[Donnees ERP indisponibles]'.",
+        errorHandling: "Si une source est indisponible, ajoutez un noeud IF apres chaque source pour vérifier que la réponse n'est pas vide. En cas d'erreur, le rapport peut etre généré partiellement avec une mention '[Donnees ERP indisponibles]'.",
         variants: [
           {
             toolName: "PostgreSQL (ERP)",
@@ -13509,10 +13509,10 @@ def test_traduction_japonais():
             errorHandling: "Erreur de connexion : verifiez que l'IP de n8n est autorisee dans le firewall de votre serveur PostgreSQL. Timeout : augmentez le timeout dans les options du noeud.",
           },
           {
-            toolName: "Google Sheets (donnees)",
+            toolName: "Google Sheets (données)",
             toolIcon: "📊",
             isFree: true,
-            configuration: "1. Ajoutez un noeud \"Google Sheets\"\n2. Operation : Read Rows\n3. Document : selectionnez votre fichier de donnees\n4. Sheet : la feuille contenant vos KPIs\n5. Filtres : colonne 'date' >= {{ $now.minus(7, 'days').format('yyyy-MM-dd') }}\n6. Authentication : credential Google Sheets OAuth2",
+            configuration: "1. Ajoutez un noeud \"Google Sheets\"\n2. Operation : Read Rows\n3. Document : sélectionnez votre fichier de données\n4. Sheet : la feuille contenant vos KPIs\n5. Filtres : colonne 'date' >= {{ $now.minus(7, 'days').format('yyyy-MM-dd') }}\n6. Authentication : credential Google Sheets OAuth2",
             errorHandling: "Sheet not found : verifiez que le document est partage avec le compte de service n8n.",
           },
           {
@@ -13527,7 +13527,7 @@ def test_traduction_japonais():
         nodeLabel: "Code — Calcul des KPIs",
         nodeType: "Code",
         nodeIcon: "⚙️",
-        description: "Ce noeud JavaScript calcule tous les KPIs a partir des donnees brutes collectees. Les calculs sont deterministes (pas de LLM ici) pour garantir la fiabilite des chiffres. Il produit un objet structure avec les KPIs, les variations, et les alertes.",
+        description: "Ce noeud JavaScript calcule tous les KPIs a partir des données brutes collectees. Les calculs sont deterministes (pas de LLM ici) pour garantir la fiabilité des chiffres. Il produit un objet structure avec les KPIs, les variations, et les alertes.",
         configuration: "1. Ajoutez un noeud \"Code\"\n2. Langage : JavaScript\n3. Collez le code suivant :\n\nconst erp = $('Collecte ERP').all().map(i => i.json);\nconst crm = $('Collecte CRM').all().map(i => i.json);\n\n// Calcul CA\nconst ca = erp.filter(e => e.compte.startsWith('70')).reduce((sum, e) => sum + e.total_credit, 0);\nconst charges = erp.filter(e => e.compte.startsWith('6')).reduce((sum, e) => sum + e.total_debit, 0);\nconst marge = ca - charges;\nconst tauxMarge = ca > 0 ? (marge / ca * 100).toFixed(1) : 0;\n\n// Pipeline CRM\nconst deals = crm.length;\nconst pipeline = crm.reduce((sum, d) => sum + (d.amount || 0), 0);\n\nconst kpis = {\n  ca, charges, marge, tauxMarge, deals, pipeline,\n  alertes: []\n};\n\nif (parseFloat(tauxMarge) < 20) {\n  kpis.alertes.push('Taux de marge sous le seuil de 20% : ' + tauxMarge + '%');\n}\n\nreturn [{ json: kpis }];",
         expectedOutput: "{ \"ca\": 245800, \"charges\": 189200, \"marge\": 56600, \"tauxMarge\": \"23.0\", \"deals\": 12, \"pipeline\": 890000, \"alertes\": [] }",
         customization: "Adaptez les comptes comptables (70*, 6*) a votre plan de comptes. Ajoutez vos propres seuils d'alerte. Pour les KPIs RH, ajoutez un calcul d'effectif et de taux d'absenteisme.",
@@ -13537,7 +13537,7 @@ def test_traduction_japonais():
         nodeLabel: "Appel LLM — Analyse et commentaires",
         nodeType: "HTTP Request",
         nodeIcon: "🤖",
-        description: "Ce noeud envoie les KPIs calcules au LLM pour generer des commentaires analytiques en langage naturel : synthese executive, points positifs, points de vigilance, et recommandations. Le LLM ne calcule rien, il interprete les chiffres deja fiables.",
+        description: "Ce noeud envoie les KPIs calcules au LLM pour générer des commentaires analytiques en langage naturel : synthese executive, points positifs, points de vigilance, et recommandations. Le LLM ne calcule rien, il interprete les chiffres deja fiables.",
         configuration: "Choisissez votre fournisseur LLM ci-dessous.\nLe prompt envoie les KPIs structures et demande une analyse executive.",
         expectedOutput: "{ \"synthese\": \"Le CA hebdomadaire progresse de 3,2%...\", \"points_positifs\": [...], \"vigilance\": [...], \"recommandations\": [...] }",
         errorHandling: "Erreur 429 (rate limit) : ajoutez un noeud Wait de 2 secondes avant l'appel. Reponse non-JSON : renforcez le prompt avec 'Reponds UNIQUEMENT en JSON valide'.",
@@ -13545,27 +13545,27 @@ def test_traduction_japonais():
           {
             toolName: "OpenAI (GPT-4o-mini)",
             toolIcon: "🟢",
-            configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : POST\n3. URL : https://api.openai.com/v1/chat/completions\n4. Authentication : Predefined Credential Type > OpenAI API\n5. Body JSON :\n{\n  \"model\": \"gpt-4o-mini\",\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un DAF senior. Analyse ces KPIs et genere un JSON avec : synthese (3-5 phrases), points_positifs (max 3), vigilance (max 3), recommandations (max 3). KPIs : {{ JSON.stringify($json) }}\" }]\n}\n\nCout estime : ~0,005 EUR par rapport",
+            configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : POST\n3. URL : https://api.openai.com/v1/chat/completions\n4. Authentication : Predefined Credential Type > OpenAI API\n5. Body JSON :\n{\n  \"model\": \"gpt-4o-mini\",\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un DAF senior. Analyse ces KPIs et généré un JSON avec : synthese (3-5 phrases), points_positifs (max 3), vigilance (max 3), recommandations (max 3). KPIs : {{ JSON.stringify($json) }}\" }]\n}\n\nCout estime : ~0,005 EUR par rapport",
             errorHandling: "Erreur 401 : cle API invalide. Erreur 429 : rate limit depasse.",
           },
           {
             toolName: "Anthropic (Claude)",
             toolIcon: "🟤",
-            configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : POST\n3. URL : https://api.anthropic.com/v1/messages\n4. Headers : x-api-key: VOTRE_CLE, anthropic-version: 2023-06-01, Content-Type: application/json\n5. Body JSON :\n{\n  \"model\": \"claude-sonnet-4-5-20250929\",\n  \"max_tokens\": 2048,\n  \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un DAF senior. Analyse ces KPIs et genere un JSON avec : synthese, points_positifs, vigilance, recommandations. KPIs : {{ JSON.stringify($json) }}\" }]\n}\n\nCout estime : ~0,01 EUR par rapport\nNote : la reponse est dans response.content[0].text",
+            configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : POST\n3. URL : https://api.anthropic.com/v1/messages\n4. Headers : x-api-key: VOTRE_CLE, anthropic-version: 2023-06-01, Content-Type: application/json\n5. Body JSON :\n{\n  \"model\": \"claude-sonnet-4-5-20250929\",\n  \"max_tokens\": 2048,\n  \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un DAF senior. Analyse ces KPIs et généré un JSON avec : synthese, points_positifs, vigilance, recommandations. KPIs : {{ JSON.stringify($json) }}\" }]\n}\n\nCout estime : ~0,01 EUR par rapport\nNote : la réponse est dans response.content[0].text",
             errorHandling: "Erreur 401 : cle API invalide. Erreur 529 : API surchargee, reessayez.",
           },
           {
             toolName: "Mistral (EU 🇪🇺)",
             toolIcon: "🔵",
-            configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : POST\n3. URL : https://api.mistral.ai/v1/chat/completions\n4. Headers : Authorization: Bearer VOTRE_CLE, Content-Type: application/json\n5. Body JSON :\n{\n  \"model\": \"mistral-large-latest\",\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un DAF senior. Analyse ces KPIs... {{ JSON.stringify($json) }}\" }]\n}\n\nAvantage : heberge en Europe (RGPD-friendly)",
-            errorHandling: "Meme format de reponse qu'OpenAI (response.choices[0].message.content).",
+            configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : POST\n3. URL : https://api.mistral.ai/v1/chat/completions\n4. Headers : Authorization: Bearer VOTRE_CLE, Content-Type: application/json\n5. Body JSON :\n{\n  \"model\": \"mistral-large-latest\",\n  \"temperature\": 0.2,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un DAF senior. Analyse ces KPIs... {{ JSON.stringify($json) }}\" }]\n}\n\nAvantage : hébergé en Europe (RGPD-friendly)",
+            errorHandling: "Meme format de réponse qu'OpenAI (response.choices[0].message.content).",
           },
           {
             toolName: "Ollama (gratuit, local)",
             toolIcon: "🦙",
             isFree: true,
-            configuration: "1. Installez Ollama : https://ollama.ai\n2. ollama pull llama3.1\n3. Noeud HTTP Request > POST > http://localhost:11434/v1/chat/completions\n4. Body : { \"model\": \"llama3.1\", \"temperature\": 0.2, \"messages\": [{ \"role\": \"user\", \"content\": \"...\" }] }\n5. Timeout : 60000ms (modeles locaux plus lents)\n\nCout : 0 EUR. Prerequis : 16 Go RAM recommande.",
-            errorHandling: "Connection refused : lancez 'ollama serve'. Reponse lente : essayez un modele plus petit (mistral:7b).",
+            configuration: "1. Installez Ollama : https://ollama.ai\n2. ollama pull llama3.1\n3. Noeud HTTP Request > POST > http://localhost:11434/v1/chat/completions\n4. Body : { \"model\": \"llama3.1\", \"temperature\": 0.2, \"messages\": [{ \"role\": \"user\", \"content\": \"...\" }] }\n5. Timeout : 60000ms (modèles locaux plus lents)\n\nCout : 0 EUR. Prerequis : 16 Go RAM recommandé.",
+            errorHandling: "Connection refused : lancez 'ollama serve'. Reponse lente : essayez un modèle plus petit (mistral:7b).",
           },
         ],
       },
@@ -13574,17 +13574,17 @@ def test_traduction_japonais():
         nodeType: "Code",
         nodeIcon: "⚙️",
         description: "Ce noeud assemble le rapport final en HTML a partir des KPIs calcules et des commentaires LLM. Le HTML inclut les graphiques (generes via SVG inline), les tableaux de KPIs et les commentaires analytiques.",
-        configuration: "1. Ajoutez un noeud \"Code\"\n2. Langage : JavaScript\n3. Le code genere un document HTML complet avec :\n   - En-tete avec date et periode\n   - Tableau des KPIs avec variations\n   - Graphiques en SVG inline (barres comparatives)\n   - Section commentaires LLM (synthese, alertes, recommandations)\n   - Pied de page avec mention 'Rapport genere automatiquement'\n4. Le HTML est retourne dans le champ 'html' de la sortie\n\nconst kpis = $('Code — Calcul KPIs').item.json;\nconst analyse = JSON.parse($('Appel LLM').item.json.choices[0].message.content);\n\nconst html = `<html><head><style>body{font-family:Arial;margin:40px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px}</style></head><body>\n<h1>Rapport Hebdomadaire — ${new Date().toLocaleDateString('fr-FR')}</h1>\n<h2>KPIs</h2>\n<table><tr><th>Indicateur</th><th>Valeur</th></tr>\n<tr><td>CA</td><td>${kpis.ca.toLocaleString('fr-FR')} EUR</td></tr>\n<tr><td>Marge</td><td>${kpis.marge.toLocaleString('fr-FR')} EUR (${kpis.tauxMarge}%)</td></tr>\n<tr><td>Pipeline</td><td>${kpis.pipeline.toLocaleString('fr-FR')} EUR</td></tr>\n</table>\n<h2>Analyse</h2><p>${analyse.synthese}</p>\n<h3>Recommandations</h3><ul>${(analyse.recommandations||[]).map(r => '<li>'+r+'</li>').join('')}</ul>\n</body></html>`;\n\nreturn [{ json: { html } }];",
+        configuration: "1. Ajoutez un noeud \"Code\"\n2. Langage : JavaScript\n3. Le code généré un document HTML complet avec :\n   - En-tete avec date et periode\n   - Tableau des KPIs avec variations\n   - Graphiques en SVG inline (barres comparatives)\n   - Section commentaires LLM (synthese, alertes, recommandations)\n   - Pied de page avec mention 'Rapport généré automatiquement'\n4. Le HTML est retourne dans le champ 'html' de la sortie\n\nconst kpis = $('Code — Calcul KPIs').item.json;\nconst analyse = JSON.parse($('Appel LLM').item.json.choices[0].message.content);\n\nconst html = `<html><head><style>body{font-family:Arial;margin:40px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px}</style></head><body>\n<h1>Rapport Hebdomadaire — ${new Date().toLocaleDateString('fr-FR')}</h1>\n<h2>KPIs</h2>\n<table><tr><th>Indicateur</th><th>Valeur</th></tr>\n<tr><td>CA</td><td>${kpis.ca.toLocaleString('fr-FR')} EUR</td></tr>\n<tr><td>Marge</td><td>${kpis.marge.toLocaleString('fr-FR')} EUR (${kpis.tauxMarge}%)</td></tr>\n<tr><td>Pipeline</td><td>${kpis.pipeline.toLocaleString('fr-FR')} EUR</td></tr>\n</table>\n<h2>Analyse</h2><p>${analyse.synthese}</p>\n<h3>Recommandations</h3><ul>${(analyse.recommandations||[]).map(r => '<li>'+r+'</li>').join('')}</ul>\n</body></html>`;\n\nreturn [{ json: { html } }];",
         expectedOutput: "{ \"html\": \"<html>...(rapport complet)...</html>\" }",
-        customization: "Adaptez le template HTML a votre charte graphique. Ajoutez des graphiques SVG plus elabores. Vous pouvez aussi generer un PDF en ajoutant un noeud HTTP Request vers une API de conversion HTML-to-PDF (ex: api2pdf.com).",
+        customization: "Adaptez le template HTML a votre charte graphique. Ajoutez des graphiques SVG plus elabores. Vous pouvez aussi générer un PDF en ajoutant un noeud HTTP Request vers une API de conversion HTML-to-PDF (ex: api2pdf.com).",
         errorHandling: "Si l'analyse LLM est vide, affichez un message par defaut. Verifiez que le JSON de l'analyse est bien parse avec un try/catch.",
       },
       {
         nodeLabel: "Envoi du rapport par email",
         nodeType: "Send Email",
         nodeIcon: "📧",
-        description: "Ce noeud envoie le rapport HTML genere aux destinataires configures. Pour les rapports PDF, une etape de conversion intermediaire est necessaire.",
-        configuration: "1. Ajoutez un noeud \"Send Email\" ou \"Gmail\"\n2. To : daf@entreprise.fr, dg@entreprise.fr\n3. Subject : Rapport hebdomadaire — {{ $now.format('dd/MM/yyyy') }}\n4. Email Type : HTML\n5. HTML Body : {{ $json.html }}\n6. Authentication : credential SMTP ou Gmail OAuth2\n\nPour ajouter le rapport en piece jointe PDF :\n- Ajoutez un noeud HTTP Request vers api2pdf.com/chrome/html\n- Body : { \"html\": \"{{ $json.html }}\" }\n- La reponse contient une URL de telechargement du PDF\n- Utilisez un noeud HTTP Request pour telecharger le PDF\n- Attachez-le a l'email via le champ Attachments",
+        description: "Ce noeud envoie le rapport HTML généré aux destinataires configures. Pour les rapports PDF, une étape de conversion intermediaire est nécessaire.",
+        configuration: "1. Ajoutez un noeud \"Send Email\" ou \"Gmail\"\n2. To : daf@entreprise.fr, dg@entreprise.fr\n3. Subject : Rapport hebdomadaire — {{ $now.format('dd/MM/yyyy') }}\n4. Email Type : HTML\n5. HTML Body : {{ $json.html }}\n6. Authentication : credential SMTP ou Gmail OAuth2\n\nPour ajouter le rapport en piece jointe PDF :\n- Ajoutez un noeud HTTP Request vers api2pdf.com/chrome/html\n- Body : { \"html\": \"{{ $json.html }}\" }\n- La réponse contient une URL de telechargement du PDF\n- Utilisez un noeud HTTP Request pour telecharger le PDF\n- Attachez-le a l'email via le champ Attachments",
         expectedOutput: "Email envoye avec succes aux destinataires avec le rapport en corps HTML ou en piece jointe PDF.",
         variants: [
           {
@@ -13597,7 +13597,7 @@ def test_traduction_japonais():
           {
             toolName: "Slack (notification)",
             toolIcon: "💜",
-            configuration: "1. Ajoutez un noeud \"Slack\"\n2. Resource : Message\n3. Channel : #rapports-direction\n4. Text : Rapport hebdomadaire genere. CA : {{ $('Code — Calcul KPIs').item.json.ca }} EUR. Consultez votre email pour le rapport complet.\n5. Authentication : credential Slack OAuth2",
+            configuration: "1. Ajoutez un noeud \"Slack\"\n2. Resource : Message\n3. Channel : #rapports-direction\n4. Text : Rapport hebdomadaire généré. CA : {{ $('Code — Calcul KPIs').item.json.ca }} EUR. Consultez votre email pour le rapport complet.\n5. Authentication : credential Slack OAuth2",
             errorHandling: "channel_not_found : invitez le bot dans le canal avec /invite @votre-bot.",
           },
         ],
@@ -13606,7 +13606,7 @@ def test_traduction_japonais():
         nodeLabel: "Sauvegarde audit",
         nodeType: "Postgres",
         nodeIcon: "💾",
-        description: "Ce noeud sauvegarde un log d'audit de chaque execution : date, KPIs generes, destinataires, et statut d'envoi. Essentiel pour la tracabilite et le suivi historique.",
+        description: "Ce noeud sauvegarde un log d'audit de chaque exécution : date, KPIs generes, destinataires, et statut d'envoi. Essentiel pour la tracabilite et le suivi historique.",
         configuration: "1. Ajoutez un noeud \"Postgres\"\n2. Operation : Insert\n3. Table : rapport_audit\n4. Colonnes :\n   - date_generation : {{ $now.toISO() }}\n   - periode : {{ $now.minus(7, 'days').format('yyyy-MM-dd') }} au {{ $now.format('yyyy-MM-dd') }}\n   - kpis : {{ JSON.stringify($('Code — Calcul KPIs').item.json) }}\n   - statut : succes\n5. Credential : PostgreSQL\n\nSi vous n'avez pas PostgreSQL, utilisez un noeud Google Sheets pour loguer les executions.",
         expectedOutput: "Ligne inseree dans la table rapport_audit avec horodatage et resume des KPIs.",
         variants: [
@@ -13614,7 +13614,7 @@ def test_traduction_japonais():
             toolName: "Google Sheets (audit)",
             toolIcon: "📊",
             isFree: true,
-            configuration: "1. Ajoutez un noeud \"Google Sheets\"\n2. Operation : Append Row\n3. Document : 'Audit Rapports'\n4. Colonnes : Date | CA | Marge | Pipeline | Statut\n5. Mapping depuis les donnees du noeud Code KPIs",
+            configuration: "1. Ajoutez un noeud \"Google Sheets\"\n2. Operation : Append Row\n3. Document : 'Audit Rapports'\n4. Colonnes : Date | CA | Marge | Pipeline | Statut\n5. Mapping depuis les données du noeud Code KPIs",
             errorHandling: "Quota exceeded : peu probable en usage normal (1 ligne/semaine).",
           },
           {
@@ -13637,7 +13637,7 @@ def test_traduction_japonais():
     problem:
       "Les FAQ deviennent rapidement obsolètes car leur mise à jour est manuelle. Les nouvelles questions récurrentes ne sont pas détectées à temps, les clients ne trouvent pas de réponses à jour, et le volume de tickets augmente inutilement sur des sujets déjà documentés mais mal référencés.",
     value:
-      "Un agent IA analyse en continu les tickets de support entrants, identifie les questions récurrentes non couvertes par la FAQ, génère automatiquement de nouvelles entrées, et propose la mise à jour des réponses existantes devenues obsolètes. Le taux de self-service augmente significativement.",
+      "Un agent IA analyse en continu les tickets de support entrants, identifié les questions récurrentes non couvertes par la FAQ, génère automatiquement de nouvelles entrées, et propose la mise à jour des réponses existantes devenues obsolètes. Le taux de self-service augmente significativement.",
     inputs: [
       "Tickets de support résolus (texte question + réponse)",
       "FAQ existante (questions, réponses, catégories)",
@@ -13673,7 +13673,7 @@ def test_traduction_japonais():
       { name: "Ollama + Llama 3", category: "LLM", isFree: true },
       { name: "Make.com", category: "Orchestration", isFree: false },
     ],
-    architectureDiagram: "+------------------+     +------------------+     +------------------+\n|   Tickets        |---->|   Agent LLM      |---->|   FAQ CMS        |\n|   Support        |     |   (Analyse +     |     |   (Publication)  |\n+------------------+     |   Generation)    |     +------------------+\n                          +--------+---------+\n+------------------+               |\n|   Recherches     |------->-------+\n|   sans resultat  |\n+------------------+",
+    architectureDiagram: "+------------------+     +------------------+     +------------------+\n|   Tickets        |---->|   Agent LLM      |---->|   FAQ CMS        |\n|   Support        |     |   (Analyse +     |     |   (Publication)  |\n+------------------+     |   Generation)    |     +------------------+\n                          +--------+---------+\n+------------------+               |\n|   Recherches     |------->-------+\n|   sans résultat  |\n+------------------+",
     tutorial: [
       {
         title: "Prérequis et installation",
@@ -13730,7 +13730,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "import anthropic\n\nclient = anthropic.Anthropic()\n\ndef generate_faq_entry(cluster: QuestionCluster, resolved_tickets: list[dict], existing_faq: list[dict]) -> FAQEntry:\n    tickets_text = \"\\n---\\n\".join(\n        \"Q: {q}\\nR: {r}\".format(q=t[\"subject\"], r=t[\"resolution\"][:500])\n        for t in resolved_tickets[:5]\n    )\n    faq_context = \"\\n\".join(\n        \"- {q}\".format(q=f[\"question\"]) for f in existing_faq[:20]\n    )\n    prompt = (\n        \"Tu es un redacteur de FAQ professionnel.\\n\"\n        \"A partir des tickets de support resolus ci-dessous, genere une entree FAQ.\\n\\n\"\n        \"Tickets resolus sur ce sujet:\\n{tickets}\\n\\n\"\n        \"FAQ existante (pour eviter les doublons):\\n{faq}\\n\\n\"\n        \"Question representative: {question}\\n\\n\"\n        \"Genere un JSON avec: question (reformulee clairement), \"\n        \"answer (reponse complete et structuree), category, tags (liste), \"\n        \"relevance_score (0-1 selon la pertinence)\"\n    ).format(\n        tickets=tickets_text,\n        faq=faq_context,\n        question=cluster.representative_question\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=2048,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    data = FAQEntry.model_validate_json(message.content[0].text)\n    data.source_ticket_ids = [t[\"id\"] for t in resolved_tickets[:5]]\n    data.status = FAQStatus.PENDING_REVIEW\n    return data",
+            code: "import anthropic\n\nclient = anthropic.Anthropic()\n\ndef generate_faq_entry(cluster: QuestionCluster, resolved_tickets: list[dict], existing_faq: list[dict]) -> FAQEntry:\n    tickets_text = \"\\n---\\n\".join(\n        \"Q: {q}\\nR: {r}\".format(q=t[\"subject\"], r=t[\"resolution\"][:500])\n        for t in resolved_tickets[:5]\n    )\n    faq_context = \"\\n\".join(\n        \"- {q}\".format(q=f[\"question\"]) for f in existing_faq[:20]\n    )\n    prompt = (\n        \"Tu es un redacteur de FAQ professionnel.\\n\"\n        \"A partir des tickets de support resolus ci-dessous, généré une entree FAQ.\\n\\n\"\n        \"Tickets resolus sur ce sujet:\\n{tickets}\\n\\n\"\n        \"FAQ existante (pour eviter les doublons):\\n{faq}\\n\\n\"\n        \"Question representative: {question}\\n\\n\"\n        \"Genere un JSON avec: question (reformulee clairement), \"\n        \"answer (réponse complète et structuree), category, tags (liste), \"\n        \"relevance_score (0-1 selon la pertinence)\"\n    ).format(\n        tickets=tickets_text,\n        faq=faq_context,\n        question=cluster.representative_question\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=2048,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    data = FAQEntry.model_validate_json(message.content[0].text)\n    data.source_ticket_ids = [t[\"id\"] for t in resolved_tickets[:5]]\n    data.status = FAQStatus.PENDING_REVIEW\n    return data",
             filename: "generator.py",
           },
         ],
@@ -13754,7 +13754,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "import pytest\nfrom models import QuestionCluster, FAQEntry, FAQStatus\nfrom clustering import cluster_questions\nfrom generator import generate_faq_entry\n\ndef test_question_clustering():\n    tickets = [\n        {\"subject\": \"Comment reinitialiser mon mot de passe ?\", \"body\": \"Je n'arrive plus a me connecter\"},\n        {\"subject\": \"Mot de passe oublie\", \"body\": \"J'ai oublie mon mot de passe\"},\n        {\"subject\": \"Reset password\", \"body\": \"Comment changer mon mot de passe\"},\n        {\"subject\": \"Probleme connexion mot de passe\", \"body\": \"Mon mot de passe ne fonctionne plus\"},\n        {\"subject\": \"Facture introuvable\", \"body\": \"Je ne trouve pas ma facture\"},\n    ]\n    clusters = cluster_questions(tickets, eps=0.4)\n    # Les questions sur le mot de passe doivent etre regroupees\n    password_cluster = [c for c in clusters if \"mot de passe\" in c.representative_question.lower() or \"password\" in c.representative_question.lower()]\n    assert len(password_cluster) >= 1\n    assert password_cluster[0].ticket_count >= 3\n\ndef test_faq_generation_quality():\n    cluster = QuestionCluster(\n        representative_question=\"Comment reinitialiser mon mot de passe ?\",\n        similar_questions=[\"Mot de passe oublie\", \"Reset password\"],\n        ticket_count=15\n    )\n    resolved = [\n        {\"id\": \"T001\", \"subject\": \"Mot de passe oublie\", \"resolution\": \"Allez sur la page de connexion, cliquez sur Mot de passe oublie, entrez votre email, suivez le lien recu.\"},\n        {\"id\": \"T002\", \"subject\": \"Reset password\", \"resolution\": \"Utilisez le lien de reinitialisation disponible sur la page login.\"},\n    ]\n    entry = generate_faq_entry(cluster, resolved, [])\n    assert isinstance(entry, FAQEntry)\n    assert entry.status == FAQStatus.PENDING_REVIEW\n    assert len(entry.answer) > 50\n    assert len(entry.tags) >= 1\n    assert entry.relevance_score >= 0.5",
+            code: "import pytest\nfrom models import QuestionCluster, FAQEntry, FAQStatus\nfrom clustering import cluster_questions\nfrom generator import generate_faq_entry\n\ndef test_question_clustering():\n    tickets = [\n        {\"subject\": \"Comment reinitialiser mon mot de passé ?\", \"body\": \"Je n'arrive plus a me connecter\"},\n        {\"subject\": \"Mot de passé oublie\", \"body\": \"J'ai oublie mon mot de passe\"},\n        {\"subject\": \"Reset password\", \"body\": \"Comment changer mon mot de passe\"},\n        {\"subject\": \"Probleme connexion mot de passe\", \"body\": \"Mon mot de passé ne fonctionne plus\"},\n        {\"subject\": \"Facture introuvable\", \"body\": \"Je ne trouve pas ma facture\"},\n    ]\n    clusters = cluster_questions(tickets, eps=0.4)\n    # Les questions sur le mot de passé doivent etre regroupees\n    password_cluster = [c for c in clusters if \"mot de passe\" in c.representative_question.lower() or \"password\" in c.representative_question.lower()]\n    assert len(password_cluster) >= 1\n    assert password_cluster[0].ticket_count >= 3\n\ndef test_faq_generation_quality():\n    cluster = QuestionCluster(\n        representative_question=\"Comment reinitialiser mon mot de passé ?\",\n        similar_questions=[\"Mot de passé oublie\", \"Reset password\"],\n        ticket_count=15\n    )\n    resolved = [\n        {\"id\": \"T001\", \"subject\": \"Mot de passé oublie\", \"resolution\": \"Allez sur la page de connexion, cliquez sur Mot de passé oublie, entrez votre email, suivez le lien reçu.\"},\n        {\"id\": \"T002\", \"subject\": \"Reset password\", \"resolution\": \"Utilisez le lien de reinitialisation disponible sur la page login.\"},\n    ]\n    entry = generate_faq_entry(cluster, resolved, [])\n    assert isinstance(entry, FAQEntry)\n    assert entry.status == FAQStatus.PENDING_REVIEW\n    assert len(entry.answer) > 50\n    assert len(entry.tags) >= 1\n    assert entry.relevance_score >= 0.5",
             filename: "test_faq.py",
           },
         ],
@@ -13782,24 +13782,24 @@ def test_traduction_japonais():
     storytelling: {
       sector: "B2B SaaS",
       persona: "Amelie, Responsable Documentation chez un editeur SaaS RH (80 salaries)",
-      painPoint: "L'equipe support recoit 120 tickets par jour dont 40% concernent des questions deja documentees dans la FAQ — mais les utilisateurs ne les trouvent pas car les formulations sont differentes. Amelie met a jour la FAQ une fois par trimestre, mobilisant 3 jours complets. Entre-temps, 15 nouvelles fonctionnalites ont ete livrees sans documentation, et 8 articles sont devenus obsoletes suite a des mises a jour produit.",
-      story: "Amelie a configure le workflow n8n qui analyse chaque nuit les tickets resolus de la veille. Des la premiere semaine, l'agent a identifie 12 questions recurrentes non couvertes par la FAQ et a genere des brouillons d'articles. Amelie n'a eu qu'a relire et valider. L'agent a aussi detecte 5 articles obsoletes dont les reponses ne correspondaient plus au produit actuel.",
-      result: "En 6 semaines : taux de self-service passe de 35% a 58%. Volume de tickets niveau 1 reduit de 30%. La FAQ passe de 45 a 82 articles, tous a jour. Amelie consacre desormais 30 minutes par jour a la validation au lieu de 3 jours par trimestre a la redaction.",
+      painPoint: "L'équipe support reçoit 120 tickets par jour dont 40% concernent des questions deja documentees dans la FAQ — mais les utilisateurs ne les trouvent pas car les formulations sont differentes. Amelie met a jour la FAQ une fois par trimestre, mobilisant 3 jours complets. Entre-temps, 15 nouvelles fonctionnalites ont ete livrees sans documentation, et 8 articles sont devenus obsoletes suite a des mises a jour produit.",
+      story: "Amelie a configure le workflow n8n qui analyse chaque nuit les tickets resolus de la veille. Des la première semaine, l'agent a identifié 12 questions recurrentes non couvertes par la FAQ et a généré des brouillons d'articles. Amelie n'a eu qu'a relire et valider. L'agent a aussi détecté 5 articles obsoletes dont les reponses ne correspondaient plus au produit actuel.",
+      result: "En 6 semaines : taux de self-service passé de 35% a 58%. Volume de tickets niveau 1 réduit de 30%. La FAQ passé de 45 a 82 articles, tous a jour. Amelie consacre désormais 30 minutes par jour a la validation au lieu de 3 jours par trimestre a la rédaction.",
     },
     beforeAfter: {
       inputLabel: "Tickets support resolus de la semaine",
-      inputText: "Ticket #1842: 'Comment exporter mes bulletins de paie en PDF ?' — Resolu: Menu Paie > Bulletins > Selectionner le mois > Bouton Exporter PDF\nTicket #1847: 'Export bulletins format PDF impossible' — Resolu: Meme procedure, verifier que le navigateur autorise les pop-ups\nTicket #1851: 'Telecharger les fiches de paie' — Resolu: Identique\nTicket #1863: 'Bulletin de paie PDF comment faire' — Resolu: Idem + lien vers la FAQ (article introuvable par l'utilisateur)",
+      inputText: "Ticket #1842: 'Comment exporter mes bulletins de paie en PDF ?' — Resolu: Menu Paie > Bulletins > Selectionner le mois > Bouton Exporter PDF\nTicket #1847: 'Export bulletins format PDF impossible' — Resolu: Meme procedure, vérifier que le navigateur autorise les pop-ups\nTicket #1851: 'Telecharger les fiches de paie' — Resolu: Identique\nTicket #1863: 'Bulletin de paie PDF comment faire' — Resolu: Idem + lien vers la FAQ (article introuvable par l'utilisateur)",
       outputFields: [
-        { label: "Cluster detecte", value: "Export bulletins de paie PDF — 4 tickets cette semaine (recurrence haute)" },
+        { label: "Cluster détecté", value: "Export bulletins de paie PDF — 4 tickets cette semaine (recurrence haute)" },
         { label: "FAQ existante", value: "Aucune correspondance trouvee (score < 0.75)" },
-        { label: "Article genere", value: "Titre : 'Comment exporter vos bulletins de paie en PDF ?' — Reponse structuree en 4 etapes avec capture ecran suggeree" },
+        { label: "Article généré", value: "Titre : 'Comment exporter vos bulletins de paie en PDF ?' — Reponse structuree en 4 étapes avec capture ecran suggeree" },
         { label: "Tags", value: "paie, export, PDF, bulletin" },
         { label: "Statut", value: "En attente de validation — notification envoyee a Amelie" },
       ],
       beforeContext: "Analyse de 87 tickets resolus · Semaine S05-2025",
       afterLabel: "Analyse IA",
       afterDuration: "3 minutes",
-      afterSummary: "3 nouvelles entrees FAQ generees, 2 mises a jour proposees, 1 article obsolete detecte",
+      afterSummary: "3 nouvelles entrees FAQ generees, 2 mises a jour proposees, 1 article obsolete détecté",
     },
     roiEstimator: {
       label: "Combien de tickets de support traitez-vous par jour ?",
@@ -13810,55 +13810,55 @@ def test_traduction_japonais():
     },
     faq: [
       {
-        question: "L'agent peut-il gerer une FAQ multilingue ?",
-        answer: "Oui. Le LLM peut analyser des tickets dans plusieurs langues et generer des articles FAQ dans la langue cible. Configurez le prompt pour specifier la langue de sortie. Pour une FAQ francais/anglais, dupliquez le noeud de generation avec un prompt adapte a chaque langue.",
+        question: "L'agent peut-il gérer une FAQ multilingue ?",
+        answer: "Oui. Le LLM peut analyser des tickets dans plusieurs langues et générer des articles FAQ dans la langue cible. Configurez le prompt pour specifier la langue de sortie. Pour une FAQ francais/anglais, dupliquez le noeud de génération avec un prompt adapte a chaque langue.",
       },
       {
-        question: "Comment eviter que l'agent genere des reponses incorrectes dans la FAQ ?",
-        answer: "L'agent ne publie jamais directement : chaque article genere passe par un statut 'en attente de validation'. Le LLM s'appuie uniquement sur les resolutions reelles des tickets (source de verite). Un score de confiance est attribue a chaque article, et ceux sous 0.7 sont signales pour relecture approfondie.",
+        question: "Comment eviter que l'agent généré des reponses incorrectes dans la FAQ ?",
+        answer: "L'agent ne publie jamais directement : chaque article généré passé par un statut 'en attente de validation'. Le LLM s'appuie uniquement sur les resolutions reelles des tickets (source de verite). Un score de confiance est attribue a chaque article, et ceux sous 0.7 sont signales pour relecture approfondie.",
       },
       {
         question: "Quel outil de ticketing est compatible avec ce workflow ?",
         answer: "Le workflow fonctionne avec tout outil de ticketing disposant d'une API : Zendesk, Freshdesk, Intercom, Crisp, HubSpot Service Hub, Jira Service Management. Pour les outils sans API, un export CSV quotidien peut etre utilise comme source d'entree.",
       },
       {
-        question: "L'agent detecte-t-il les articles FAQ qui deviennent obsoletes ?",
+        question: "L'agent détecté-t-il les articles FAQ qui deviennent obsoletes ?",
         answer: "Oui. L'agent compare periodiquement les reponses de la FAQ existante avec les resolutions recentes des tickets. Si les resolutions divergent systematiquement d'un article FAQ (score de similarite < 0.5), l'article est signale comme potentiellement obsolete avec une proposition de mise a jour.",
       },
       {
         question: "Quel est le volume minimum de tickets pour que l'agent soit efficace ?",
-        answer: "L'agent commence a detecter des clusters pertinents a partir de 20 tickets par jour. En dessous, les patterns ne sont pas assez frequents pour justifier de nouvelles entrees FAQ. Vous pouvez abaisser le seuil de detection (min_samples dans le clustering) pour des volumes plus faibles.",
+        answer: "L'agent commence a detecter des clusters pertinents a partir de 20 tickets par jour. En dessous, les patterns ne sont pas assez frequents pour justifier de nouvelles entrees FAQ. Vous pouvez abaisser le seuil de détection (min_samples dans le clustering) pour des volumes plus faibles.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud ou n8n self-hosted",
       "Une cle API LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
       "Acces API a votre outil de ticketing (Zendesk, Freshdesk, Intercom, etc.)",
-      "Un CMS ou base de donnees pour stocker la FAQ (Notion, WordPress, base SQL, ou Google Sheets)",
+      "Un CMS ou base de données pour stocker la FAQ (Notion, WordPress, base SQL, ou Google Sheets)",
     ],
     n8nTutorial: [
       {
         nodeLabel: "Cron Trigger",
         nodeType: "Schedule Trigger",
         nodeIcon: "⏰",
-        description: "Ce noeud declenche l'analyse quotidienne des tickets resolus. L'execution a 6h du matin permet d'analyser les tickets de la veille avant l'arrivee de l'equipe.",
+        description: "Ce noeud déclenché l'analyse quotidienne des tickets resolus. L'exécution a 6h du matin permet d'analyser les tickets de la veille avant l'arrivee de l'équipe.",
         configuration: "1. Ajoutez un noeud \"Schedule Trigger\"\n2. Mode : Cron\n3. Expression Cron : 0 6 * * * (tous les jours a 6h)\n4. Timezone : Europe/Paris",
         expectedOutput: "{ \"timestamp\": \"2025-02-10T06:00:00.000+01:00\" }",
-        errorHandling: "Le cron ne se declenche que si le workflow est actif (toggle en haut a droite).",
+        errorHandling: "Le cron ne se déclenché que si le workflow est actif (toggle en haut a droite).",
       },
       {
         nodeLabel: "Recuperation tickets resolus",
         nodeType: "HTTP Request",
         nodeIcon: "🌐",
         description: "Ce noeud recupere les tickets resolus des dernieres 24h depuis votre outil de ticketing. Chaque ticket inclut la question du client et la resolution apportee par l'agent support.",
-        configuration: "Choisissez votre outil de ticketing ci-dessous pour la configuration complete.",
+        configuration: "Choisissez votre outil de ticketing ci-dessous pour la configuration complète.",
         expectedOutput: "[ { \"id\": \"T-1842\", \"subject\": \"Comment exporter mes bulletins...\", \"body\": \"...\", \"resolution\": \"Menu Paie > Bulletins > Exporter PDF\", \"resolved_at\": \"2025-02-09\" } ]",
         variants: [
           {
             toolName: "Zendesk",
             toolIcon: "🟢",
             configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : GET\n3. URL : https://INSTANCE.zendesk.com/api/v2/search.json?query=type:ticket status:solved solved>{{ $now.minus(1, 'days').format('yyyy-MM-dd') }}\n4. Authentication : Zendesk API\n5. Les tickets resolus sont dans response.results",
-            errorHandling: "Erreur 429 : Zendesk limite a 700 requetes/minute. Ajoutez un Wait de 1s si necessaire.",
+            errorHandling: "Erreur 429 : Zendesk limite a 700 requetes/minute. Ajoutez un Wait de 1s si nécessaire.",
           },
           {
             toolName: "Freshdesk",
@@ -13881,33 +13881,33 @@ def test_traduction_japonais():
         description: "Ce noeud regroupe les questions similaires en clusters pour identifier les sujets recurrents. Un algorithme de similarite textuelle simple (basee sur les mots communs) est utilise cote n8n, tandis qu'un clustering plus avance par embeddings peut etre delegue a un service externe.",
         configuration: "1. Ajoutez un noeud \"Code\"\n2. Langage : JavaScript\n3. Le code extrait les sujets des tickets, normalise les textes, et regroupe les questions partageant plus de 60% de mots-cles communs.\n\nconst tickets = $input.all().map(i => i.json);\n\nfunction normalize(text) {\n  return text.toLowerCase().replace(/[^a-z0-9\\s]/g, '').split(/\\s+/).filter(w => w.length > 3);\n}\n\nfunction similarity(a, b) {\n  const setA = new Set(normalize(a));\n  const setB = new Set(normalize(b));\n  const intersection = [...setA].filter(x => setB.has(x)).length;\n  return intersection / Math.max(setA.size, setB.size, 1);\n}\n\nconst clusters = [];\nconst assigned = new Set();\n\nfor (let i = 0; i < tickets.length; i++) {\n  if (assigned.has(i)) continue;\n  const cluster = [tickets[i]];\n  assigned.add(i);\n  for (let j = i + 1; j < tickets.length; j++) {\n    if (assigned.has(j)) continue;\n    if (similarity(tickets[i].subject, tickets[j].subject) > 0.6) {\n      cluster.push(tickets[j]);\n      assigned.add(j);\n    }\n  }\n  if (cluster.length >= 3) {\n    clusters.push({ representative: cluster[0].subject, count: cluster.length, tickets: cluster });\n  }\n}\n\nreturn clusters.map(c => ({ json: c }));",
         expectedOutput: "[ { \"representative\": \"Comment exporter mes bulletins de paie en PDF ?\", \"count\": 4, \"tickets\": [...] } ]",
-        errorHandling: "Si aucun cluster n'est detecte (volume trop faible), le workflow s'arrete naturellement. Ajoutez un noeud IF pour verifier que des clusters existent avant de continuer.",
+        errorHandling: "Si aucun cluster n'est détecté (volume trop faible), le workflow s'arrete naturellement. Ajoutez un noeud IF pour vérifier que des clusters existent avant de continuer.",
       },
       {
         nodeLabel: "Appel LLM — Generation FAQ",
         nodeType: "HTTP Request",
         nodeIcon: "🤖",
-        description: "Pour chaque cluster identifie, ce noeud envoie les tickets sources au LLM qui genere une entree FAQ structuree : question reformulee clairement, reponse complete et pedagogique, categorie et tags.",
+        description: "Pour chaque cluster identifié, ce noeud envoie les tickets sources au LLM qui généré une entree FAQ structuree : question reformulee clairement, réponse complète et pedagogique, categorie et tags.",
         configuration: "Choisissez votre fournisseur LLM ci-dessous.\nLe prompt inclut les tickets sources comme reference de verite.",
         expectedOutput: "{ \"question\": \"Comment exporter vos bulletins de paie en PDF ?\", \"answer\": \"Pour exporter...\", \"category\": \"Paie\", \"tags\": [\"export\", \"PDF\", \"bulletin\"] }",
         variants: [
           {
             toolName: "OpenAI (GPT-4o-mini)",
             toolIcon: "🟢",
-            configuration: "1. Noeud HTTP Request > POST > https://api.openai.com/v1/chat/completions\n2. Authentication : OpenAI API\n3. Body :\n{\n  \"model\": \"gpt-4o-mini\",\n  \"temperature\": 0.3,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [{ \"role\": \"user\", \"content\": \"A partir de ces tickets support resolus, genere une entree FAQ. Tickets : {{ JSON.stringify($json.tickets) }}. Retourne un JSON avec : question, answer, category, tags, relevance_score (0-1).\" }]\n}",
+            configuration: "1. Noeud HTTP Request > POST > https://api.openai.com/v1/chat/completions\n2. Authentication : OpenAI API\n3. Body :\n{\n  \"model\": \"gpt-4o-mini\",\n  \"temperature\": 0.3,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [{ \"role\": \"user\", \"content\": \"A partir de ces tickets support resolus, généré une entree FAQ. Tickets : {{ JSON.stringify($json.tickets) }}. Retourne un JSON avec : question, answer, category, tags, relevance_score (0-1).\" }]\n}",
             errorHandling: "Erreur 429 : rate limit. Ajoutez un Wait de 1s entre chaque appel dans le loop.",
           },
           {
             toolName: "Anthropic (Claude)",
             toolIcon: "🟤",
-            configuration: "1. Noeud HTTP Request > POST > https://api.anthropic.com/v1/messages\n2. Headers : x-api-key, anthropic-version: 2023-06-01\n3. Body :\n{\n  \"model\": \"claude-sonnet-4-5-20250929\",\n  \"max_tokens\": 1024,\n  \"messages\": [{ \"role\": \"user\", \"content\": \"A partir de ces tickets resolus, genere une entree FAQ... {{ JSON.stringify($json.tickets) }}\" }]\n}\nReponse dans : response.content[0].text",
+            configuration: "1. Noeud HTTP Request > POST > https://api.anthropic.com/v1/messages\n2. Headers : x-api-key, anthropic-version: 2023-06-01\n3. Body :\n{\n  \"model\": \"claude-sonnet-4-5-20250929\",\n  \"max_tokens\": 1024,\n  \"messages\": [{ \"role\": \"user\", \"content\": \"A partir de ces tickets resolus, généré une entree FAQ... {{ JSON.stringify($json.tickets) }}\" }]\n}\nReponse dans : response.content[0].text",
             errorHandling: "Erreur 529 : API surchargee. Reessayez apres 5 secondes.",
           },
           {
             toolName: "Mistral (EU 🇪🇺)",
             toolIcon: "🔵",
             configuration: "1. Noeud HTTP Request > POST > https://api.mistral.ai/v1/chat/completions\n2. Headers : Authorization: Bearer CLE\n3. Meme format que OpenAI. Modele : mistral-large-latest",
-            errorHandling: "Meme format de reponse qu'OpenAI.",
+            errorHandling: "Meme format de réponse qu'OpenAI.",
           },
           {
             toolName: "Ollama (gratuit, local)",
@@ -13932,7 +13932,7 @@ def test_traduction_japonais():
         nodeType: "Slack",
         nodeIcon: "💬",
         description: "Ce noeud notifie le responsable documentation qu'une nouvelle proposition FAQ est disponible pour validation, avec un apercu de la question et un lien direct vers l'outil de validation.",
-        configuration: "1. Ajoutez un noeud \"Slack\"\n2. Resource : Message\n3. Channel : #documentation\n4. Text :\nNouvelle proposition FAQ generee par l'IA\nQuestion : {{ $json.question }}\nBasee sur {{ $json.count }} tickets recurrents\nStatut : En attente de votre validation\n5. Authentication : Slack OAuth2",
+        configuration: "1. Ajoutez un noeud \"Slack\"\n2. Resource : Message\n3. Channel : #documentation\n4. Text :\nNouvelle proposition FAQ générée par l'IA\nQuestion : {{ $json.question }}\nBasee sur {{ $json.count }} tickets recurrents\nStatut : En attente de votre validation\n5. Authentication : Slack OAuth2",
         expectedOutput: "Message envoye sur #documentation avec l'apercu de la proposition.",
         variants: [
           {
@@ -13961,7 +13961,7 @@ def test_traduction_japonais():
     problem:
       "L'évaluation du risque crédit repose sur des modèles statistiques rigides et des analyses manuelles chronophages. Les analystes crédit passent des heures à compiler des données provenant de multiples sources (bilans, flux bancaires, données sectorielles) et les décisions sont souvent retardées, ce qui impacte la relation commerciale.",
     value:
-      "Un agent IA agrège automatiquement les données financières multi-sources, analyse les bilans et comptes de résultat, intègre les signaux faibles (actualités, contentieux, évolution sectorielle), et produit un score de risque argumenté avec des recommandations. Le temps de décision passe de plusieurs jours à quelques minutes.",
+      "Un agent IA agrège automatiquement les données financières multi-sources, analyse les bilans et comptes de résultat, intègre les signaux faibles (actualités, contentieux, évolution sectorielle), et produit un score de risque argumenté avec des recommandations. Le temps de décision passé de plusieurs jours à quelques minutes.",
     inputs: [
       "Bilans et comptes de résultat (3 derniers exercices)",
       "Données Banque de France (cotation, incidents de paiement)",
@@ -14058,7 +14058,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "import anthropic\nfrom models import CreditRiskScore, RiskGrade, FinancialRatios\n\nclient = anthropic.Anthropic()\n\ndef analyze_credit_risk(\n    ratios: FinancialRatios,\n    statistical_score: int,\n    statistical_grade: str,\n    company_info: dict,\n    sector_benchmarks: dict,\n    payment_history: dict,\n    legal_info: dict\n) -> CreditRiskScore:\n    ratios_text = \"\\n\".join(\n        \"- {}: {}\".format(k, round(v, 3)) for k, v in ratios.model_dump().items()\n    )\n    prompt = (\n        \"Tu es un analyste credit senior dans une institution financiere.\\n\"\n        \"Analyse ce dossier de risque credit et produis une evaluation detaillee.\\n\\n\"\n        \"Score statistique: {score}/1000 (grade {grade})\\n\\n\"\n        \"Ratios financiers:\\n{ratios}\\n\\n\"\n        \"Informations entreprise:\\n\"\n        \"- Raison sociale: {name}\\n\"\n        \"- SIREN: {siren}\\n\"\n        \"- Secteur: {sector}\\n\"\n        \"- Effectif: {employees}\\n\\n\"\n        \"Benchmarks sectoriels: {benchmarks}\\n\\n\"\n        \"Historique de paiement: {history}\\n\\n\"\n        \"Informations legales: {legal}\\n\\n\"\n        \"Retourne un JSON avec: score (0-1000), grade (A-E), \"\n        \"strengths (points forts), warnings (points de vigilance), \"\n        \"recommended_credit_limit, recommended_payment_terms (jours), \"\n        \"review_frequency, detailed_analysis, confidence\"\n    ).format(\n        score=statistical_score, grade=statistical_grade,\n        ratios=ratios_text,\n        name=company_info.get(\"name\", \"\"),\n        siren=company_info.get(\"siren\", \"\"),\n        sector=company_info.get(\"sector\", \"\"),\n        employees=company_info.get(\"employees\", \"\"),\n        benchmarks=str(sector_benchmarks),\n        history=str(payment_history),\n        legal=str(legal_info)\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    result = CreditRiskScore.model_validate_json(message.content[0].text)\n    result.financial_ratios = ratios\n    return result",
+            code: "import anthropic\nfrom models import CreditRiskScore, RiskGrade, FinancialRatios\n\nclient = anthropic.Anthropic()\n\ndef analyze_credit_risk(\n    ratios: FinancialRatios,\n    statistical_score: int,\n    statistical_grade: str,\n    company_info: dict,\n    sector_benchmarks: dict,\n    payment_history: dict,\n    legal_info: dict\n) -> CreditRiskScore:\n    ratios_text = \"\\n\".join(\n        \"- {}: {}\".format(k, round(v, 3)) for k, v in ratios.model_dump().items()\n    )\n    prompt = (\n        \"Tu es un analyste credit senior dans une institution financière.\\n\"\n        \"Analyse ce dossier de risque credit et produis une évaluation détaillée.\\n\\n\"\n        \"Score statistique: {score}/1000 (grade {grade})\\n\\n\"\n        \"Ratios financiers:\\n{ratios}\\n\\n\"\n        \"Informations entreprise:\\n\"\n        \"- Raison sociale: {name}\\n\"\n        \"- SIREN: {siren}\\n\"\n        \"- Secteur: {sector}\\n\"\n        \"- Effectif: {employees}\\n\\n\"\n        \"Benchmarks sectoriels: {benchmarks}\\n\\n\"\n        \"Historique de paiement: {history}\\n\\n\"\n        \"Informations legales: {legal}\\n\\n\"\n        \"Retourne un JSON avec: score (0-1000), grade (A-E), \"\n        \"strengths (points forts), warnings (points de vigilance), \"\n        \"recommended_credit_limit, recommended_payment_terms (jours), \"\n        \"review_frequency, detailed_analysis, confidence\"\n    ).format(\n        score=statistical_score, grade=statistical_grade,\n        ratios=ratios_text,\n        name=company_info.get(\"name\", \"\"),\n        siren=company_info.get(\"siren\", \"\"),\n        sector=company_info.get(\"sector\", \"\"),\n        employees=company_info.get(\"employees\", \"\"),\n        benchmarks=str(sector_benchmarks),\n        history=str(payment_history),\n        legal=str(legal_info)\n    )\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=4096,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    result = CreditRiskScore.model_validate_json(message.content[0].text)\n    result.financial_ratios = ratios\n    return result",
             filename: "credit_analyzer.py",
           },
         ],
@@ -14070,7 +14070,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "from fastapi import FastAPI, HTTPException, Depends\nfrom fastapi.security import HTTPBearer\nimport joblib\n\napp = FastAPI(title=\"Credit Risk Scoring Agent\")\nsecurity = HTTPBearer()\nscoring_model = joblib.load(\"models/xgb_credit_v1.joblib\")\n\n@app.post(\"/api/credit/score\")\nasync def score_company(request: dict, token=Depends(security)):\n    siren = request.get(\"siren\")\n    if not siren:\n        raise HTTPException(400, \"SIREN requis\")\n    # Collecte des donnees multi-sources\n    bilan = await fetch_financial_data(siren)\n    company_info = await fetch_company_info(siren)\n    payment_history = await fetch_payment_history(siren)\n    legal_info = await fetch_legal_info(siren)\n    sector_benchmarks = await fetch_sector_benchmarks(company_info[\"sector\"])\n    # Calcul des ratios\n    ratios = compute_ratios(bilan[\"bilan\"], bilan[\"compte_resultat\"])\n    features = ratios_to_features(ratios)\n    # Scoring statistique\n    stat_score, stat_grade = predict_risk(scoring_model, features)\n    # Analyse LLM\n    result = analyze_credit_risk(\n        ratios, stat_score, stat_grade,\n        company_info, sector_benchmarks, payment_history, legal_info\n    )\n    # Sauvegarde et audit\n    await save_scoring_result(siren, result)\n    # Alertes si risque eleve\n    if result.grade in [RiskGrade.D, RiskGrade.E]:\n        await send_risk_alert(siren, result)\n    return result.model_dump()\n\n@app.get(\"/api/credit/history/{siren}\")\nasync def scoring_history(siren: str, token=Depends(security)):\n    return await fetch_scoring_history(siren)\n\n@app.get(\"/api/credit/portfolio\")\nasync def portfolio_overview(token=Depends(security)):\n    return {\n        \"total_expositions\": await total_exposure(),\n        \"distribution_grades\": await grade_distribution(),\n        \"top_risques\": await top_risks(limit=20),\n        \"evolution_mensuelle\": await monthly_trend()\n    }",
+            code: "from fastapi import FastAPI, HTTPException, Depends\nfrom fastapi.security import HTTPBearer\nimport joblib\n\napp = FastAPI(title=\"Credit Risk Scoring Agent\")\nsecurity = HTTPBearer()\nscoring_model = joblib.load(\"models/xgb_credit_v1.joblib\")\n\n@app.post(\"/api/credit/score\")\nasync def score_company(request: dict, token=Depends(security)):\n    siren = request.get(\"siren\")\n    if not siren:\n        raise HTTPException(400, \"SIREN requis\")\n    # Collecte des données multi-sources\n    bilan = await fetch_financial_data(siren)\n    company_info = await fetch_company_info(siren)\n    payment_history = await fetch_payment_history(siren)\n    legal_info = await fetch_legal_info(siren)\n    sector_benchmarks = await fetch_sector_benchmarks(company_info[\"sector\"])\n    # Calcul des ratios\n    ratios = compute_ratios(bilan[\"bilan\"], bilan[\"compte_resultat\"])\n    features = ratios_to_features(ratios)\n    # Scoring statistique\n    stat_score, stat_grade = predict_risk(scoring_model, features)\n    # Analyse LLM\n    result = analyze_credit_risk(\n        ratios, stat_score, stat_grade,\n        company_info, sector_benchmarks, payment_history, legal_info\n    )\n    # Sauvegarde et audit\n    await save_scoring_result(siren, result)\n    # Alertes si risque eleve\n    if result.grade in [RiskGrade.D, RiskGrade.E]:\n        await send_risk_alert(siren, result)\n    return result.model_dump()\n\n@app.get(\"/api/credit/history/{siren}\")\nasync def scoring_history(siren: str, token=Depends(security)):\n    return await fetch_scoring_history(siren)\n\n@app.get(\"/api/credit/portfolio\")\nasync def portfolio_overview(token=Depends(security)):\n    return {\n        \"total_expositions\": await total_exposure(),\n        \"distribution_grades\": await grade_distribution(),\n        \"top_risques\": await top_risks(limit=20),\n        \"evolution_mensuelle\": await monthly_trend()\n    }",
             filename: "api.py",
           },
         ],
@@ -14082,7 +14082,7 @@ def test_traduction_japonais():
         codeSnippets: [
           {
             language: "python",
-            code: "import pytest\nimport numpy as np\nfrom models import CreditRiskScore, RiskGrade, FinancialRatios\nfrom ratios import compute_ratios\nfrom scoring_model import predict_risk\nfrom credit_analyzer import analyze_credit_risk\n\ndef test_ratios_computation():\n    bilan = {\n        \"capitaux_propres\": 500000, \"total_actif\": 1200000,\n        \"dettes_totales\": 700000, \"actifs_circulants\": 600000,\n        \"passifs_circulants\": 400000, \"creances_clients\": 150000,\n        \"dettes_fournisseurs\": 100000, \"stocks\": 80000\n    }\n    cr = {\n        \"chiffre_affaires\": 2000000, \"resultat_net\": 120000,\n        \"achats\": 800000, \"dotations_amortissements\": 50000,\n        \"ca_precedent\": 1800000\n    }\n    ratios = compute_ratios(bilan, cr)\n    assert ratios.ratio_endettement == pytest.approx(1.4, rel=0.01)\n    assert ratios.ratio_liquidite == pytest.approx(1.5, rel=0.01)\n    assert ratios.marge_nette == pytest.approx(0.06, rel=0.01)\n    assert ratios.taux_croissance_ca == pytest.approx(11.11, rel=0.1)\n\ndef test_scoring_model_output_range():\n    features = [1.2, 1.5, 0.42, 0.06, 25.0, 27.4, 45.6, 170000, 11.1]\n    score, grade = predict_risk(scoring_model, features)\n    assert 0 <= score <= 1000\n    assert grade in [\"A\", \"B\", \"C\", \"D\", \"E\"]\n\ndef test_high_risk_detection():\n    # Entreprise en difficulte financiere\n    bilan = {\n        \"capitaux_propres\": -50000, \"total_actif\": 300000,\n        \"dettes_totales\": 350000, \"actifs_circulants\": 80000,\n        \"passifs_circulants\": 250000, \"creances_clients\": 60000,\n        \"dettes_fournisseurs\": 120000, \"stocks\": 40000\n    }\n    cr = {\n        \"chiffre_affaires\": 500000, \"resultat_net\": -80000,\n        \"achats\": 300000, \"dotations_amortissements\": 20000,\n        \"ca_precedent\": 600000\n    }\n    ratios = compute_ratios(bilan, cr)\n    assert ratios.ratio_liquidite < 1.0\n    assert ratios.marge_nette < 0\n    assert ratios.taux_croissance_ca < 0\n\ndef test_credit_analysis_completeness():\n    ratios = FinancialRatios(\n        ratio_endettement=1.4, ratio_liquidite=1.5, ratio_solvabilite=0.42,\n        marge_nette=0.06, rotation_stocks=25.0, delai_paiement_clients=27.4,\n        delai_paiement_fournisseurs=45.6, capacite_autofinancement=170000,\n        taux_croissance_ca=11.1\n    )\n    result = analyze_credit_risk(\n        ratios, 720, \"B\",\n        {\"name\": \"Test SAS\", \"siren\": \"123456789\", \"sector\": \"tech\", \"employees\": 50},\n        {\"marge_nette_median\": 0.05}, {\"retards_30j\": 0}, {\"contentieux\": 0}\n    )\n    assert isinstance(result, CreditRiskScore)\n    assert 0 <= result.score <= 1000\n    assert result.grade in list(RiskGrade)\n    assert len(result.strengths) >= 1\n    assert result.recommended_credit_limit > 0\n    assert result.confidence >= 0.5",
+            code: "import pytest\nimport numpy as np\nfrom models import CreditRiskScore, RiskGrade, FinancialRatios\nfrom ratios import compute_ratios\nfrom scoring_model import predict_risk\nfrom credit_analyzer import analyze_credit_risk\n\ndef test_ratios_computation():\n    bilan = {\n        \"capitaux_propres\": 500000, \"total_actif\": 1200000,\n        \"dettes_totales\": 700000, \"actifs_circulants\": 600000,\n        \"passifs_circulants\": 400000, \"creances_clients\": 150000,\n        \"dettes_fournisseurs\": 100000, \"stocks\": 80000\n    }\n    cr = {\n        \"chiffre_affaires\": 2000000, \"resultat_net\": 120000,\n        \"achats\": 800000, \"dotations_amortissements\": 50000,\n        \"ca_precedent\": 1800000\n    }\n    ratios = compute_ratios(bilan, cr)\n    assert ratios.ratio_endettement == pytest.approx(1.4, rel=0.01)\n    assert ratios.ratio_liquidite == pytest.approx(1.5, rel=0.01)\n    assert ratios.marge_nette == pytest.approx(0.06, rel=0.01)\n    assert ratios.taux_croissance_ca == pytest.approx(11.11, rel=0.1)\n\ndef test_scoring_model_output_range():\n    features = [1.2, 1.5, 0.42, 0.06, 25.0, 27.4, 45.6, 170000, 11.1]\n    score, grade = predict_risk(scoring_model, features)\n    assert 0 <= score <= 1000\n    assert grade in [\"A\", \"B\", \"C\", \"D\", \"E\"]\n\ndef test_high_risk_detection():\n    # Entreprise en difficulte financière\n    bilan = {\n        \"capitaux_propres\": -50000, \"total_actif\": 300000,\n        \"dettes_totales\": 350000, \"actifs_circulants\": 80000,\n        \"passifs_circulants\": 250000, \"creances_clients\": 60000,\n        \"dettes_fournisseurs\": 120000, \"stocks\": 40000\n    }\n    cr = {\n        \"chiffre_affaires\": 500000, \"resultat_net\": -80000,\n        \"achats\": 300000, \"dotations_amortissements\": 20000,\n        \"ca_precedent\": 600000\n    }\n    ratios = compute_ratios(bilan, cr)\n    assert ratios.ratio_liquidite < 1.0\n    assert ratios.marge_nette < 0\n    assert ratios.taux_croissance_ca < 0\n\ndef test_credit_analysis_completeness():\n    ratios = FinancialRatios(\n        ratio_endettement=1.4, ratio_liquidite=1.5, ratio_solvabilite=0.42,\n        marge_nette=0.06, rotation_stocks=25.0, delai_paiement_clients=27.4,\n        delai_paiement_fournisseurs=45.6, capacite_autofinancement=170000,\n        taux_croissance_ca=11.1\n    )\n    result = analyze_credit_risk(\n        ratios, 720, \"B\",\n        {\"name\": \"Test SAS\", \"siren\": \"123456789\", \"sector\": \"tech\", \"employees\": 50},\n        {\"marge_nette_median\": 0.05}, {\"retards_30j\": 0}, {\"contentieux\": 0}\n    )\n    assert isinstance(result, CreditRiskScore)\n    assert 0 <= result.score <= 1000\n    assert result.grade in list(RiskGrade)\n    assert len(result.strengths) >= 1\n    assert result.recommended_credit_limit > 0\n    assert result.confidence >= 0.5",
             filename: "test_credit_scoring.py",
           },
         ],
@@ -14110,9 +14110,9 @@ def test_traduction_japonais():
     storytelling: {
       sector: "Banque / Finance",
       persona: "Philippe, Responsable Analyse Credit dans une banque regionale (800 salaries)",
-      painPoint: "Son equipe de 6 analystes traite 200 dossiers de credit par mois. Chaque dossier necessite en moyenne 4 heures d'analyse : collecte des bilans sur Infogreffe, calcul des ratios financiers sur Excel, verification des incidents Banque de France, et redaction d'un avis motive. Les delais de reponse atteignent 8 jours ouvrables, ce qui pousse 15% des prospects a se tourner vers des fintechs plus rapides.",
-      story: "Philippe a deploye l'agent en mode pilote sur 50 dossiers PME. L'agent collecte automatiquement les donnees Infogreffe et Banque de France, calcule les 9 ratios financiers, genere un score statistique XGBoost, puis produit une analyse qualitative detaillee avec points forts, vigilances et recommandation de limite. L'analyste n'a plus qu'a valider et ajuster si necessaire.",
-      result: "En 3 mois sur le pilote : temps d'analyse par dossier reduit de 4h a 35 minutes. Delai de reponse passe de 8 jours a 48 heures. Detection de 3 risques majeurs (entreprises en pre-difficulte) qui auraient ete identifies avec 2 a 4 semaines de retard en processus manuel. Taux de perte sur le portefeuille pilote en baisse de 18%.",
+      painPoint: "Son équipe de 6 analystes traite 200 dossiers de credit par mois. Chaque dossier nécessité en moyenne 4 heures d'analyse : collecte des bilans sur Infogreffe, calcul des ratios financiers sur Excel, verification des incidents Banque de France, et rédaction d'un avis motive. Les délais de réponse atteignent 8 jours ouvrables, ce qui pousse 15% des prospects a se tourner vers des fintechs plus rapides.",
+      story: "Philippe a déployé l'agent en mode pilote sur 50 dossiers PME. L'agent collecte automatiquement les données Infogreffe et Banque de France, calcule les 9 ratios financiers, généré un score statistique XGBoost, puis produit une analyse qualitative détaillée avec points forts, vigilances et recommandation de limite. L'analyste n'a plus qu'a valider et ajuster si nécessaire.",
+      result: "En 3 mois sur le pilote : temps d'analyse par dossier réduit de 4h a 35 minutes. Delai de réponse passé de 8 jours a 48 heures. Detection de 3 risques majeurs (entreprises en pre-difficulte) qui auraient ete identifies avec 2 a 4 semaines de retard en processus manuel. Taux de perte sur le portefeuille pilote en baisse de 18%.",
     },
     beforeAfter: {
       inputLabel: "Demande de scoring credit",
@@ -14127,7 +14127,7 @@ def test_traduction_japonais():
       beforeContext: "SIREN 412 456 789 · Analyse automatique multi-sources",
       afterLabel: "Scoring IA",
       afterDuration: "90 secondes",
-      afterSummary: "Score calcule, analyse detaillee et recommandation de limite generee automatiquement",
+      afterSummary: "Score calcule, analyse détaillée et recommandation de limite générée automatiquement",
     },
     roiEstimator: {
       label: "Combien de dossiers de credit analysez-vous par mois ?",
@@ -14138,50 +14138,50 @@ def test_traduction_japonais():
     },
     faq: [
       {
-        question: "L'agent est-il conforme aux exigences reglementaires Bale III/IV ?",
-        answer: "L'agent est concu pour faciliter la conformite : piste d'audit complete de chaque decision, explicabilite du score (decomposition par facteur), tracabilite des donnees sources, et possibilite d'override humain documente. Cependant, la conformite finale depend de votre implementation specifique et doit etre validee par votre service conformite et votre regulateur (ACPR).",
+        question: "L'agent est-il conforme aux exigences réglementaires Bale III/IV ?",
+        answer: "L'agent est concu pour faciliter la conformité : piste d'audit complète de chaque decision, explicabilite du score (decomposition par facteur), tracabilite des données sources, et possibilite d'override humain documente. Cependant, la conformité finale depend de votre implementation spécifique et doit etre validee par votre service conformité et votre regulateur (ACPR).",
       },
       {
-        question: "Peut-on entrainer le modele de scoring sur nos propres donnees historiques ?",
-        answer: "Oui, c'est meme recommande. Le modele XGBoost doit etre entraine sur votre historique de credit (dossiers avec issue connue : rembourse normalement, incident, defaut). Un minimum de 500 dossiers labellises est necessaire pour un modele fiable. Le pipeline d'entrainement est inclus dans le tutoriel.",
+        question: "Peut-on entrainer le modèle de scoring sur nos propres données historiques ?",
+        answer: "Oui, c'est meme recommandé. Le modèle XGBoost doit etre entraine sur votre historique de credit (dossiers avec issue connue : rembourse normalement, incident, defaut). Un minimum de 500 dossiers labellises est nécessaire pour un modèle fiable. Le pipeline d'entraînement est inclus dans le tutoriel.",
       },
       {
-        question: "Comment le LLM gere-t-il la confidentialite des donnees financieres ?",
-        answer: "Seuls les ratios calcules et les donnees agregees sont envoyes au LLM, jamais les bilans complets ni les releves bancaires. Le SIREN est pseudonymise dans les logs LLM. Pour une confidentialite maximale, utilisez Ollama en local ou Mistral AI (hebergement europeen). Les donnees brutes restent exclusivement dans votre infrastructure.",
+        question: "Comment le LLM gère-t-il la confidentialite des données financières ?",
+        answer: "Seuls les ratios calcules et les données agregees sont envoyes au LLM, jamais les bilans complets ni les releves bancaires. Le SIREN est pseudonymise dans les logs LLM. Pour une confidentialite maximale, utilisez Ollama en local ou Mistral AI (hébergement europeen). Les données brutes restent exclusivement dans votre infrastructure.",
       },
       {
-        question: "Quelle est la precision du scoring par rapport a une analyse humaine ?",
-        answer: "Sur les backtests realises, le modele combine (XGBoost + analyse LLM) atteint un AUC de 0.85-0.92, comparable aux meilleurs analystes seniors. L'avantage principal est la consistance : le modele applique les memes criteres a chaque dossier, sans biais de fatigue ou de charge de travail. Les cas complexes (restructuration, secteurs atypiques) necessitent toujours une validation humaine.",
+        question: "Quelle est la précision du scoring par rapport a une analyse humaine ?",
+        answer: "Sur les backtests realises, le modèle combine (XGBoost + analyse LLM) atteint un AUC de 0.85-0.92, comparable aux meilleurs analystes seniors. L'avantage principal est la consistance : le modèle applique les memes critères a chaque dossier, sans biais de fatigue ou de charge de travail. Les cas complexes (restructuration, secteurs atypiques) necessitent toujours une validation humaine.",
       },
       {
-        question: "L'agent detecte-t-il les signaux faibles (actualites negatives, contentieux) ?",
+        question: "L'agent détecté-t-il les signaux faibles (actualites negatives, contentieux) ?",
         answer: "Oui, le noeud d'enrichissement interroge les bases legales (Infogreffe, Bodacc) pour detecter les contentieux, procedures collectives et changements de dirigeants. Le LLM peut egalement analyser des flux d'actualites via un noeud RSS supplementaire. Ces signaux faibles sont integres dans l'analyse qualitative et peuvent impacter le score final.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud ou n8n self-hosted",
       "Une cle API LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces API aux sources de donnees financieres (Infogreffe/Pappers, Banque de France, donnees internes)",
-      "Un modele XGBoost entraine sur vos donnees historiques (ou utilisation du scoring LLM seul en mode MVP)",
+      "Acces API aux sources de données financières (Infogreffe/Pappers, Banque de France, données internes)",
+      "Un modèle XGBoost entraine sur vos données historiques (ou utilisation du scoring LLM seul en mode MVP)",
     ],
     n8nTutorial: [
       {
         nodeLabel: "Webhook — Demande de scoring",
         nodeType: "Webhook",
         nodeIcon: "🔗",
-        description: "Ce noeud recoit les demandes de scoring credit via une API securisee. Chaque demande contient le SIREN de l'entreprise a analyser et les parametres du credit demande.",
+        description: "Ce noeud reçoit les demandes de scoring credit via une API securisee. Chaque demande contient le SIREN de l'entreprise a analyser et les paramètres du credit demande.",
         configuration: "1. Ajoutez un noeud \"Webhook\"\n2. Methode : POST\n3. Path : /scoring-credit\n4. Authentication : Header Auth (X-API-Key)\n5. Response Mode : Last Node\n6. Le body attendu : { \"siren\": \"412456789\", \"montant_demande\": 250000, \"objet\": \"BFR\" }",
         expectedOutput: "{ \"siren\": \"412456789\", \"montant_demande\": 250000, \"objet\": \"BFR\" }",
         errorHandling: "Erreur 401 : le header X-API-Key ne correspond pas. Erreur 404 : workflow non active.",
       },
       {
-        nodeLabel: "Enrichissement donnees legales",
+        nodeLabel: "Enrichissement données legales",
         nodeType: "HTTP Request",
         nodeIcon: "🌐",
-        description: "Ce noeud recupere les donnees legales et financieres de l'entreprise depuis les registres publics : bilans, dirigeants, evenements legaux (Bodacc), et cotation Banque de France.",
-        configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : GET\n3. URL : https://api.pappers.fr/v2/entreprise?siren={{ $json.siren }}&api_token=VOTRE_CLE\n4. Ce noeud retourne : raison sociale, forme juridique, date creation, dirigeants, bilans, chiffre d'affaires, effectif\n5. Ajoutez un 2e noeud HTTP Request pour les donnees Banque de France si vous avez un acces API FIBEN",
+        description: "Ce noeud recupere les données legales et financières de l'entreprise depuis les registres publics : bilans, dirigeants, evenements legaux (Bodacc), et cotation Banque de France.",
+        configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : GET\n3. URL : https://api.pappers.fr/v2/entreprise?siren={{ $json.siren }}&api_token=VOTRE_CLE\n4. Ce noeud retourne : raison sociale, forme juridique, date creation, dirigeants, bilans, chiffre d'affaires, effectif\n5. Ajoutez un 2e noeud HTTP Request pour les données Banque de France si vous avez un acces API FIBEN",
         expectedOutput: "{ \"nom\": \"TECHNOPLUS SAS\", \"forme_juridique\": \"SAS\", \"date_creation\": \"2015-03-12\", \"ca\": 3200000, \"resultat_net\": 230400, ... }",
-        errorHandling: "Erreur 404 : SIREN invalide ou entreprise non trouvee. Ajoutez un noeud IF pour verifier la reponse avant de continuer.",
+        errorHandling: "Erreur 404 : SIREN invalide ou entreprise non trouvee. Ajoutez un noeud IF pour vérifier la réponse avant de continuer.",
         variants: [
           {
             toolName: "Pappers API",
@@ -14192,7 +14192,7 @@ def test_traduction_japonais():
           {
             toolName: "Societe.com API",
             toolIcon: "🟠",
-            configuration: "1. URL : https://api.societe.com/api/v1/company/{{ $json.siren }}\n2. Authentication : Bearer Token\n3. Retourne donnees legales, financieres et dirigeants",
+            configuration: "1. URL : https://api.société.com/api/v1/company/{{ $json.siren }}\n2. Authentication : Bearer Token\n3. Retourne données legales, financières et dirigeants",
             errorHandling: "Verifiez votre abonnement API et les quotas mensuels.",
           },
         ],
@@ -14201,23 +14201,23 @@ def test_traduction_japonais():
         nodeLabel: "Code — Calcul des ratios financiers",
         nodeType: "Code",
         nodeIcon: "⚙️",
-        description: "Ce noeud calcule les 9 ratios financiers cles a partir des bilans extraits. Les calculs sont deterministes pour garantir la fiabilite et la conformite reglementaire.",
+        description: "Ce noeud calcule les 9 ratios financiers cles a partir des bilans extraits. Les calculs sont deterministes pour garantir la fiabilité et la conformité réglementaire.",
         configuration: "1. Ajoutez un noeud \"Code\"\n2. Langage : JavaScript\n3. Le code extrait les postes du bilan et calcule :\n   - Ratio d'endettement = Dettes / Capitaux propres\n   - Ratio de liquidite = Actifs circulants / Passifs circulants\n   - Marge nette = Resultat net / CA\n   - Taux de croissance CA = (CA N - CA N-1) / CA N-1\n   - Et 5 autres ratios cles\n4. Retourne un objet structure avec tous les ratios",
         expectedOutput: "{ \"ratio_endettement\": 0.8, \"ratio_liquidite\": 1.6, \"marge_nette\": 0.072, \"taux_croissance_ca\": 0.12, ... }",
-        errorHandling: "Division par zero : ajoutez des gardes Math.max(denominateur, 1) pour eviter les erreurs sur les donnees manquantes.",
+        errorHandling: "Division par zero : ajoutez des gardes Math.max(denominateur, 1) pour eviter les erreurs sur les données manquantes.",
       },
       {
         nodeLabel: "Appel LLM — Analyse qualitative",
         nodeType: "HTTP Request",
         nodeIcon: "🤖",
-        description: "Ce noeud envoie les ratios calcules et le contexte de l'entreprise au LLM pour generer une analyse qualitative complete : points forts, vigilances, recommandation de limite de credit, et plan de surveillance.",
+        description: "Ce noeud envoie les ratios calcules et le contexte de l'entreprise au LLM pour générer une analyse qualitative complète : points forts, vigilances, recommandation de limite de credit, et plan de surveillance.",
         configuration: "Choisissez votre fournisseur LLM ci-dessous. Le prompt envoie les ratios et le contexte de l'entreprise.",
         expectedOutput: "{ \"score\": 720, \"grade\": \"B\", \"strengths\": [...], \"warnings\": [...], \"recommended_limit\": 200000, ... }",
         variants: [
           {
             toolName: "OpenAI (GPT-4o-mini)",
             toolIcon: "🟢",
-            configuration: "1. Noeud HTTP Request > POST > https://api.openai.com/v1/chat/completions\n2. Authentication : OpenAI API\n3. Body : { \"model\": \"gpt-4o-mini\", \"temperature\": 0, \"response_format\": { \"type\": \"json_object\" }, \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un analyste credit senior. Analyse ces ratios financiers et genere un scoring. Ratios : {{ JSON.stringify($json) }}. Retourne : score (0-1000), grade (A-E), strengths, warnings, recommended_credit_limit, review_frequency, detailed_analysis.\" }] }",
+            configuration: "1. Noeud HTTP Request > POST > https://api.openai.com/v1/chat/completions\n2. Authentication : OpenAI API\n3. Body : { \"model\": \"gpt-4o-mini\", \"temperature\": 0, \"response_format\": { \"type\": \"json_object\" }, \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un analyste credit senior. Analyse ces ratios financiers et généré un scoring. Ratios : {{ JSON.stringify($json) }}. Retourne : score (0-1000), grade (A-E), strengths, warnings, recommended_credit_limit, review_frequency, detailed_analysis.\" }] }",
             errorHandling: "Erreur 401 : cle invalide. Erreur 429 : rate limit.",
           },
           {
@@ -14229,15 +14229,15 @@ def test_traduction_japonais():
           {
             toolName: "Mistral (EU 🇪🇺)",
             toolIcon: "🔵",
-            configuration: "1. POST > https://api.mistral.ai/v1/chat/completions\n2. Meme format qu'OpenAI. Modele : mistral-large-latest\n3. Avantage : donnees financieres hebergees en Europe (conformite RGPD)",
-            errorHandling: "Meme format de reponse qu'OpenAI.",
+            configuration: "1. POST > https://api.mistral.ai/v1/chat/completions\n2. Meme format qu'OpenAI. Modele : mistral-large-latest\n3. Avantage : données financières hebergees en Europe (conformité RGPD)",
+            errorHandling: "Meme format de réponse qu'OpenAI.",
           },
           {
             toolName: "Ollama (gratuit, local)",
             toolIcon: "🦙",
             isFree: true,
             configuration: "1. POST > http://localhost:11434/v1/chat/completions\n2. { \"model\": \"mixtral:8x7b\", \"messages\": [...] }\n3. Timeout : 90000ms\n4. Avantage : aucune donnee ne quitte votre infrastructure",
-            errorHandling: "Connection refused : lancez 'ollama serve'. Modele recommande : mixtral pour l'analyse financiere.",
+            errorHandling: "Connection refused : lancez 'ollama serve'. Modele recommandé : mixtral pour l'analyse financière.",
           },
         ],
       },
@@ -14245,18 +14245,18 @@ def test_traduction_japonais():
         nodeLabel: "Switch — Grade de risque",
         nodeType: "Switch",
         nodeIcon: "🔀",
-        description: "Ce noeud route le resultat selon le grade de risque. Les grades D et E declenchent une alerte obligatoire vers l'analyste senior pour validation manuelle.",
+        description: "Ce noeud route le résultat selon le grade de risque. Les grades D et E declenchent une alerte obligatoire vers l'analyste senior pour validation manuelle.",
         configuration: "1. Ajoutez un noeud \"Switch\"\n2. Mode : Rules\n3. Rule 0 : {{ $json.grade }} equals \"D\" ou \"E\" -> Output 0 (alerte risque eleve)\n4. Fallback : Output 1 (traitement normal)\n5. Connectez la sortie 0 vers un noeud Email d'alerte",
         expectedOutput: "Le dossier est route vers la sortie appropriee selon le grade.",
-        errorHandling: "Verifiez que le champ 'grade' est bien present dans la reponse LLM. Ajoutez un fallback par defaut.",
+        errorHandling: "Verifiez que le champ 'grade' est bien present dans la réponse LLM. Ajoutez un fallback par defaut.",
       },
       {
         nodeLabel: "Sauvegarde et rapport",
         nodeType: "Postgres",
         nodeIcon: "💾",
-        description: "Ce noeud sauvegarde le scoring complet dans la base de donnees pour audit et suivi du portefeuille. Le rapport est egalement retourne en reponse au webhook.",
-        configuration: "1. Ajoutez un noeud \"Postgres\"\n2. Operation : Insert\n3. Table : credit_scoring\n4. Colonnes : siren, score, grade, ratios (JSON), analyse (JSON), recommandation, date_scoring\n5. Connectez ensuite un noeud \"Respond to Webhook\" pour retourner le resultat au demandeur",
-        expectedOutput: "Scoring sauvegarde en base et retourne en reponse API.",
+        description: "Ce noeud sauvegarde le scoring complet dans la base de données pour audit et suivi du portefeuille. Le rapport est egalement retourne en réponse au webhook.",
+        configuration: "1. Ajoutez un noeud \"Postgres\"\n2. Operation : Insert\n3. Table : credit_scoring\n4. Colonnes : siren, score, grade, ratios (JSON), analyse (JSON), recommandation, date_scoring\n5. Connectez ensuite un noeud \"Respond to Webhook\" pour retourner le résultat au demandeur",
+        expectedOutput: "Scoring sauvegarde en base et retourne en réponse API.",
         errorHandling: "Erreur d'insertion : verifiez le schema de la table. Les champs JSON doivent etre de type JSONB dans PostgreSQL.",
       },
     ],
@@ -14268,9 +14268,9 @@ def test_traduction_japonais():
     title: "Agent Chatbot WhatsApp Business",
     subtitle: "Engagez vos clients et suivez leurs commandes via un chatbot IA sur WhatsApp Business",
     problem:
-      "Les entreprises B2B recoivent un volume croissant de demandes clients via WhatsApp : suivi de commandes, questions produits, demandes de devis. Les equipes commerciales et support ne peuvent pas repondre en temps reel 24h/24, ce qui entraine des delais de reponse eleves, une insatisfaction client et des opportunites commerciales manquees. Le copier-coller de reponses types ne suffit plus face a la diversite des demandes.",
+      "Les entreprises B2B recoivent un volume croissant de demandes clients via WhatsApp : suivi de commandes, questions produits, demandes de devis. Les equipes commerciales et support ne peuvent pas repondre en temps reel 24h/24, ce qui entraine des délais de réponse eleves, une insatisfaction client et des opportunites commerciales manquees. Le copier-coller de reponses types ne suffit plus face a la diversite des demandes.",
     value:
-      "Un agent IA connecte a WhatsApp Business API analyse chaque message entrant, identifie l'intention du client (suivi commande, demande de devis, question produit, reclamation), interroge les systemes internes (ERP, CRM, logistique) et repond de maniere personnalisee et instantanee. Les demandes complexes sont escaladees vers un humain avec tout le contexte. Le taux de reponse passe a 100% et le delai moyen chute sous les 30 secondes.",
+      "Un agent IA connecte a WhatsApp Business API analyse chaque message entrant, identifié l'intention du client (suivi commande, demande de devis, question produit, reclamation), interroge les systèmes internes (ERP, CRM, logistique) et repond de maniere personnalisee et instantanee. Les demandes complexes sont escaladees vers un humain avec tout le contexte. Le taux de réponse passé a 100% et le délai moyen chute sous les 30 secondes.",
     inputs: [
       "Messages WhatsApp entrants (texte, images, documents)",
       "Catalogue produits et tarifs",
@@ -14287,13 +14287,13 @@ def test_traduction_japonais():
     ],
     risks: [
       "Reponses incorrectes sur le statut de commande ou les tarifs",
-      "Non-conformite RGPD sur les donnees personnelles echangees via WhatsApp",
+      "Non-conformité RGPD sur les données personnelles echangees via WhatsApp",
       "Hallucination du LLM sur des informations produit critiques",
       "Dependance a la disponibilite de l'API WhatsApp Business",
       "Ton inapproprie dans un contexte B2B formel",
     ],
     roiIndicatif:
-      "Reduction de 70% du temps de reponse moyen. Augmentation de 40% du taux d'engagement client. Diminution de 50% de la charge du support niveau 1.",
+      "Reduction de 70% du temps de réponse moyen. Augmentation de 40% du taux d'engagement client. Diminution de 50% de la charge du support niveau 1.",
     recommendedStack: [
       { name: "OpenAI GPT-4.1", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
@@ -14312,7 +14312,7 @@ def test_traduction_japonais():
       {
         title: "Prerequis et configuration WhatsApp Business API",
         content:
-          "Pour commencer, vous devez configurer un compte WhatsApp Business API via Meta Business Suite. Creez une application Meta, activez le produit WhatsApp et obtenez vos identifiants. Le processus de verification de l'entreprise peut prendre quelques jours.\n\nInstallez les dependances Python necessaires pour le projet. Vous aurez besoin de FastAPI pour l'API webhook, de LangChain pour l'orchestration de l'agent, et de la bibliotheque OpenAI pour le LLM. Configurez les variables d'environnement pour securiser vos cles API.\n\nLa configuration du webhook est cruciale : WhatsApp enverra tous les messages entrants a votre endpoint. Assurez-vous que votre serveur est accessible via HTTPS avec un certificat SSL valide. Pour le developpement local, utilisez ngrok pour creer un tunnel securise.\n\nConfigurez les modeles de messages (templates) dans Meta Business Suite. Ces templates sont necessaires pour initier des conversations et envoyer des notifications proactives comme les confirmations de commande.",
+          "Pour commencer, vous devez configurer un compte WhatsApp Business API via Meta Business Suite. Creez une application Meta, activez le produit WhatsApp et obtenez vos identifiants. Le processus de verification de l'entreprise peut prendre quelques jours.\n\nInstallez les dependances Python nécessaires pour le projet. Vous aurez besoin de FastAPI pour l'API webhook, de LangChain pour l'orchestration de l'agent, et de la bibliotheque OpenAI pour le LLM. Configurez les variables d'environnement pour securiser vos cles API.\n\nLa configuration du webhook est cruciale : WhatsApp enverra tous les messages entrants a votre endpoint. Assurez-vous que votre serveur est accessible via HTTPS avec un certificat SSL valide. Pour le developpement local, utilisez ngrok pour créer un tunnel securise.\n\nConfigurez les modèles de messages (templates) dans Meta Business Suite. Ces templates sont nécessaires pour initier des conversations et envoyer des notifications proactives comme les confirmations de commande.",
         codeSnippets: [
           {
             language: "bash",
@@ -14324,7 +14324,7 @@ def test_traduction_japonais():
       {
         title: "Webhook et traitement des messages entrants",
         content:
-          "Le coeur du systeme est le webhook qui recoit les messages WhatsApp. Meta envoie une requete POST a votre endpoint chaque fois qu'un client envoie un message. Vous devez verifier la signature de la requete pour garantir son authenticite, puis extraire le contenu du message.\n\nLe webhook doit gerer differents types de messages : texte simple, images, documents et reponses interactives (boutons, listes). Chaque type necessite un traitement specifique avant d'etre envoye a l'agent LLM pour analyse et generation de reponse.\n\nIl est important de repondre rapidement au webhook (sous 5 secondes) pour eviter les timeouts de Meta. Utilisez un systeme de file d'attente asynchrone pour traiter les messages en arriere-plan tout en accusant reception immediatement.\n\nImplementez un mecanisme de deduplication car Meta peut renvoyer le meme message plusieurs fois. Stockez les identifiants de messages dans votre base de donnees pour eviter les reponses en double.",
+          "Le coeur du système est le webhook qui reçoit les messages WhatsApp. Meta envoie une requete POST a votre endpoint chaque fois qu'un client envoie un message. Vous devez vérifier la signature de la requete pour garantir son authenticite, puis extraire le contenu du message.\n\nLe webhook doit gérer differents types de messages : texte simple, images, documents et reponses interactives (boutons, listes). Chaque type nécessité un traitement spécifique avant d'etre envoye a l'agent LLM pour analyse et génération de réponse.\n\nIl est important de repondre rapidement au webhook (sous 5 secondes) pour eviter les timeouts de Meta. Utilisez un système de file d'attente asynchrone pour traiter les messages en arriere-plan tout en accusant reception immediatement.\n\nImplementez un mecanisme de deduplication car Meta peut renvoyer le meme message plusieurs fois. Stockez les identifiants de messages dans votre base de données pour eviter les reponses en double.",
         codeSnippets: [
           {
             language: "python",
@@ -14336,37 +14336,37 @@ def test_traduction_japonais():
       {
         title: "Agent conversationnel avec outils metier",
         content:
-          "L'agent LLM est le cerveau du chatbot. Il analyse l'intention du client, decide quel outil utiliser (recherche commande, catalogue produit, generation devis, escalade), et formule une reponse naturelle et professionnelle. L'utilisation du pattern ReAct permet a l'agent de raisonner etape par etape.\n\nDefinissez les outils metier que l'agent peut appeler : recherche de commande par numero ou nom client, consultation du catalogue et des stocks, generation de devis, et escalade vers un humain. Chaque outil est une fonction Python qui interroge vos systemes internes.\n\nLa gestion du contexte conversationnel est essentielle. Stockez l'historique des conversations par client dans PostgreSQL pour que l'agent puisse maintenir le fil de la discussion. Limitez le contexte aux 10 derniers messages pour optimiser les couts et la latence.\n\nParametrez le prompt systeme avec soin : ton professionnel B2B, reponses concises adaptees au format mobile, vouvoiement systematique, et limites claires sur les actions autonomes de l'agent.",
+          "L'agent LLM est le cerveau du chatbot. Il analyse l'intention du client, decide quel outil utiliser (recherche commande, catalogue produit, génération devis, escalade), et formule une réponse naturelle et professionnelle. L'utilisation du pattern ReAct permet a l'agent de raisonner étape par étape.\n\nDefinissez les outils metier que l'agent peut appeler : recherche de commande par numero ou nom client, consultation du catalogue et des stocks, génération de devis, et escalade vers un humain. Chaque outil est une fonction Python qui interroge vos systèmes internes.\n\nLa gestion du contexte conversationnel est essentielle. Stockez l'historique des conversations par client dans PostgreSQL pour que l'agent puisse maintenir le fil de la discussion. Limitez le contexte aux 10 derniers messages pour optimiser les couts et la latence.\n\nParametrez le prompt système avec soin : ton professionnel B2B, reponses concises adaptees au format mobile, vouvoiement systematique, et limites claires sur les actions autonomes de l'agent.",
         codeSnippets: [
           {
             language: "python",
-            code: "from langchain.chat_models import ChatOpenAI\nfrom langchain.agents import AgentExecutor, create_openai_tools_agent\nfrom langchain.tools import tool\nfrom langchain.prompts import ChatPromptTemplate, MessagesPlaceholder\n\n@tool\ndef rechercher_commande(numero_commande: str) -> str:\n    \"\"\"Recherche le statut d'une commande par son numero.\"\"\"\n    commande = query_erp_order(numero_commande)\n    if not commande:\n        return \"Aucune commande trouvee avec ce numero.\"\n    return \"Commande {num}: statut={s}, livraison prevue le {d}\".format(\n        num=commande[\"numero\"], s=commande[\"statut\"], d=commande[\"date_livraison\"]\n    )\n\n@tool\ndef consulter_catalogue(recherche: str) -> str:\n    \"\"\"Recherche un produit dans le catalogue.\"\"\"\n    produits = search_catalog(recherche)\n    if not produits:\n        return \"Aucun produit trouve.\"\n    return \"\\n\".join(\n        \"- {n} : {p} EUR HT (stock: {s})\".format(n=p[\"nom\"], p=p[\"prix\"], s=p[\"stock\"]) for p in produits[:5]\n    )\n\nllm = ChatOpenAI(model=\"gpt-4.1\", temperature=0.1)\ntools = [rechercher_commande, consulter_catalogue]",
+            code: "from langchain.chat_models import ChatOpenAI\nfrom langchain.agents import AgentExecutor, create_openai_tools_agent\nfrom langchain.tools import tool\nfrom langchain.prompts import ChatPromptTemplate, MessagesPlaceholder\n\n@tool\ndef rechercher_commande(numero_commande: str) -> str:\n    \"\"\"Recherche le statut d'une commande par son numero.\"\"\"\n    commande = query_erp_order(numero_commande)\n    if not commande:\n        return \"Aucune commande trouvee avec ce numero.\"\n    return \"Commande {num}: statut={s}, livraison prévue le {d}\".format(\n        num=commande[\"numero\"], s=commande[\"statut\"], d=commande[\"date_livraison\"]\n    )\n\n@tool\ndef consulter_catalogue(recherche: str) -> str:\n    \"\"\"Recherche un produit dans le catalogue.\"\"\"\n    produits = search_catalog(recherche)\n    if not produits:\n        return \"Aucun produit trouve.\"\n    return \"\\n\".join(\n        \"- {n} : {p} EUR HT (stock: {s})\".format(n=p[\"nom\"], p=p[\"prix\"], s=p[\"stock\"]) for p in produits[:5]\n    )\n\nllm = ChatOpenAI(model=\"gpt-4.1\", temperature=0.1)\ntools = [rechercher_commande, consulter_catalogue]",
             filename: "agent_whatsapp.py",
           },
         ],
       },
       {
-        title: "Tests et deploiement en production",
+        title: "Tests et déploiement en production",
         content:
-          "Avant le deploiement, testez exhaustivement chaque scenario conversationnel. Simulez des demandes de suivi commande, des questions produit, des reclamations et des cas limites (messages vides, spam, langues non supportees). Mesurez la qualite des reponses avec un jeu de test annote.\n\nDeployez l'API sur AWS Lambda avec API Gateway pour beneficier du scaling automatique. WhatsApp peut envoyer des pics de messages importants, notamment apres l'envoi de campagnes promotionnelles. Lambda gere ces pics sans intervention manuelle.\n\nMettez en place un monitoring complet avec Langfuse : tracez chaque conversation, mesurez le temps de reponse, le taux d'escalade vers un humain, et la satisfaction client. Configurez des alertes si le taux d'escalade depasse un seuil configurable.\n\nPrevoyez une phase de rodage de 2 semaines ou toutes les reponses sont verifiees par un humain avant envoi (mode shadow). Cela permet d'affiner le prompt et de corriger les cas non couverts avant de passer en mode autonome.",
+          "Avant le déploiement, testez exhaustivement chaque scenario conversationnel. Simulez des demandes de suivi commande, des questions produit, des reclamations et des cas limites (messages vides, spam, langues non supportees). Mesurez la qualité des reponses avec un jeu de test annote.\n\nDeployez l'API sur AWS Lambda avec API Gateway pour beneficier du scaling automatique. WhatsApp peut envoyer des pics de messages importants, notamment apres l'envoi de campagnes promotionnelles. Lambda gère ces pics sans intervention manuelle.\n\nMettez en place un monitoring complet avec Langfuse : tracez chaque conversation, mesurez le temps de réponse, le taux d'escalade vers un humain, et la satisfaction client. Configurez des alertes si le taux d'escalade depasse un seuil configurable.\n\nPrevoyez une phase de rodage de 2 semaines ou toutes les reponses sont verifiees par un humain avant envoi (mode shadow). Cela permet d'affiner le prompt et de corriger les cas non couverts avant de passer en mode autonome.",
         codeSnippets: [
           {
             language: "python",
-            code: "import pytest\nfrom agent_whatsapp import executor\n\ndef test_suivi_commande():\n    result = executor.invoke({\n        \"input\": \"Bonjour, ou en est ma commande CMD-2024-1234 ?\",\n        \"chat_history\": [],\n    })\n    assert \"CMD-2024-1234\" in result[\"output\"]\n\ndef test_escalade():\n    result = executor.invoke({\n        \"input\": \"Je souhaite annuler ma commande immediatement\",\n        \"chat_history\": [],\n    })\n    assert any(mot in result[\"output\"].lower() for mot in [\"conseiller\", \"humain\", \"equipe\"])",
+            code: "import pytest\nfrom agent_whatsapp import executor\n\ndef test_suivi_commande():\n    result = executor.invoke({\n        \"input\": \"Bonjour, ou en est ma commande CMD-2024-1234 ?\",\n        \"chat_history\": [],\n    })\n    assert \"CMD-2024-1234\" in result[\"output\"]\n\ndef test_escalade():\n    result = executor.invoke({\n        \"input\": \"Je souhaite annuler ma commande immediatement\",\n        \"chat_history\": [],\n    })\n    assert any(mot in result[\"output\"].lower() for mot in [\"conseiller\", \"humain\", \"équipe\"])",
             filename: "test_agent.py",
           },
         ],
       },
     ],
     enterprise: {
-      piiHandling: "Les messages WhatsApp contiennent des donnees personnelles (numeros de telephone, noms, adresses). Anonymisez ces donnees avant envoi au LLM. Les numeros sont pseudonymises dans les logs. Stockage conforme RGPD avec chiffrement AES-256. Politique de retention limitee a 12 mois avec purge automatique.",
-      auditLog: "Chaque interaction est tracee : horodatage, numero pseudonymise, intention detectee, outil appele, reponse generee, temps de traitement, score de confiance, indicateur d'escalade. Logs stockes dans PostgreSQL avec retention de 24 mois.",
-      humanInTheLoop: "Les demandes de modification de commande, reclamations financieres et messages a faible confiance sont escalades vers un agent humain. Le mode shadow est active pendant les 2 premieres semaines. Un superviseur peut prendre le controle de n'importe quelle conversation.",
-      monitoring: "Dashboard temps reel : volume de messages par heure, temps de reponse median, taux d'escalade, taux de resolution autonome, satisfaction client, top 10 des intentions, alertes sur les anomalies.",
+      piiHandling: "Les messages WhatsApp contiennent des données personnelles (numeros de telephone, noms, adresses). Anonymisez ces données avant envoi au LLM. Les numeros sont pseudonymises dans les logs. Stockage conforme RGPD avec chiffrement AES-256. Politique de retention limitee a 12 mois avec purge automatique.",
+      auditLog: "Chaque interaction est tracee : horodatage, numero pseudonymise, intention détectée, outil appele, réponse générée, temps de traitement, score de confiance, indicateur d'escalade. Logs stockes dans PostgreSQL avec retention de 24 mois.",
+      humanInTheLoop: "Les demandes de modification de commande, reclamations financières et messages a faible confiance sont escalades vers un agent humain. Le mode shadow est active pendant les 2 premieres semaines. Un superviseur peut prendre le controle de n'importe quelle conversation.",
+      monitoring: "Dashboard temps reel : volume de messages par heure, temps de réponse median, taux d'escalade, taux de resolution autonome, satisfaction client, top 10 des intentions, alertes sur les anomalies.",
     },
     n8nWorkflow: {
-      description: "Workflow n8n : Webhook (message WhatsApp entrant) -> Node Code (extraction du message) -> Node HTTP Request (API LLM agent) -> Node Switch (intention) -> Branch commande: Node HTTP Request (ERP) -> Branch escalade: Node Slack (notification) -> Node HTTP Request (reponse WhatsApp API).",
-      nodes: ["Webhook (WhatsApp)", "Code (extraction)", "HTTP Request (Agent LLM)", "Switch (intention)", "HTTP Request (ERP)", "Slack (escalade)", "HTTP Request (reponse WhatsApp)"],
+      description: "Workflow n8n : Webhook (message WhatsApp entrant) -> Node Code (extraction du message) -> Node HTTP Request (API LLM agent) -> Node Switch (intention) -> Branch commande: Node HTTP Request (ERP) -> Branch escalade: Node Slack (notification) -> Node HTTP Request (réponse WhatsApp API).",
+      nodes: ["Webhook (WhatsApp)", "Code (extraction)", "HTTP Request (Agent LLM)", "Switch (intention)", "HTTP Request (ERP)", "Slack (escalade)", "HTTP Request (réponse WhatsApp)"],
       triggerType: "Webhook (message WhatsApp entrant)",
     },
     estimatedTime: "6-10h",
@@ -14376,27 +14376,27 @@ def test_traduction_japonais():
     functions: ["Support", "Sales"],
     metaTitle: "Agent Chatbot WhatsApp Business IA -- Guide Complet",
     metaDescription:
-      "Deployez un chatbot IA sur WhatsApp Business pour automatiser le suivi de commandes et l'engagement client. Stack technique, tutoriel et ROI detaille.",
+      "Deployez un chatbot IA sur WhatsApp Business pour automatiser le suivi de commandes et l'engagement client. Stack technique, tutoriel et ROI détaillé.",
     storytelling: {
       sector: "Distribution B2B",
       persona: "Karim, Directeur Commercial dans une entreprise de fournitures industrielles (45 salaries)",
-      painPoint: "Ses 8 commerciaux recoivent en moyenne 60 messages WhatsApp par jour de leurs clients : suivi de commande, demande de prix, verification de stock. Ils passent 2 heures par jour a copier-coller des informations depuis l'ERP vers WhatsApp. Les clients qui ecrivent le soir ou le week-end attendent parfois 48h pour une reponse simple. 3 commandes urgentes ont ete perdues le mois dernier car le message etait noye dans les conversations.",
-      story: "Karim a deploye le chatbot WhatsApp connecte a l'ERP. Desormais, quand un client ecrit 'Ou en est ma commande CMD-2024-4521 ?', le bot repond en 15 secondes avec le statut en temps reel. Pour les demandes de prix, il interroge le catalogue et genere un devis instantanement. Les demandes complexes (reclamations, negociations) sont escaladees vers le commercial avec tout le contexte.",
-      result: "En 1 mois : temps de reponse moyen passe de 4h a 25 secondes. Taux de reponse 24/7 = 100%. Charge du support commercial reduite de 45%. 12 commandes supplementaires generees via les devis automatiques. Satisfaction client (NPS) en hausse de 22 points.",
+      painPoint: "Ses 8 commerciaux recoivent en moyenne 60 messages WhatsApp par jour de leurs clients : suivi de commande, demande de prix, verification de stock. Ils passent 2 heures par jour a copier-coller des informations depuis l'ERP vers WhatsApp. Les clients qui ecrivent le soir ou le week-end attendent parfois 48h pour une réponse simple. 3 commandes urgentes ont ete perdues le mois dernier car le message etait noye dans les conversations.",
+      story: "Karim a déployé le chatbot WhatsApp connecte a l'ERP. Desormais, quand un client ecrit 'Ou en est ma commande CMD-2024-4521 ?', le bot repond en 15 secondes avec le statut en temps reel. Pour les demandes de prix, il interroge le catalogue et généré un devis instantanement. Les demandes complexes (reclamations, negociations) sont escaladees vers le commercial avec tout le contexte.",
+      result: "En 1 mois : temps de réponse moyen passé de 4h a 25 secondes. Taux de réponse 24/7 = 100%. Charge du support commercial reduite de 45%. 12 commandes supplementaires generees via les devis automatiques. Satisfaction client (NPS) en hausse de 22 points.",
     },
     beforeAfter: {
-      inputLabel: "Message WhatsApp recu",
-      inputText: "Bonjour, je suis Jean Dupont de la societe METAL PLUS. Pouvez-vous me dire ou en est ma commande du 15 janvier ? C'est la reference CMD-2024-4521. J'ai aussi besoin d'un prix pour 500 vis inox M8x40. Merci",
+      inputLabel: "Message WhatsApp reçu",
+      inputText: "Bonjour, je suis Jean Dupont de la société METAL PLUS. Pouvez-vous me dire ou en est ma commande du 15 janvier ? C'est la reference CMD-2024-4521. J'ai aussi besoin d'un prix pour 500 vis inox M8x40. Merci",
       outputFields: [
-        { label: "Intention detectee", value: "1) Suivi commande 2) Demande de prix" },
-        { label: "Suivi commande", value: "CMD-2024-4521 : Expediee le 22/01 — Transporteur : Chronopost — N° suivi : FR7894561230 — Livraison prevue : 24/01" },
-        { label: "Devis genere", value: "Vis inox A2 M8x40 (ref: VIS-INX-M8-40) — Prix unitaire: 0,18 EUR HT — 500 pcs = 90,00 EUR HT — Stock : 2 400 pcs disponibles" },
+        { label: "Intention détectée", value: "1) Suivi commande 2) Demande de prix" },
+        { label: "Suivi commande", value: "CMD-2024-4521 : Expediee le 22/01 — Transporteur : Chronopost — N° suivi : FR7894561230 — Livraison prévue : 24/01" },
+        { label: "Devis généré", value: "Vis inox A2 M8x40 (ref: VIS-INX-M8-40) — Prix unitaire: 0,18 EUR HT — 500 pcs = 90,00 EUR HT — Stock : 2 400 pcs disponibles" },
         { label: "Reponse WhatsApp", value: "Bonjour M. Dupont, votre commande CMD-2024-4521 a ete expediee le 22/01 via Chronopost (n° FR7894561230). Concernant les vis inox M8x40 : 90 EUR HT les 500 pieces, disponibles immediatement. Souhaitez-vous passer commande ?" },
       ],
       beforeContext: "+33 6 12 34 56 78 · Client METAL PLUS · il y a 30 sec",
       afterLabel: "Reponse IA",
       afterDuration: "15 secondes",
-      afterSummary: "Suivi de commande + devis genere automatiquement en une seule reponse",
+      afterSummary: "Suivi de commande + devis généré automatiquement en une seule réponse",
     },
     roiEstimator: {
       label: "Combien de messages clients recevez-vous par jour sur WhatsApp ?",
@@ -14408,40 +14408,40 @@ def test_traduction_japonais():
     faq: [
       {
         question: "Faut-il un compte WhatsApp Business API payant ?",
-        answer: "Oui, le chatbot necessite WhatsApp Business API (via Meta Business Suite), distinct de l'application WhatsApp Business gratuite. Les 1 000 premieres conversations par mois sont gratuites. Au-dela, le cout est d'environ 0,04 a 0,08 EUR par conversation (24h). Un partenaire BSP (Business Solution Provider) comme Twilio, MessageBird ou 360dialog simplifie la configuration.",
+        answer: "Oui, le chatbot nécessité WhatsApp Business API (via Meta Business Suite), distinct de l'application WhatsApp Business gratuite. Les 1 000 premieres conversations par mois sont gratuites. Au-dela, le cout est d'environ 0,04 a 0,08 EUR par conversation (24h). Un partenaire BSP (Business Solution Provider) comme Twilio, MessageBird ou 360dialog simplifie la configuration.",
       },
       {
-        question: "Le chatbot peut-il gerer des images et documents (bons de commande, photos) ?",
+        question: "Le chatbot peut-il gérer des images et documents (bons de commande, photos) ?",
         answer: "Oui, l'API WhatsApp Business supporte les images, documents PDF et messages vocaux. Le workflow n8n peut extraire le texte d'un bon de commande via OCR (noeud HTTP Request vers une API OCR) ou analyser une image produit via le mode vision du LLM. Les documents sont stockes et associes a la conversation.",
       },
       {
-        question: "Comment garantir la conformite RGPD des conversations WhatsApp ?",
-        answer: "Les numeros de telephone sont pseudonymises dans les logs LLM. Les conversations sont stockees chiffrees avec une retention limitee (12 mois par defaut). Un mecanisme de suppression sur demande est prevu. Informez vos clients dans votre politique de confidentialite que les conversations sont traitees par une IA. Le consentement est implicite quand le client initie la conversation.",
+        question: "Comment garantir la conformité RGPD des conversations WhatsApp ?",
+        answer: "Les numeros de telephone sont pseudonymises dans les logs LLM. Les conversations sont stockees chiffrees avec une retention limitee (12 mois par defaut). Un mecanisme de suppression sur demande est prévu. Informez vos clients dans votre politique de confidentialite que les conversations sont traitees par une IA. Le consentement est implicite quand le client initie la conversation.",
       },
       {
         question: "Que se passe-t-il si le chatbot ne sait pas repondre ?",
-        answer: "Le chatbot est configure avec un seuil de confiance. Si l'intention n'est pas clairement identifiee (score < 0.6) ou si la demande est complexe (reclamation, negociation, demande technique pointue), le message est escalade vers un commercial humain via Slack ou email avec tout le contexte de la conversation. Le client recoit un message : 'Je transmets votre demande a un conseiller qui vous repondra rapidement.'",
+        answer: "Le chatbot est configure avec un seuil de confiance. Si l'intention n'est pas clairement identifiée (score < 0.6) ou si la demande est complexe (reclamation, negociation, demande technique pointue), le message est escalade vers un commercial humain via Slack ou email avec tout le contexte de la conversation. Le client reçoit un message : 'Je transmets votre demande a un conseiller qui vous repondra rapidement.'",
       },
       {
-        question: "Puis-je connecter le chatbot a mon ERP specifique (Sage, SAP, Odoo) ?",
-        answer: "Oui, le workflow utilise des noeuds HTTP Request generiques qui s'adaptent a n'importe quel ERP disposant d'une API REST. Pour Sage X3/100, utilisez l'API REST Sage. Pour SAP, l'API SAP Business One. Pour Odoo, l'API JSON-RPC native. Le noeud de recherche de commande est personnalise pour interroger votre ERP specifique.",
+        question: "Puis-je connecter le chatbot a mon ERP spécifique (Sage, SAP, Odoo) ?",
+        answer: "Oui, le workflow utilise des noeuds HTTP Request generiques qui s'adaptent a n'importe quel ERP disposant d'une API REST. Pour Sage X3/100, utilisez l'API REST Sage. Pour SAP, l'API SAP Business One. Pour Odoo, l'API JSON-RPC native. Le noeud de recherche de commande est personnalise pour interroger votre ERP spécifique.",
       },
     ],
     prerequisites: [
       "Un compte WhatsApp Business API (via Meta Business Suite ou un BSP comme Twilio/360dialog)",
       "Un compte n8n Cloud ou n8n self-hosted avec URL HTTPS accessible",
       "Une cle API LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces API a votre ERP pour les donnees commandes et catalogue produits",
+      "Acces API a votre ERP pour les données commandes et catalogue produits",
     ],
     n8nTutorial: [
       {
         nodeLabel: "Webhook — Message WhatsApp",
         nodeType: "Webhook",
         nodeIcon: "🔗",
-        description: "Ce noeud recoit les messages WhatsApp entrants. L'API WhatsApp Business envoie un POST a votre URL chaque fois qu'un client envoie un message.",
+        description: "Ce noeud reçoit les messages WhatsApp entrants. L'API WhatsApp Business envoie un POST a votre URL chaque fois qu'un client envoie un message.",
         configuration: "1. Ajoutez un noeud \"Webhook\"\n2. Methode : POST\n3. Path : /whatsapp-webhook\n4. Response Mode : Immediately (repondre en < 5s a Meta)\n5. Configurez le webhook dans Meta Business Suite > WhatsApp > Configuration > Webhook URL\n6. Evenement a ecouter : messages",
         expectedOutput: "{ \"from\": \"33612345678\", \"text\": \"Ou en est ma commande CMD-2024-4521 ?\", \"timestamp\": \"...\" }",
-        errorHandling: "Erreur 403 : le token de verification ne correspond pas. Configurez-le dans Meta Business Suite. Pas de donnees : testez avec l'outil de test WhatsApp dans le dashboard Meta.",
+        errorHandling: "Erreur 403 : le token de verification ne correspond pas. Configurez-le dans Meta Business Suite. Pas de données : testez avec l'outil de test WhatsApp dans le dashboard Meta.",
       },
       {
         nodeLabel: "Code — Extraction du message",
@@ -14456,14 +14456,14 @@ def test_traduction_japonais():
         nodeLabel: "Appel LLM — Agent conversationnel",
         nodeType: "HTTP Request",
         nodeIcon: "🤖",
-        description: "Ce noeud envoie le message au LLM qui identifie l'intention (suivi commande, demande prix, reclamation, question generale) et extrait les entites (numero de commande, reference produit, quantite).",
+        description: "Ce noeud envoie le message au LLM qui identifié l'intention (suivi commande, demande prix, reclamation, question generale) et extrait les entites (numero de commande, reference produit, quantite).",
         configuration: "Choisissez votre fournisseur LLM ci-dessous.\nLe prompt guide l'extraction d'intention et d'entites.",
         expectedOutput: "{ \"intentions\": [{ \"type\": \"suivi_commande\", \"commande\": \"CMD-2024-4521\" }, { \"type\": \"demande_prix\", \"produit\": \"vis inox M8x40\", \"quantite\": 500 }] }",
         variants: [
           {
             toolName: "OpenAI (GPT-4o-mini)",
             toolIcon: "🟢",
-            configuration: "1. POST > https://api.openai.com/v1/chat/completions\n2. Body : { \"model\": \"gpt-4o-mini\", \"temperature\": 0, \"response_format\": { \"type\": \"json_object\" }, \"messages\": [{ \"role\": \"user\", \"content\": \"Analyse ce message client WhatsApp et identifie les intentions. Message : {{ $json.text }}. Retourne un JSON avec : intentions (liste avec type, et entites extraites).\" }] }\n\nCout : ~0,001 EUR par message",
+            configuration: "1. POST > https://api.openai.com/v1/chat/completions\n2. Body : { \"model\": \"gpt-4o-mini\", \"temperature\": 0, \"response_format\": { \"type\": \"json_object\" }, \"messages\": [{ \"role\": \"user\", \"content\": \"Analyse ce message client WhatsApp et identifié les intentions. Message : {{ $json.text }}. Retourne un JSON avec : intentions (liste avec type, et entites extraites).\" }] }\n\nCout : ~0,001 EUR par message",
             errorHandling: "Erreur 429 : rate limit. Peu probable avec le volume WhatsApp standard.",
           },
           {
@@ -14476,7 +14476,7 @@ def test_traduction_japonais():
             toolName: "Mistral (EU 🇪🇺)",
             toolIcon: "🔵",
             configuration: "1. POST > https://api.mistral.ai/v1/chat/completions\n2. Meme format qu'OpenAI. Modele : mistral-large-latest",
-            errorHandling: "Meme format de reponse qu'OpenAI.",
+            errorHandling: "Meme format de réponse qu'OpenAI.",
           },
           {
             toolName: "Ollama (gratuit, local)",
@@ -14491,19 +14491,19 @@ def test_traduction_japonais():
         nodeLabel: "Switch — Routage par intention",
         nodeType: "Switch",
         nodeIcon: "🔀",
-        description: "Ce noeud route le message vers le bon traitement selon l'intention detectee : suivi commande vers l'ERP, demande prix vers le catalogue, reclamation vers l'escalade humaine.",
+        description: "Ce noeud route le message vers le bon traitement selon l'intention détectée : suivi commande vers l'ERP, demande prix vers le catalogue, reclamation vers l'escalade humaine.",
         configuration: "1. Ajoutez un noeud \"Switch\"\n2. Mode : Rules\n3. Rule 0 : {{ $json.intentions[0].type }} equals \"suivi_commande\" -> Output 0 (ERP)\n4. Rule 1 : {{ $json.intentions[0].type }} equals \"demande_prix\" -> Output 1 (Catalogue)\n5. Rule 2 : {{ $json.intentions[0].type }} equals \"reclamation\" -> Output 2 (Escalade)\n6. Fallback : Output 3 (Reponse generique)",
         expectedOutput: "Le message est route vers la sortie correspondant a l'intention principale.",
-        errorHandling: "Si aucune intention n'est detectee, le fallback envoie un message generique demandant au client de preciser sa demande.",
+        errorHandling: "Si aucune intention n'est détectée, le fallback envoie un message generique demandant au client de preciser sa demande.",
       },
       {
         nodeLabel: "HTTP Request — Interrogation ERP",
         nodeType: "HTTP Request",
         nodeIcon: "🌐",
-        description: "Ce noeud interroge votre ERP pour recuperer le statut de la commande, les informations de livraison, ou les prix et stocks produits selon l'intention detectee.",
-        configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Pour le suivi commande :\n   - GET > https://votre-erp.com/api/orders/{{ $json.intentions[0].commande }}\n   - Authentication : Bearer Token\n3. Pour la recherche produit :\n   - GET > https://votre-erp.com/api/products/search?q={{ $json.intentions[0].produit }}\n4. Les donnees retournees alimenteront la reponse WhatsApp",
+        description: "Ce noeud interroge votre ERP pour recuperer le statut de la commande, les informations de livraison, ou les prix et stocks produits selon l'intention détectée.",
+        configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Pour le suivi commande :\n   - GET > https://votre-erp.com/api/orders/{{ $json.intentions[0].commande }}\n   - Authentication : Bearer Token\n3. Pour la recherche produit :\n   - GET > https://votre-erp.com/api/products/search?q={{ $json.intentions[0].produit }}\n4. Les données retournees alimenteront la réponse WhatsApp",
         expectedOutput: "{ \"order_id\": \"CMD-2024-4521\", \"status\": \"expediee\", \"carrier\": \"Chronopost\", \"tracking\": \"FR7894561230\", \"estimated_delivery\": \"2024-01-24\" }",
-        errorHandling: "Erreur 404 : commande non trouvee. Envoyez un message WhatsApp : 'Je n'ai pas trouve cette reference. Pouvez-vous verifier le numero ?'",
+        errorHandling: "Erreur 404 : commande non trouvee. Envoyez un message WhatsApp : 'Je n'ai pas trouve cette reference. Pouvez-vous vérifier le numero ?'",
       },
       {
         nodeLabel: "Notification escalade",
@@ -14526,8 +14526,8 @@ def test_traduction_japonais():
         nodeLabel: "HTTP Request — Reponse WhatsApp",
         nodeType: "HTTP Request",
         nodeIcon: "📤",
-        description: "Ce noeud envoie la reponse au client via l'API WhatsApp Business. Le message est formate a partir des donnees ERP et de la reponse generee par le LLM.",
-        configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : POST\n3. URL : https://graph.facebook.com/v18.0/{{ $('Code — Extraction').item.json.phone_number_id }}/messages\n4. Headers : Authorization: Bearer VOTRE_TOKEN_WHATSAPP, Content-Type: application/json\n5. Body :\n{\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Code — Extraction').item.json.from }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": \"{{ $json.reponse }}\" }\n}",
+        description: "Ce noeud envoie la réponse au client via l'API WhatsApp Business. Le message est formate a partir des données ERP et de la réponse générée par le LLM.",
+        configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : POST\n3. URL : https://graph.facebook.com/v18.0/{{ $('Code — Extraction').item.json.phone_number_id }}/messages\n4. Headers : Authorization: Bearer VOTRE_TOKEN_WHATSAPP, Content-Type: application/json\n5. Body :\n{\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Code — Extraction').item.json.from }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": \"{{ $json.réponse }}\" }\n}",
         expectedOutput: "{ \"messaging_product\": \"whatsapp\", \"messages\": [{ \"id\": \"wamid.xxx\" }] }",
         errorHandling: "Erreur 400 : format du numero invalide (doit etre au format international sans +). Erreur 131047 : message template requis (la fenetre de 24h est depassee).",
       },
@@ -14542,9 +14542,9 @@ def test_traduction_japonais():
     problem:
       "Les entreprises B2B sont mentionnees sur les reseaux sociaux (LinkedIn, X/Twitter, forums specialises) sans en avoir conscience. Les equipes marketing ne peuvent pas surveiller manuellement des milliers de publications quotidiennes. Les crises reputationnelles sont detectees trop tard, et les opportunites d'engagement positif sont manquees. Les outils de social listening classiques offrent une analyse de sentiment basique et peu fiable sur le vocabulaire B2B francophone.",
     value:
-      "Un agent IA collecte en continu les mentions de votre marque, de vos produits et de vos concurrents sur les reseaux sociaux et forums professionnels. Il analyse le sentiment avec une comprehension fine du contexte B2B, detecte les tendances emergentes, identifie les influenceurs cles, et declenche des alertes en temps reel en cas de crise. Les equipes marketing disposent d'un tableau de bord actionnable avec des recommandations de reponse.",
+      "Un agent IA collecte en continu les mentions de votre marque, de vos produits et de vos concurrents sur les reseaux sociaux et forums professionnels. Il analyse le sentiment avec une comprehension fine du contexte B2B, détecté les tendances emergentes, identifié les influenceurs cles, et déclenché des alertes en temps reel en cas de crise. Les equipes marketing disposent d'un tableau de bord actionnable avec des recommandations de réponse.",
     inputs: [
-      "Flux de donnees reseaux sociaux (LinkedIn, X/Twitter, forums)",
+      "Flux de données reseaux sociaux (LinkedIn, X/Twitter, forums)",
       "Liste de mots-cles et mentions a surveiller",
       "Profils concurrents a analyser",
       "Historique des campagnes marketing",
@@ -14555,14 +14555,14 @@ def test_traduction_japonais():
       "Classification thematique des mentions",
       "Alertes en temps reel pour les mentions critiques",
       "Tableau de bord d'evolution du sentiment",
-      "Recommandations de reponse contextualisees",
+      "Recommandations de réponse contextualisees",
       "Rapport hebdomadaire de veille reputationnelle",
     ],
     risks: [
       "Mauvaise interpretation du sarcasme ou de l'ironie en contexte francophone",
       "Biais dans l'analyse de sentiment selon les secteurs",
       "Non-respect des conditions d'utilisation des API reseaux sociaux",
-      "Volume de donnees trop important degradant la qualite d'analyse",
+      "Volume de données trop important degradant la qualité d'analyse",
       "Faux positifs declenchant des alertes inutiles",
     ],
     roiIndicatif:
@@ -14583,9 +14583,9 @@ def test_traduction_japonais():
     architectureDiagram: "+-------------+  +-------------+  +-------------+\n|  LinkedIn   |  |  X/Twitter  |  |  Forums     |\n|  API        |  |  API        |  |  RSS/Scrape |\n+------+------+  +------+------+  +------+------+\n       |                |                |\n       v                v                v\n+----------------------------------------------+\n|         Collecteur de Mentions               |\n|         (File d'attente Redis)               |\n+-----------------------+----------------------+\n                        |\n                +-------v--------+\n                |   Agent LLM    |\n                |   (Analyse)    |\n                +-------+--------+\n                        |\n              +---------+---------+\n              |                   |\n       +------v------+     +------v------+\n       |  Dashboard  |     |  Alertes    |\n       |  (Metabase) |     |  (Slack)    |\n       +-------------+     +-------------+",
     tutorial: [
       {
-        title: "Prerequis et configuration des sources de donnees",
+        title: "Prerequis et configuration des sources de données",
         content:
-          "Commencez par configurer les acces aux API des reseaux sociaux. Pour LinkedIn, vous aurez besoin d'une application LinkedIn Developer avec les permissions Marketing API. Pour X/Twitter, creez un projet dans le Developer Portal avec un acces Business pour beneficier du volume de requetes necessaire.\n\nInstallez les dependances Python du projet. Le collecteur de mentions utilise des bibliotheques specifiques pour chaque plateforme, ainsi que Redis pour la file d'attente de traitement. LangChain orchestre l'agent d'analyse et Anthropic Claude fournit la comprehension fine du contexte.\n\nConfigurez les mots-cles de surveillance : nom de votre entreprise et ses variantes, noms de produits, noms des dirigeants, et termes specifiques a votre secteur. Incluez egalement les noms de vos principaux concurrents pour une analyse comparative.\n\nMettez en place un scheduler (cron ou APScheduler) pour collecter les mentions a intervalles reguliers. La frequence depend de votre volume : toutes les 5 minutes pour les grandes marques, toutes les heures pour les PME.",
+          "Commencez par configurer les acces aux API des reseaux sociaux. Pour LinkedIn, vous aurez besoin d'une application LinkedIn Developer avec les permissions Marketing API. Pour X/Twitter, creez un projet dans le Developer Portal avec un acces Business pour beneficier du volume de requetes nécessaire.\n\nInstallez les dependances Python du projet. Le collecteur de mentions utilise des bibliotheques spécifiques pour chaque plateforme, ainsi que Redis pour la file d'attente de traitement. LangChain orchestre l'agent d'analyse et Anthropic Claude fournit la comprehension fine du contexte.\n\nConfigurez les mots-cles de surveillance : nom de votre entreprise et ses variantes, noms de produits, noms des dirigeants, et termes spécifiques a votre secteur. Incluez egalement les noms de vos principaux concurrents pour une analyse comparative.\n\nMettez en place un scheduler (cron ou APScheduler) pour collecter les mentions a intervalles reguliers. La fréquence depend de votre volume : toutes les 5 minutes pour les grandes marques, toutes les heures pour les PME.",
         codeSnippets: [
           {
             language: "bash",
@@ -14597,7 +14597,7 @@ def test_traduction_japonais():
       {
         title: "Collecteur de mentions multi-plateformes",
         content:
-          "Le collecteur interroge chaque plateforme et normalise les donnees dans un format unifie. Chaque mention est stockee avec ses metadonnees (auteur, date, plateforme, engagement) dans une file Redis pour traitement asynchrone par l'agent d'analyse.\n\nPour X/Twitter, utilisez l'API v2 avec les operateurs de recherche avances. Filtrez par langue (lang:fr) et excluez les retweets pour eviter les doublons. Pour LinkedIn, l'API Marketing permet de recuperer les mentions de votre page entreprise.\n\nPour les forums specialises (forums sectoriels, Reddit, communautes publiques), utilisez un scraper RSS ou un outil comme Apify. Normalisez les donnees dans le meme schema que les reseaux sociaux pour un traitement uniforme.\n\nImplementez un systeme de deduplication base sur le hash du contenu et l'identifiant de la plateforme. Les memes contenus peuvent apparaitre sur plusieurs plateformes (cross-posting), et il est important de les regrouper.",
+          "Le collecteur interroge chaque plateforme et normalise les données dans un format unifie. Chaque mention est stockee avec ses metadonnees (auteur, date, plateforme, engagement) dans une file Redis pour traitement asynchrone par l'agent d'analyse.\n\nPour X/Twitter, utilisez l'API v2 avec les operateurs de recherche avances. Filtrez par langue (lang:fr) et excluez les retweets pour eviter les doublons. Pour LinkedIn, l'API Marketing permet de recuperer les mentions de votre page entreprise.\n\nPour les forums specialises (forums sectoriels, Reddit, communautes publiques), utilisez un scraper RSS ou un outil comme Apify. Normalisez les données dans le meme schema que les reseaux sociaux pour un traitement uniforme.\n\nImplementez un système de deduplication base sur le hash du contenu et l'identifiant de la plateforme. Les memes contenus peuvent apparaitre sur plusieurs plateformes (cross-posting), et il est important de les regrouper.",
         codeSnippets: [
           {
             language: "python",
@@ -14609,19 +14609,19 @@ def test_traduction_japonais():
       {
         title: "Agent d'analyse de sentiment contextuel",
         content:
-          "L'agent LLM analyse chaque mention avec une comprehension fine du contexte B2B francophone. Contrairement aux outils de sentiment classiques bases sur des lexiques, le LLM comprend le sarcasme, les references sectorielles, et les nuances du langage professionnel.\n\nLe prompt systeme est calibre pour le contexte B2B francais. Il inclut les specificites de votre marque, vos produits, et les sujets sensibles a surveiller en priorite. L'agent produit un score de sentiment continu (-1 a +1) plus nuance qu'une simple classification.\n\nPour les mentions a fort engagement ou a sentiment tres negatif, l'agent genere automatiquement une recommandation de reponse adaptee au ton de votre marque. Cette reponse est envoyee a l'equipe marketing pour validation avant publication.\n\nLe traitement par batch permet d'optimiser les couts API. Regroupez les mentions par lots de 10-20 pour une analyse en une seule requete LLM, tout en maintenant la qualite individuelle de chaque analyse.",
+          "L'agent LLM analyse chaque mention avec une comprehension fine du contexte B2B francophone. Contrairement aux outils de sentiment classiques bases sur des lexiques, le LLM comprend le sarcasme, les references sectorielles, et les nuances du langage professionnel.\n\nLe prompt système est calibre pour le contexte B2B francais. Il inclut les specificites de votre marque, vos produits, et les sujets sensibles a surveiller en priorite. L'agent produit un score de sentiment continu (-1 a +1) plus nuance qu'une simple classification.\n\nPour les mentions a fort engagement ou a sentiment tres negatif, l'agent généré automatiquement une recommandation de réponse adaptee au ton de votre marque. Cette réponse est envoyee a l'équipe marketing pour validation avant publication.\n\nLe traitement par batch permet d'optimiser les couts API. Regroupez les mentions par lots de 10-20 pour une analyse en une seule requete LLM, tout en maintenant la qualité individuelle de chaque analyse.",
         codeSnippets: [
           {
             language: "python",
-            code: "import anthropic\nfrom pydantic import BaseModel, Field\n\nclient = anthropic.Anthropic()\n\nclass SentimentAnalysis(BaseModel):\n    sentiment_score: float = Field(ge=-1.0, le=1.0)\n    sentiment_label: str\n    themes: list[str]\n    urgency: str\n    summary: str\n    recommended_action: str\n    suggested_response: str = \"\"\n    confidence: float = Field(ge=0.0, le=1.0)\n\ndef analyze_mention(mention_content: str, author_info: str, brand_context: str) -> SentimentAnalysis:\n    prompt = (\n        \"Tu es un analyste de reputation de marque specialise B2B.\\n\"\n        \"Analyse cette mention de notre marque sur les reseaux sociaux.\\n\\n\"\n        \"Mention: {content}\\n\"\n        \"Auteur: {author}\\n\"\n        \"Contexte marque: {context}\\n\\n\"\n        \"Analyse le sentiment, les themes, l'urgence, et recommande une action.\\n\"\n        \"Retourne un JSON avec: sentiment_score, sentiment_label, themes, \"\n        \"urgency, summary, recommended_action, suggested_response, confidence.\"\n    ).format(content=mention_content, author=author_info, context=brand_context)\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=1024,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return SentimentAnalysis.model_validate_json(message.content[0].text)",
+            code: "import anthropic\nfrom pydantic import BaseModel, Field\n\nclient = anthropic.Anthropic()\n\nclass SentimentAnalysis(BaseModel):\n    sentiment_score: float = Field(ge=-1.0, le=1.0)\n    sentiment_label: str\n    themes: list[str]\n    urgency: str\n    summary: str\n    recommended_action: str\n    suggested_response: str = \"\"\n    confidence: float = Field(ge=0.0, le=1.0)\n\ndef analyze_mention(mention_content: str, author_info: str, brand_context: str) -> SentimentAnalysis:\n    prompt = (\n        \"Tu es un analyste de reputation de marque specialise B2B.\\n\"\n        \"Analyse cette mention de notre marque sur les reseaux sociaux.\\n\\n\"\n        \"Mention: {content}\\n\"\n        \"Auteur: {author}\\n\"\n        \"Contexte marque: {context}\\n\\n\"\n        \"Analyse le sentiment, les themes, l'urgence, et recommandé une action.\\n\"\n        \"Retourne un JSON avec: sentiment_score, sentiment_label, themes, \"\n        \"urgency, summary, recommended_action, suggested_response, confidence.\"\n    ).format(content=mention_content, author=author_info, context=brand_context)\n    message = client.messages.create(\n        model=\"claude-sonnet-4-5-20250514\",\n        max_tokens=1024,\n        messages=[{\"role\": \"user\", \"content\": prompt}]\n    )\n    return SentimentAnalysis.model_validate_json(message.content[0].text)",
             filename: "sentiment_agent.py",
           },
         ],
       },
       {
-        title: "Alertes, dashboard et deploiement",
+        title: "Alertes, dashboard et déploiement",
         content:
-          "Configurez un systeme d'alertes multi-niveaux. Les mentions critiques (sentiment tres negatif, fort engagement, auteur influent) declenchent une notification Slack immediate avec le contexte complet et la reponse suggeree. Les tendances negatives detectees sur 24h generent un rapport de synthese par email.\n\nDeployez un dashboard Metabase connecte a PostgreSQL pour visualiser les metriques en temps reel : evolution du sentiment moyen, repartition par theme, volume de mentions par plateforme, top auteurs et influenceurs, et comparaison avec les concurrents.\n\nAutomatisez la generation de rapports hebdomadaires. L'agent LLM synthetise les evenements marquants de la semaine, les tendances emergentes, et propose des recommandations strategiques. Ce rapport est envoye automatiquement au directeur marketing.\n\nPour le deploiement en production, utilisez Vercel pour l'API et un worker Redis dedie pour le traitement des mentions. Mettez en place des health checks et des alertes d'infrastructure pour garantir la continuite du service de veille.",
+          "Configurez un système d'alertes multi-niveaux. Les mentions critiques (sentiment tres negatif, fort engagement, auteur influent) declenchent une notification Slack immédiate avec le contexte complet et la réponse suggeree. Les tendances negatives detectees sur 24h generent un rapport de synthese par email.\n\nDeployez un dashboard Metabase connecte a PostgreSQL pour visualiser les metriques en temps reel : evolution du sentiment moyen, repartition par theme, volume de mentions par plateforme, top auteurs et influenceurs, et comparaison avec les concurrents.\n\nAutomatisez la génération de rapports hebdomadaires. L'agent LLM synthetise les evenements marquants de la semaine, les tendances emergentes, et propose des recommandations strategiques. Ce rapport est envoye automatiquement au directeur marketing.\n\nPour le déploiement en production, utilisez Vercel pour l'API et un worker Redis dedie pour le traitement des mentions. Mettez en place des health checks et des alertes d'infrastructure pour garantir la continuite du service de veille.",
         codeSnippets: [
           {
             language: "python",
@@ -14632,10 +14632,10 @@ def test_traduction_japonais():
       },
     ],
     enterprise: {
-      piiHandling: "Les donnees collectees sur les reseaux sociaux peuvent contenir des informations personnelles. Seul le contenu textuel est envoye au LLM, sans les metadonnees d'identification. Les profils auteurs sont pseudonymises dans la base de donnees. Conformite RGPD avec droit d'opposition. Donnees stockees en UE uniquement.",
-      auditLog: "Chaque analyse est tracee : horodatage, plateforme source, mention originale (hash), score de sentiment, themes detectes, action recommandee, et identite de l'operateur ayant valide ou rejete la recommandation. Conservation 18 mois avec export automatique.",
-      humanInTheLoop: "Les mentions critiques (sentiment < -0.7 ou urgence critique) sont validees par un humain avant toute action de reponse. Les reponses suggerees ne sont jamais publiees automatiquement : un membre de l'equipe marketing doit les valider. Le mode automatique peut etre active uniquement pour les mentions positives a faible engagement.",
-      monitoring: "Dashboard de monitoring : volume de mentions collectees par heure, taux de couverture par plateforme, latence d'analyse, distribution des sentiments en temps reel, taux d'alertes critiques, temps de reaction moyen de l'equipe, et evolution comparative du sentiment vs concurrents.",
+      piiHandling: "Les données collectees sur les reseaux sociaux peuvent contenir des informations personnelles. Seul le contenu textuel est envoye au LLM, sans les metadonnees d'identification. Les profils auteurs sont pseudonymises dans la base de données. Conformite RGPD avec droit d'opposition. Donnees stockees en UE uniquement.",
+      auditLog: "Chaque analyse est tracee : horodatage, plateforme source, mention originale (hash), score de sentiment, themes detectes, action recommandée, et identite de l'operateur ayant valide ou rejete la recommandation. Conservation 18 mois avec export automatique.",
+      humanInTheLoop: "Les mentions critiques (sentiment < -0.7 ou urgence critique) sont validees par un humain avant toute action de réponse. Les reponses suggerees ne sont jamais publiees automatiquement : un membre de l'équipe marketing doit les valider. Le mode automatique peut etre active uniquement pour les mentions positives a faible engagement.",
+      monitoring: "Dashboard de monitoring : volume de mentions collectees par heure, taux de couverture par plateforme, latence d'analyse, distribution des sentiments en temps reel, taux d'alertes critiques, temps de reaction moyen de l'équipe, et evolution comparative du sentiment vs concurrents.",
     },
     n8nWorkflow: {
       description: "Workflow n8n : Cron Trigger (toutes les 15 min) -> Node HTTP Request (API Twitter) -> Node HTTP Request (API LinkedIn) -> Node Code (normalisation et deduplication) -> Node HTTP Request (API Claude - analyse sentiment) -> Node Switch (urgence critique ?) -> Branch critique: Node Slack (alerte) -> Node PostgreSQL (sauvegarde) -> Cron hebdomadaire: Node HTTP Request (rapport) -> Node Email (envoi rapport).",
@@ -14653,24 +14653,24 @@ def test_traduction_japonais():
     storytelling: {
       sector: "Tech B2B",
       persona: "Sophie, Directrice Marketing dans une ESN (Entreprise de Services Numeriques, 200 salaries)",
-      painPoint: "Sophie decouvre les mentions negatives de son entreprise sur LinkedIn et X/Twitter 3 a 5 jours apres leur publication. Un ancien client mecontent a poste un thread viral critique il y a 2 semaines — l'equipe ne l'a vu que lorsqu'un prospect a annule une demo en le citant. La veille reputationnelle est faite manuellement par un alternant qui scrute 3 sources, alors que les discussions ont lieu sur plus de 15 plateformes differentes.",
-      story: "Sophie a configure l'agent de surveillance qui collecte les mentions toutes les 15 minutes sur LinkedIn, X/Twitter, et 5 forums tech francophones. Le premier jour, l'agent a detecte une discussion negative sur un forum specialise ou 3 personnes se plaignaient du service apres-vente. L'alerte Slack est arrivee en 12 minutes. L'equipe a pu repondre le jour meme, transformant une critique en temoignage de reactivite.",
-      result: "En 2 mois : detection des mentions critiques passee de 3-5 jours a 15 minutes en moyenne. Taux d'engagement sur les reponses aux mentions multiplie par 3. Deux crises reputationnelles evitees grace a la detection precoce. Sophie a supprime l'abonnement a un outil de social listening a 450 EUR/mois qui ne couvrait pas les forums tech francophones.",
+      painPoint: "Sophie decouvre les mentions negatives de son entreprise sur LinkedIn et X/Twitter 3 a 5 jours apres leur publication. Un ancien client mecontent a poste un thread viral critique il y a 2 semaines — l'équipe ne l'a vu que lorsqu'un prospect a annule une demo en le citant. La veille reputationnelle est faite manuellement par un alternant qui scrute 3 sources, alors que les discussions ont lieu sur plus de 15 plateformes differentes.",
+      story: "Sophie a configure l'agent de surveillance qui collecte les mentions toutes les 15 minutes sur LinkedIn, X/Twitter, et 5 forums tech francophones. Le premier jour, l'agent a détecté une discussion negative sur un forum specialise ou 3 personnes se plaignaient du service apres-vente. L'alerte Slack est arrivee en 12 minutes. L'équipe a pu repondre le jour meme, transformant une critique en temoignage de réactivité.",
+      result: "En 2 mois : détection des mentions critiques passée de 3-5 jours a 15 minutes en moyenne. Taux d'engagement sur les reponses aux mentions multiplie par 3. Deux crises reputationnelles evitees grace a la détection precoce. Sophie a supprime l'abonnement a un outil de social listening a 450 EUR/mois qui ne couvrait pas les forums tech francophones.",
     },
     beforeAfter: {
-      inputLabel: "Mention detectee sur LinkedIn",
+      inputLabel: "Mention détectée sur LinkedIn",
       inputText: "Post LinkedIn de @marc_dsi_retail : 'Apres 18 mois avec [VotreESN], je suis tres decu. Le turnover constant des consultants rend impossible la capitalisation sur les projets. 3 chefs de projet differents en 1 an sur notre migration cloud. Je cherche des alternatives plus stables. #DSI #consulting'",
       outputFields: [
         { label: "Sentiment", value: "-0.82 — Tres negatif" },
-        { label: "Themes", value: "Turnover consultants, stabilite equipe, migration cloud, insatisfaction client" },
+        { label: "Themes", value: "Turnover consultants, stabilite équipe, migration cloud, insatisfaction client" },
         { label: "Urgence", value: "Critique — Auteur influent (2 400 abonnes, DSI retail)" },
-        { label: "Recommandation", value: "Reponse prioritaire sous 2h. Proposition : prise de contact directe pour comprendre la situation et proposer un plan d'action de stabilisation de l'equipe." },
+        { label: "Recommandation", value: "Reponse prioritaire sous 2h. Proposition : prise de contact directe pour comprendre la situation et proposer un plan d'action de stabilisation de l'équipe." },
         { label: "Reponse suggeree", value: "Marc, merci pour ce retour transparent. La stabilite de nos equipes est une priorite. Je vous contacte en prive pour echanger et mettre en place un plan d'action concret. — Sophie, Dir. Marketing" },
       ],
       beforeContext: "LinkedIn · marc_dsi_retail · 847 reactions · il y a 23 min",
       afterLabel: "Analyse IA",
       afterDuration: "8 secondes",
-      afterSummary: "Mention critique detectee, analysee et reponse suggeree en temps reel",
+      afterSummary: "Mention critique détectée, analysee et réponse suggeree en temps reel",
     },
     roiEstimator: {
       label: "Combien de mentions de votre marque detectez-vous par semaine ?",
@@ -14690,11 +14690,11 @@ def test_traduction_japonais():
       },
       {
         question: "L'agent comprend-il le sarcasme et l'ironie en francais ?",
-        answer: "Les LLM modernes (Claude, GPT-4) ont une bonne comprehension du sarcasme et de l'ironie en francais, meilleure que les outils d'analyse de sentiment classiques bases sur des lexiques. Le taux de precision sur le sentiment est de l'ordre de 85-90% contre 60-70% pour les outils lexicaux. Les cas ambigus sont signales avec un score de confiance faible pour relecture humaine.",
+        answer: "Les LLM modernes (Claude, GPT-4) ont une bonne comprehension du sarcasme et de l'ironie en francais, meilleure que les outils d'analyse de sentiment classiques bases sur des lexiques. Le taux de précision sur le sentiment est de l'ordre de 85-90% contre 60-70% pour les outils lexicaux. Les cas ambigus sont signales avec un score de confiance faible pour relecture humaine.",
       },
       {
         question: "Les reponses suggerees sont-elles publiees automatiquement ?",
-        answer: "Non, jamais. Les reponses suggerees sont envoyees a l'equipe marketing via Slack ou email pour validation. La publication automatique de reponses sur les reseaux sociaux est risquee (ton inapproprie, contexte mal compris). L'agent est un assistant de redaction, pas un community manager autonome.",
+        answer: "Non, jamais. Les reponses suggerees sont envoyees a l'équipe marketing via Slack ou email pour validation. La publication automatique de reponses sur les reseaux sociaux est risquee (ton inapproprie, contexte mal compris). L'agent est un assistant de rédaction, pas un community manager autonome.",
       },
       {
         question: "Puis-je comparer le sentiment de ma marque avec celui de mes concurrents ?",
@@ -14712,8 +14712,8 @@ def test_traduction_japonais():
         nodeLabel: "Cron Trigger — Collecte periodique",
         nodeType: "Schedule Trigger",
         nodeIcon: "⏰",
-        description: "Ce noeud declenche la collecte des mentions a intervalles reguliers. La frequence depend de votre volume : toutes les 15 minutes pour une surveillance active, toutes les heures pour un suivi standard.",
-        configuration: "1. Ajoutez un noeud \"Schedule Trigger\"\n2. Mode : Cron\n3. Expression Cron : */15 * * * * (toutes les 15 minutes)\n4. Timezone : Europe/Paris\n5. Pour une frequence horaire : 0 * * * *",
+        description: "Ce noeud déclenché la collecte des mentions a intervalles reguliers. La fréquence depend de votre volume : toutes les 15 minutes pour une surveillance active, toutes les heures pour un suivi standard.",
+        configuration: "1. Ajoutez un noeud \"Schedule Trigger\"\n2. Mode : Cron\n3. Expression Cron : */15 * * * * (toutes les 15 minutes)\n4. Timezone : Europe/Paris\n5. Pour une fréquence horaire : 0 * * * *",
         expectedOutput: "{ \"timestamp\": \"2025-02-10T09:15:00.000+01:00\" }",
         errorHandling: "Activez le workflow (toggle en haut a droite) pour que le cron fonctionne.",
       },
@@ -14724,7 +14724,7 @@ def test_traduction_japonais():
         description: "Ce noeud interroge l'API Twitter/X v2 pour recuperer les tweets recents mentionnant votre marque, vos produits ou vos concurrents.",
         configuration: "1. Ajoutez un noeud \"HTTP Request\"\n2. Methode : GET\n3. URL : https://api.twitter.com/2/tweets/search/recent\n4. Query Parameters :\n   - query : (VotreMarque OR votre-produit) lang:fr -is:retweet\n   - max_results : 100\n   - tweet.fields : created_at,public_metrics,author_id\n5. Authentication : Bearer Token (cle API Twitter)\n6. Connectez un 2e noeud HTTP Request pour LinkedIn/RSS",
         expectedOutput: "{ \"data\": [{ \"id\": \"...\", \"text\": \"...\", \"created_at\": \"...\", \"public_metrics\": { \"like_count\": 12 } }] }",
-        errorHandling: "Erreur 429 : quota API depasse. Reduisez la frequence de collecte. Erreur 403 : verifiez que votre plan API Twitter inclut la recherche de tweets.",
+        errorHandling: "Erreur 429 : quota API depasse. Reduisez la fréquence de collecte. Erreur 403 : verifiez que votre plan API Twitter inclut la recherche de tweets.",
       },
       {
         nodeLabel: "Code — Normalisation et deduplication",
@@ -14741,7 +14741,7 @@ def test_traduction_japonais():
         nodeIcon: "🤖",
         description: "Ce noeud envoie chaque mention au LLM pour une analyse de sentiment contextuelle : score (-1 a +1), themes, urgence, et recommandation d'action.",
         configuration: "Choisissez votre fournisseur LLM ci-dessous.",
-        expectedOutput: "{ \"sentiment_score\": -0.82, \"sentiment_label\": \"Tres negatif\", \"themes\": [...], \"urgency\": \"critique\", \"recommended_action\": \"reponse prioritaire\" }",
+        expectedOutput: "{ \"sentiment_score\": -0.82, \"sentiment_label\": \"Tres negatif\", \"themes\": [...], \"urgency\": \"critique\", \"recommended_action\": \"réponse prioritaire\" }",
         variants: [
           {
             toolName: "OpenAI (GPT-4o-mini)",
@@ -14759,7 +14759,7 @@ def test_traduction_japonais():
             toolName: "Mistral (EU 🇪🇺)",
             toolIcon: "🔵",
             configuration: "1. POST > https://api.mistral.ai/v1/chat/completions\n2. Meme format qu'OpenAI. Hebergement europeen.",
-            errorHandling: "Meme format de reponse qu'OpenAI.",
+            errorHandling: "Meme format de réponse qu'OpenAI.",
           },
           {
             toolName: "Ollama (gratuit, local)",
@@ -14774,8 +14774,8 @@ def test_traduction_japonais():
         nodeLabel: "Switch — Niveau d'urgence",
         nodeType: "Switch",
         nodeIcon: "🔀",
-        description: "Ce noeud route les mentions selon leur urgence. Les mentions critiques declenchent une alerte Slack immediate. Les mentions normales sont sauvegardees pour le rapport hebdomadaire.",
-        configuration: "1. Ajoutez un noeud \"Switch\"\n2. Mode : Rules\n3. Rule 0 : {{ $json.urgency }} equals \"critique\" -> Output 0 (alerte immediate)\n4. Rule 1 : {{ $json.urgency }} equals \"haute\" -> Output 1 (alerte)\n5. Fallback : Output 2 (sauvegarde pour rapport)",
+        description: "Ce noeud route les mentions selon leur urgence. Les mentions critiques declenchent une alerte Slack immédiate. Les mentions normales sont sauvegardees pour le rapport hebdomadaire.",
+        configuration: "1. Ajoutez un noeud \"Switch\"\n2. Mode : Rules\n3. Rule 0 : {{ $json.urgency }} equals \"critique\" -> Output 0 (alerte immédiate)\n4. Rule 1 : {{ $json.urgency }} equals \"haute\" -> Output 1 (alerte)\n5. Fallback : Output 2 (sauvegarde pour rapport)",
         expectedOutput: "La mention est routee vers l'alerte ou la sauvegarde selon l'urgence.",
         errorHandling: "Verifiez que le champ urgency est present. Ajoutez un fallback par defaut.",
       },
@@ -14783,8 +14783,8 @@ def test_traduction_japonais():
         nodeLabel: "Alerte Slack — Mention critique",
         nodeType: "Slack",
         nodeIcon: "💬",
-        description: "Ce noeud envoie une alerte Slack immediate pour les mentions critiques avec le contexte complet, l'analyse de sentiment, et la reponse suggeree.",
-        configuration: "1. Ajoutez un noeud \"Slack\"\n2. Channel : #reputation-alertes\n3. Text :\nAlerte Reputation Critique\nPlateforme : {{ $json.platform }}\nSentiment : {{ $json.sentiment_label }} ({{ $json.sentiment_score }})\nAuteur : {{ $json.author }} ({{ $json.engagement }} interactions)\n\n> {{ $json.content }}\n\nReponse suggeree : {{ $json.suggested_response }}\n4. Pour les mentions critiques, ajoutez @channel pour notifier toute l'equipe",
+        description: "Ce noeud envoie une alerte Slack immédiate pour les mentions critiques avec le contexte complet, l'analyse de sentiment, et la réponse suggeree.",
+        configuration: "1. Ajoutez un noeud \"Slack\"\n2. Channel : #reputation-alertes\n3. Text :\nAlerte Reputation Critique\nPlateforme : {{ $json.platform }}\nSentiment : {{ $json.sentiment_label }} ({{ $json.sentiment_score }})\nAuteur : {{ $json.author }} ({{ $json.engagement }} interactions)\n\n> {{ $json.content }}\n\nReponse suggeree : {{ $json.suggested_response }}\n4. Pour les mentions critiques, ajoutez @channel pour notifier toute l'équipe",
         expectedOutput: "Message d'alerte envoye avec contexte complet.",
         variants: [
           {
@@ -14800,8 +14800,8 @@ def test_traduction_japonais():
         nodeLabel: "Sauvegarde et rapport",
         nodeType: "Postgres",
         nodeIcon: "💾",
-        description: "Ce noeud sauvegarde chaque mention analysee en base pour le suivi historique et la generation du rapport hebdomadaire de veille reputationnelle.",
-        configuration: "1. Ajoutez un noeud \"Postgres\" (ou Supabase)\n2. Operation : Insert\n3. Table : mentions_sentiment\n4. Colonnes : platform, author, content, url, sentiment_score, themes, urgency, analyzed_at\n5. Un 2e workflow Cron hebdomadaire (lundi 8h) genere le rapport de synthese en interrogeant cette table",
+        description: "Ce noeud sauvegarde chaque mention analysee en base pour le suivi historique et la génération du rapport hebdomadaire de veille reputationnelle.",
+        configuration: "1. Ajoutez un noeud \"Postgres\" (ou Supabase)\n2. Operation : Insert\n3. Table : mentions_sentiment\n4. Colonnes : platform, author, content, url, sentiment_score, themes, urgency, analyzed_at\n5. Un 2e workflow Cron hebdomadaire (lundi 8h) généré le rapport de synthese en interrogeant cette table",
         expectedOutput: "Mention sauvegardee avec analyse de sentiment pour reporting.",
         errorHandling: "Erreur d'insertion : verifiez le schema de la table.",
       },
@@ -14810,13 +14810,13 @@ def test_traduction_japonais():
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-prevision-demande-stock",
+    slug: "agent-prévision-demande-stock",
     title: "Agent de Prevision de Demande et Optimisation des Stocks",
     subtitle: "Anticipez la demande et optimisez vos niveaux de stock grace a l'IA predictive",
     problem:
-      "Les entreprises B2B souffrent d'un double probleme de gestion des stocks : le surstockage immobilise du capital et genere des couts de stockage, tandis que les ruptures de stock entrainent des pertes de ventes et une insatisfaction client. Les methodes de prevision traditionnelles (moyennes mobiles, saisonnalite simple) ne captent pas les signaux faibles comme les tendances marche, les evenements macroeconomiques ou les comportements d'achat emergents.",
+      "Les entreprises B2B souffrent d'un double problème de gestion des stocks : le surstockage immobilise du capital et généré des couts de stockage, tandis que les ruptures de stock entrainent des pertes de ventes et une insatisfaction client. Les methodes de prévision traditionnelles (moyennes mobiles, saisonnalite simple) ne captent pas les signaux faibles comme les tendances marche, les evenements macroeconomiques ou les comportements d'achat emergents.",
     value:
-      "Un agent IA combine des modeles de prevision statistiques avec l'analyse contextuelle d'un LLM pour produire des previsions de demande precises. Il integre les donnees de vente historiques, les tendances marche, les evenements sectoriels et les signaux faibles pour generer des recommandations de reapprovisionnement optimales. Le taux de rupture chute et le capital immobilise diminue significativement.",
+      "Un agent IA combine des modèles de prévision statistiques avec l'analyse contextuelle d'un LLM pour produire des prévisions de demande precises. Il intégré les données de vente historiques, les tendances marche, les evenements sectoriels et les signaux faibles pour générer des recommandations de reapprovisionnement optimales. Le taux de rupture chute et le capital immobilise diminue significativement.",
     inputs: [
       "Historique des ventes (3 ans minimum)",
       "Niveaux de stock actuels par reference",
@@ -14830,18 +14830,18 @@ def test_traduction_japonais():
       "Recommandations de reapprovisionnement avec quantites",
       "Alertes de risque de rupture de stock",
       "Analyse des surstocks avec recommandations de destockage",
-      "Rapport de performance des previsions (MAPE, biais)",
+      "Rapport de performance des prévisions (MAPE, biais)",
       "Scenarios what-if pour les decisions strategiques",
     ],
     risks: [
       "Previsions erronees causant des ruptures ou du surstockage",
       "Surconfiance dans les predictions IA sans validation humaine",
       "Biais saisonnier mal calibre pour les nouveaux produits sans historique",
-      "Dependance a la qualite et la completude des donnees historiques",
+      "Dependance a la qualité et la completude des données historiques",
       "Impact financier eleve en cas de recommandation incorrecte",
     ],
     roiIndicatif:
-      "Reduction de 35% du stock moyen. Diminution de 60% des ruptures de stock. Amelioration de 25% de la precision des previsions vs methodes traditionnelles. ROI typique de 300% la premiere annee.",
+      "Reduction de 35% du stock moyen. Diminution de 60% des ruptures de stock. Amelioration de 25% de la précision des prévisions vs methodes traditionnelles. ROI typique de 300% la première année.",
     recommendedStack: [
       { name: "OpenAI GPT-4.1", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
@@ -14859,9 +14859,9 @@ def test_traduction_japonais():
     architectureDiagram: "+-------------+  +-------------+  +-------------+\n|  Historique |  |  Donnees    |  |  Signaux    |\n|  Ventes     |  |  Marche     |  |  Externes   |\n+------+------+  +------+------+  +------+------+\n       |                |                |\n       v                v                v\n+----------------------------------------------+\n|        Modele Statistique (Prophet)          |\n|        + Agent LLM (Contexte)                |\n+-----------------------+----------------------+\n                        |\n              +---------+---------+\n              |                   |\n       +------v------+     +------v------+\n       |  Previsions |     |  Alertes    |\n       |  + Reappro  |     |  Ruptures   |\n       +-------------+     +-------------+",
     tutorial: [
       {
-        title: "Prerequis et preparation des donnees",
+        title: "Prerequis et preparation des données",
         content:
-          "La qualite des previsions depend directement de la qualite des donnees. Commencez par extraire l'historique de ventes de votre ERP sur au moins 3 ans. Nettoyez les donnees : supprimez les commandes annulees, corrigez les valeurs aberrantes, et identifiez les periodes anormales pour les marquer comme anomalies.\n\nInstallez les dependances Python. Prophet (Meta) est un excellent modele de base pour les series temporelles avec saisonnalite. Combinez-le avec LangChain et un LLM pour ajouter une couche d'analyse contextuelle que les modeles statistiques seuls ne peuvent pas fournir.\n\nStructurez vos donnees dans un format standardise : une ligne par couple (reference, date) avec les colonnes quantite vendue, prix, categorie produit, et indicateurs contextuels. Ce format alimentera a la fois le modele statistique et l'agent LLM.\n\nConfigurez egalement les sources de donnees externes : API meteo pour les produits saisonniers, flux RSS sectoriels pour les tendances marche, et calendrier des salons professionnels. Ces signaux enrichissent la precision des previsions.",
+          "La qualité des prévisions depend directement de la qualité des données. Commencez par extraire l'historique de ventes de votre ERP sur au moins 3 ans. Nettoyez les données : supprimez les commandes annulees, corrigez les valeurs aberrantes, et identifiez les periodes anormales pour les marquer comme anomalies.\n\nInstallez les dependances Python. Prophet (Meta) est un excellent modèle de base pour les series temporelles avec saisonnalite. Combinez-le avec LangChain et un LLM pour ajouter une couche d'analyse contextuelle que les modèles statistiques seuls ne peuvent pas fournir.\n\nStructurez vos données dans un format standardise : une ligne par couple (reference, date) avec les colonnes quantite vendue, prix, categorie produit, et indicateurs contextuels. Ce format alimentera a la fois le modèle statistique et l'agent LLM.\n\nConfigurez egalement les sources de données externes : API meteo pour les produits saisonniers, flux RSS sectoriels pour les tendances marche, et calendrier des salons professionnels. Ces signaux enrichissent la précision des prévisions.",
         codeSnippets: [
           {
             language: "bash",
@@ -14871,9 +14871,9 @@ def test_traduction_japonais():
         ],
       },
       {
-        title: "Modele de prevision statistique avec Prophet",
+        title: "Modele de prévision statistique avec Prophet",
         content:
-          "Prophet est particulierement adapte aux series temporelles B2B car il gere nativement la saisonnalite multiple (hebdomadaire, mensuelle, annuelle), les jours feries, et les changements de tendance. Entrainez un modele par reference produit ou par famille de produits.\n\nConfigurez les parametres de Prophet en fonction de vos donnees : ajoutez les jours feries francais, definissez les periodes de changement de tendance, et incluez les regresseurs externes (promotions, meteo) qui impactent la demande.\n\nLe modele produit non seulement une prevision ponctuelle mais aussi un intervalle de confiance. Utilisez cet intervalle pour calibrer vos niveaux de stock de securite : un produit avec un intervalle large necessite un stock de securite plus important.\n\nEvaluez les performances avec un backtesting rigoureux : entrainez sur 80% de l'historique et testez sur les 20% restants. Mesurez le MAPE (erreur moyenne absolue en pourcentage) et le biais. Un MAPE inferieur a 20% est un bon objectif pour les produits a demande reguliere.",
+          "Prophet est particulierement adapte aux series temporelles B2B car il gère nativement la saisonnalite multiple (hebdomadaire, mensuelle, annuelle), les jours feries, et les changements de tendance. Entrainez un modèle par reference produit ou par famille de produits.\n\nConfigurez les paramètres de Prophet en fonction de vos données : ajoutez les jours feries francais, definissez les periodes de changement de tendance, et incluez les regresseurs externes (promotions, meteo) qui impactent la demande.\n\nLe modèle produit non seulement une prévision ponctuelle mais aussi un intervalle de confiance. Utilisez cet intervalle pour calibrer vos niveaux de stock de sécurité : un produit avec un intervalle large nécessité un stock de sécurité plus important.\n\nEvaluez les performances avec un backtesting rigoureux : entrainez sur 80% de l'historique et testez sur les 20% restants. Mesurez le MAPE (erreur moyenne absolue en pourcentage) et le biais. Un MAPE inferieur a 20% est un bon objectif pour les produits a demande régulière.",
         codeSnippets: [
           {
             language: "python",
@@ -14885,19 +14885,19 @@ def test_traduction_japonais():
       {
         title: "Agent LLM pour l'analyse contextuelle",
         content:
-          "Le LLM apporte la dimension contextuelle que les modeles statistiques ne captent pas. Il analyse les tendances marche, les evenements sectoriels, et les signaux faibles pour ajuster les previsions statistiques et generer des recommandations actionnables.\n\nL'agent recoit les previsions Prophet, les niveaux de stock actuels, les delais fournisseurs, et le contexte marche. Il produit des recommandations de reapprovisionnement en tenant compte de contraintes invisibles au modele statistique : MOQ, remises volume, contraintes logistiques, et priorites strategiques.\n\nPour les nouveaux produits sans historique, l'agent LLM est particulierement precieux. Il peut estimer la demande initiale en se basant sur des produits similaires, les tendances du marche, et les retours qualitatifs de l'equipe commerciale.\n\nL'agent genere egalement des scenarios what-if : que se passe-t-il si un fournisseur est en retard de 2 semaines ? Si une promotion est lancee ? Si un concurrent baisse ses prix ? Ces scenarios aident les responsables supply chain a prendre des decisions eclairees.",
+          "Le LLM apporte la dimension contextuelle que les modèles statistiques ne captent pas. Il analyse les tendances marche, les evenements sectoriels, et les signaux faibles pour ajuster les prévisions statistiques et générer des recommandations actionnables.\n\nL'agent reçoit les prévisions Prophet, les niveaux de stock actuels, les délais fournisseurs, et le contexte marche. Il produit des recommandations de reapprovisionnement en tenant compte de contraintes invisibles au modèle statistique : MOQ, remises volume, contraintes logistiques, et priorites strategiques.\n\nPour les nouveaux produits sans historique, l'agent LLM est particulierement precieux. Il peut estimer la demande initiale en se basant sur des produits similaires, les tendances du marche, et les retours qualitatifs de l'équipe commerciale.\n\nL'agent généré egalement des scenarios what-if : que se passe-t-il si un fournisseur est en retard de 2 semaines ? Si une promotion est lancee ? Si un concurrent baisse ses prix ? Ces scenarios aident les responsables supply chain a prendre des decisions eclairees.",
         codeSnippets: [
           {
             language: "python",
-            code: "import openai\nfrom pydantic import BaseModel, Field\n\nclient = openai.OpenAI()\n\nclass ReplenishmentRecommendation(BaseModel):\n    reference: str\n    current_stock: int\n    predicted_demand_4w: int\n    recommended_order_qty: int\n    order_urgency: str\n    rupture_risk: str\n    reasoning: str\n    confidence: float = Field(ge=0.0, le=1.0)\n\ndef generate_recommendations(\n    forecasts: list[dict], stock_levels: dict,\n    lead_times: dict, market_context: str\n) -> list[ReplenishmentRecommendation]:\n    forecast_summary = \"\\n\".join(\n        \"- {ref} : prevision 4 sem={pred}, stock actuel={stock}, delai={lt} jours\".format(\n            ref=f[\"reference\"],\n            pred=sum(fc[\"predicted\"] for fc in f[\"forecasts\"][:4]),\n            stock=stock_levels.get(f[\"reference\"], 0),\n            lt=lead_times.get(f[\"reference\"], 14)\n        ) for f in forecasts\n    )\n    prompt = (\n        \"Tu es un expert en supply chain et gestion des stocks B2B.\\n\"\n        \"Analyse ces previsions et niveaux de stock.\\n\\n\"\n        \"Previsions et stocks:\\n{data}\\n\\n\"\n        \"Contexte marche:\\n{context}\\n\\n\"\n        \"Pour chaque reference, recommande: quantite a commander, urgence, \"\n        \"risque de rupture, et raisonnement.\\n\"\n        \"Retourne une liste JSON de recommandations.\"\n    ).format(data=forecast_summary, context=market_context)\n    response = client.chat.completions.create(\n        model=\"gpt-4.1\",\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n        response_format={\"type\": \"json_object\"}\n    )\n    import json\n    parsed = json.loads(response.choices[0].message.content)\n    return [ReplenishmentRecommendation(**r) for r in parsed[\"recommendations\"]]",
+            code: "import openai\nfrom pydantic import BaseModel, Field\n\nclient = openai.OpenAI()\n\nclass ReplenishmentRecommendation(BaseModel):\n    reference: str\n    current_stock: int\n    predicted_demand_4w: int\n    recommended_order_qty: int\n    order_urgency: str\n    rupture_risk: str\n    reasoning: str\n    confidence: float = Field(ge=0.0, le=1.0)\n\ndef generate_recommendations(\n    forecasts: list[dict], stock_levels: dict,\n    lead_times: dict, market_context: str\n) -> list[ReplenishmentRecommendation]:\n    forecast_summary = \"\\n\".join(\n        \"- {ref} : prévision 4 sem={pred}, stock actuel={stock}, délai={lt} jours\".format(\n            ref=f[\"reference\"],\n            pred=sum(fc[\"predicted\"] for fc in f[\"forecasts\"][:4]),\n            stock=stock_levels.get(f[\"reference\"], 0),\n            lt=lead_times.get(f[\"reference\"], 14)\n        ) for f in forecasts\n    )\n    prompt = (\n        \"Tu es un expert en supply chain et gestion des stocks B2B.\\n\"\n        \"Analyse ces prévisions et niveaux de stock.\\n\\n\"\n        \"Previsions et stocks:\\n{data}\\n\\n\"\n        \"Contexte marche:\\n{context}\\n\\n\"\n        \"Pour chaque reference, recommandé: quantite a commander, urgence, \"\n        \"risque de rupture, et raisonnement.\\n\"\n        \"Retourne une liste JSON de recommandations.\"\n    ).format(data=forecast_summary, context=market_context)\n    response = client.chat.completions.create(\n        model=\"gpt-4.1\",\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n        response_format={\"type\": \"json_object\"}\n    )\n    import json\n    parsed = json.loads(response.choices[0].message.content)\n    return [ReplenishmentRecommendation(**r) for r in parsed[\"recommendations\"]]",
             filename: "recommendation_agent.py",
           },
         ],
       },
       {
-        title: "API, alertes et deploiement",
+        title: "API, alertes et déploiement",
         content:
-          "Exposez le systeme de prevision via une API REST qui alimente votre ERP et votre dashboard supply chain. L'API permet de lancer des previsions a la demande, de consulter les recommandations en cours, et de simuler des scenarios.\n\nConfigurez un systeme d'alertes proactif. Chaque matin, le systeme compare les niveaux de stock avec les previsions de demande et envoie un email aux responsables supply chain avec la liste des references en risque de rupture. Les alertes critiques declenchent une notification Slack immediate.\n\nDeployez le pipeline de prevision comme un job batch quotidien sur AWS Lambda. Les previsions sont recalculees chaque nuit avec les dernieres donnees de vente et stockees dans PostgreSQL. Le dashboard affiche les previsions, niveaux de stock et recommandations en temps reel.\n\nMettez en place un feedback loop : chaque semaine, comparez les previsions passees avec les ventes reelles pour mesurer et ameliorer la precision. Ce mecanisme d'apprentissage continu permet d'affiner les modeles et de detecter rapidement une degradation de la qualite.",
+          "Exposez le système de prévision via une API REST qui alimente votre ERP et votre dashboard supply chain. L'API permet de lancer des prévisions a la demande, de consulter les recommandations en cours, et de simuler des scenarios.\n\nConfigurez un système d'alertes proactif. Chaque matin, le système compare les niveaux de stock avec les prévisions de demande et envoie un email aux responsables supply chain avec la liste des references en risque de rupture. Les alertes critiques declenchent une notification Slack immédiate.\n\nDeployez le pipeline de prévision comme un job batch quotidien sur AWS Lambda. Les prévisions sont recalculees chaque nuit avec les dernieres données de vente et stockees dans PostgreSQL. Le dashboard affiche les prévisions, niveaux de stock et recommandations en temps reel.\n\nMettez en place un feedback loop : chaque semaine, comparez les prévisions passees avec les ventes reelles pour mesurer et ameliorer la précision. Ce mecanisme d'apprentissage continu permet d'affiner les modèles et de detecter rapidement une degradation de la qualité.",
         codeSnippets: [
           {
             language: "python",
@@ -14908,14 +14908,14 @@ def test_traduction_japonais():
       },
     ],
     enterprise: {
-      piiHandling: "Les donnees de prevision ne contiennent generalement pas de PII. Les donnees de vente peuvent inclure des noms de clients : anonymisez-les avant envoi au LLM. Les donnees commerciales (volumes, prix) sont des secrets d'affaires : utilisez un LLM avec clauses de non-retention des donnees. Stockage chiffre AES-256.",
-      auditLog: "Tracabilite complete de chaque cycle de prevision : horodatage, references traitees, version du modele Prophet, parametres du LLM, previsions generees, recommandations emises, decisions prises par les operateurs, et ecart prevision vs realite. Conservation 5 ans pour l'analyse retrospective.",
+      piiHandling: "Les données de prévision ne contiennent generalement pas de PII. Les données de vente peuvent inclure des noms de clients : anonymisez-les avant envoi au LLM. Les données commerciales (volumes, prix) sont des secrets d'affaires : utilisez un LLM avec clauses de non-retention des données. Stockage chiffre AES-256.",
+      auditLog: "Tracabilite complète de chaque cycle de prévision : horodatage, references traitees, version du modèle Prophet, paramètres du LLM, prévisions generees, recommandations emises, decisions prises par les operateurs, et ecart prévision vs realite. Conservation 5 ans pour l'analyse retrospective.",
       humanInTheLoop: "Les recommandations de reapprovisionnement superieure a un seuil de valeur (configurable, par exemple 50K EUR) necessitent une validation par le responsable supply chain. Les alertes de surstockage avec recommandation de destockage sont toujours soumises a validation humaine.",
-      monitoring: "Dashboard de performance : MAPE par famille de produits, biais de prevision, taux de rupture reel vs predit, taux de surstockage, valeur du stock moyen, taux de couverture, et evolution de la precision dans le temps. Alertes si le MAPE depasse 30% sur une famille de produits.",
+      monitoring: "Dashboard de performance : MAPE par famille de produits, biais de prévision, taux de rupture reel vs predit, taux de surstockage, valeur du stock moyen, taux de couverture, et evolution de la précision dans le temps. Alertes si le MAPE depasse 30% sur une famille de produits.",
     },
     n8nWorkflow: {
-      description: "Workflow n8n : Cron Trigger (quotidien 6h) -> Node PostgreSQL (extraction donnees ventes) -> Node Code (preparation donnees + modele Prophet) -> Node HTTP Request (API LLM - analyse contextuelle) -> Node Code (generation recommandations) -> Node Switch (alertes critiques ?) -> Branch critique: Node Slack (alerte rupture) -> Node PostgreSQL (sauvegarde) -> Node Email (rapport quotidien supply chain).",
-      nodes: ["Cron Trigger (6h)", "PostgreSQL (donnees ventes)", "Code (Prophet forecast)", "HTTP Request (LLM contexte)", "Code (recommandations)", "Switch (criticite)", "Slack (alerte rupture)", "PostgreSQL (sauvegarde)", "Email (rapport quotidien)"],
+      description: "Workflow n8n : Cron Trigger (quotidien 6h) -> Node PostgreSQL (extraction données ventes) -> Node Code (preparation données + modèle Prophet) -> Node HTTP Request (API LLM - analyse contextuelle) -> Node Code (génération recommandations) -> Node Switch (alertes critiques ?) -> Branch critique: Node Slack (alerte rupture) -> Node PostgreSQL (sauvegarde) -> Node Email (rapport quotidien supply chain).",
+      nodes: ["Cron Trigger (6h)", "PostgreSQL (données ventes)", "Code (Prophet forecast)", "HTTP Request (LLM contexte)", "Code (recommandations)", "Switch (criticite)", "Slack (alerte rupture)", "PostgreSQL (sauvegarde)", "Email (rapport quotidien)"],
       triggerType: "Cron (quotidien a 6h du matin)",
     },
     estimatedTime: "12-18h",
@@ -14925,13 +14925,13 @@ def test_traduction_japonais():
     functions: ["Supply Chain"],
     metaTitle: "Agent IA de Prevision de Demande et Optimisation des Stocks -- Guide Expert",
     metaDescription:
-      "Optimisez vos stocks avec un agent IA de prevision de demande. Modele Prophet, analyse contextuelle LLM et recommandations de reapprovisionnement automatiques. Tutoriel complet.",
+      "Optimisez vos stocks avec un agent IA de prévision de demande. Modele Prophet, analyse contextuelle LLM et recommandations de reapprovisionnement automatiques. Tutoriel complet.",
     storytelling: {
       sector: "Distribution industrielle",
       persona: "Catherine, Responsable Supply Chain chez un distributeur de pieces detachees industrielles (90 salaries, 8 000 references)",
-      painPoint: "Avec 8 000 references en stock, Catherine ne peut pas prevoir la demande de chaque produit individuellement. Les previsions actuelles sont basees sur des moyennes mobiles Excel qui ne captent pas la saisonnalite ni les evenements marche. Le taux de rupture de stock est de 12%, generant 180 000 EUR de ventes perdues par trimestre. Parallelement, 800 000 EUR de stock dormant (references sans mouvement depuis 6 mois) immobilisent inutilement de la tresorerie.",
-      story: "Catherine a deploye l'agent de prevision qui combine Prophet (modele statistique) avec une analyse contextuelle LLM. Chaque nuit, le systeme recalcule les previsions pour les 8 000 references en croisant l'historique de ventes, la saisonnalite et les signaux marche (salons professionnels, reglementation). Les recommandations de reappro arrivent a 7h avec un code couleur : rouge (rupture imminente), orange (reappro a planifier), vert (stock suffisant).",
-      result: "En 6 mois : taux de rupture passe de 12% a 4,5%. Stock dormant reduit de 35% (280 000 EUR de tresorerie liberee). Precision des previsions amelioree de 28% vs les moyennes mobiles. Catherine a reaffecte un acheteur a l'analyse strategique des fournisseurs au lieu du reappro quotidien.",
+      painPoint: "Avec 8 000 references en stock, Catherine ne peut pas prevoir la demande de chaque produit individuellement. Les prévisions actuelles sont basees sur des moyennes mobiles Excel qui ne captent pas la saisonnalite ni les evenements marche. Le taux de rupture de stock est de 12%, generant 180 000 EUR de ventes perdues par trimestre. Parallelement, 800 000 EUR de stock dormant (references sans mouvement depuis 6 mois) immobilisent inutilement de la tresorerie.",
+      story: "Catherine a déployé l'agent de prévision qui combine Prophet (modèle statistique) avec une analyse contextuelle LLM. Chaque nuit, le système recalcule les prévisions pour les 8 000 references en croisant l'historique de ventes, la saisonnalite et les signaux marche (salons professionnels, reglementation). Les recommandations de reappro arrivent a 7h avec un code couleur : rouge (rupture imminente), orange (reappro a planifier), vert (stock suffisant).",
+      result: "En 6 mois : taux de rupture passé de 12% a 4,5%. Stock dormant réduit de 35% (280 000 EUR de tresorerie liberee). Precision des prévisions améliorée de 28% vs les moyennes mobiles. Catherine a réaffecté un acheteur a l'analyse stratégique des fournisseurs au lieu du reappro quotidien.",
     },
     beforeAfter: {
       inputLabel: "Donnees de vente et stock pour une reference",
@@ -14946,41 +14946,41 @@ def test_traduction_japonais():
       beforeContext: "ROUL-6205-ZZ · Roulement a billes · Analyse quotidienne",
       afterLabel: "Prevision IA",
       afterDuration: "12 secondes",
-      afterSummary: "Prevision calculee, risque evalue et recommandation de reappro generee",
+      afterSummary: "Prevision calculee, risque évalué et recommandation de reappro générée",
     },
     roiEstimator: {
       label: "Combien de references produit gerez-vous en stock ?",
-      unitLabel: "Analyse prevision / ref / sem.",
+      unitLabel: "Analyse prévision / ref / sem.",
       timePerUnitMinutes: 15,
       timeWithAISeconds: 2,
       options: [100, 500, 2000, 5000, 10000],
     },
     faq: [
       {
-        question: "Le modele Prophet est-il adapte aux produits avec une demande tres irreguliere ?",
-        answer: "Prophet fonctionne bien pour les produits avec un historique suffisant (2+ ans) et des patterns saisonniers. Pour les produits a demande sporadique (pieces rares, commandes ponctuelles), un modele de Croston ou un simple seuil de reappro par point de commande est plus adapte. L'agent detecte automatiquement le profil de demande et applique le modele le plus pertinent.",
+        question: "Le modèle Prophet est-il adapte aux produits avec une demande tres irreguliere ?",
+        answer: "Prophet fonctionne bien pour les produits avec un historique suffisant (2+ ans) et des patterns saisonniers. Pour les produits a demande sporadique (pieces rares, commandes ponctuelles), un modèle de Croston ou un simple seuil de reappro par point de commande est plus adapte. L'agent détecté automatiquement le profil de demande et applique le modèle le plus pertinent.",
       },
       {
-        question: "Comment gerer les nouveaux produits sans historique de vente ?",
-        answer: "L'agent LLM excelle dans ce cas. Il estime la demande initiale en se basant sur : les ventes de produits similaires deja en catalogue, les benchmarks sectoriels, et les informations qualitatives de l'equipe commerciale. Un modele par analogie est utilise pour les 6 premiers mois, puis Prophet prend le relais quand suffisamment d'historique est disponible.",
+        question: "Comment gérer les nouveaux produits sans historique de vente ?",
+        answer: "L'agent LLM excelle dans ce cas. Il estime la demande initiale en se basant sur : les ventes de produits similaires deja en catalogue, les benchmarks sectoriels, et les informations qualitatives de l'équipe commerciale. Un modèle par analogie est utilise pour les 6 premiers mois, puis Prophet prend le relais quand suffisamment d'historique est disponible.",
       },
       {
         question: "L'agent peut-il se connecter a mon ERP (Sage, SAP, Odoo) ?",
-        answer: "Oui, le workflow utilise des noeuds HTTP Request ou des connecteurs natifs n8n. Pour Sage X3, utilisez l'API REST. Pour SAP, les RFC/BAPI via l'API OData. Pour Odoo, l'API JSON-RPC. L'extraction des donnees de vente et de stock est le seul prerequis technique. Un noeud PostgreSQL peut aussi interroger directement votre base de donnees ERP.",
+        answer: "Oui, le workflow utilise des noeuds HTTP Request ou des connecteurs natifs n8n. Pour Sage X3, utilisez l'API REST. Pour SAP, les RFC/BAPI via l'API OData. Pour Odoo, l'API JSON-RPC. L'extraction des données de vente et de stock est le seul prerequis technique. Un noeud PostgreSQL peut aussi interroger directement votre base de données ERP.",
       },
       {
         question: "Quel est le cout mensuel de fonctionnement de l'agent ?",
-        answer: "Pour 5 000 references analysees quotidiennement : environ 15-30 EUR/mois en couts LLM (appels contextuels uniquement pour les references en alerte, pas pour toutes). Le modele Prophet tourne localement dans le noeud Code sans cout API. Le cout total est marginal compare aux economies realisees (reduction des ruptures et du surstockage).",
+        answer: "Pour 5 000 references analysees quotidiennement : environ 15-30 EUR/mois en couts LLM (appels contextuels uniquement pour les references en alerte, pas pour toutes). Le modèle Prophet tourne localement dans le noeud Code sans cout API. Le cout total est marginal compare aux economies realisees (réduction des ruptures et du surstockage).",
       },
       {
-        question: "Comment mesurer la performance des previsions dans le temps ?",
-        answer: "L'agent inclut un mecanisme de backtesting automatique. Chaque semaine, il compare les previsions passees avec les ventes reelles et calcule le MAPE (Mean Absolute Percentage Error) par famille de produits. Un dashboard affiche l'evolution de la precision. Une alerte est declenchee si le MAPE depasse 30% sur une famille, signalant un besoin de recalibration.",
+        question: "Comment mesurer la performance des prévisions dans le temps ?",
+        answer: "L'agent inclut un mecanisme de backtesting automatique. Chaque semaine, il compare les prévisions passees avec les ventes reelles et calcule le MAPE (Mean Absolute Percentage Error) par famille de produits. Un dashboard affiche l'evolution de la précision. Une alerte est déclenchée si le MAPE depasse 30% sur une famille, signalant un besoin de recalibration.",
       },
     ],
     prerequisites: [
       "Un compte n8n Cloud ou n8n self-hosted",
       "Une cle API LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
-      "Acces aux donnees de vente historiques (3 ans minimum) et aux niveaux de stock actuels via votre ERP",
+      "Acces aux données de vente historiques (3 ans minimum) et aux niveaux de stock actuels via votre ERP",
       "Environ 3h pour configurer le workflow et les connecteurs ERP",
     ],
     n8nTutorial: [
@@ -14988,42 +14988,42 @@ def test_traduction_japonais():
         nodeLabel: "Cron Trigger — Prevision quotidienne",
         nodeType: "Schedule Trigger",
         nodeIcon: "⏰",
-        description: "Ce noeud declenche le pipeline de prevision chaque matin a 6h, avant l'arrivee de l'equipe supply chain. Les recommandations sont pretes a 7h.",
+        description: "Ce noeud déclenché le pipeline de prévision chaque matin a 6h, avant l'arrivee de l'équipe supply chain. Les recommandations sont pretes a 7h.",
         configuration: "1. Ajoutez un noeud \"Schedule Trigger\"\n2. Mode : Cron\n3. Expression Cron : 0 6 * * * (tous les jours a 6h)\n4. Timezone : Europe/Paris",
         expectedOutput: "{ \"timestamp\": \"2025-02-10T06:00:00.000+01:00\" }",
         errorHandling: "Le cron ne fonctionne que si le workflow est active.",
       },
       {
-        nodeLabel: "Extraction donnees ventes et stock",
+        nodeLabel: "Extraction données ventes et stock",
         nodeType: "Postgres",
         nodeIcon: "🐘",
-        description: "Ce noeud extrait l'historique des ventes et les niveaux de stock actuels depuis votre base de donnees ERP.",
+        description: "Ce noeud extrait l'historique des ventes et les niveaux de stock actuels depuis votre base de données ERP.",
         configuration: "1. Ajoutez un noeud \"Postgres\"\n2. Operation : Execute Query\n3. Query :\nSELECT r.reference, r.designation, r.stock_actuel, r.delai_fournisseur_jours, r.moq,\n  v.date_vente, v.quantite\nFROM references r\nJOIN ventes v ON r.reference = v.reference\nWHERE v.date_vente >= NOW() - INTERVAL '3 years'\nORDER BY r.reference, v.date_vente\n4. Credential : PostgreSQL de votre ERP",
         expectedOutput: "[ { \"reference\": \"ROUL-6205-ZZ\", \"stock_actuel\": 89, \"date_vente\": \"2024-01-08\", \"quantite\": 12 }, ... ]",
         errorHandling: "Timeout : ajoutez un LIMIT ou filtrez par famille de produits pour traiter par batch.",
       },
       {
-        nodeLabel: "Code — Modele de prevision Prophet",
+        nodeLabel: "Code — Modele de prévision Prophet",
         nodeType: "Code",
         nodeIcon: "⚙️",
-        description: "Ce noeud calcule les previsions statistiques pour chaque reference. En n8n, nous utilisons un algorithme de decomposition saisonniere simplifie (car Prophet necessite Python). Pour une implementation Prophet complete, utilisez un service externe.",
-        configuration: "1. Ajoutez un noeud \"Code\"\n2. Langage : JavaScript\n3. Le code regroupe les ventes par semaine pour chaque reference, calcule la tendance (regression lineaire), la saisonnalite (moyenne par semaine de l'annee), et projette la demande sur 4-12 semaines\n4. Pour chaque reference, il compare la prevision avec le stock actuel et le delai fournisseur pour determiner l'urgence\n5. Les references en risque de rupture sont signalees",
+        description: "Ce noeud calcule les prévisions statistiques pour chaque reference. En n8n, nous utilisons un algorithme de decomposition saisonniere simplifie (car Prophet nécessité Python). Pour une implementation Prophet complète, utilisez un service externe.",
+        configuration: "1. Ajoutez un noeud \"Code\"\n2. Langage : JavaScript\n3. Le code regroupe les ventes par semaine pour chaque reference, calcule la tendance (regression lineaire), la saisonnalite (moyenne par semaine de l'année), et projette la demande sur 4-12 semaines\n4. Pour chaque reference, il compare la prévision avec le stock actuel et le délai fournisseur pour determiner l'urgence\n5. Les references en risque de rupture sont signalees",
         expectedOutput: "[ { \"reference\": \"ROUL-6205-ZZ\", \"forecast_4w\": 68, \"lower\": 52, \"upper\": 84, \"risk\": \"moderate\", \"order_recommended\": true } ]",
-        customization: "Pour utiliser le vrai Prophet, deployez un service Python (FastAPI + Prophet) et appelez-le via un noeud HTTP Request. Le noeud Code n8n gere la preparation des donnees et l'interpretation des resultats.",
+        customization: "Pour utiliser le vrai Prophet, deployez un service Python (FastAPI + Prophet) et appelez-le via un noeud HTTP Request. Le noeud Code n8n gère la preparation des données et l'interpretation des résultats.",
         errorHandling: "References avec moins de 6 mois d'historique : utilisez une moyenne simple au lieu de la decomposition saisonniere.",
       },
       {
         nodeLabel: "Appel LLM — Analyse contextuelle",
         nodeType: "HTTP Request",
         nodeIcon: "🤖",
-        description: "Ce noeud envoie les references en alerte au LLM pour une analyse contextuelle : evenements marche a venir (salons, saisonnalite sectorielle), recommandations d'achat specifiques, et commentaires actionnables.",
+        description: "Ce noeud envoie les references en alerte au LLM pour une analyse contextuelle : evenements marche a venir (salons, saisonnalite sectorielle), recommandations d'achat spécifiques, et commentaires actionnables.",
         configuration: "Choisissez votre fournisseur LLM ci-dessous.\nSeules les references en alerte sont envoyees (pas toutes les 8000).",
         expectedOutput: "{ \"recommendations\": [{ \"reference\": \"ROUL-6205-ZZ\", \"order_qty\": 100, \"urgency\": \"ORANGE\", \"context\": \"Pic saisonnier mars...\" }] }",
         variants: [
           {
             toolName: "OpenAI (GPT-4o-mini)",
             toolIcon: "🟢",
-            configuration: "1. POST > https://api.openai.com/v1/chat/completions\n2. Body : { \"model\": \"gpt-4o-mini\", \"temperature\": 0.2, \"response_format\": { \"type\": \"json_object\" }, \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un expert supply chain. Analyse ces previsions de stock et genere des recommandations de reappro. Donnees : {{ JSON.stringify($json) }}.\" }] }",
+            configuration: "1. POST > https://api.openai.com/v1/chat/completions\n2. Body : { \"model\": \"gpt-4o-mini\", \"temperature\": 0.2, \"response_format\": { \"type\": \"json_object\" }, \"messages\": [{ \"role\": \"user\", \"content\": \"Tu es un expert supply chain. Analyse ces prévisions de stock et généré des recommandations de reappro. Donnees : {{ JSON.stringify($json) }}.\" }] }",
             errorHandling: "Erreur 429 : rate limit. Regroupez les references en un seul appel (batch).",
           },
           {
@@ -15036,7 +15036,7 @@ def test_traduction_japonais():
             toolName: "Mistral (EU 🇪🇺)",
             toolIcon: "🔵",
             configuration: "1. POST > https://api.mistral.ai/v1/chat/completions\n2. Meme format qu'OpenAI.",
-            errorHandling: "Hebergement europeen pour la confidentialite des donnees commerciales.",
+            errorHandling: "Hebergement europeen pour la confidentialite des données commerciales.",
           },
           {
             toolName: "Ollama (gratuit, local)",
@@ -15051,8 +15051,8 @@ def test_traduction_japonais():
         nodeLabel: "Switch — Niveau de criticite",
         nodeType: "Switch",
         nodeIcon: "🔀",
-        description: "Ce noeud route les recommandations selon leur niveau d'urgence : rouge (rupture imminente -> alerte immediate), orange (reappro a planifier -> email quotidien), vert (stock suffisant -> log uniquement).",
-        configuration: "1. Ajoutez un noeud \"Switch\"\n2. Mode : Rules\n3. Rule 0 : {{ $json.urgency }} equals \"ROUGE\" -> Output 0 (alerte Slack immediate)\n4. Rule 1 : {{ $json.urgency }} equals \"ORANGE\" -> Output 1 (email quotidien)\n5. Fallback : Output 2 (sauvegarde log)",
+        description: "Ce noeud route les recommandations selon leur niveau d'urgence : rouge (rupture imminente -> alerte immédiate), orange (reappro a planifier -> email quotidien), vert (stock suffisant -> log uniquement).",
+        configuration: "1. Ajoutez un noeud \"Switch\"\n2. Mode : Rules\n3. Rule 0 : {{ $json.urgency }} equals \"ROUGE\" -> Output 0 (alerte Slack immédiate)\n4. Rule 1 : {{ $json.urgency }} equals \"ORANGE\" -> Output 1 (email quotidien)\n5. Fallback : Output 2 (sauvegarde log)",
         expectedOutput: "Recommandations routees selon l'urgence.",
         errorHandling: "Si le champ urgency est manquant, le fallback sauvegarde en log pour investigation.",
       },
@@ -15060,62 +15060,62 @@ def test_traduction_japonais():
         nodeLabel: "Alerte et rapport quotidien",
         nodeType: "Send Email",
         nodeIcon: "📧",
-        description: "Ce noeud envoie le rapport quotidien de recommandations de reappro a l'equipe supply chain, avec un code couleur par urgence.",
-        configuration: "1. Ajoutez un noeud \"Send Email\" ou \"Gmail\"\n2. To : supplychain@entreprise.fr\n3. Subject : [Supply Chain] Recommandations reappro — {{ $now.format('dd/MM/yyyy') }}\n4. Body HTML avec tableau des recommandations par urgence\n5. Les alertes ROUGE sont aussi envoyees sur Slack pour reaction immediate",
+        description: "Ce noeud envoie le rapport quotidien de recommandations de reappro a l'équipe supply chain, avec un code couleur par urgence.",
+        configuration: "1. Ajoutez un noeud \"Send Email\" ou \"Gmail\"\n2. To : supplychain@entreprise.fr\n3. Subject : [Supply Chain] Recommandations reappro — {{ $now.format('dd/MM/yyyy') }}\n4. Body HTML avec tableau des recommandations par urgence\n5. Les alertes ROUGE sont aussi envoyees sur Slack pour reaction immédiate",
         expectedOutput: "Email envoye avec le tableau des recommandations de reapprovisionnement.",
         variants: [
           {
             toolName: "Slack (alertes critiques)",
             toolIcon: "💬",
-            configuration: "1. Noeud \"Slack\" > Channel : #supply-alertes\n2. Text : ALERTE RUPTURE : {{ $json.reference }} — Stock : {{ $json.stock_actuel }} — Demande prevue 4 sem : {{ $json.forecast_4w }}\n3. Mentionnez @channel pour les ruptures imminentes",
+            configuration: "1. Noeud \"Slack\" > Channel : #supply-alertes\n2. Text : ALERTE RUPTURE : {{ $json.reference }} — Stock : {{ $json.stock_actuel }} — Demande prévue 4 sem : {{ $json.forecast_4w }}\n3. Mentionnez @channel pour les ruptures imminentes",
             errorHandling: "channel_not_found : invitez le bot dans le canal.",
           },
         ],
       },
       {
-        nodeLabel: "Sauvegarde previsions",
+        nodeLabel: "Sauvegarde prévisions",
         nodeType: "Postgres",
         nodeIcon: "💾",
-        description: "Ce noeud sauvegarde les previsions et recommandations en base pour le suivi de performance (backtesting) et l'historique des decisions.",
-        configuration: "1. Noeud \"Postgres\" > Operation : Insert\n2. Table : forecast_log\n3. Colonnes : reference, date_prevision, forecast_4w, stock_actuel, recommendation, urgency\n4. Ces donnees permettent de comparer les previsions avec les ventes reelles pour mesurer la precision",
+        description: "Ce noeud sauvegarde les prévisions et recommandations en base pour le suivi de performance (backtesting) et l'historique des decisions.",
+        configuration: "1. Noeud \"Postgres\" > Operation : Insert\n2. Table : forecast_log\n3. Colonnes : reference, date_prevision, forecast_4w, stock_actuel, recommendation, urgency\n4. Ces données permettent de comparer les prévisions avec les ventes reelles pour mesurer la précision",
         expectedOutput: "Previsions sauvegardees pour backtesting.",
-        errorHandling: "Verifiez le schema de la table avant la premiere execution.",
+        errorHandling: "Verifiez le schema de la table avant la première exécution.",
       },
     ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-generation-contrats",
+    slug: "agent-génération-contrats",
     title: "Agent IA de Generation de Contrats",
-    subtitle: "Generez automatiquement des contrats commerciaux personnalises a partir de modeles et de donnees CRM",
+    subtitle: "Generez automatiquement des contrats commerciaux personnalises a partir de modèles et de données CRM",
     problem:
-      "Les entreprises perdent des heures a rediger manuellement des contrats commerciaux a partir de modeles Word ou PDF. Le processus implique du copier-coller de donnees clients depuis le CRM, la selection manuelle des clauses appropriees selon le type de contrat, et des allers-retours interminables avec le service juridique pour validation. Les erreurs sont frequentes : mauvais tarifs, clauses manquantes, donnees client obsoletes, fautes de nommage. Le service juridique devient un goulot d'etranglement car chaque contrat doit etre relu integralement. En moyenne, la generation d'un contrat prend 2 a 4 heures et mobilise 3 personnes differentes.",
+      "Les entreprises perdent des heures a rédiger manuellement des contrats commerciaux a partir de modèles Word ou PDF. Le processus implique du copier-coller de données clients depuis le CRM, la selection manuelle des clauses appropriees selon le type de contrat, et des allers-retours interminables avec le service juridique pour validation. Les erreurs sont frequentes : mauvais tarifs, clauses manquantes, données client obsoletes, fautes de nommage. Le service juridique devient un goulot d'etranglement car chaque contrat doit etre relu integralement. En moyenne, la génération d'un contrat prend 2 a 4 heures et mobilise 3 personnes differentes.",
     value:
-      "Un agent IA connecte au CRM et a la base de modeles de contrats automatise l'integralite du processus. L'agent extrait les donnees client a jour (raison sociale, SIRET, adresse, contacts, historique commercial), selectionne le modele de contrat adapte au type de deal (licence SaaS, prestation de service, contrat cadre), remplit automatiquement toutes les variables, ajoute les clauses pertinentes selon le secteur et le montant du contrat, et genere un PDF pret a etre relu. La relecture juridique se reduit a une simple verification car la structure et les clauses obligatoires sont toujours presentes. Temps de generation reduit de 2-4h a 10 minutes.",
+      "Un agent IA connecte au CRM et a la base de modèles de contrats automatise l'integralite du processus. L'agent extrait les données client a jour (raison sociale, SIRET, adresse, contacts, historique commercial), selectionne le modèle de contrat adapte au type de deal (licence SaaS, prestation de service, contrat cadre), remplit automatiquement toutes les variables, ajoute les clauses pertinentes selon le secteur et le montant du contrat, et généré un PDF pret a etre relu. La relecture juridique se réduit a une simple verification car la structure et les clauses obligatoires sont toujours présentés. Temps de génération réduit de 2-4h a 10 minutes.",
     inputs: [
       "Donnees client depuis le CRM (raison sociale, SIRET, contacts, historique)",
       "Type de contrat demande (licence, prestation, contrat cadre, NDA)",
       "Parametres commerciaux (montant, duree, conditions de paiement)",
-      "Bibliotheque de modeles de contrats (.docx, .pdf)",
+      "Bibliotheque de modèles de contrats (.docx, .pdf)",
       "Base de clauses juridiques par categorie et secteur",
     ],
     outputs: [
-      "Contrat PDF genere automatiquement avec toutes les variables remplies",
-      "Version Word editable pour modifications manuelles si necessaire",
-      "Checklist de conformite validee automatiquement",
+      "Contrat PDF généré automatiquement avec toutes les variables remplies",
+      "Version Word editable pour modifications manuelles si nécessaire",
+      "Checklist de conformité validee automatiquement",
       "Resume du contrat avec points d'attention pour le relecteur",
-      "Journal de generation avec traçabilite des sources de donnees",
+      "Journal de génération avec traçabilite des sources de données",
     ],
     risks: [
       "Erreur de remplissage de variables critiques (montants, dates, raison sociale)",
       "Hallucination du LLM sur des clauses juridiques inexistantes ou incorrectes",
-      "Non-conformite RGPD lors du traitement des donnees personnelles des contacts",
+      "Non-conformité RGPD lors du traitement des données personnelles des contacts",
       "Mauvaise selection de clauses entrainant un risque juridique pour l'entreprise",
-      "Dependance a la disponibilite du CRM et des APIs de generation PDF",
+      "Dependance a la disponibilite du CRM et des APIs de génération PDF",
     ],
     roiIndicatif:
-      "Reduction de 80% du temps de redaction des contrats (de 2-4h a 10-15 minutes). Diminution de 95% des erreurs de saisie et de clauses manquantes. Gain de 60% sur le temps de relecture juridique. ROI estime : 2 ETP economises par an pour une equipe commerciale de 10 personnes.",
+      "Reduction de 80% du temps de rédaction des contrats (de 2-4h a 10-15 minutes). Diminution de 95% des erreurs de saisie et de clauses manquantes. Gain de 60% sur le temps de relecture juridique. ROI estime : 2 ETP economises par an pour une équipe commerciale de 10 personnes.",
     recommendedStack: [
       { name: "Claude 3.5 Sonnet", category: "LLM" },
       { name: "n8n", category: "Orchestration" },
@@ -15131,9 +15131,9 @@ def test_traduction_japonais():
     architectureDiagram: "+-------------+     +----------------+     +-------------+\n|    CRM      |---->|  API Agent     |---->|  Agent LLM  |\n| (Donnees)   |     |  (FastAPI)     |     |  (Analyse)  |\n+-------------+     +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  Modeles       |<----|  Moteur de  |\n                    |  Contrats      |     |  Clauses    |\n                    +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  PDF/Word      |<----|  Generateur |\n                    |  (Sortie)      |     |  Documents  |\n                    +----------------+     +-------------+",
     tutorial: [
       {
-        title: "Configuration des modeles de contrats et de la base de clauses",
+        title: "Configuration des modèles de contrats et de la base de clauses",
         content:
-          "La premiere etape consiste a structurer votre bibliotheque de modeles de contrats. Chaque modele doit etre converti en un format exploitable par l'agent : un template avec des variables balisees. Nous utilisons le format Jinja2 pour les variables dans les documents.\n\nCommencez par identifier vos types de contrats les plus frequents : contrat de licence SaaS, contrat de prestation de services, accord-cadre, NDA. Pour chaque type, creez un modele de reference avec des variables clairement identifiees (nom_client, siret, montant_ht, duree_contrat, etc.).\n\nLa base de clauses est un element central du systeme. Chaque clause est stockee dans PostgreSQL avec des metadonnees : categorie (responsabilite, confidentialite, resiliation, SLA), secteur d'application, caractere obligatoire ou optionnel, et conditions d'inclusion automatique. Par exemple, une clause de conformite bancaire est automatiquement ajoutee pour les clients du secteur financier.\n\nInstallez les dependances Python necessaires et configurez l'acces a votre base de donnees PostgreSQL. Le schema de base comprend trois tables principales : contract_templates, clauses, et generated_contracts pour la traçabilite.",
+          "La première étape consiste a structurer votre bibliotheque de modèles de contrats. Chaque modèle doit etre converti en un format exploitable par l'agent : un template avec des variables balisees. Nous utilisons le format Jinja2 pour les variables dans les documents.\n\nCommencez par identifier vos types de contrats les plus frequents : contrat de licence SaaS, contrat de prestation de services, accord-cadre, NDA. Pour chaque type, creez un modèle de reference avec des variables clairement identifiees (nom_client, siret, montant_ht, duree_contrat, etc.).\n\nLa base de clauses est un element central du système. Chaque clause est stockee dans PostgreSQL avec des metadonnees : categorie (responsabilite, confidentialite, resiliation, SLA), secteur d'application, caractere obligatoire ou optionnel, et conditions d'inclusion automatique. Par exemple, une clause de conformité bancaire est automatiquement ajoutee pour les clients du secteur financier.\n\nInstallez les dependances Python nécessaires et configurez l'acces a votre base de données PostgreSQL. Le schema de base comprend trois tables principales : contract_templates, clauses, et generated_contracts pour la traçabilite.",
         codeSnippets: [
           {
             language: "bash",
@@ -15153,9 +15153,9 @@ def test_traduction_japonais():
         ],
       },
       {
-        title: "Integration CRM et extraction des donnees client",
+        title: "Integration CRM et extraction des données client",
         content:
-          "L'agent doit pouvoir interroger votre CRM pour recuperer les donnees client a jour. Nous implementons un connecteur generique qui supporte les CRM les plus courants (Salesforce, HubSpot, Pipedrive) via leurs APIs respectives. Le connecteur abstrait les differences entre les CRM derriere une interface unifiee.\n\nLorsqu'une demande de generation de contrat arrive, l'agent commence par extraire toutes les informations necessaires depuis le CRM : donnees legales de l'entreprise (raison sociale, SIRET, adresse du siege), coordonnees du contact signataire, historique commercial (CA cumule, nombre de contrats precedents), et le secteur d'activite du client. Ces informations sont validees avant d'etre injectees dans le contrat.\n\nL'agent LLM intervient ici pour analyser le contexte du deal et enrichir la requete. A partir de la description commerciale du deal dans le CRM, il identifie les besoins specifiques qui doivent se refleter dans le contrat : perimetre fonctionnel, niveaux de SLA attendus, conditions particulieres negociees.\n\nUn systeme de cache est mis en place pour eviter les appels CRM redondants. Les donnees client sont cachees pendant 1 heure avec invalidation automatique en cas de mise a jour dans le CRM via webhook.",
+          "L'agent doit pouvoir interroger votre CRM pour recuperer les données client a jour. Nous implementons un connecteur generique qui supporte les CRM les plus courants (Salesforce, HubSpot, Pipedrive) via leurs APIs respectives. Le connecteur abstrait les differences entre les CRM derriere une interface unifiee.\n\nLorsqu'une demande de génération de contrat arrive, l'agent commence par extraire toutes les informations nécessaires depuis le CRM : données legales de l'entreprise (raison sociale, SIRET, adresse du siege), coordonnees du contact signataire, historique commercial (CA cumule, nombre de contrats precedents), et le secteur d'activité du client. Ces informations sont validees avant d'etre injectees dans le contrat.\n\nL'agent LLM intervient ici pour analyser le contexte du deal et enrichir la requete. A partir de la description commerciale du deal dans le CRM, il identifié les besoins spécifiques qui doivent se refleter dans le contrat : périmètre fonctionnel, niveaux de SLA attendus, conditions particulieres negociees.\n\nUn système de cache est mis en place pour eviter les appels CRM redondants. Les données client sont cachees pendant 1 heure avec invalidation automatique en cas de mise a jour dans le CRM via webhook.",
         codeSnippets: [
           {
             language: "python",
@@ -15164,7 +15164,7 @@ def test_traduction_japonais():
           },
           {
             language: "python",
-            code: "from anthropic import Anthropic\nimport json\nimport os\n\nanthopic_client = Anthropic(api_key=os.getenv(\"ANTHROPIC_API_KEY\"))\n\nasync def analyze_deal_for_clauses(deal_context: dict, client_data: ClientData) -> dict:\n    prompt = f\"\"\"Analyse le contexte commercial suivant et identifie les elements\n    contractuels importants.\n\n    Client : {client_data.raison_sociale} (secteur : {client_data.secteur})\n    Description du deal : {deal_context['description']}\n    Montant : {deal_context['montant']} EUR HT\n    Produits : {json.dumps(deal_context['produits'], ensure_ascii=False)}\n\n    Reponds en JSON avec les champs suivants :\n    - clauses_recommandees: liste de categories de clauses a inclure\n    - sla_niveau: \"standard\" | \"premium\" | \"enterprise\"\n    - conditions_particulieres: liste de conditions specifiques identifiees\n    - risques_identifies: liste de points de vigilance juridique\"\"\"\n\n    response = anthopic_client.messages.create(\n        model=\"claude-3-5-sonnet-latest\",\n        max_tokens=1024,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return json.loads(response.content[0].text)",
+            code: "from anthropic import Anthropic\nimport json\nimport os\n\nanthopic_client = Anthropic(api_key=os.getenv(\"ANTHROPIC_API_KEY\"))\n\nasync def analyze_deal_for_clauses(deal_context: dict, client_data: ClientData) -> dict:\n    prompt = f\"\"\"Analyse le contexte commercial suivant et identifié les elements\n    contractuels importants.\n\n    Client : {client_data.raison_sociale} (secteur : {client_data.secteur})\n    Description du deal : {deal_context['description']}\n    Montant : {deal_context['montant']} EUR HT\n    Produits : {json.dumps(deal_context['produits'], ensure_ascii=False)}\n\n    Reponds en JSON avec les champs suivants :\n    - clauses_recommandees: liste de categories de clauses a inclure\n    - sla_niveau: \"standard\" | \"premium\" | \"enterprise\"\n    - conditions_particulieres: liste de conditions spécifiques identifiees\n    - risques_identifies: liste de points de vigilance juridique\"\"\"\n\n    response = anthopic_client.messages.create(\n        model=\"claude-3-5-sonnet-latest\",\n        max_tokens=1024,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return json.loads(response.content[0].text)",
             filename: "deal_analyzer.py",
           },
         ],
@@ -15172,7 +15172,7 @@ def test_traduction_japonais():
       {
         title: "Moteur de selection de clauses et assemblage du contrat",
         content:
-          "Le moteur de clauses est le composant qui assemble intelligemment le contrat final. Il combine le modele de base, les variables remplies avec les donnees CRM, et les clauses selectionnees par l'agent LLM. La selection des clauses suit un algorithme en trois etapes.\n\nPremierement, les clauses obligatoires sont systematiquement incluses : elles correspondent aux mentions legales requises et aux clauses standard de votre entreprise. Deuxiemement, les clauses sectorielles sont ajoutees en fonction du secteur du client (conformite bancaire pour la finance, protection des donnees de sante pour le medical, etc.). Troisiemement, l'agent LLM recommande des clauses supplementaires basees sur l'analyse du deal.\n\nL'assemblage final utilise Jinja2 pour le remplissage des variables et python-docx pour la manipulation du document Word. Chaque variable est validee avant insertion : les montants sont formates en euros avec separateur de milliers, les dates suivent le format francais, les raisons sociales sont en majuscules conformement aux usages juridiques.\n\nUn systeme de validation pre-generation verifie la coherence du contrat : toutes les variables obligatoires sont remplies, les montants sont positifs, la duree est raisonnable, les clauses ne se contredisent pas. En cas d'incoherence, l'agent signale le probleme et propose une correction.",
+          "Le moteur de clauses est le composant qui assemble intelligemment le contrat final. Il combine le modèle de base, les variables remplies avec les données CRM, et les clauses selectionnees par l'agent LLM. La selection des clauses suit un algorithme en trois étapes.\n\nPremierement, les clauses obligatoires sont systematiquement incluses : elles correspondent aux mentions legales requises et aux clauses standard de votre entreprise. Deuxiemement, les clauses sectorielles sont ajoutees en fonction du secteur du client (conformité bancaire pour la finance, protection des données de sante pour le medical, etc.). Troisiemement, l'agent LLM recommandé des clauses supplementaires basees sur l'analyse du deal.\n\nL'assemblage final utilise Jinja2 pour le remplissage des variables et python-docx pour la manipulation du document Word. Chaque variable est validee avant insertion : les montants sont formates en euros avec separateur de milliers, les dates suivent le format francais, les raisons sociales sont en majuscules conformement aux usages juridiques.\n\nUn système de validation pre-génération vérifié la coherence du contrat : toutes les variables obligatoires sont remplies, les montants sont positifs, la duree est raisonnable, les clauses ne se contredisent pas. En cas d'incoherence, l'agent signale le problème et propose une correction.",
         codeSnippets: [
           {
             language: "python",
@@ -15187,9 +15187,9 @@ def test_traduction_japonais():
         ],
       },
       {
-        title: "Generation PDF et deploiement de l'agent",
+        title: "Generation PDF et déploiement de l'agent",
         content:
-          "La derniere etape consiste a generer le document final en PDF a partir du contrat assemble. Nous utilisons python-docx pour creer le document Word intermediaire avec une mise en page professionnelle, puis WeasyPrint pour la conversion en PDF.\n\nLe document genere inclut automatiquement : une page de garde avec les logos des deux parties, un sommaire cliquable, les articles numerotes avec les clauses selectionnees, les annexes techniques le cas echeant, et un bloc de signatures en derniere page. La mise en forme respecte les standards juridiques francais.\n\nDeployez l'API sur Vercel avec les fonctions serverless. Creez un endpoint POST /api/generate-contract qui recoit une requete ContractRequest, orchestre l'ensemble du processus (extraction CRM, analyse LLM, selection clauses, assemblage, generation PDF) et retourne le document genere.\n\nIntegrez Langfuse pour le monitoring de la qualite. Chaque generation est tracee avec les metriques cles : temps de generation total, nombre de clauses selectionnees, score de confiance de l'analyse LLM, et statut de validation. Configurez des alertes si le temps de generation depasse 60 secondes ou si des erreurs de validation sont detectees.",
+          "La dernière étape consiste a générer le document final en PDF a partir du contrat assemble. Nous utilisons python-docx pour créer le document Word intermediaire avec une mise en page professionnelle, puis WeasyPrint pour la conversion en PDF.\n\nLe document généré inclut automatiquement : une page de garde avec les logos des deux parties, un sommaire cliquable, les articles numerotes avec les clauses selectionnees, les annexes techniques le cas echeant, et un bloc de signatures en dernière page. La mise en forme respecte les standards juridiques francais.\n\nDeployez l'API sur Vercel avec les fonctions serverless. Creez un endpoint POST /api/generate-contract qui reçoit une requete ContractRequest, orchestre l'ensemble du processus (extraction CRM, analyse LLM, selection clauses, assemblage, génération PDF) et retourne le document généré.\n\nIntegrez Langfuse pour le monitoring de la qualité. Chaque génération est tracee avec les metriques cles : temps de génération total, nombre de clauses selectionnees, score de confiance de l'analyse LLM, et statut de validation. Configurez des alertes si le temps de génération depasse 60 secondes ou si des erreurs de validation sont detectees.",
         codeSnippets: [
           {
             language: "python",
@@ -15198,21 +15198,21 @@ def test_traduction_japonais():
           },
           {
             language: "python",
-            code: "from fastapi import FastAPI, HTTPException\nfrom langfuse import Langfuse\nfrom models import ContractRequest\nfrom crm_connector import CRMConnector\nfrom deal_analyzer import analyze_deal_for_clauses\nfrom clause_engine import ClauseEngine\nfrom variable_engine import prepare_variables, validate_variables\nfrom contract_generator import ContractGenerator\nimport psycopg2\nimport os\nimport time\n\napp = FastAPI(title=\"Agent Generation Contrats\")\nlangfuse = Langfuse()\ncrm = CRMConnector()\n\n@app.post(\"/api/generate-contract\")\nasync def generate_contract(request: ContractRequest):\n    trace = langfuse.trace(name=\"contract-generation\", input=request.dict())\n    start_time = time.time()\n\n    try:\n        client_data = await crm.get_client_data(request.client_id)\n        trace.span(name=\"crm-extraction\", input={\"client_id\": request.client_id})\n\n        deal_context = await crm.get_deal_context(request.client_id)\n        analysis = await analyze_deal_for_clauses(deal_context, client_data)\n        trace.span(name=\"llm-analysis\", output=analysis)\n\n        conn = psycopg2.connect(os.getenv(\"DATABASE_URL\"))\n        engine = ClauseEngine(conn)\n        clauses = engine.select_clauses(\n            client_data, request, analysis.get(\"clauses_recommandees\", [])\n        )\n\n        variables = prepare_variables(client_data, request)\n        errors = validate_variables(variables, [\"raison_sociale\", \"siret\", \"montant_ht\"])\n        if errors:\n            raise HTTPException(400, detail={\"errors\": errors})\n\n        generator = ContractGenerator(templates_dir=\"./templates\")\n        docx_path = generator.generate_docx(\n            request.contract_type.value, variables, clauses\n        )\n        pdf_path = generator.convert_to_pdf(docx_path)\n\n        duration = time.time() - start_time\n        trace.span(name=\"generation-complete\", output={\n            \"duration_seconds\": duration,\n            \"clauses_count\": len(clauses),\n            \"pdf_path\": pdf_path,\n        })\n\n        return {\n            \"status\": \"success\",\n            \"pdf_url\": f\"/downloads/{os.path.basename(pdf_path)}\",\n            \"clauses_included\": len(clauses),\n            \"generation_time\": f\"{duration:.1f}s\",\n            \"review_checklist\": analysis.get(\"risques_identifies\", []),\n        }\n    except Exception as e:\n        trace.span(name=\"error\", output={\"error\": str(e)})\n        raise HTTPException(500, detail=str(e))",
+            code: "from fastapi import FastAPI, HTTPException\nfrom langfuse import Langfuse\nfrom models import ContractRequest\nfrom crm_connector import CRMConnector\nfrom deal_analyzer import analyze_deal_for_clauses\nfrom clause_engine import ClauseEngine\nfrom variable_engine import prepare_variables, validate_variables\nfrom contract_generator import ContractGenerator\nimport psycopg2\nimport os\nimport time\n\napp = FastAPI(title=\"Agent Generation Contrats\")\nlangfuse = Langfuse()\ncrm = CRMConnector()\n\n@app.post(\"/api/generate-contract\")\nasync def generate_contract(request: ContractRequest):\n    trace = langfuse.trace(name=\"contract-génération\", input=request.dict())\n    start_time = time.time()\n\n    try:\n        client_data = await crm.get_client_data(request.client_id)\n        trace.span(name=\"crm-extraction\", input={\"client_id\": request.client_id})\n\n        deal_context = await crm.get_deal_context(request.client_id)\n        analysis = await analyze_deal_for_clauses(deal_context, client_data)\n        trace.span(name=\"llm-analysis\", output=analysis)\n\n        conn = psycopg2.connect(os.getenv(\"DATABASE_URL\"))\n        engine = ClauseEngine(conn)\n        clauses = engine.select_clauses(\n            client_data, request, analysis.get(\"clauses_recommandees\", [])\n        )\n\n        variables = prepare_variables(client_data, request)\n        errors = validate_variables(variables, [\"raison_sociale\", \"siret\", \"montant_ht\"])\n        if errors:\n            raise HTTPException(400, detail={\"errors\": errors})\n\n        generator = ContractGenerator(templates_dir=\"./templates\")\n        docx_path = generator.generate_docx(\n            request.contract_type.value, variables, clauses\n        )\n        pdf_path = generator.convert_to_pdf(docx_path)\n\n        duration = time.time() - start_time\n        trace.span(name=\"génération-complète\", output={\n            \"duration_seconds\": duration,\n            \"clauses_count\": len(clauses),\n            \"pdf_path\": pdf_path,\n        })\n\n        return {\n            \"status\": \"success\",\n            \"pdf_url\": f\"/downloads/{os.path.basename(pdf_path)}\",\n            \"clauses_included\": len(clauses),\n            \"generation_time\": f\"{duration:.1f}s\",\n            \"review_checklist\": analysis.get(\"risques_identifies\", []),\n        }\n    except Exception as e:\n        trace.span(name=\"error\", output={\"error\": str(e)})\n        raise HTTPException(500, detail=str(e))",
             filename: "main.py",
           },
         ],
       },
     ],
     enterprise: {
-      piiHandling: "Les contrats contiennent des donnees personnelles sensibles (noms, adresses, SIRET, coordonnees). Les donnees sont chiffrees en transit (TLS 1.3) et au repos (AES-256). Les documents generes sont stockes dans un bucket S3 chiffre avec acces restreint par role IAM. Les donnees envoyees au LLM sont anonymisees : les SIRET et numeros de telephone sont pseudonymises avant l'appel API. Conformite RGPD assuree avec droit a l'effacement des contrats et donnees associees sur demande. Retention limitee a 5 ans conformement aux obligations legales.",
-      auditLog: "Chaque generation de contrat est integralement tracee : identifiant unique de generation, horodatage, utilisateur demandeur, client concerne, modele utilise, variables injectees, clauses selectionnees (avec justification de selection), temps de generation, et statut de validation. Tous les appels au LLM sont logges dans Langfuse avec les prompts et reponses. Les modifications post-generation sont versionees. Retention des logs de 24 mois minimum.",
-      humanInTheLoop: "Chaque contrat genere passe obligatoirement par une etape de validation humaine avant envoi au client. Les contrats depassant un seuil de montant configurable (par defaut 50 000 EUR) necessitent une double validation (commercial + juridique). Les clauses ajoutees par recommandation IA sont marquees visuellement dans le document pour attirer l'attention du relecteur. Un workflow d'approbation est integre avec notifications par email et Slack.",
-      monitoring: "Dashboard temps reel dans Langfuse : nombre de contrats generes par jour, temps moyen de generation, taux d'erreurs de validation, repartition par type de contrat, top des clauses les plus utilisees. Alertes configurees sur : temps de generation superieur a 60 secondes, taux d'erreur superieur a 5%, echec de connexion CRM. Rapport hebdomadaire automatique envoye a l'equipe juridique.",
+      piiHandling: "Les contrats contiennent des données personnelles sensibles (noms, adresses, SIRET, coordonnees). Les données sont chiffrees en transit (TLS 1.3) et au repos (AES-256). Les documents generes sont stockes dans un bucket S3 chiffre avec acces restreint par role IAM. Les données envoyees au LLM sont anonymisees : les SIRET et numeros de telephone sont pseudonymises avant l'appel API. Conformite RGPD assuree avec droit a l'effacement des contrats et données associees sur demande. Retention limitee a 5 ans conformement aux obligations legales.",
+      auditLog: "Chaque génération de contrat est integralement tracee : identifiant unique de génération, horodatage, utilisateur demandeur, client concerne, modèle utilise, variables injectees, clauses selectionnees (avec justification de selection), temps de génération, et statut de validation. Tous les appels au LLM sont logges dans Langfuse avec les prompts et reponses. Les modifications post-génération sont versionees. Retention des logs de 24 mois minimum.",
+      humanInTheLoop: "Chaque contrat généré passé obligatoirement par une étape de validation humaine avant envoi au client. Les contrats depassant un seuil de montant configurable (par defaut 50 000 EUR) necessitent une double validation (commercial + juridique). Les clauses ajoutees par recommandation IA sont marquees visuellement dans le document pour attirer l'attention du relecteur. Un workflow d'approbation est intégré avec notifications par email et Slack.",
+      monitoring: "Dashboard temps reel dans Langfuse : nombre de contrats generes par jour, temps moyen de génération, taux d'erreurs de validation, repartition par type de contrat, top des clauses les plus utilisees. Alertes configurees sur : temps de génération superieur a 60 secondes, taux d'erreur superieur a 5%, echec de connexion CRM. Rapport hebdomadaire automatique envoye a l'équipe juridique.",
     },
     n8nWorkflow: {
-      description: "Workflow n8n : Webhook (demande de contrat depuis le CRM) -> Node HTTP Request (extraction donnees client CRM) -> Node Code (preparation des variables) -> Node HTTP Request (analyse LLM Claude pour selection clauses) -> Node Postgres (recuperation clauses) -> Node Code (assemblage contrat et validation) -> Node HTTP Request (generation PDF) -> Node IF (validation OK ?) -> Branch OK : Node Email (envoi au relecteur) + Node Slack (notification) -> Branch Erreur : Node Slack (alerte equipe).",
-      nodes: ["Webhook (demande CRM)", "HTTP Request (CRM API)", "Code (preparation variables)", "HTTP Request (Claude LLM)", "Postgres (clauses)", "Code (assemblage)", "HTTP Request (generation PDF)", "IF (validation)", "Email (envoi relecteur)", "Slack (notification)"],
+      description: "Workflow n8n : Webhook (demande de contrat depuis le CRM) -> Node HTTP Request (extraction données client CRM) -> Node Code (preparation des variables) -> Node HTTP Request (analyse LLM Claude pour selection clauses) -> Node Postgres (recuperation clauses) -> Node Code (assemblage contrat et validation) -> Node HTTP Request (génération PDF) -> Node IF (validation OK ?) -> Branch OK : Node Email (envoi au relecteur) + Node Slack (notification) -> Branch Erreur : Node Slack (alerte équipe).",
+      nodes: ["Webhook (demande CRM)", "HTTP Request (CRM API)", "Code (preparation variables)", "HTTP Request (Claude LLM)", "Postgres (clauses)", "Code (assemblage)", "HTTP Request (génération PDF)", "IF (validation)", "Email (envoi relecteur)", "Slack (notification)"],
       triggerType: "Webhook (demande depuis CRM ou formulaire interne)",
     },
     estimatedTime: "8-12h",
@@ -15222,31 +15222,31 @@ def test_traduction_japonais():
     functions: ["Legal", "Sales"],
     metaTitle: "Agent IA de Generation de Contrats -- Guide Complet",
     metaDescription:
-      "Automatisez la generation de contrats commerciaux avec un agent IA connecte a votre CRM. Modeles, clauses intelligentes et PDF en 10 minutes. Tutoriel complet.",
+      "Automatisez la génération de contrats commerciaux avec un agent IA connecte a votre CRM. Modeles, clauses intelligentes et PDF en 10 minutes. Tutoriel complet.",
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-audit-securite-code",
+    slug: "agent-audit-sécurité-code",
     title: "Agent IA d'Audit de Securite de Code",
-    subtitle: "Analysez automatiquement votre code source pour detecter les vulnerabilites OWASP et les failles de securite",
+    subtitle: "Analysez automatiquement votre code source pour detecter les vulnerabilites OWASP et les failles de sécurité",
     problem:
-      "Les audits de securite du code sont traditionnellement realises de maniere ponctuelle, souvent uniquement avant les mises en production majeures. Les revues manuelles sont lentes (plusieurs jours pour une application moyenne), couteuses (consultants specialises) et inconsistantes (dependantes de l'expertise individuelle du revieweur). Les developpeurs introduisent des vulnerabilites sans le savoir : injections SQL, failles XSS, gestion incorrecte des secrets, dependances obsoletes avec des CVE connues. Les outils SAST classiques generent trop de faux positifs et ne comprennent pas le contexte metier du code, ce qui conduit les equipes a ignorer les alertes.",
+      "Les audits de sécurité du code sont traditionnellement realises de maniere ponctuelle, souvent uniquement avant les mises en production majeures. Les revues manuelles sont lentes (plusieurs jours pour une application moyenne), couteuses (consultants specialises) et inconsistantes (dependantes de l'expertise individuelle du revieweur). Les developpeurs introduisent des vulnerabilites sans le savoir : injections SQL, failles XSS, gestion incorrecte des secrets, dependances obsoletes avec des CVE connues. Les outils SAST classiques generent trop de faux positifs et ne comprennent pas le contexte metier du code, ce qui conduit les equipes a ignorer les alertes.",
     value:
-      "Un agent IA analyse chaque Pull Request en temps reel et identifie les vulnerabilites du Top 10 OWASP : injections SQL, XSS, authentification cassee, exposition de donnees sensibles, mauvaise configuration de securite. L'agent comprend le contexte du code grace a l'analyse AST (Abstract Syntax Tree) et fournit non seulement l'alerte mais aussi une explication detaillee de la faille, un exemple d'exploitation, et un snippet de code corrige. Les dependances sont verifiees contre les bases CVE. Le taux de faux positifs est reduit de 80% par rapport aux outils SAST classiques grace a la comprehension contextuelle du LLM. La securite devient continue plutot que ponctuelle.",
+      "Un agent IA analyse chaque Pull Request en temps reel et identifié les vulnerabilites du Top 10 OWASP : injections SQL, XSS, authentification cassee, exposition de données sensibles, mauvaise configuration de sécurité. L'agent comprend le contexte du code grace a l'analyse AST (Abstract Syntax Tree) et fournit non seulement l'alerte mais aussi une explication détaillée de la faille, un exemple d'exploitation, et un snippet de code corrige. Les dependances sont verifiees contre les bases CVE. Le taux de faux positifs est réduit de 80% par rapport aux outils SAST classiques grace a la comprehension contextuelle du LLM. La sécurité devient continue plutot que ponctuelle.",
     inputs: [
       "Code source des Pull Requests (diff et fichiers complets)",
       "Historique des vulnerabilites detectees et corrigees",
-      "Configuration des regles de securite specifiques au projet",
-      "Base de donnees CVE pour les dependances (NVD, GitHub Advisory)",
+      "Configuration des regles de sécurité spécifiques au projet",
+      "Base de données CVE pour les dependances (NVD, GitHub Advisory)",
       "Fichiers de configuration (Dockerfile, CI/CD, env) pour analyse de la surface d'attaque",
     ],
     outputs: [
-      "Rapport de securite detaille par Pull Request avec niveau de severite",
+      "Rapport de sécurité détaillé par Pull Request avec niveau de severite",
       "Commentaires inline sur les lignes de code vulnerables dans la PR",
       "Suggestions de correction avec snippets de code prets a l'emploi",
-      "Score de securite global du repository avec evolution temporelle",
-      "Tableau de bord des vulnerabilites par categorie OWASP et par equipe",
+      "Score de sécurité global du repository avec evolution temporelle",
+      "Tableau de bord des vulnerabilites par categorie OWASP et par équipe",
     ],
     risks: [
       "Faux negatifs : vulnerabilites critiques non detectees par le LLM",
@@ -15256,7 +15256,7 @@ def test_traduction_japonais():
       "Hallucination du LLM sur des vulnerabilites inexistantes ou des corrections incorrectes",
     ],
     roiIndicatif:
-      "Detection de 85% des vulnerabilites supplementaires avant mise en production. Reduction de 60% du temps de revue de securite manuelle. Diminution de 90% des incidents de securite en production. ROI estime : prevention de 3 a 5 incidents de securite majeurs par an, representant chacun un cout moyen de 50 000 a 200 000 EUR.",
+      "Detection de 85% des vulnerabilites supplementaires avant mise en production. Reduction de 60% du temps de revue de sécurité manuelle. Diminution de 90% des incidents de sécurité en production. ROI estime : prevention de 3 a 5 incidents de sécurité majeurs par an, representant chacun un cout moyen de 50 000 a 200 000 EUR.",
     recommendedStack: [
       { name: "OpenAI GPT-4.1", category: "LLM" },
       { name: "LangChain", category: "Orchestration" },
@@ -15275,7 +15275,7 @@ def test_traduction_japonais():
       {
         title: "Integration Git et reception des Pull Requests",
         content:
-          "La premiere etape consiste a configurer un webhook GitHub (ou GitLab) pour recevoir les evenements de Pull Request. Chaque fois qu'une PR est ouverte ou mise a jour, votre agent recoit le diff du code modifie et peut demarrer l'analyse de securite automatiquement.\n\nCreez une application GitHub ou un webhook de repository qui envoie les evenements 'pull_request' a votre API. Le webhook inclut les metadonnees de la PR (auteur, branche, description) et un lien vers le diff. Vous devez ensuite utiliser l'API GitHub pour recuperer le contenu complet des fichiers modifies, car le diff seul ne suffit pas pour comprendre le contexte.\n\nConfigurez l'authentification avec un token GitHub App pour acceder aux repositories prives. Le token doit avoir les permissions 'contents:read' et 'pull_requests:write' pour lire le code et poster des commentaires de revue.\n\nInstallez les dependances Python. Nous utilisons tree-sitter pour l'analyse AST multi-langages (Python, JavaScript, TypeScript, Java, Go), LangChain pour l'orchestration de l'agent, et les clients GitHub et OpenAI.",
+          "La première étape consiste a configurer un webhook GitHub (ou GitLab) pour recevoir les evenements de Pull Request. Chaque fois qu'une PR est ouverte ou mise a jour, votre agent reçoit le diff du code modifie et peut demarrer l'analyse de sécurité automatiquement.\n\nCreez une application GitHub ou un webhook de repository qui envoie les evenements 'pull_request' a votre API. Le webhook inclut les metadonnees de la PR (auteur, branche, description) et un lien vers le diff. Vous devez ensuite utiliser l'API GitHub pour recuperer le contenu complet des fichiers modifies, car le diff seul ne suffit pas pour comprendre le contexte.\n\nConfigurez l'authentification avec un token GitHub App pour acceder aux repositories prives. Le token doit avoir les permissions 'contents:read' et 'pull_requests:write' pour lire le code et poster des commentaires de revue.\n\nInstallez les dependances Python. Nous utilisons tree-sitter pour l'analyse AST multi-langages (Python, JavaScript, TypeScript, Java, Go), LangChain pour l'orchestration de l'agent, et les clients GitHub et OpenAI.",
         codeSnippets: [
           {
             language: "bash",
@@ -15290,43 +15290,43 @@ def test_traduction_japonais():
         ],
       },
       {
-        title: "Analyse AST et detection des patterns de vulnerabilites",
+        title: "Analyse AST et détection des patterns de vulnerabilites",
         content:
-          "L'analyse AST (Abstract Syntax Tree) est la cle pour reduire les faux positifs. Plutot que d'analyser le code comme du texte brut, nous le parsons en arbre syntaxique pour comprendre la structure : quelles fonctions sont appelees, comment les donnees circulent des entrees utilisateur vers les requetes base de donnees, ou sont geres les secrets.\n\nNous utilisons tree-sitter, un parseur incremental multi-langages, pour generer l'AST de chaque fichier. Le parseur identifie les noeuds critiques : appels de fonctions de base de donnees, manipulation de HTML, lecture de variables d'environnement, imports de bibliotheques cryptographiques, gestion des entrees utilisateur.\n\nLe moteur de detection combine deux approches : une analyse statique basee sur des patterns connus (regles codees en dur pour les injections SQL, XSS, etc.) et une analyse contextuelle par le LLM qui comprend la logique metier du code. L'analyse statique est rapide et precise pour les patterns simples, tandis que le LLM excelle sur les vulnerabilites subtiles qui necessitent de comprendre le flux de donnees.\n\nChaque vulnerabilite detectee est classee selon le framework OWASP Top 10 avec un niveau de severite (critique, haute, moyenne, basse, informationnelle). Le contexte complet est fourni : ligne de code concernee, explication de la faille, scenario d'exploitation, et proposition de correction.",
+          "L'analyse AST (Abstract Syntax Tree) est la cle pour reduire les faux positifs. Plutot que d'analyser le code comme du texte brut, nous le parsons en arbre syntaxique pour comprendre la structure : quelles fonctions sont appelees, comment les données circulent des entrees utilisateur vers les requetes base de données, ou sont geres les secrets.\n\nNous utilisons tree-sitter, un parseur incremental multi-langages, pour générer l'AST de chaque fichier. Le parseur identifié les noeuds critiques : appels de fonctions de base de données, manipulation de HTML, lecture de variables d'environnement, imports de bibliotheques cryptographiques, gestion des entrees utilisateur.\n\nLe moteur de détection combine deux approches : une analyse statique basee sur des patterns connus (regles codees en dur pour les injections SQL, XSS, etc.) et une analyse contextuelle par le LLM qui comprend la logique metier du code. L'analyse statique est rapide et précise pour les patterns simples, tandis que le LLM excelle sur les vulnerabilites subtiles qui necessitent de comprendre le flux de données.\n\nChaque vulnerabilite détectée est classee selon le framework OWASP Top 10 avec un niveau de severite (critique, haute, moyenne, basse, informationnelle). Le contexte complet est fourni : ligne de code concernee, explication de la faille, scenario d'exploitation, et proposition de correction.",
         codeSnippets: [
           {
             language: "python",
-            code: "import tree_sitter_python as tspython\nimport tree_sitter_javascript as tsjavascript\nfrom tree_sitter import Language, Parser\nfrom dataclasses import dataclass\nfrom enum import Enum\n\nclass Severity(str, Enum):\n    CRITICAL = \"critique\"\n    HIGH = \"haute\"\n    MEDIUM = \"moyenne\"\n    LOW = \"basse\"\n    INFO = \"informationnelle\"\n\nclass OWASPCategory(str, Enum):\n    INJECTION = \"A03:2021 - Injection\"\n    BROKEN_AUTH = \"A07:2021 - Identification et authentification\"\n    SENSITIVE_DATA = \"A02:2021 - Defaillances cryptographiques\"\n    XSS = \"A03:2021 - Injection (XSS)\"\n    MISCONFIG = \"A05:2021 - Mauvaise configuration de securite\"\n    VULNERABLE_DEPS = \"A06:2021 - Composants vulnerables et obsoletes\"\n    BROKEN_ACCESS = \"A01:2021 - Controle d'acces defaillant\"\n\n@dataclass\nclass Vulnerability:\n    file: str\n    line: int\n    severity: Severity\n    category: OWASPCategory\n    title: str\n    description: str\n    exploit_scenario: str\n    fix_suggestion: str\n    code_snippet: str\n    fixed_code: str\n\nclass ASTAnalyzer:\n    def __init__(self):\n        self.py_language = Language(tspython.language())\n        self.js_language = Language(tsjavascript.language())\n        self.parser = Parser()\n\n    def analyze_python(self, code: str, filename: str) -> list[dict]:\n        self.parser.language = self.py_language\n        tree = self.parser.parse(bytes(code, \"utf-8\"))\n        findings = []\n\n        self._check_sql_injection(tree.root_node, code, filename, findings)\n        self._check_hardcoded_secrets(tree.root_node, code, filename, findings)\n        self._check_unsafe_deserialization(tree.root_node, code, filename, findings)\n        self._check_command_injection(tree.root_node, code, filename, findings)\n\n        return findings\n\n    def _check_sql_injection(self, node, code: str, filename: str, findings: list):\n        if node.type == \"call\":\n            func_text = code[node.start_byte:node.end_byte]\n            if any(kw in func_text.lower() for kw in [\"execute(\", \"raw(\", \"rawquery(\"]):\n                if \"f\\\"\" in func_text or \"format(\" in func_text or \"%s\" not in func_text:\n                    if \".format(\" in func_text or \"f\\\"\" in func_text or \"f'\" in func_text:\n                        findings.append({\n                            \"type\": \"sql_injection\",\n                            \"line\": node.start_point[0] + 1,\n                            \"file\": filename,\n                            \"code\": func_text,\n                            \"severity\": \"critique\",\n                        })\n        for child in node.children:\n            self._check_sql_injection(child, code, filename, findings)",
+            code: "import tree_sitter_python as tspython\nimport tree_sitter_javascript as tsjavascript\nfrom tree_sitter import Language, Parser\nfrom dataclasses import dataclass\nfrom enum import Enum\n\nclass Severity(str, Enum):\n    CRITICAL = \"critique\"\n    HIGH = \"haute\"\n    MEDIUM = \"moyenne\"\n    LOW = \"basse\"\n    INFO = \"informationnelle\"\n\nclass OWASPCategory(str, Enum):\n    INJECTION = \"A03:2021 - Injection\"\n    BROKEN_AUTH = \"A07:2021 - Identification et authentification\"\n    SENSITIVE_DATA = \"A02:2021 - Defaillances cryptographiques\"\n    XSS = \"A03:2021 - Injection (XSS)\"\n    MISCONFIG = \"A05:2021 - Mauvaise configuration de sécurité\"\n    VULNERABLE_DEPS = \"A06:2021 - Composants vulnerables et obsoletes\"\n    BROKEN_ACCESS = \"A01:2021 - Controle d'acces defaillant\"\n\n@dataclass\nclass Vulnerability:\n    file: str\n    line: int\n    severity: Severity\n    category: OWASPCategory\n    title: str\n    description: str\n    exploit_scenario: str\n    fix_suggestion: str\n    code_snippet: str\n    fixed_code: str\n\nclass ASTAnalyzer:\n    def __init__(self):\n        self.py_language = Language(tspython.language())\n        self.js_language = Language(tsjavascript.language())\n        self.parser = Parser()\n\n    def analyze_python(self, code: str, filename: str) -> list[dict]:\n        self.parser.language = self.py_language\n        tree = self.parser.parse(bytes(code, \"utf-8\"))\n        findings = []\n\n        self._check_sql_injection(tree.root_node, code, filename, findings)\n        self._check_hardcoded_secrets(tree.root_node, code, filename, findings)\n        self._check_unsafe_deserialization(tree.root_node, code, filename, findings)\n        self._check_command_injection(tree.root_node, code, filename, findings)\n\n        return findings\n\n    def _check_sql_injection(self, node, code: str, filename: str, findings: list):\n        if node.type == \"call\":\n            func_text = code[node.start_byte:node.end_byte]\n            if any(kw in func_text.lower() for kw in [\"execute(\", \"raw(\", \"rawquery(\"]):\n                if \"f\\\"\" in func_text or \"format(\" in func_text or \"%s\" not in func_text:\n                    if \".format(\" in func_text or \"f\\\"\" in func_text or \"f'\" in func_text:\n                        findings.append({\n                            \"type\": \"sql_injection\",\n                            \"line\": node.start_point[0] + 1,\n                            \"file\": filename,\n                            \"code\": func_text,\n                            \"severity\": \"critique\",\n                        })\n        for child in node.children:\n            self._check_sql_injection(child, code, filename, findings)",
             filename: "ast_analyzer.py",
           },
           {
             language: "python",
-            code: "import re\nfrom ast_analyzer import Vulnerability, Severity, OWASPCategory\n\nSECRET_PATTERNS = [\n    (r'(?i)(password|passwd|pwd|secret|token|api_key|apikey)\\s*=\\s*[\"\\'][^\"\\']{8,}[\"\\']', \"Secret code en dur\"),\n    (r'(?i)(aws_access_key_id|aws_secret_access_key)\\s*=\\s*[\"\\'][A-Za-z0-9/+=]{20,}[\"\\']', \"Cle AWS en dur\"),\n    (r'(?i)bearer\\s+[A-Za-z0-9\\-._~+/]+=*', \"Token Bearer en dur\"),\n    (r'-----BEGIN (RSA |EC )?PRIVATE KEY-----', \"Cle privee dans le code\"),\n]\n\nUNSAFE_FUNCTIONS = {\n    \"python\": {\n        \"eval(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"exec(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"pickle.loads(\": (\"Deserialisation non securisee\", Severity.HIGH),\n        \"yaml.load(\": (\"Deserialisation YAML non securisee\", Severity.HIGH),\n        \"subprocess.call(shell=True\": (\"Injection de commande OS\", Severity.CRITICAL),\n        \"os.system(\": (\"Injection de commande OS\", Severity.CRITICAL),\n        \"__import__(\": (\"Import dynamique non securise\", Severity.MEDIUM),\n    },\n    \"javascript\": {\n        \"eval(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"innerHTML\": (\"Risque de XSS\", Severity.HIGH),\n        \"document.write(\": (\"Risque de XSS\", Severity.HIGH),\n        \"dangerouslySetInnerHTML\": (\"Risque de XSS dans React\", Severity.HIGH),\n        \"child_process.exec(\": (\"Injection de commande OS\", Severity.CRITICAL),\n    },\n}\n\ndef scan_for_secrets(code: str, filename: str) -> list[Vulnerability]:\n    vulnerabilities = []\n    lines = code.split(\"\\n\")\n    for i, line in enumerate(lines):\n        for pattern, description in SECRET_PATTERNS:\n            if re.search(pattern, line):\n                vulnerabilities.append(Vulnerability(\n                    file=filename,\n                    line=i + 1,\n                    severity=Severity.CRITICAL,\n                    category=OWASPCategory.SENSITIVE_DATA,\n                    title=description,\n                    description=f\"Un secret semble etre code en dur dans le fichier. \"\n                                f\"Les secrets doivent etre stockes dans des variables d'environnement \"\n                                f\"ou un gestionnaire de secrets (Vault, AWS Secrets Manager).\",\n                    exploit_scenario=f\"Un attaquant ayant acces au code source (fuite, depot public) \"\n                                     f\"peut extraire le secret et l'utiliser pour acceder aux systemes proteges.\",\n                    fix_suggestion=f\"Deplacez le secret dans une variable d'environnement \"\n                                   f\"et utilisez os.getenv() pour le lire.\",\n                    code_snippet=line.strip(),\n                    fixed_code=\"# Utiliser une variable d'environnement\\nimport os\\nvalue = os.getenv('SECRET_NAME')\",\n                ))\n    return vulnerabilities",
+            code: "import re\nfrom ast_analyzer import Vulnerability, Severity, OWASPCategory\n\nSECRET_PATTERNS = [\n    (r'(?i)(password|passwd|pwd|secret|token|api_key|apikey)\\s*=\\s*[\"\\'][^\"\\']{8,}[\"\\']', \"Secret code en dur\"),\n    (r'(?i)(aws_access_key_id|aws_secret_access_key)\\s*=\\s*[\"\\'][A-Za-z0-9/+=]{20,}[\"\\']', \"Cle AWS en dur\"),\n    (r'(?i)bearer\\s+[A-Za-z0-9\\-._~+/]+=*', \"Token Bearer en dur\"),\n    (r'-----BEGIN (RSA |EC )?PRIVATE KEY-----', \"Cle privee dans le code\"),\n]\n\nUNSAFE_FUNCTIONS = {\n    \"python\": {\n        \"eval(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"exec(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"pickle.loads(\": (\"Deserialisation non securisee\", Severity.HIGH),\n        \"yaml.load(\": (\"Deserialisation YAML non securisee\", Severity.HIGH),\n        \"subprocess.call(shell=True\": (\"Injection de commande OS\", Severity.CRITICAL),\n        \"os.system(\": (\"Injection de commande OS\", Severity.CRITICAL),\n        \"__import__(\": (\"Import dynamique non securise\", Severity.MEDIUM),\n    },\n    \"javascript\": {\n        \"eval(\": (\"Execution de code arbitraire\", Severity.CRITICAL),\n        \"innerHTML\": (\"Risque de XSS\", Severity.HIGH),\n        \"document.write(\": (\"Risque de XSS\", Severity.HIGH),\n        \"dangerouslySetInnerHTML\": (\"Risque de XSS dans React\", Severity.HIGH),\n        \"child_process.exec(\": (\"Injection de commande OS\", Severity.CRITICAL),\n    },\n}\n\ndef scan_for_secrets(code: str, filename: str) -> list[Vulnerability]:\n    vulnerabilities = []\n    lines = code.split(\"\\n\")\n    for i, line in enumerate(lines):\n        for pattern, description in SECRET_PATTERNS:\n            if re.search(pattern, line):\n                vulnerabilities.append(Vulnerability(\n                    file=filename,\n                    line=i + 1,\n                    severity=Severity.CRITICAL,\n                    category=OWASPCategory.SENSITIVE_DATA,\n                    title=description,\n                    description=f\"Un secret semble etre code en dur dans le fichier. \"\n                                f\"Les secrets doivent etre stockes dans des variables d'environnement \"\n                                f\"ou un gestionnaire de secrets (Vault, AWS Secrets Manager).\",\n                    exploit_scenario=f\"Un attaquant ayant acces au code source (fuite, depot public) \"\n                                     f\"peut extraire le secret et l'utiliser pour acceder aux systèmes proteges.\",\n                    fix_suggestion=f\"Deplacez le secret dans une variable d'environnement \"\n                                   f\"et utilisez os.getenv() pour le lire.\",\n                    code_snippet=line.strip(),\n                    fixed_code=\"# Utiliser une variable d'environnement\\nimport os\\nvalue = os.getenv('SECRET_NAME')\",\n                ))\n    return vulnerabilities",
             filename: "pattern_scanner.py",
           },
         ],
       },
       {
-        title: "Analyse contextuelle par LLM et generation des rapports",
+        title: "Analyse contextuelle par LLM et génération des rapports",
         content:
-          "L'analyse contextuelle par LLM est le differenciateur principal de cet agent par rapport aux outils SAST classiques. Le LLM comprend la logique metier du code et peut identifier des vulnerabilites subtiles que les regles statiques ne detectent pas : validation insuffisante des roles dans un middleware d'autorisation, fuite de donnees sensibles via des logs trop verbeux, conditions de course dans la gestion de sessions.\n\nL'agent envoie au LLM le code complet des fichiers modifies avec le contexte des fichiers adjacents (imports, classes parentes, middleware). Le prompt est structure pour guider l'analyse selon les categories OWASP et exiger des reponses structurees en JSON avec tous les champs necessaires au rapport.\n\nPour chaque vulnerabilite detectee, le LLM genere une explication pedagogique destinee au developpeur : pourquoi c'est dangereux, comment un attaquant pourrait l'exploiter, et un snippet de code corrige pret a copier-coller. Cette approche educative ameliore la securite a long terme en formant les developpeurs.\n\nLe rapport de securite est publie directement comme commentaire de revue sur la Pull Request GitHub. Les vulnerabilites critiques et hautes bloquent automatiquement le merge via un check status. Les vulnerabilites moyennes et basses sont des avertissements informatifs.",
+          "L'analyse contextuelle par LLM est le differenciateur principal de cet agent par rapport aux outils SAST classiques. Le LLM comprend la logique metier du code et peut identifier des vulnerabilites subtiles que les regles statiques ne detectent pas : validation insuffisante des roles dans un middleware d'autorisation, fuite de données sensibles via des logs trop verbeux, conditions de course dans la gestion de sessions.\n\nL'agent envoie au LLM le code complet des fichiers modifies avec le contexte des fichiers adjacents (imports, classes parentes, middleware). Le prompt est structure pour guider l'analyse selon les categories OWASP et exiger des reponses structurees en JSON avec tous les champs nécessaires au rapport.\n\nPour chaque vulnerabilite détectée, le LLM généré une explication pedagogique destinee au developpeur : pourquoi c'est dangereux, comment un attaquant pourrait l'exploiter, et un snippet de code corrige pret a copier-coller. Cette approche educative amélioré la sécurité a long terme en formant les developpeurs.\n\nLe rapport de sécurité est publie directement comme commentaire de revue sur la Pull Request GitHub. Les vulnerabilites critiques et hautes bloquent automatiquement le merge via un check status. Les vulnerabilites moyennes et basses sont des avertissements informatifs.",
         codeSnippets: [
           {
             language: "python",
-            code: "from langchain.chat_models import ChatOpenAI\nfrom langchain.prompts import ChatPromptTemplate\nimport json\nfrom ast_analyzer import Vulnerability, Severity, OWASPCategory\n\nSECURITY_PROMPT = ChatPromptTemplate.from_messages([\n    (\"system\", \"\"\"Tu es un expert en securite applicative specialise dans l'audit de code.\nAnalyse le code source fourni et identifie les vulnerabilites de securite.\n\nPour chaque vulnerabilite trouvee, reponds en JSON avec ce schema :\n{{\n  \"vulnerabilities\": [\n    {{\n      \"line\": <numero de ligne>,\n      \"severity\": \"critique\" | \"haute\" | \"moyenne\" | \"basse\",\n      \"category\": \"<categorie OWASP>\",\n      \"title\": \"<titre court>\",\n      \"description\": \"<explication detaillee en francais>\",\n      \"exploit_scenario\": \"<scenario d'exploitation>\",\n      \"fix_suggestion\": \"<explication de la correction>\",\n      \"fixed_code\": \"<code corrige>\"\n    }}\n  ],\n  \"security_score\": <score de 0 a 100>,\n  \"summary\": \"<resume en francais>\"\n}}\n\nConcentre-toi sur : injections SQL/NoSQL, XSS, authentification/autorisation,\nexposition de donnees sensibles, configuration de securite, composants vulnerables.\nNe signale que les vrais problemes, evite les faux positifs.\"\"\"),\n    (\"human\", \"\"\"Fichier : {filename} (langage : {language})\n\nDiff de la PR :\n```\n{patch}\n```\n\nContenu complet du fichier :\n```{language}\n{content}\n```\n\nContexte du projet : {project_context}\n\nAnalyse les modifications et le fichier complet pour detecter les vulnerabilites.\"\"\")\n])\n\nclass LLMSecurityAnalyzer:\n    def __init__(self):\n        self.llm = ChatOpenAI(model=\"gpt-4.1\", temperature=0, max_tokens=4096)\n        self.chain = SECURITY_PROMPT | self.llm\n\n    async def analyze_file(self, file_data: dict, project_context: str) -> dict:\n        result = await self.chain.ainvoke({\n            \"filename\": file_data[\"filename\"],\n            \"language\": file_data[\"language\"],\n            \"patch\": file_data[\"patch\"],\n            \"content\": file_data[\"content\"],\n            \"project_context\": project_context,\n        })\n        return json.loads(result.content)\n\n    async def analyze_pr(self, files: list[dict], project_context: str) -> list[dict]:\n        all_vulns = []\n        total_score = 0\n        for f in files:\n            analysis = await self.analyze_file(f, project_context)\n            for vuln in analysis.get(\"vulnerabilities\", []):\n                vuln[\"file\"] = f[\"filename\"]\n                all_vulns.append(vuln)\n            total_score += analysis.get(\"security_score\", 100)\n\n        avg_score = total_score // max(len(files), 1)\n        return {\n            \"vulnerabilities\": sorted(all_vulns, key=lambda v: [\"critique\", \"haute\", \"moyenne\", \"basse\"].index(v[\"severity\"])),\n            \"security_score\": avg_score,\n            \"files_analyzed\": len(files),\n            \"total_vulnerabilities\": len(all_vulns),\n        }",
+            code: "from langchain.chat_models import ChatOpenAI\nfrom langchain.prompts import ChatPromptTemplate\nimport json\nfrom ast_analyzer import Vulnerability, Severity, OWASPCategory\n\nSECURITY_PROMPT = ChatPromptTemplate.from_messages([\n    (\"system\", \"\"\"Tu es un expert en sécurité applicative specialise dans l'audit de code.\nAnalyse le code source fourni et identifié les vulnerabilites de sécurité.\n\nPour chaque vulnerabilite trouvee, reponds en JSON avec ce schema :\n{{\n  \"vulnerabilities\": [\n    {{\n      \"line\": <numero de ligne>,\n      \"severity\": \"critique\" | \"haute\" | \"moyenne\" | \"basse\",\n      \"category\": \"<categorie OWASP>\",\n      \"title\": \"<titre court>\",\n      \"description\": \"<explication détaillée en francais>\",\n      \"exploit_scenario\": \"<scenario d'exploitation>\",\n      \"fix_suggestion\": \"<explication de la correction>\",\n      \"fixed_code\": \"<code corrige>\"\n    }}\n  ],\n  \"security_score\": <score de 0 a 100>,\n  \"summary\": \"<resume en francais>\"\n}}\n\nConcentre-toi sur : injections SQL/NoSQL, XSS, authentification/autorisation,\nexposition de données sensibles, configuration de sécurité, composants vulnerables.\nNe signale que les vrais problèmes, evite les faux positifs.\"\"\"),\n    (\"human\", \"\"\"Fichier : {filename} (langage : {language})\n\nDiff de la PR :\n```\n{patch}\n```\n\nContenu complet du fichier :\n```{language}\n{content}\n```\n\nContexte du projet : {project_context}\n\nAnalyse les modifications et le fichier complet pour detecter les vulnerabilites.\"\"\")\n])\n\nclass LLMSecurityAnalyzer:\n    def __init__(self):\n        self.llm = ChatOpenAI(model=\"gpt-4.1\", temperature=0, max_tokens=4096)\n        self.chain = SECURITY_PROMPT | self.llm\n\n    async def analyze_file(self, file_data: dict, project_context: str) -> dict:\n        result = await self.chain.ainvoke({\n            \"filename\": file_data[\"filename\"],\n            \"language\": file_data[\"language\"],\n            \"patch\": file_data[\"patch\"],\n            \"content\": file_data[\"content\"],\n            \"project_context\": project_context,\n        })\n        return json.loads(result.content)\n\n    async def analyze_pr(self, files: list[dict], project_context: str) -> list[dict]:\n        all_vulns = []\n        total_score = 0\n        for f in files:\n            analysis = await self.analyze_file(f, project_context)\n            for vuln in analysis.get(\"vulnerabilities\", []):\n                vuln[\"file\"] = f[\"filename\"]\n                all_vulns.append(vuln)\n            total_score += analysis.get(\"security_score\", 100)\n\n        avg_score = total_score // max(len(files), 1)\n        return {\n            \"vulnerabilities\": sorted(all_vulns, key=lambda v: [\"critique\", \"haute\", \"moyenne\", \"basse\"].index(v[\"severity\"])),\n            \"security_score\": avg_score,\n            \"files_analyzed\": len(files),\n            \"total_vulnerabilities\": len(all_vulns),\n        }",
             filename: "llm_analyzer.py",
           },
           {
             language: "python",
-            code: "from github import Github\nimport os\n\nclass GitHubReporter:\n    def __init__(self):\n        self.g = Github(os.getenv(\"GITHUB_TOKEN\"))\n\n    def post_review(self, repo_name: str, pr_number: int, analysis: dict):\n        repo = self.g.get_repo(repo_name)\n        pr = repo.get_pull(pr_number)\n\n        score = analysis[\"security_score\"]\n        vulns = analysis[\"vulnerabilities\"]\n        critiques = [v for v in vulns if v[\"severity\"] == \"critique\"]\n        hautes = [v for v in vulns if v[\"severity\"] == \"haute\"]\n\n        status = \"APPROVE\" if not critiques and not hautes else \"REQUEST_CHANGES\"\n        icon = \"\\u2705\" if status == \"APPROVE\" else \"\\u274c\"\n\n        body = f\"## {icon} Rapport d'Audit de Securite\\n\\n\"\n        body += f\"**Score de securite : {score}/100**\\n\\n\"\n        body += f\"| Severite | Nombre |\\n|---|---|\\n\"\n        body += f\"| Critique | {len(critiques)} |\\n\"\n        body += f\"| Haute | {len(hautes)} |\\n\"\n        body += f\"| Moyenne | {len([v for v in vulns if v['severity'] == 'moyenne'])} |\\n\"\n        body += f\"| Basse | {len([v for v in vulns if v['severity'] == 'basse'])} |\\n\\n\"\n\n        for vuln in vulns:\n            severity_badge = {\"critique\": \"\\U0001f534\", \"haute\": \"\\U0001f7e0\", \"moyenne\": \"\\U0001f7e1\", \"basse\": \"\\U0001f535\"}\n            badge = severity_badge.get(vuln[\"severity\"], \"\")\n            body += f\"### {badge} {vuln['title']}\\n\"\n            body += f\"**Fichier :** `{vuln['file']}` ligne {vuln['line']}\\n\"\n            body += f\"**Categorie :** {vuln['category']}\\n\\n\"\n            body += f\"{vuln['description']}\\n\\n\"\n            body += f\"**Scenario d'exploitation :** {vuln['exploit_scenario']}\\n\\n\"\n            body += f\"**Correction suggeree :**\\n```\\n{vuln['fixed_code']}\\n```\\n\\n---\\n\\n\"\n\n        comments = []\n        for vuln in vulns:\n            if vuln.get(\"line\"):\n                comments.append({\n                    \"path\": vuln[\"file\"],\n                    \"line\": vuln[\"line\"],\n                    \"body\": f\"**{vuln['severity'].upper()}** - {vuln['title']}\\n\\n{vuln['description']}\\n\\nCorrection :\\n```\\n{vuln['fixed_code']}\\n```\",\n                })\n\n        pr.create_review(body=body, event=status, comments=comments)\n\n        commit = repo.get_commit(pr.head.sha)\n        state = \"failure\" if critiques or hautes else \"success\"\n        commit.create_status(\n            state=state,\n            target_url=f\"https://votre-dashboard.com/pr/{pr_number}\",\n            description=f\"Score: {score}/100 - {len(vulns)} vulnerabilite(s) detectee(s)\",\n            context=\"security-audit/ai-agent\",\n        )",
+            code: "from github import Github\nimport os\n\nclass GitHubReporter:\n    def __init__(self):\n        self.g = Github(os.getenv(\"GITHUB_TOKEN\"))\n\n    def post_review(self, repo_name: str, pr_number: int, analysis: dict):\n        repo = self.g.get_repo(repo_name)\n        pr = repo.get_pull(pr_number)\n\n        score = analysis[\"security_score\"]\n        vulns = analysis[\"vulnerabilities\"]\n        critiques = [v for v in vulns if v[\"severity\"] == \"critique\"]\n        hautes = [v for v in vulns if v[\"severity\"] == \"haute\"]\n\n        status = \"APPROVE\" if not critiques and not hautes else \"REQUEST_CHANGES\"\n        icon = \"\\u2705\" if status == \"APPROVE\" else \"\\u274c\"\n\n        body = f\"## {icon} Rapport d'Audit de Securite\\n\\n\"\n        body += f\"**Score de sécurité : {score}/100**\\n\\n\"\n        body += f\"| Severite | Nombre |\\n|---|---|\\n\"\n        body += f\"| Critique | {len(critiques)} |\\n\"\n        body += f\"| Haute | {len(hautes)} |\\n\"\n        body += f\"| Moyenne | {len([v for v in vulns if v['severity'] == 'moyenne'])} |\\n\"\n        body += f\"| Basse | {len([v for v in vulns if v['severity'] == 'basse'])} |\\n\\n\"\n\n        for vuln in vulns:\n            severity_badge = {\"critique\": \"\\U0001f534\", \"haute\": \"\\U0001f7e0\", \"moyenne\": \"\\U0001f7e1\", \"basse\": \"\\U0001f535\"}\n            badge = severity_badge.get(vuln[\"severity\"], \"\")\n            body += f\"### {badge} {vuln['title']}\\n\"\n            body += f\"**Fichier :** `{vuln['file']}` ligne {vuln['line']}\\n\"\n            body += f\"**Categorie :** {vuln['category']}\\n\\n\"\n            body += f\"{vuln['description']}\\n\\n\"\n            body += f\"**Scenario d'exploitation :** {vuln['exploit_scenario']}\\n\\n\"\n            body += f\"**Correction suggeree :**\\n```\\n{vuln['fixed_code']}\\n```\\n\\n---\\n\\n\"\n\n        comments = []\n        for vuln in vulns:\n            if vuln.get(\"line\"):\n                comments.append({\n                    \"path\": vuln[\"file\"],\n                    \"line\": vuln[\"line\"],\n                    \"body\": f\"**{vuln['severity'].upper()}** - {vuln['title']}\\n\\n{vuln['description']}\\n\\nCorrection :\\n```\\n{vuln['fixed_code']}\\n```\",\n                })\n\n        pr.create_review(body=body, event=status, comments=comments)\n\n        commit = repo.get_commit(pr.head.sha)\n        state = \"failure\" if critiques or hautes else \"success\"\n        commit.create_status(\n            state=state,\n            target_url=f\"https://votre-dashboard.com/pr/{pr_number}\",\n            description=f\"Score: {score}/100 - {len(vulns)} vulnerabilite(s) detectee(s)\",\n            context=\"security-audit/ai-agent\",\n        )",
             filename: "github_reporter.py",
           },
         ],
       },
       {
-        title: "Integration CI/CD et deploiement en production",
+        title: "Integration CI/CD et déploiement en production",
         content:
-          "L'integration dans votre pipeline CI/CD est essentielle pour que l'audit de securite soit systematique et non contournable. Configurez l'agent comme un check obligatoire sur vos branches protegees : aucune PR ne peut etre mergee si des vulnerabilites critiques ou hautes sont detectees.\n\nDeployez l'API sur AWS Lambda pour beneficier du scaling automatique. Les analyses de securite peuvent etre couteuses en temps (30 secondes a 2 minutes par PR selon la taille), mais Lambda gere les executions paralleles si plusieurs PR sont ouvertes simultanement. Configurez un timeout de 5 minutes et 512 Mo de memoire.\n\nLa verification des dependances est automatisee via l'analyse des fichiers requirements.txt, package.json, go.mod et pom.xml. L'agent interroge la base NVD (National Vulnerability Database) et GitHub Advisory pour identifier les CVE connues et recommander les mises a jour.\n\nMettez en place le monitoring avec Datadog : tracez chaque analyse (duree, nombre de vulnerabilites, score), creez des dashboards d'evolution de la securite par repository et par equipe, et configurez des alertes si le score moyen de securite descend sous un seuil configurable. Un rapport hebdomadaire est genere automatiquement pour le RSSI.",
+          "L'integration dans votre pipeline CI/CD est essentielle pour que l'audit de sécurité soit systematique et non contournable. Configurez l'agent comme un check obligatoire sur vos branches protégées : aucune PR ne peut etre mergee si des vulnerabilites critiques ou hautes sont detectees.\n\nDeployez l'API sur AWS Lambda pour beneficier du scaling automatique. Les analyses de sécurité peuvent etre couteuses en temps (30 secondes a 2 minutes par PR selon la taille), mais Lambda gère les executions paralleles si plusieurs PR sont ouvertes simultanement. Configurez un timeout de 5 minutes et 512 Mo de memoire.\n\nLa verification des dependances est automatisee via l'analyse des fichiers requirements.txt, package.json, go.mod et pom.xml. L'agent interroge la base NVD (National Vulnerability Database) et GitHub Advisory pour identifier les CVE connues et recommander les mises a jour.\n\nMettez en place le monitoring avec Datadog : tracez chaque analyse (duree, nombre de vulnerabilites, score), creez des dashboards d'evolution de la sécurité par repository et par équipe, et configurez des alertes si le score moyen de sécurité descend sous un seuil configurable. Un rapport hebdomadaire est généré automatiquement pour le RSSI.",
         codeSnippets: [
           {
             language: "python",
@@ -15335,7 +15335,7 @@ def test_traduction_japonais():
           },
           {
             language: "yaml",
-            code: "# Configuration GitHub Actions pour integrer l'audit de securite\nname: Security Audit\n\non:\n  pull_request:\n    types: [opened, synchronize]\n\njobs:\n  security-scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n\n      - name: Declencher l'audit de securite IA\n        run: |\n          curl -X POST ${{ secrets.SECURITY_AGENT_URL }}/webhook/github \\\n            -H \"Content-Type: application/json\" \\\n            -H \"X-GitHub-Event: pull_request\" \\\n            -H \"X-Hub-Signature-256: $(echo -n '${{ toJSON(github.event) }}' | openssl dgst -sha256 -hmac ${{ secrets.WEBHOOK_SECRET }} | cut -d' ' -f2)\" \\\n            -d '${{ toJSON(github.event) }}'\n\n      - name: Attendre le resultat de l'audit\n        run: |\n          for i in $(seq 1 30); do\n            STATUS=$(gh api repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/statuses | jq -r '.[] | select(.context==\"security-audit/ai-agent\") | .state' | head -1)\n            if [ \"$STATUS\" = \"success\" ] || [ \"$STATUS\" = \"failure\" ]; then\n              echo \"Audit termine avec statut: $STATUS\"\n              [ \"$STATUS\" = \"success\" ] && exit 0 || exit 1\n            fi\n            echo \"Audit en cours... tentative $i/30\"\n            sleep 10\n          done\n          echo \"Timeout de l'audit de securite\"\n          exit 1\n        env:\n          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
+            code: "# Configuration GitHub Actions pour intégrer l'audit de sécurité\nname: Security Audit\n\non:\n  pull_request:\n    types: [opened, synchronize]\n\njobs:\n  security-scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n\n      - name: Declencher l'audit de sécurité IA\n        run: |\n          curl -X POST ${{ secrets.SECURITY_AGENT_URL }}/webhook/github \\\n            -H \"Content-Type: application/json\" \\\n            -H \"X-GitHub-Event: pull_request\" \\\n            -H \"X-Hub-Signature-256: $(echo -n '${{ toJSON(github.event) }}' | openssl dgst -sha256 -hmac ${{ secrets.WEBHOOK_SECRET }} | cut -d' ' -f2)\" \\\n            -d '${{ toJSON(github.event) }}'\n\n      - name: Attendre le résultat de l'audit\n        run: |\n          for i in $(seq 1 30); do\n            STATUS=$(gh api repos/${{ github.repository }}/commits/${{ github.event.pull_request.head.sha }}/statuses | jq -r '.[] | select(.context==\"security-audit/ai-agent\") | .state' | head -1)\n            if [ \"$STATUS\" = \"success\" ] || [ \"$STATUS\" = \"failure\" ]; then\n              echo \"Audit termine avec statut: $STATUS\"\n              [ \"$STATUS\" = \"success\" ] && exit 0 || exit 1\n            fi\n            echo \"Audit en cours... tentative $i/30\"\n            sleep 10\n          done\n          echo \"Timeout de l'audit de sécurité\"\n          exit 1\n        env:\n          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
             filename: ".github/workflows/security-audit.yml",
           },
           {
@@ -15348,13 +15348,13 @@ def test_traduction_japonais():
     ],
     enterprise: {
       piiHandling: "Le code source est une propriete intellectuelle sensible. Pour les deployments on-premise, utilisez Ollama avec CodeLlama pour que le code ne quitte jamais votre infrastructure. En mode cloud, les appels au LLM sont effectues via des endpoints conformes SOC 2 avec chiffrement TLS 1.3. Aucun code n'est stocke cote LLM (zero data retention). Les rapports de vulnerabilites sont stockes dans PostgreSQL avec chiffrement AES-256 et acces restreint par role RBAC. Retention des rapports limitee a 24 mois avec purge automatique.",
-      auditLog: "Chaque analyse de PR est integralement tracee : horodatage, repository, numero de PR, auteur, fichiers analyses, vulnerabilites detectees (avec ligne et severite), score de securite, decision (approve/block), duree d'analyse, version du modele LLM utilise. Les logs sont stockes dans PostgreSQL avec export possible vers un SIEM (Splunk, ELK). Retention de 36 mois pour conformite ISO 27001.",
-      humanInTheLoop: "Les vulnerabilites critiques declenchent une notification immediate au RSSI et au lead developpeur via Slack et email. Un processus d'exception permet a un responsable securite habilite de forcer le merge d'une PR bloquee avec justification obligatoire (documentee dans l'audit log). Les faux positifs peuvent etre marques comme tels par le developpeur, creant une regle d'exclusion soumise a validation du RSSI.",
-      monitoring: "Dashboard Datadog temps reel : score de securite moyen par repository et par equipe, evolution temporelle des vulnerabilites, top 10 des categories OWASP les plus frequentes, temps moyen d'analyse par PR, taux de faux positifs rapportes. Alertes configurees : score de securite moyen sous 70/100, vulnerabilite critique non corrigee depuis plus de 48h, echec de l'agent sur une PR. Rapport hebdomadaire automatique pour le RSSI avec tendances et recommandations.",
+      auditLog: "Chaque analyse de PR est integralement tracee : horodatage, repository, numero de PR, auteur, fichiers analyses, vulnerabilites detectees (avec ligne et severite), score de sécurité, decision (approve/block), duree d'analyse, version du modèle LLM utilise. Les logs sont stockes dans PostgreSQL avec export possible vers un SIEM (Splunk, ELK). Retention de 36 mois pour conformité ISO 27001.",
+      humanInTheLoop: "Les vulnerabilites critiques declenchent une notification immédiate au RSSI et au lead developpeur via Slack et email. Un processus d'exception permet a un responsable sécurité habilite de forcer le merge d'une PR bloquee avec justification obligatoire (documentee dans l'audit log). Les faux positifs peuvent etre marques comme tels par le developpeur, creant une regle d'exclusion soumise a validation du RSSI.",
+      monitoring: "Dashboard Datadog temps reel : score de sécurité moyen par repository et par équipe, evolution temporelle des vulnerabilites, top 10 des categories OWASP les plus frequentes, temps moyen d'analyse par PR, taux de faux positifs rapportes. Alertes configurees : score de sécurité moyen sous 70/100, vulnerabilite critique non corrigee depuis plus de 48h, echec de l'agent sur une PR. Rapport hebdomadaire automatique pour le RSSI avec tendances et recommandations.",
     },
     n8nWorkflow: {
-      description: "Workflow n8n : Webhook (evenement GitHub PR) -> Node Code (extraction des fichiers modifies via GitHub API) -> Node Code (analyse AST et scan de patterns) -> Node HTTP Request (analyse LLM contextuelle) -> Node Merge (combinaison des resultats statiques et LLM) -> Node IF (vulnerabilites critiques ?) -> Branch critique : Node GitHub API (commenter PR + bloquer merge) + Node Slack (alerte RSSI) -> Branch OK : Node GitHub API (approuver PR) -> Node Postgres (sauvegarder rapport).",
-      nodes: ["Webhook (GitHub PR)", "Code (extraction fichiers)", "Code (analyse AST)", "HTTP Request (LLM analyse)", "Merge (resultats)", "IF (severite critique)", "GitHub API (commentaire PR)", "Slack (alerte RSSI)", "GitHub API (approbation)", "Postgres (sauvegarde rapport)"],
+      description: "Workflow n8n : Webhook (evenement GitHub PR) -> Node Code (extraction des fichiers modifies via GitHub API) -> Node Code (analyse AST et scan de patterns) -> Node HTTP Request (analyse LLM contextuelle) -> Node Merge (combinaison des résultats statiques et LLM) -> Node IF (vulnerabilites critiques ?) -> Branch critique : Node GitHub API (commenter PR + bloquer merge) + Node Slack (alerte RSSI) -> Branch OK : Node GitHub API (approuver PR) -> Node Postgres (sauvegarder rapport).",
+      nodes: ["Webhook (GitHub PR)", "Code (extraction fichiers)", "Code (analyse AST)", "HTTP Request (LLM analyse)", "Merge (résultats)", "IF (severite critique)", "GitHub API (commentaire PR)", "Slack (alerte RSSI)", "GitHub API (approbation)", "Postgres (sauvegarde rapport)"],
       triggerType: "Webhook (evenement pull_request GitHub)",
     },
     estimatedTime: "14-20h",
@@ -15364,7 +15364,7 @@ def test_traduction_japonais():
     functions: ["IT"],
     metaTitle: "Agent IA d'Audit de Securite de Code -- Guide Complet",
     metaDescription:
-      "Deployez un agent IA pour auditer automatiquement la securite de votre code sur chaque Pull Request. Detection OWASP, analyse AST et corrections automatiques.",
+      "Deployez un agent IA pour auditer automatiquement la sécurité de votre code sur chaque Pull Request. Detection OWASP, analyse AST et corrections automatiques.",
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -15373,15 +15373,15 @@ def test_traduction_japonais():
     title: "Agent IA de Resume de Documents",
     subtitle: "Resumez automatiquement des documents longs (rapports, contrats, etudes) en quelques secondes",
     problem:
-      "Les professionnels de la banque, de l'assurance et de l'audit passent en moyenne 3 a 4 heures par jour a lire et synthetiser des documents longs : rapports financiers de 100+ pages, contrats juridiques complexes, etudes reglementaires, notes de conformite. Les informations cles sont noyees dans des paragraphes denses, ce qui retarde les prises de decision et augmente le risque d'omission d'une clause critique ou d'un risque cache. Les outils de recherche classiques (Ctrl+F) ne suffisent pas car ils ne comprennent pas le contexte semantique du document.",
+      "Les professionnels de la banque, de l'assurance et de l'audit passent en moyenne 3 a 4 heures par jour a lire et synthetiser des documents longs : rapports financiers de 100+ pages, contrats juridiques complexes, etudes réglementaires, notes de conformité. Les informations cles sont noyees dans des paragraphes denses, ce qui retarde les prises de decision et augmente le risque d'omission d'une clause critique ou d'un risque cache. Les outils de recherche classiques (Ctrl+F) ne suffisent pas car ils ne comprennent pas le contexte semantique du document.",
     value:
-      "Un agent IA ingere automatiquement les documents (PDF, Word, scans via OCR), les decoupe en sections logiques, extrait les points cles, et genere des resumes structures avec des bullet points hierarchises. Pour chaque document, l'agent identifie les risques, obligations, dates limites et montants importants. Il peut comparer plusieurs documents entre eux et produire des tableaux de synthese comparative. Les analystes economisent 3 a 4 heures par jour et la qualite des syntheses est homogene et auditable.",
+      "Un agent IA ingere automatiquement les documents (PDF, Word, scans via OCR), les decoupe en sections logiques, extrait les points cles, et généré des resumes structures avec des bullet points hierarchises. Pour chaque document, l'agent identifié les risques, obligations, dates limites et montants importants. Il peut comparer plusieurs documents entre eux et produire des tableaux de synthese comparative. Les analystes economisent 3 a 4 heures par jour et la qualité des syntheses est homogene et auditable.",
     inputs: [
       "Documents PDF (rapports financiers, contrats, etudes)",
       "Documents Word (.docx, .doc)",
       "Documents scannes (images, PDF scannes via OCR)",
       "Modeles de resume personnalises (templates)",
-      "Criteres d'extraction specifiques (risques, obligations, montants)",
+      "Criteres d'extraction spécifiques (risques, obligations, montants)",
     ],
     outputs: [
       "Resume structure avec bullet points hierarchises",
@@ -15394,11 +15394,11 @@ def test_traduction_japonais():
       "Omission d'une clause critique dans le resume",
       "Hallucination du LLM inventant des informations absentes du document",
       "Mauvaise interpretation de termes juridiques ou financiers techniques",
-      "Qualite degradee sur les documents scannes de mauvaise qualite (OCR)",
-      "Non-conformite RGPD si les documents contiennent des donnees personnelles",
+      "Qualite dégradée sur les documents scannes de mauvaise qualité (OCR)",
+      "Non-conformité RGPD si les documents contiennent des données personnelles",
     ],
     roiIndicatif:
-      "Economie de 3 a 4 heures par analyste par jour. Reduction de 60% des erreurs d'omission dans les revues documentaires. Acceleration de 5x du temps de traitement des dossiers de conformite.",
+      "Economie de 3 a 4 heures par analyste par jour. Reduction de 60% des erreurs d'omission dans les revues documentaires. Acceleration de 5x du temps de traitement des dossiers de conformité.",
     recommendedStack: [
       { name: "Claude 3.5 Sonnet", category: "LLM" },
       { name: "n8n", category: "Orchestration" },
@@ -15416,7 +15416,7 @@ def test_traduction_japonais():
       {
         title: "Ingestion de documents et OCR",
         content:
-          "La premiere etape consiste a mettre en place un pipeline d'ingestion capable de traiter differents formats de documents. Le systeme doit accepter des PDF natifs, des documents Word, et des scans necessitant un traitement OCR.\n\nPour les PDF natifs, utilisez la bibliotheque PyMuPDF (fitz) qui extrait le texte avec une excellente preservation de la structure (titres, paragraphes, tableaux). Pour les documents Word, python-docx permet d'extraire le contenu en preservant la hierarchie des titres.\n\nLes documents scannes necessitent un pre-traitement OCR. Tesseract, combine avec un pre-traitement d'image via Pillow, offre de bons resultats pour les documents en francais. Pour les scans de mauvaise qualite, ajoutez une etape de nettoyage d'image (binarisation, desinclinaison, suppression du bruit).\n\nConfigurez un endpoint d'upload dans votre API FastAPI qui detecte automatiquement le type de document et applique le pipeline de traitement adapte. Stockez les documents originaux et le texte extrait dans Supabase pour un acces ulterieur.",
+          "La première étape consiste a mettre en place un pipeline d'ingestion capable de traiter differents formats de documents. Le système doit accepter des PDF natifs, des documents Word, et des scans necessitant un traitement OCR.\n\nPour les PDF natifs, utilisez la bibliotheque PyMuPDF (fitz) qui extrait le texte avec une excellente preservation de la structure (titres, paragraphes, tableaux). Pour les documents Word, python-docx permet d'extraire le contenu en preservant la hierarchie des titres.\n\nLes documents scannes necessitent un pre-traitement OCR. Tesseract, combine avec un pre-traitement d'image via Pillow, offre de bons résultats pour les documents en francais. Pour les scans de mauvaise qualité, ajoutez une étape de nettoyage d'image (binarisation, desinclinaison, suppression du bruit).\n\nConfigurez un endpoint d'upload dans votre API FastAPI qui détecté automatiquement le type de document et applique le pipeline de traitement adapte. Stockez les documents originaux et le texte extrait dans Supabase pour un acces ulterieur.",
         codeSnippets: [
           {
             language: "python",
@@ -15428,7 +15428,7 @@ def test_traduction_japonais():
       {
         title: "Strategie de decoupage (chunking) semantique",
         content:
-          "Le decoupage des documents en morceaux (chunks) est une etape critique pour la qualite du resume. Un mauvais decoupage peut couper une idee en deux, perdre le contexte, ou generer des resumes incoherents. La strategie optimale combine decoupage structurel et semantique.\n\nLe decoupage structurel utilise les titres, sous-titres et sauts de section du document pour creer des chunks naturels. Chaque section conserve son contexte hierarchique (titre du chapitre, titre de la section) comme metadonnee.\n\nPour les documents sans structure claire, utilisez un decoupage par fenetre glissante avec chevauchement. Une taille de chunk de 1500-2000 tokens avec un chevauchement de 200 tokens offre un bon equilibre entre contexte et precision.\n\nStockez chaque chunk dans Supabase avec ses metadonnees (position dans le document, titre de section, page) et un embedding vectoriel pour permettre la recherche semantique ulterieure. L'embedding est genere via le modele all-MiniLM-L6-v2 de sentence-transformers, performant et rapide.\n\nImplementez un systeme de poids par section : les introductions, conclusions et sections executives recoivent un poids plus eleve car elles contiennent generalement les informations les plus importantes du document.",
+          "Le decoupage des documents en morceaux (chunks) est une étape critique pour la qualité du resume. Un mauvais decoupage peut couper une idee en deux, perdre le contexte, ou générer des resumes incoherents. La stratégie optimale combine decoupage structurel et semantique.\n\nLe decoupage structurel utilise les titres, sous-titres et sauts de section du document pour créer des chunks naturels. Chaque section conserve son contexte hierarchique (titre du chapitre, titre de la section) comme metadonnee.\n\nPour les documents sans structure claire, utilisez un decoupage par fenetre glissante avec chevauchement. Une taille de chunk de 1500-2000 tokens avec un chevauchement de 200 tokens offre un bon equilibre entre contexte et précision.\n\nStockez chaque chunk dans Supabase avec ses metadonnees (position dans le document, titre de section, page) et un embedding vectoriel pour permettre la recherche semantique ulterieure. L'embedding est généré via le modèle all-MiniLM-L6-v2 de sentence-transformers, performant et rapide.\n\nImplementez un système de poids par section : les introductions, conclusions et sections executives recoivent un poids plus eleve car elles contiennent generalement les informations les plus importantes du document.",
         codeSnippets: [
           {
             language: "python",
@@ -15440,19 +15440,19 @@ def test_traduction_japonais():
       {
         title: "Prompts de resume et extraction d'informations cles",
         content:
-          "La qualite du resume depend directement de la qualite des prompts envoyes au LLM. Utilisez une approche en deux passes : d'abord un resume par chunk avec extraction des informations cles, puis une synthese globale qui consolide tous les resumes partiels.\n\nLe prompt de premiere passe demande au LLM de resumer chaque chunk en identifiant : les faits principaux, les chiffres cles, les risques mentionnes, les obligations ou engagements, et les dates limites. Le format de sortie est structure en JSON pour faciliter l'agregation.\n\nLa deuxieme passe recoit tous les resumes partiels et produit un resume global coherent. Le prompt insiste sur la deduplication (un meme fait peut apparaitre dans plusieurs chunks) et la hierarchisation par importance. Le resume final est structure avec un executive summary, des bullet points par theme, et une section risques/alertes.\n\nPour la comparaison multi-documents, un troisieme prompt analyse les resumes de plusieurs documents cote a cote et produit un tableau comparatif. Cette fonctionnalite est particulierement utile pour comparer des offres commerciales, des contrats concurrents, ou des versions successives d'un meme document.\n\nCalibrez la temperature du LLM a 0.1 pour maximiser la fidelite au document source. Toute information du resume doit etre tracable a un passage precis du document original.",
+          "La qualité du resume depend directement de la qualité des prompts envoyes au LLM. Utilisez une approche en deux passes : d'abord un resume par chunk avec extraction des informations cles, puis une synthese globale qui consolide tous les resumes partiels.\n\nLe prompt de première passé demande au LLM de resumer chaque chunk en identifiant : les faits principaux, les chiffres cles, les risques mentionnes, les obligations ou engagements, et les dates limites. Le format de sortie est structure en JSON pour faciliter l'agregation.\n\nLa deuxieme passé reçoit tous les resumes partiels et produit un resume global cohérent. Le prompt insiste sur la deduplication (un meme fait peut apparaitre dans plusieurs chunks) et la hierarchisation par importance. Le resume final est structure avec un executive summary, des bullet points par theme, et une section risques/alertes.\n\nPour la comparaison multi-documents, un troisieme prompt analyse les resumes de plusieurs documents cote a cote et produit un tableau comparatif. Cette fonctionnalite est particulierement utile pour comparer des offres commerciales, des contrats concurrents, ou des versions successives d'un meme document.\n\nCalibrez la temperature du LLM a 0.1 pour maximiser la fidelite au document source. Toute information du resume doit etre tracable a un passage précis du document original.",
         codeSnippets: [
           {
             language: "python",
-            code: "import anthropic\nimport json\nfrom typing import Optional\n\nclient = anthropic.Anthropic()\n\nCHUNK_SUMMARY_PROMPT = \"\"\"Tu es un analyste expert en synthese de documents professionnels.\nResume le passage suivant en extrayant les informations cles.\n\nSection: {section_title}\nContenu:\n---\n{content}\n---\n\nRetourne un JSON avec cette structure exacte:\n{{\n  \"resume\": \"Resume en 2-3 phrases\",\n  \"faits_cles\": [\"fait 1\", \"fait 2\"],\n  \"chiffres\": [\"montant ou statistique 1\"],\n  \"risques\": [\"risque identifie 1\"],\n  \"obligations\": [\"obligation ou engagement 1\"],\n  \"dates_limites\": [\"date et contexte 1\"],\n  \"importance\": \"haute/moyenne/basse\"\n}}\"\"\"\n\nGLOBAL_SUMMARY_PROMPT = \"\"\"Tu es un analyste senior. A partir des resumes partiels ci-dessous,\nproduis un resume global structure du document.\n\nResumes partiels:\n{partial_summaries}\n\nProduis un resume structure avec:\n1. **Synthese executive** (3-5 phrases)\n2. **Points cles** (bullet points hierarchises)\n3. **Chiffres importants** (tableau)\n4. **Risques et alertes** (liste priorisee)\n5. **Obligations et echeances** (liste chronologique)\n6. **Recommandations** (si applicables)\n\nReste strictement fidele au contenu des documents. Ne genere aucune information non presente dans les resumes partiels.\"\"\"\n\nasync def summarize_chunk(chunk: dict) -> dict:\n    prompt = CHUNK_SUMMARY_PROMPT.format(\n        section_title=chunk[\"section_title\"],\n        content=chunk[\"content\"][:3000],\n    )\n    message = client.messages.create(\n        model=\"claude-3-5-sonnet-20241022\",\n        max_tokens=1024,\n        temperature=0.1,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return json.loads(message.content[0].text)\n\nasync def generate_global_summary(partial_summaries: list[dict]) -> str:\n    formatted = json.dumps(partial_summaries, ensure_ascii=False, indent=2)\n    prompt = GLOBAL_SUMMARY_PROMPT.format(partial_summaries=formatted)\n    message = client.messages.create(\n        model=\"claude-3-5-sonnet-20241022\",\n        max_tokens=4096,\n        temperature=0.1,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return message.content[0].text",
+            code: "import anthropic\nimport json\nfrom typing import Optional\n\nclient = anthropic.Anthropic()\n\nCHUNK_SUMMARY_PROMPT = \"\"\"Tu es un analyste expert en synthese de documents professionnels.\nResume le passage suivant en extrayant les informations cles.\n\nSection: {section_title}\nContenu:\n---\n{content}\n---\n\nRetourne un JSON avec cette structure exacte:\n{{\n  \"resume\": \"Resume en 2-3 phrases\",\n  \"faits_cles\": [\"fait 1\", \"fait 2\"],\n  \"chiffres\": [\"montant ou statistique 1\"],\n  \"risques\": [\"risque identifié 1\"],\n  \"obligations\": [\"obligation ou engagement 1\"],\n  \"dates_limites\": [\"date et contexte 1\"],\n  \"importance\": \"haute/moyenne/basse\"\n}}\"\"\"\n\nGLOBAL_SUMMARY_PROMPT = \"\"\"Tu es un analyste senior. A partir des resumes partiels ci-dessous,\nproduis un resume global structure du document.\n\nResumes partiels:\n{partial_summaries}\n\nProduis un resume structure avec:\n1. **Synthese executive** (3-5 phrases)\n2. **Points cles** (bullet points hierarchises)\n3. **Chiffres importants** (tableau)\n4. **Risques et alertes** (liste priorisee)\n5. **Obligations et echeances** (liste chronologique)\n6. **Recommandations** (si applicables)\n\nReste strictement fidele au contenu des documents. Ne généré aucune information non présenté dans les resumes partiels.\"\"\"\n\nasync def summarize_chunk(chunk: dict) -> dict:\n    prompt = CHUNK_SUMMARY_PROMPT.format(\n        section_title=chunk[\"section_title\"],\n        content=chunk[\"content\"][:3000],\n    )\n    message = client.messages.create(\n        model=\"claude-3-5-sonnet-20241022\",\n        max_tokens=1024,\n        temperature=0.1,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return json.loads(message.content[0].text)\n\nasync def generate_global_summary(partial_summaries: list[dict]) -> str:\n    formatted = json.dumps(partial_summaries, ensure_ascii=False, indent=2)\n    prompt = GLOBAL_SUMMARY_PROMPT.format(partial_summaries=formatted)\n    message = client.messages.create(\n        model=\"claude-3-5-sonnet-20241022\",\n        max_tokens=4096,\n        temperature=0.1,\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    return message.content[0].text",
             filename: "summarization.py",
           },
         ],
       },
       {
-        title: "Formatage des sorties et deploiement",
+        title: "Formatage des sorties et déploiement",
         content:
-          "Le resume genere doit etre exporte dans des formats exploitables par les utilisateurs finaux. Implementez trois formats de sortie : PDF professionnel avec mise en page soignee, document Word editable, et Markdown pour integration dans des outils collaboratifs.\n\nPour la generation PDF, utilisez la bibliotheque WeasyPrint qui convertit du HTML/CSS en PDF. Creez un template HTML avec le branding de l'entreprise, une table des matieres automatique, et une mise en page adaptee a l'impression. Les tableaux comparatifs sont particulierement importants a bien formater.\n\nDeployez l'API sur Vercel avec un endpoint d'upload et un endpoint de telechargement. L'upload declenche le pipeline complet (ingestion, chunking, resume, export) et retourne un identifiant de job. Le client poll l'endpoint de statut jusqu'a completion.\n\nMettez en place le monitoring avec Langfuse pour tracer chaque etape du pipeline : temps d'extraction, nombre de chunks, cout LLM par document, qualite estimee du resume. Configurez des alertes si le temps de traitement depasse un seuil ou si le taux d'erreur OCR est anormalement eleve.\n\nPour les tests, constituez un jeu de 20 documents annotes manuellement et mesurez le taux de couverture des informations cles (rappel) et la precision du resume (absence d'hallucinations). Visez un rappel superieur a 90% et une precision de 95%.",
+          "Le resume généré doit etre exporte dans des formats exploitables par les utilisateurs finaux. Implementez trois formats de sortie : PDF professionnel avec mise en page soignee, document Word editable, et Markdown pour intégration dans des outils collaboratifs.\n\nPour la génération PDF, utilisez la bibliotheque WeasyPrint qui convertit du HTML/CSS en PDF. Creez un template HTML avec le branding de l'entreprise, une table des matieres automatique, et une mise en page adaptee a l'impression. Les tableaux comparatifs sont particulierement importants a bien formater.\n\nDeployez l'API sur Vercel avec un endpoint d'upload et un endpoint de telechargement. L'upload déclenché le pipeline complet (ingestion, chunking, resume, export) et retourne un identifiant de job. Le client poll l'endpoint de statut jusqu'a completion.\n\nMettez en place le monitoring avec Langfuse pour tracer chaque étape du pipeline : temps d'extraction, nombre de chunks, cout LLM par document, qualité estimee du resume. Configurez des alertes si le temps de traitement depasse un seuil ou si le taux d'erreur OCR est anormalement eleve.\n\nPour les tests, constituez un jeu de 20 documents annotes manuellement et mesurez le taux de couverture des informations cles (rappel) et la précision du resume (absence d'hallucinations). Visez un rappel superieur a 90% et une précision de 95%.",
         codeSnippets: [
           {
             language: "python",
@@ -15463,14 +15463,14 @@ def test_traduction_japonais():
       },
     ],
     enterprise: {
-      piiHandling: "Les documents peuvent contenir des donnees personnelles sensibles (noms, adresses, numeros de comptes, RIB). Avant envoi au LLM, un module de detection PII (base sur Presidio de Microsoft) anonymise les donnees personnelles en les remplacant par des tokens generiques. Les documents originaux sont chiffres en AES-256 au repos dans Supabase. Politique de retention configurable par client avec purge automatique. Conformite RGPD avec registre de traitement.",
-      auditLog: "Chaque traitement de document est trace de bout en bout : horodatage d'upload, hash SHA-256 du document original, nombre de pages et chunks, temps de traitement par etape, cout LLM consomme, identifiant de l'analyste, resume genere (versionne). Logs immutables stockes dans une table d'audit Supabase avec retention de 24 mois.",
-      humanInTheLoop: "Pour les documents critiques (contrats > 1M EUR, rapports reglementaires), le resume genere est soumis a validation par un analyste senior avant diffusion. Un workflow de validation avec commentaires permet de corriger et enrichir le resume. Le mode revision compare le resume IA avec les annotations humaines pour ameliorer le modele en continu.",
-      monitoring: "Dashboard Langfuse : temps de traitement moyen par type de document, cout LLM par resume, taux d'erreur OCR, taux de validation humaine, score de couverture des informations cles, volume de documents traites par jour, alertes sur les anomalies de qualite et les depassements de couts.",
+      piiHandling: "Les documents peuvent contenir des données personnelles sensibles (noms, adresses, numeros de comptes, RIB). Avant envoi au LLM, un module de détection PII (base sur Presidio de Microsoft) anonymise les données personnelles en les remplacant par des tokens generiques. Les documents originaux sont chiffres en AES-256 au repos dans Supabase. Politique de retention configurable par client avec purge automatique. Conformite RGPD avec registre de traitement.",
+      auditLog: "Chaque traitement de document est trace de bout en bout : horodatage d'upload, hash SHA-256 du document original, nombre de pages et chunks, temps de traitement par étape, cout LLM consomme, identifiant de l'analyste, resume généré (versionne). Logs immutables stockes dans une table d'audit Supabase avec retention de 24 mois.",
+      humanInTheLoop: "Pour les documents critiques (contrats > 1M EUR, rapports réglementaires), le resume généré est soumis a validation par un analyste senior avant diffusion. Un workflow de validation avec commentaires permet de corriger et enrichir le resume. Le mode revision compare le resume IA avec les annotations humaines pour ameliorer le modèle en continu.",
+      monitoring: "Dashboard Langfuse : temps de traitement moyen par type de document, cout LLM par resume, taux d'erreur OCR, taux de validation humaine, score de couverture des informations cles, volume de documents traites par jour, alertes sur les anomalies de qualité et les depassements de couts.",
     },
     n8nWorkflow: {
-      description: "Workflow n8n : Webhook (upload document) -> Node Code (detection format PDF/Word/scan) -> Node Switch (format) -> Branch PDF: Node Code (extraction PyMuPDF) -> Branch Word: Node Code (extraction python-docx) -> Branch Scan: Node HTTP Request (OCR Tesseract) -> Node Code (chunking semantique) -> Node Loop (pour chaque chunk) -> Node HTTP Request (API Claude - resume chunk) -> Node Code (agregation resumes partiels) -> Node HTTP Request (API Claude - resume global) -> Node Code (formatage export) -> Node Supabase (sauvegarde) -> Node Email (notification analyste).",
-      nodes: ["Webhook (upload)", "Code (detection format)", "Switch (PDF/Word/Scan)", "Code (extraction texte)", "HTTP Request (OCR)", "Code (chunking)", "Loop (chunks)", "HTTP Request (Claude resume)", "Code (agregation)", "HTTP Request (Claude synthese)", "Code (export PDF/Word)", "Supabase (sauvegarde)", "Email (notification)"],
+      description: "Workflow n8n : Webhook (upload document) -> Node Code (détection format PDF/Word/scan) -> Node Switch (format) -> Branch PDF: Node Code (extraction PyMuPDF) -> Branch Word: Node Code (extraction python-docx) -> Branch Scan: Node HTTP Request (OCR Tesseract) -> Node Code (chunking semantique) -> Node Loop (pour chaque chunk) -> Node HTTP Request (API Claude - resume chunk) -> Node Code (agregation resumes partiels) -> Node HTTP Request (API Claude - resume global) -> Node Code (formatage export) -> Node Supabase (sauvegarde) -> Node Email (notification analyste).",
+      nodes: ["Webhook (upload)", "Code (détection format)", "Switch (PDF/Word/Scan)", "Code (extraction texte)", "HTTP Request (OCR)", "Code (chunking)", "Loop (chunks)", "HTTP Request (Claude resume)", "Code (agregation)", "HTTP Request (Claude synthese)", "Code (export PDF/Word)", "Supabase (sauvegarde)", "Email (notification)"],
       triggerType: "Webhook (upload de document)",
     },
     estimatedTime: "4-6h",
@@ -15487,13 +15487,13 @@ def test_traduction_japonais():
   {
     slug: "agent-creation-fiches-produit",
     title: "Agent IA de Creation de Fiches Produit",
-    subtitle: "Generez des fiches produit SEO-optimisees automatiquement a partir de donnees brutes fournisseur",
+    subtitle: "Generez des fiches produit SEO-optimisees automatiquement a partir de données brutes fournisseur",
     problem:
-      "Les equipes e-commerce doivent creer des fiches produit uniques et SEO-optimisees pour des centaines, voire des milliers de references (SKUs). Les donnees fournisseurs arrivent sous forme de fichiers CSV bruts avec des descriptions techniques minimalistes, souvent en anglais. Le copier-coller de ces donnees genere du contenu duplique penalise par Google, des descriptions generiques qui ne convertissent pas, et une incapacite a maintenir un ton de marque coherent sur l'ensemble du catalogue. Un redacteur produit manuellement 4 a 5 fiches par heure, creant un goulot d'etranglement majeur lors des lancements de collections ou de l'integration de nouveaux fournisseurs.",
+      "Les equipes e-commerce doivent créer des fiches produit uniques et SEO-optimisees pour des centaines, voire des milliers de references (SKUs). Les données fournisseurs arrivent sous forme de fichiers CSV bruts avec des descriptions techniques minimalistes, souvent en anglais. Le copier-coller de ces données généré du contenu duplique penalise par Google, des descriptions generiques qui ne convertissent pas, et une incapacite a maintenir un ton de marque cohérent sur l'ensemble du catalogue. Un redacteur produit manuellement 4 a 5 fiches par heure, creant un goulot d'etranglement majeur lors des lancements de collections ou de l'integration de nouveaux fournisseurs.",
     value:
-      "Un agent IA ingere les donnees brutes fournisseur (CSV, flux API), les images produit et les descriptions concurrentes, puis genere automatiquement des fiches produit completes et uniques. Chaque fiche comprend un titre SEO-optimise, une description marketing engageante, des bullet points techniques, des balises meta (title, description), et des donnees structurees Schema.org. L'agent maintient le ton de voix de la marque de maniere coherente sur l'ensemble du catalogue. Le pipeline permet de generer plus de 100 fiches produit par heure contre 5 manuellement, avec un score SEO superieur de 40% en moyenne.",
+      "Un agent IA ingere les données brutes fournisseur (CSV, flux API), les images produit et les descriptions concurrentes, puis généré automatiquement des fiches produit completes et uniques. Chaque fiche comprend un titre SEO-optimise, une description marketing engageante, des bullet points techniques, des balises meta (title, description), et des données structurees Schema.org. L'agent maintient le ton de voix de la marque de maniere cohérente sur l'ensemble du catalogue. Le pipeline permet de générer plus de 100 fiches produit par heure contre 5 manuellement, avec un score SEO superieur de 40% en moyenne.",
     inputs: [
-      "Fichiers CSV de donnees fournisseur (references, specs techniques)",
+      "Fichiers CSV de données fournisseur (references, specs techniques)",
       "Images produit (pour analyse visuelle optionnelle)",
       "Guide de ton de marque et exemples de fiches existantes",
       "Mots-cles SEO cibles par categorie de produit",
@@ -15512,7 +15512,7 @@ def test_traduction_japonais():
       "Informations techniques incorrectes inventees par le LLM",
       "Ton de marque inconsistant sur un large volume de fiches",
       "Sur-optimisation SEO (keyword stuffing) penalisee par Google",
-      "Non-conformite reglementaire sur les allegations produit (cosmetique, alimentaire)",
+      "Non-conformité réglementaire sur les allegations produit (cosmetique, alimentaire)",
     ],
     roiIndicatif:
       "Generation de 100+ fiches produit par heure contre 5 manuellement (gain de productivite 20x). Amelioration de 40% du score SEO moyen des pages produit. Augmentation de 25% du taux de conversion grace a des descriptions plus engageantes.",
@@ -15532,9 +15532,9 @@ def test_traduction_japonais():
     architectureDiagram: "+-------------+     +----------------+     +-------------+\n|  Donnees    |---->|  Pipeline      |---->|  Enrichiss. |\n|  Fournisseur|     |  Ingestion     |     |  Donnees    |\n|  (CSV/API)  |     |  (n8n)         |     |  (SEO+Conc) |\n+-------------+     +----------------+     +------+------+\n                                                  |\n                    +----------------+     +------v------+\n                    |  Supabase      |<----|  Agent LLM  |\n                    |  (Catalogue +  |     |  (GPT-4.1)  |\n                    |   Fiches)      |     +------+------+\n                    +----------------+            |\n                                           +------v------+\n                                           |  Validation |\n                                           |  SEO Score  |\n                                           +------+------+\n                                                  |\n                                           +------v------+\n                                           |  Export     |\n                                           |  (CMS/API)  |\n                                           +-------------+",
     tutorial: [
       {
-        title: "Ingestion et normalisation des donnees fournisseur",
+        title: "Ingestion et normalisation des données fournisseur",
         content:
-          "La premiere etape du pipeline consiste a ingerer et normaliser les donnees brutes des fournisseurs. Ces donnees arrivent sous differents formats (CSV, Excel, API) avec des structures heterogenes : chaque fournisseur utilise ses propres noms de colonnes, unites de mesure et conventions.\n\nCreez un module d'ingestion flexible qui mappe automatiquement les colonnes fournisseur vers votre schema produit interne. Utilisez un fichier de configuration YAML par fournisseur pour definir les correspondances de colonnes. Pour les nouveaux fournisseurs, le LLM peut suggerer les mappings automatiquement.\n\nNormalisez les donnees : convertissez les unites (pouces vers cm, oz vers g), standardisez les noms de couleurs, nettoyez les caracteres speciaux, et traduisez les descriptions anglaises en francais si necessaire. Stockez les donnees brutes et normalisees dans Supabase pour tracabilite.\n\nImplementez une validation automatique : verifiez que les champs obligatoires sont presents (nom, prix, categorie), que les valeurs numeriques sont coherentes (poids positif, prix > 0), et que les images existent aux URLs indiquees. Les produits invalides sont mis en quarantaine pour correction manuelle.",
+          "La première étape du pipeline consiste a ingerer et normaliser les données brutes des fournisseurs. Ces données arrivent sous differents formats (CSV, Excel, API) avec des structures heterogenes : chaque fournisseur utilise ses propres noms de colonnes, unites de mesure et conventions.\n\nCreez un module d'ingestion flexible qui mappe automatiquement les colonnes fournisseur vers votre schema produit interne. Utilisez un fichier de configuration YAML par fournisseur pour definir les correspondances de colonnes. Pour les nouveaux fournisseurs, le LLM peut suggerer les mappings automatiquement.\n\nNormalisez les données : convertissez les unites (pouces vers cm, oz vers g), standardisez les noms de couleurs, nettoyez les caracteres speciaux, et traduisez les descriptions anglaises en francais si nécessaire. Stockez les données brutes et normalisees dans Supabase pour tracabilite.\n\nImplementez une validation automatique : verifiez que les champs obligatoires sont presents (nom, prix, categorie), que les valeurs numeriques sont coherentes (poids positif, prix > 0), et que les images existent aux URLs indiquees. Les produits invalides sont mis en quarantaine pour correction manuelle.",
         codeSnippets: [
           {
             language: "python",
@@ -15546,19 +15546,19 @@ def test_traduction_japonais():
       {
         title: "Generation de descriptions produit avec le LLM",
         content:
-          "Le coeur du systeme est le prompt de generation de fiches produit. Le prompt doit produire un contenu unique, engageant et fidele aux donnees techniques du produit. La cle est de fournir au LLM un contexte riche : donnees produit, guide de ton de marque, exemples de fiches existantes, et mots-cles SEO cibles.\n\nStructurez le prompt en sections claires : d'abord les donnees brutes du produit, puis les directives de ton de marque (formel, decontracte, technique), les mots-cles SEO a integrer naturellement, et enfin le format de sortie attendu en JSON strict.\n\nPour eviter les descriptions repetitives entre produits similaires, incluez dans le prompt les descriptions deja generees pour les produits de la meme categorie. Le LLM utilisera cette information pour varier le vocabulaire et les angles d'accroche.\n\nImplementez un systeme de templates par categorie de produit. Un vetement ne se decrit pas comme un composant electronique. Chaque template definit les attributs a mettre en avant, le vocabulaire sectoriel, et les structures de phrases adaptees.\n\nLe format de sortie JSON garantit une integration facile avec n'importe quel CMS (Shopify, WooCommerce, PrestaShop, Magento). Chaque champ est valide par un schema Pydantic avant export.",
+          "Le coeur du système est le prompt de génération de fiches produit. Le prompt doit produire un contenu unique, engageant et fidele aux données techniques du produit. La cle est de fournir au LLM un contexte riche : données produit, guide de ton de marque, exemples de fiches existantes, et mots-cles SEO cibles.\n\nStructurez le prompt en sections claires : d'abord les données brutes du produit, puis les directives de ton de marque (formel, decontracte, technique), les mots-cles SEO a intégrer naturellement, et enfin le format de sortie attendu en JSON strict.\n\nPour eviter les descriptions repetitives entre produits similaires, incluez dans le prompt les descriptions deja generees pour les produits de la meme categorie. Le LLM utilisera cette information pour varier le vocabulaire et les angles d'accroche.\n\nImplementez un système de templates par categorie de produit. Un vetement ne se decrit pas comme un composant electronique. Chaque template definit les attributs a mettre en avant, le vocabulaire sectoriel, et les structures de phrases adaptees.\n\nLe format de sortie JSON garantit une intégration facile avec n'importe quel CMS (Shopify, WooCommerce, PrestaShop, Magento). Chaque champ est valide par un schema Pydantic avant export.",
         codeSnippets: [
           {
             language: "python",
-            code: "import openai\nimport json\nfrom pydantic import BaseModel\n\nclient = openai.OpenAI()\n\nclass ProductSheet(BaseModel):\n    seo_title: str\n    meta_title: str\n    meta_description: str\n    short_description: str\n    long_description: str\n    bullet_points: list[str]\n    keywords: list[str]\n    schema_org: dict\n\nGENERATION_PROMPT = \"\"\"Tu es un redacteur e-commerce expert en SEO francophone.\nGenere une fiche produit complete et unique a partir des donnees ci-dessous.\n\n## Donnees produit\n- Nom: {name}\n- Categorie: {category}\n- Marque: {brand}\n- Prix: {price} EUR\n- Caracteristiques: {features}\n- Materiau: {material}\n- Couleur: {color}\n- Dimensions: {dimensions}\n\n## Directives de marque\n{brand_guidelines}\n\n## Mots-cles SEO a integrer\n{seo_keywords}\n\n## Fiches existantes dans la meme categorie (pour varier le style)\n{existing_descriptions}\n\n## Consignes\n1. Le titre SEO doit contenir le mot-cle principal et faire moins de 60 caracteres\n2. La meta description doit faire entre 120 et 155 caracteres\n3. La description courte doit faire 1-2 phrases accrocheuses\n4. La description longue doit faire 200-400 mots, structuree en paragraphes\n5. Genere 5-8 bullet points techniques\n6. Integre les mots-cles naturellement, sans keyword stuffing\n7. Ne jamais inventer de caracteristiques non presentes dans les donnees\n8. Utiliser le vouvoiement\n\nRetourne un JSON avec: seo_title, meta_title, meta_description,\nshort_description, long_description, bullet_points, keywords, schema_org\"\"\"\n\ndef generate_product_sheet(\n    product: dict,\n    brand_guidelines: str,\n    seo_keywords: list[str],\n    existing_descriptions: list[str] = None,\n) -> ProductSheet:\n    existing = \"\\n---\\n\".join(existing_descriptions[:3]) if existing_descriptions else \"Aucune\"\n    prompt = GENERATION_PROMPT.format(\n        name=product[\"name\"],\n        category=product[\"category\"],\n        brand=product.get(\"brand\", \"N/A\"),\n        price=product[\"price\"],\n        features=\", \".join(product.get(\"features\", [])),\n        material=product.get(\"material\", \"N/A\"),\n        color=product.get(\"color\", \"N/A\"),\n        dimensions=product.get(\"dimensions\", \"N/A\"),\n        brand_guidelines=brand_guidelines,\n        seo_keywords=\", \".join(seo_keywords),\n        existing_descriptions=existing,\n    )\n    response = client.chat.completions.create(\n        model=\"gpt-4.1\",\n        temperature=0.7,\n        response_format={\"type\": \"json_object\"},\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    data = json.loads(response.choices[0].message.content)\n    return ProductSheet(**data)",
+            code: "import openai\nimport json\nfrom pydantic import BaseModel\n\nclient = openai.OpenAI()\n\nclass ProductSheet(BaseModel):\n    seo_title: str\n    meta_title: str\n    meta_description: str\n    short_description: str\n    long_description: str\n    bullet_points: list[str]\n    keywords: list[str]\n    schema_org: dict\n\nGENERATION_PROMPT = \"\"\"Tu es un redacteur e-commerce expert en SEO francophone.\nGenere une fiche produit complète et unique a partir des données ci-dessous.\n\n## Donnees produit\n- Nom: {name}\n- Categorie: {category}\n- Marque: {brand}\n- Prix: {price} EUR\n- Caracteristiques: {features}\n- Materiau: {material}\n- Couleur: {color}\n- Dimensions: {dimensions}\n\n## Directives de marque\n{brand_guidelines}\n\n## Mots-cles SEO a integrer\n{seo_keywords}\n\n## Fiches existantes dans la meme categorie (pour varier le style)\n{existing_descriptions}\n\n## Consignes\n1. Le titre SEO doit contenir le mot-cle principal et faire moins de 60 caracteres\n2. La meta description doit faire entre 120 et 155 caracteres\n3. La description courte doit faire 1-2 phrases accrocheuses\n4. La description longue doit faire 200-400 mots, structuree en paragraphes\n5. Genere 5-8 bullet points techniques\n6. Integre les mots-cles naturellement, sans keyword stuffing\n7. Ne jamais inventer de caracteristiques non présentés dans les données\n8. Utiliser le vouvoiement\n\nRetourne un JSON avec: seo_title, meta_title, meta_description,\nshort_description, long_description, bullet_points, keywords, schema_org\"\"\"\n\ndef generate_product_sheet(\n    product: dict,\n    brand_guidelines: str,\n    seo_keywords: list[str],\n    existing_descriptions: list[str] = None,\n) -> ProductSheet:\n    existing = \"\\n---\\n\".join(existing_descriptions[:3]) if existing_descriptions else \"Aucune\"\n    prompt = GENERATION_PROMPT.format(\n        name=product[\"name\"],\n        category=product[\"category\"],\n        brand=product.get(\"brand\", \"N/A\"),\n        price=product[\"price\"],\n        features=\", \".join(product.get(\"features\", [])),\n        material=product.get(\"material\", \"N/A\"),\n        color=product.get(\"color\", \"N/A\"),\n        dimensions=product.get(\"dimensions\", \"N/A\"),\n        brand_guidelines=brand_guidelines,\n        seo_keywords=\", \".join(seo_keywords),\n        existing_descriptions=existing,\n    )\n    response = client.chat.completions.create(\n        model=\"gpt-4.1\",\n        temperature=0.7,\n        response_format={\"type\": \"json_object\"},\n        messages=[{\"role\": \"user\", \"content\": prompt}],\n    )\n    data = json.loads(response.choices[0].message.content)\n    return ProductSheet(**data)",
             filename: "product_generator.py",
           },
         ],
       },
       {
-        title: "Optimisation SEO et validation qualite",
+        title: "Optimisation SEO et validation qualité",
         content:
-          "Une fois les fiches generees, un pipeline de validation automatique verifie la qualite SEO et la coherence du contenu. Ce pipeline agit comme un redacteur en chef automatise qui accepte, rejette ou demande une revision de chaque fiche.\n\nLe score SEO est calcule sur plusieurs criteres : presence du mot-cle principal dans le titre (H1), la meta description et le premier paragraphe, densite de mots-cles entre 1% et 3%, longueur de la meta description (120-155 caracteres), unicite du contenu (comparaison avec les fiches existantes via similarite cosinus).\n\nLa detection de contenu duplique est critique pour eviter les penalites Google. Calculez un embedding de chaque description generee et comparez-le avec les descriptions existantes dans votre catalogue. Si la similarite cosinus depasse 0.85, la fiche est rejetee et regeneree avec des directives de diversification renforcees.\n\nVerifiez egalement la fidelite aux donnees source : aucune caracteristique technique du resume ne doit etre absente des donnees fournisseur originales. Un module de fact-checking compare les bullet points generes avec les features brutes du produit.\n\nPour les secteurs reglementes (cosmetique, alimentaire, sante), ajoutez une couche de verification des allegations. Certaines formulations sont interdites sans certification (bio, hypoallergenique, therapeutique). Une liste noire de termes par categorie est appliquee automatiquement.",
+          "Une fois les fiches generees, un pipeline de validation automatique vérifié la qualité SEO et la coherence du contenu. Ce pipeline agit comme un redacteur en chef automatise qui accepte, rejette ou demande une revision de chaque fiche.\n\nLe score SEO est calcule sur plusieurs critères : presence du mot-cle principal dans le titre (H1), la meta description et le premier paragraphe, densite de mots-cles entre 1% et 3%, longueur de la meta description (120-155 caracteres), unicite du contenu (comparaison avec les fiches existantes via similarite cosinus).\n\nLa détection de contenu duplique est critique pour eviter les penalites Google. Calculez un embedding de chaque description générée et comparez-le avec les descriptions existantes dans votre catalogue. Si la similarite cosinus depasse 0.85, la fiche est rejetee et regeneree avec des directives de diversification renforcees.\n\nVerifiez egalement la fidelite aux données source : aucune caracteristique technique du resume ne doit etre absente des données fournisseur originales. Un module de fact-checking compare les bullet points generes avec les features brutes du produit.\n\nPour les secteurs reglementes (cosmetique, alimentaire, sante), ajoutez une couche de verification des allegations. Certaines formulations sont interdites sans certification (bio, hypoallergenique, therapeutique). Une liste noire de termes par categorie est appliquee automatiquement.",
         codeSnippets: [
           {
             language: "python",
@@ -15568,9 +15568,9 @@ def test_traduction_japonais():
         ],
       },
       {
-        title: "Pipeline de traitement en masse et deploiement",
+        title: "Pipeline de traitement en masse et déploiement",
         content:
-          "Le pipeline de traitement en masse permet de generer des centaines de fiches produit en un seul batch. Le systeme gere la file d'attente, le rate limiting des API, la reprise sur erreur, et l'export vers le CMS cible.\n\nUtilisez un systeme de file d'attente base sur Supabase (table de jobs avec statut) pour gerer les batches. Chaque produit est un job independant qui peut etre retraite en cas d'echec. Le worker traite les produits en parallele (5-10 simultanes) tout en respectant les limites de taux de l'API OpenAI.\n\nL'export vers le CMS est automatise via les API natives. Pour Shopify, utilisez l'API GraphQL Admin pour creer ou mettre a jour les produits. Pour WooCommerce, utilisez l'API REST. Pour PrestaShop, le webservice XML. Le module d'export est pluggable pour supporter n'importe quel CMS.\n\nDeployez le dashboard de gestion sur Vercel. L'interface permet de lancer un batch, suivre la progression en temps reel, previsualiser les fiches generees, approuver ou rejeter individuellement, et declencher la publication vers le CMS.\n\nMettez en place le monitoring Langfuse pour suivre les metriques cles : nombre de fiches generees par jour, score SEO moyen, taux de rejet au premier passage, cout moyen par fiche (tokens LLM), et temps de traitement par batch. Configurez des alertes si le score SEO moyen descend sous 70/100.",
+          "Le pipeline de traitement en masse permet de générer des centaines de fiches produit en un seul batch. Le système gère la file d'attente, le rate limiting des API, la reprise sur erreur, et l'export vers le CMS cible.\n\nUtilisez un système de file d'attente base sur Supabase (table de jobs avec statut) pour gérer les batches. Chaque produit est un job indépendant qui peut etre retraite en cas d'echec. Le worker traite les produits en parallele (5-10 simultanes) tout en respectant les limites de taux de l'API OpenAI.\n\nL'export vers le CMS est automatise via les API natives. Pour Shopify, utilisez l'API GraphQL Admin pour créer ou mettre a jour les produits. Pour WooCommerce, utilisez l'API REST. Pour PrestaShop, le webservice XML. Le module d'export est pluggable pour supporter n'importe quel CMS.\n\nDeployez le dashboard de gestion sur Vercel. L'interface permet de lancer un batch, suivre la progression en temps reel, previsualiser les fiches generees, approuver ou rejeter individuellement, et déclencher la publication vers le CMS.\n\nMettez en place le monitoring Langfuse pour suivre les metriques cles : nombre de fiches generees par jour, score SEO moyen, taux de rejet au premier passage, cout moyen par fiche (tokens LLM), et temps de traitement par batch. Configurez des alertes si le score SEO moyen descend sous 70/100.",
         codeSnippets: [
           {
             language: "python",
@@ -15581,14 +15581,14 @@ def test_traduction_japonais():
       },
     ],
     enterprise: {
-      piiHandling: "Les donnees fournisseurs peuvent contenir des informations commerciales confidentielles (prix d'achat, marges, conditions negociees). Ces donnees sont stockees chiffrees dans Supabase et ne sont jamais envoyees au LLM. Seules les informations publiques du produit (nom, description, specs techniques) sont transmises a l'API. Les cles API sont stockees dans un vault securise (Supabase Vault). Conformite RGPD si les donnees contiennent des informations de contacts fournisseurs.",
-      auditLog: "Chaque fiche produit generee est versionnee avec : horodatage de generation, donnees source utilisees (hash), modele LLM et version, prompt utilise (versionne), score SEO avant et apres validation, identifiant de l'operateur ayant approuve la publication, et horodatage de publication vers le CMS. Retention de 24 mois avec export CSV automatique.",
+      piiHandling: "Les données fournisseurs peuvent contenir des informations commerciales confidentielles (prix d'achat, marges, conditions negociees). Ces données sont stockees chiffrees dans Supabase et ne sont jamais envoyees au LLM. Seules les informations publiques du produit (nom, description, specs techniques) sont transmises a l'API. Les cles API sont stockees dans un vault securise (Supabase Vault). Conformite RGPD si les données contiennent des informations de contacts fournisseurs.",
+      auditLog: "Chaque fiche produit générée est versionnee avec : horodatage de génération, données source utilisees (hash), modèle LLM et version, prompt utilise (versionne), score SEO avant et apres validation, identifiant de l'operateur ayant approuve la publication, et horodatage de publication vers le CMS. Retention de 24 mois avec export CSV automatique.",
       humanInTheLoop: "Les fiches dont le score SEO est inferieur a 70/100 ou dont le contenu est signale comme potentiellement inexact sont routees vers une file de validation humaine. Un redacteur peut editer, approuver ou rejeter chaque fiche via le dashboard. Les fiches des categories reglementees (cosmetique, alimentaire) necessitent systematiquement une validation humaine avant publication.",
-      monitoring: "Dashboard Langfuse et Supabase : volume de fiches generees par jour, score SEO moyen par categorie, taux de rejet au premier passage, taux de validation humaine, cout LLM moyen par fiche, temps de traitement par batch, comparaison de performance entre modeles LLM, alertes sur les degradations de qualite et les anomalies de cout.",
+      monitoring: "Dashboard Langfuse et Supabase : volume de fiches generees par jour, score SEO moyen par categorie, taux de rejet au premier passage, taux de validation humaine, cout LLM moyen par fiche, temps de traitement par batch, comparaison de performance entre modèles LLM, alertes sur les degradations de qualité et les anomalies de cout.",
     },
     n8nWorkflow: {
-      description: "Workflow n8n : Webhook (upload CSV fournisseur) -> Node Code (parsing et normalisation CSV) -> Node Supabase (sauvegarde produits bruts) -> Node Loop (pour chaque produit) -> Node HTTP Request (API GPT-4.1 - generation fiche) -> Node Code (validation SEO et unicite) -> Node Switch (score SEO >= 70 ?) -> Branch OK: Node Supabase (sauvegarde fiche validee) -> Branch KO: Node HTTP Request (regeneration avec directives) -> Node Supabase (sauvegarde finale) -> Node HTTP Request (export vers CMS Shopify/WooCommerce) -> Node Email (rapport de batch).",
-      nodes: ["Webhook (upload CSV)", "Code (parsing CSV)", "Supabase (produits bruts)", "Loop (produits)", "HTTP Request (GPT-4.1 generation)", "Code (validation SEO)", "Switch (score SEO)", "HTTP Request (regeneration)", "Supabase (fiches validees)", "HTTP Request (export CMS)", "Email (rapport batch)"],
+      description: "Workflow n8n : Webhook (upload CSV fournisseur) -> Node Code (parsing et normalisation CSV) -> Node Supabase (sauvegarde produits bruts) -> Node Loop (pour chaque produit) -> Node HTTP Request (API GPT-4.1 - génération fiche) -> Node Code (validation SEO et unicite) -> Node Switch (score SEO >= 70 ?) -> Branch OK: Node Supabase (sauvegarde fiche validee) -> Branch KO: Node HTTP Request (regeneration avec directives) -> Node Supabase (sauvegarde finale) -> Node HTTP Request (export vers CMS Shopify/WooCommerce) -> Node Email (rapport de batch).",
+      nodes: ["Webhook (upload CSV)", "Code (parsing CSV)", "Supabase (produits bruts)", "Loop (produits)", "HTTP Request (GPT-4.1 génération)", "Code (validation SEO)", "Switch (score SEO)", "HTTP Request (regeneration)", "Supabase (fiches validees)", "HTTP Request (export CMS)", "Email (rapport batch)"],
       triggerType: "Webhook (upload fichier fournisseur)",
     },
     estimatedTime: "4-8h",
@@ -15598,7 +15598,7 @@ def test_traduction_japonais():
     functions: ["Marketing"],
     metaTitle: "Agent IA de Creation de Fiches Produit SEO -- Guide Complet",
     metaDescription:
-      "Generez automatiquement des fiches produit SEO-optimisees a partir de donnees fournisseurs. Pipeline de generation en masse, validation qualite et export CMS. Tutoriel complet avec code.",
+      "Generez automatiquement des fiches produit SEO-optimisees a partir de données fournisseurs. Pipeline de génération en masse, validation qualité et export CMS. Tutoriel complet avec code.",
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -15748,7 +15748,7 @@ class MultiSourceCollector:
       {
         title: "Détection de changements et analyse NLP",
         content:
-          "Implémentez le moteur de détection de changements qui compare les collectes successives et identifie les modifications significatives. Le LLM analyse le contexte de chaque changement pour le classifier et évaluer son impact stratégique.",
+          "Implémentez le moteur de détection de changements qui compare les collectes successives et identifié les modifications significatives. Le LLM analyse le contexte de chaque changement pour le classifier et évaluer son impact stratégique.",
         codeSnippets: [
           {
             language: "python",
@@ -16036,7 +16036,7 @@ if __name__ == "__main__":
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-notes-frais-ocr-conformite",
+    slug: "agent-notes-frais-ocr-conformité",
     title: "Agent de Gestion des Notes de Frais avec OCR et Conformité",
     subtitle: "Automatisez l'extraction OCR, la vérification de conformité et l'imputation comptable des notes de frais en temps réel",
     problem:
@@ -16580,7 +16580,7 @@ async def submit_expense(
     problem:
       "La planification de réunions dans les organisations de plus de 100 collaborateurs est un cauchemar logistique. Les assistants de direction passent en moyenne 5 heures par semaine à coordonner les agendas. Les conflits de créneaux génèrent des chaînes d'emails interminables. Les réunions s'accumulent sans tenir compte de la charge cognitive des participants : pas de temps de respiration entre deux meetings, réunions placées sur les plages de travail profond, fuseaux horaires ignorés pour les équipes internationales. Résultat : 67% des cadres estiment que les réunions les empêchent de travailler efficacement.",
     value:
-      "Un agent IA analyse les agendas de tous les participants, identifie les créneaux optimaux en tenant compte des préférences individuelles (travail profond le matin, pas de réunion le vendredi après-midi), des fuseaux horaires, de la charge de réunions quotidienne, et de la priorité du sujet. Il propose automatiquement les 3 meilleurs créneaux, gère les relances, réserve les salles et génère un ordre du jour structuré.",
+      "Un agent IA analyse les agendas de tous les participants, identifié les créneaux optimaux en tenant compte des préférences individuelles (travail profond le matin, pas de réunion le vendredi après-midi), des fuseaux horaires, de la charge de réunions quotidienne, et de la priorité du sujet. Il propose automatiquement les 3 meilleurs créneaux, gère les relances, réserve les salles et génère un ordre du jour structuré.",
     inputs: [
       "Agendas Google Calendar ou Microsoft Outlook de tous les participants",
       "Préférences individuelles de planning (plages protégées, jours sans réunion)",
@@ -16967,13 +16967,13 @@ def generate_agenda(meeting: dict) -> dict:
       {
         title: "Analyse de charge réunion et suggestions d'optimisation",
         content:
-          "L'agent analyse la charge de réunions de chaque collaborateur et identifie les opportunités d'optimisation : réunions récurrentes qui pourraient être remplacées par un message asynchrone, réunions trop longues, participants non essentiels. Il génère un rapport hebdomadaire avec des recommandations.",
+          "L'agent analyse la charge de réunions de chaque collaborateur et identifié les opportunités d'optimisation : réunions récurrentes qui pourraient être remplacées par un message asynchrone, réunions trop longues, participants non essentiels. Il génère un rapport hebdomadaire avec des recommandations.",
         codeSnippets: [
           {
             language: "python",
             code: `MEETING_AUDIT_PROMPT = """Tu es un consultant en productivité organisationnelle.
 
-Analyse le planning de réunions de cette semaine pour l'équipe et identifie les optimisations:
+Analyse le planning de réunions de cette semaine pour l'équipe et identifié les optimisations:
 
 ## Réunions de la semaine:
 {meetings_json}
@@ -17158,7 +17158,7 @@ async def handle_slack_event(request: Request):
     problem:
       "Les banques et fintechs françaises font face à une explosion des fraudes transactionnelles (+30% par an). Les systèmes traditionnels basés sur des règles statiques (montant > seuil, pays à risque) génèrent jusqu'à 95% de faux positifs, mobilisant des dizaines d'analystes sur des alertes non pertinentes. Parallèlement, les fraudeurs sophistiqués contournent ces règles en fragmentant les montants et en utilisant des schémas comportementaux inédits. Le coût de la fraude non détectée et du traitement des faux positifs dépasse 2% du chiffre d'affaires pour les acteurs du paiement. Les exigences de la DSP2 imposent une authentification forte tout en maintenant une expérience client fluide.",
     value:
-      "Un agent IA combine un modèle de scoring ML en temps réel (< 100ms par transaction) avec un LLM pour l'analyse contextuelle des transactions suspectes. Le ML filtre 99% des transactions légitimes. Les 1% restants sont analysés par le LLM qui examine le contexte comportemental complet du client, génère une explication en langage naturel, et recommande une action (bloquer, authentifier, laisser passer). Les faux positifs sont réduits de 70% et les fraudes non détectées de 40%.",
+      "Un agent IA combine un modèle de scoring ML en temps réel (< 100ms par transaction) avec un LLM pour l'analyse contextuelle des transactions suspectes. Le ML filtre 99% des transactions légitimes. Les 1% restants sont analysés par le LLM qui examine le contexte comportemental complet du client, génère une explication en langage naturel, et recommandé une action (bloquer, authentifier, laisser passer). Les faux positifs sont réduits de 70% et les fraudes non détectées de 40%.",
     inputs: [
       "Flux de transactions en temps réel (montant, devise, marchand, géolocalisation, device)",
       "Profil comportemental historique du porteur (habitudes de dépenses, lieux fréquents)",
@@ -17390,7 +17390,7 @@ class FraudScoringModel:
         # Métriques
         y_prob = self.model.predict_proba(X_test)[:, 1]
         auc = roc_auc_score(y_test, y_prob)
-        precision, recall, thresholds = precision_recall_curve(y_test, y_prob)
+        précision, recall, thresholds = precision_recall_curve(y_test, y_prob)
         print(f"AUC-ROC: {auc:.4f}")
 
         # Sauvegarder
@@ -17683,21 +17683,21 @@ class FraudFeedbackLoop:
             elif cat == "false_negative":
                 metrics["fn"] += 1
 
-        precision = metrics["tp"] / max(metrics["tp"] + metrics["fp"], 1)
+        précision = metrics["tp"] / max(metrics["tp"] + metrics["fp"], 1)
         recall = metrics["tp"] / max(metrics["tp"] + metrics["fn"], 1)
 
         report = {
             "date": datetime.utcnow().date().isoformat(),
-            "precision": round(precision, 4),
+            "précision": round(précision, 4),
             "recall": round(recall, 4),
-            "f1_score": round(2 * precision * recall / max(precision + recall, 0.001), 4),
+            "f1_score": round(2 * précision * recall / max(précision + recall, 0.001), 4),
             "false_positive_rate": round(metrics["fp"] / max(sum(metrics.values()), 1), 4),
             "total_reviewed": sum(metrics.values()),
             "metrics": metrics,
         }
 
         # Alerte si les métriques se dégradent
-        if precision < 0.3:
+        if précision < 0.3:
             send_alert("Précision fraude sous 30% - réentraînement nécessaire")
         if recall < 0.8:
             send_alert("Rappel fraude sous 80% - fraudes non détectées en hausse")
@@ -17971,7 +17971,7 @@ Sélectionne les 4 produits les plus pertinents pour ce client parmi le catalogu
 1. Sélectionne 4 produits cohérents avec le profil et l'historique
 2. Inclus au moins 1 produit de cross-sell (catégorie complémentaire)
 3. Respecte la gamme de prix habituelle du client (+/- 30%)
-4. Ne recommande JAMAIS un produit déjà acheté
+4. Ne recommandé JAMAIS un produit déjà acheté
 5. Pour les clients "at_risk", privilégie les best-sellers ou promotions
 6. Pour les VIP, privilégie les nouveautés et éditions limitées
 
