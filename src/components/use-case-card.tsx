@@ -47,7 +47,7 @@ export function UseCaseCard({ useCase, searchQuery }: UseCaseCardProps) {
           <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
             {searchQuery ? highlightText(useCase.problem, searchQuery) : useCase.problem}
           </p>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 mb-3">
             {useCase.functions.map((fn) => (
               <Badge key={fn} variant="secondary" className="text-xs">
                 {fn}
@@ -64,6 +64,9 @@ export function UseCaseCard({ useCase, searchQuery }: UseCaseCardProps) {
               </Badge>
             )}
           </div>
+          <p className="text-xs text-primary font-medium">
+            Voir le tutoriel &rarr;
+          </p>
         </CardContent>
       </Card>
     </Link>

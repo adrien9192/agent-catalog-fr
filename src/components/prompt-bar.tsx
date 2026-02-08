@@ -41,7 +41,7 @@ export function PromptBar() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ex: triage support, qualification leads..."
+            placeholder="Ex: réduire le temps de réponse client, qualifier mes leads..."
             className="flex-1 min-w-0 bg-transparent text-sm sm:text-base outline-none placeholder:opacity-40"
             style={{ color: "var(--prompt-bar-text)" }}
           />

@@ -52,16 +52,16 @@ export function Header() {
 
         <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
-          <Button size="sm" variant="outline" asChild>
-            <Link href="/catalogue">Workflows</Link>
-          </Button>
           <Button size="sm" asChild>
             <Link href="/pricing">Essai gratuit</Link>
           </Button>
         </div>
 
         {/* Mobile nav */}
-        <div className="flex md:hidden items-center gap-1">
+        <div className="flex md:hidden items-center gap-1.5">
+          <Button size="sm" asChild className="text-xs h-8 px-3">
+            <Link href="/pricing">Essai gratuit</Link>
+          </Button>
           <ThemeToggle />
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
