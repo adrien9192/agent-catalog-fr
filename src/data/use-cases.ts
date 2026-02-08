@@ -67,6 +67,16 @@ export const useCases: UseCase[] = [
         { label: "Suggestion de réponse", value: "Bonjour, nous avons bien identifié le problème sur la page de validation de commande. Notre équipe technique est mobilisée. Vous recevrez une mise à jour sous 2h." },
         { label: "Confiance", value: "0.94" },
       ],
+      beforeContext: "client@exemple.fr · il y a 3 min",
+      afterDuration: "2 secondes",
+      afterSummary: "Ticket classé, priorisé et assigné automatiquement",
+    },
+    roiEstimator: {
+      label: "Combien de tickets traitez-vous par jour ?",
+      unitLabel: "Triage manuel / sem.",
+      timePerUnitMinutes: 3,
+      timeWithAISeconds: 30,
+      options: [10, 30, 50, 100, 200],
     },
     prerequisites: [
       "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",

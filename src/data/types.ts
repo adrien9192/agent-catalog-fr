@@ -64,6 +64,22 @@ export interface BeforeAfterExample {
   inputLabel: string;
   inputText: string;
   outputFields: { label: string; value: string }[];
+  beforeContext?: string;
+  afterDuration?: string;
+  afterSummary?: string;
+}
+
+export interface ROIEstimatorConfig {
+  label: string;
+  unitLabel: string;
+  timePerUnitMinutes: number;
+  timeWithAISeconds: number;
+  options: number[];
+}
+
+export interface FAQItem {
+  question: string;
+  answer: string;
 }
 
 export interface UseCase {
@@ -84,6 +100,8 @@ export interface UseCase {
   prerequisites?: string[];
   tutorial: TutorialSection[];
   n8nTutorial?: N8nTutorialStep[];
+  roiEstimator?: ROIEstimatorConfig;
+  faq?: FAQItem[];
   enterprise: EnterpriseSection;
   n8nWorkflow: N8nWorkflow;
   estimatedTime: string;

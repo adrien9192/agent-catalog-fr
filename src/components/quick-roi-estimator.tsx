@@ -3,27 +3,44 @@
 import { useState } from "react";
 import Link from "next/link";
 
-export function QuickROIEstimator() {
+interface QuickROIEstimatorProps {
+  label?: string;
+  unitLabel?: string;
+  timePerUnitMinutes?: number;
+  timeWithAISeconds?: number;
+  options?: number[];
+}
+
+export function QuickROIEstimator({
+  label = "Combien traitez-vous d'éléments par jour ?",
+  unitLabel = "Traitement manuel / sem.",
+  timePerUnitMinutes = 3,
+  timeWithAISeconds = 30,
+  options = [10, 30, 50, 100, 200],
+}: QuickROIEstimatorProps) {
   const [volume, setVolume] = useState<number | null>(null);
 
   const savings = volume
     ? {
-        hoursNow: Math.round((volume * 5 * 3) / 60),
-        hoursWithAI: Math.max(1, Math.round((volume * 5 * 0.5) / 60)),
-        saved: Math.round((volume * 5 * 2.5) / 60),
+        hoursNow: Math.round((volume * 5 * timePerUnitMinutes) / 60),
+        hoursWithAI: Math.max(
+          1,
+          Math.round((volume * 5 * (timeWithAISeconds / 60)) / 60)
+        ),
+        saved: Math.round(
+          (volume * 5 * (timePerUnitMinutes - timeWithAISeconds / 60)) / 60
+        ),
       }
     : null;
 
   return (
     <div className="rounded-xl border bg-muted/20 p-5 sm:p-6">
-      <p className="font-semibold text-sm mb-1">
-        Combien de tickets traitez-vous par jour ?
-      </p>
+      <p className="font-semibold text-sm mb-1">{label}</p>
       <p className="text-xs text-muted-foreground mb-4">
         Estimez le temps gagné en 1 clic.
       </p>
       <div className="flex flex-wrap gap-2 mb-4">
-        {[10, 30, 50, 100, 200].map((v) => (
+        {options.map((v) => (
           <button
             key={v}
             onClick={() => setVolume(v)}
@@ -37,16 +54,14 @@ export function QuickROIEstimator() {
           </button>
         ))}
       </div>
-      {savings && (
+      {savings && savings.saved > 0 && (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4">
           <div className="grid grid-cols-3 gap-3 rounded-lg border bg-background p-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-destructive">
                 {savings.hoursNow}h
               </p>
-              <p className="text-[11px] text-muted-foreground">
-                Triage manuel / sem.
-              </p>
+              <p className="text-[11px] text-muted-foreground">{unitLabel}</p>
             </div>
             <div className="flex items-center justify-center">
               <span className="text-xl text-muted-foreground">&rarr;</span>

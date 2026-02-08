@@ -30,7 +30,7 @@ export function StickyCTABar({ title, difficulty }: StickyCTABarProps) {
         <div className="hidden sm:block min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{title}</p>
           <p className="text-xs text-muted-foreground">
-            {difficulty} &middot; Livré en 5 jours ouvrés
+            {difficulty} &middot; Essai gratuit 14 jours
           </p>
         </div>
         <div className="flex w-full sm:w-auto shrink-0 items-center gap-2">
@@ -38,7 +38,7 @@ export function StickyCTABar({ title, difficulty }: StickyCTABarProps) {
             <Link href="/demande">Sur mesure</Link>
           </Button>
           <Button size="sm" asChild className="flex-1 sm:flex-none">
-            <Link href="/pricing">Essai gratuit</Link>
+            <Link href="/pricing">Recevoir ce workflow</Link>
           </Button>
           <button
             onClick={() => setDismissed(true)}
