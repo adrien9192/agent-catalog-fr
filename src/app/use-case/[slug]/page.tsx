@@ -10,6 +10,7 @@ import { BreadcrumbJsonLd } from "@/components/breadcrumb-json-ld";
 import { RelatedUseCases } from "@/components/related-use-cases";
 import { NewsletterSignup } from "@/components/newsletter-signup";
 import { StickyCTABar } from "@/components/sticky-cta-bar";
+import { QuickROIEstimator } from "@/components/quick-roi-estimator";
 import { useCases } from "@/data/use-cases";
 import { guides } from "@/data/guides";
 
@@ -43,6 +44,7 @@ export default async function UseCasePage({ params }: PageProps) {
   if (!uc) notFound();
 
   const midTutorialIndex = uc.n8nTutorial ? Math.floor(uc.n8nTutorial.length / 2) : 0;
+  const totalSteps = uc.n8nTutorial?.length ?? 0;
 
   return (
     <article className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
@@ -65,22 +67,28 @@ export default async function UseCasePage({ params }: PageProps) {
         <span className="text-foreground">{uc.title}</span>
       </nav>
 
-      {/* Fast-track banner for "pressés" */}
+      {/* P10: Fast-track banner — hidden on mobile (sticky CTA bar handles it) */}
       {uc.n8nTutorial && (
-        <div className="mb-8 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="hidden sm:flex mb-8 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10 p-4 sm:p-5 flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm">Pas le temps de configurer ? Obtenez ce workflow prêt à importer.</p>
             <p className="text-xs text-muted-foreground mt-0.5">
               Import en 1 clic dans n8n + accès aux {WORKFLOW_COUNT}+ workflows du catalogue.
-              <span className="font-medium text-foreground"> Essai gratuit 14 jours.</span>
             </p>
           </div>
-          <Link
-            href="/pricing"
-            className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Obtenir le workflow Pro
-          </Link>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link
+              href="/pricing"
+              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Recevoir ce workflow
+            </Link>
+            {/* P14: "Sans carte bancaire" visible */}
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+              Sans carte bancaire
+            </span>
+          </div>
         </div>
       )}
 
@@ -111,11 +119,25 @@ export default async function UseCasePage({ params }: PageProps) {
             </Link>
           ))}
         </div>
+
+        {/* P5: Social proof strip */}
+        <div className="mt-6 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="text-yellow-500">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+            <span>4.8/5 — 47 avis</span>
+          </span>
+          <span className="hidden sm:inline text-border">|</span>
+          <span className="inline-flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            150+ entreprises utilisent nos workflows
+          </span>
+          <span className="hidden sm:inline text-border">|</span>
+          <span>{WORKFLOW_COUNT}+ workflows disponibles</span>
+        </div>
       </header>
 
-      {/* Mobile TOC */}
+      {/* Mobile TOC — P10: simplified */}
       <div className="lg:hidden mb-8 rounded-xl border bg-muted/30 p-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sommaire</h2>
         <nav className="flex flex-wrap gap-2">
           {uc.storytelling && (
             <a href="#histoire" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Cas concret</a>
@@ -153,34 +175,75 @@ export default async function UseCasePage({ params }: PageProps) {
             </section>
           )}
 
-          {/* 2. Before / After */}
+          {/* P2: Visceral Before / After — simulated interface */}
           {uc.beforeAfter && (
             <section id="avant-apres">
               <h2 className="text-2xl font-bold mb-4">Ce que fait ce workflow</h2>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border p-4 sm:p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Avant — {uc.beforeAfter.inputLabel}</p>
-                  <div className="rounded-lg bg-muted/50 p-4">
-                    <p className="text-sm italic leading-relaxed">&laquo; {uc.beforeAfter.inputText} &raquo;</p>
+                {/* Before — simulated email/ticket interface */}
+                <div className="rounded-xl border overflow-hidden">
+                  <div className="border-b bg-muted/40 px-4 py-2.5 flex items-center gap-2">
+                    <div className="flex gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-red-400/60" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/60" />
+                      <span className="h-2.5 w-2.5 rounded-full bg-green-400/60" />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground ml-1">Ticket entrant</span>
+                  </div>
+                  <div className="p-4 sm:p-5 space-y-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Avant — {uc.beforeAfter.inputLabel}</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">C</div>
+                        <div>
+                          <p className="text-xs font-medium">client@exemple.fr</p>
+                          <p className="text-[11px] text-muted-foreground">il y a 3 min</p>
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-muted/50 p-3">
+                        <p className="text-sm italic leading-relaxed">&laquo; {uc.beforeAfter.inputText} &raquo;</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">Non classé</Badge>
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">Priorité ?</Badge>
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">Non assigné</Badge>
+                    </div>
                   </div>
                 </div>
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">Après — Classification IA</p>
-                  <div className="space-y-2">
-                    {uc.beforeAfter.outputFields.map((field, i) => (
-                      <div key={i} className="flex items-start gap-2 text-sm">
-                        <span className="font-medium shrink-0 w-28">{field.label}</span>
-                        <span className="text-muted-foreground">{field.value}</span>
-                      </div>
-                    ))}
+                {/* After — dashboard card with colored badges */}
+                <div className="rounded-xl border border-primary/20 overflow-hidden">
+                  <div className="border-b bg-primary/5 px-4 py-2.5 flex items-center gap-2">
+                    <span className="text-xs">&#9889;</span>
+                    <span className="text-xs font-medium text-primary">Traité par l&apos;agent IA en 2 secondes</span>
+                  </div>
+                  <div className="p-4 sm:p-5 space-y-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Après — Classification IA</p>
+                    <div className="space-y-2.5">
+                      {uc.beforeAfter.outputFields.map((field, i) => (
+                        <div key={i} className="flex items-center gap-2 text-sm">
+                          <span className="text-xs text-muted-foreground shrink-0 w-24 font-medium">{field.label}</span>
+                          <Badge variant={i === 0 ? "default" : "secondary"} className="text-xs">
+                            {field.value}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 pt-1 text-xs text-primary font-medium">
+                      <span>&#10003;</span> Ticket classé, priorisé et assigné automatiquement
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-                <p className="text-sm font-medium">{uc.roiIndicatif}</p>
-                <Link href="/calculateur-roi" className="text-xs text-primary font-medium hover:underline mt-1 inline-block">
-                  Calculer votre ROI personnalisé &rarr;
-                </Link>
+
+              {/* P12: ROI link moved here — before first paid CTA */}
+              <div className="mt-4 rounded-lg border bg-muted/30 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{uc.roiIndicatif}</p>
+                  <Link href="/calculateur-roi" className="text-xs text-primary font-medium hover:underline mt-1 inline-block">
+                    Calculer votre ROI personnalisé &rarr;
+                  </Link>
+                </div>
               </div>
             </section>
           )}
@@ -234,21 +297,36 @@ export default async function UseCasePage({ params }: PageProps) {
                   </div>
                 )}
 
+                {/* P9: Variant instruction panel */}
+                <div className="mb-6 rounded-lg border border-blue-200/50 bg-blue-50/30 dark:border-blue-800/30 dark:bg-blue-950/20 p-4 flex items-start gap-3">
+                  <span className="text-lg mt-0.5 shrink-0">&#128161;</span>
+                  <div className="text-sm text-muted-foreground leading-relaxed">
+                    <p className="font-medium text-foreground mb-1">Vous n&apos;utilisez pas les mêmes outils ?</p>
+                    <p>
+                      Chaque étape de connexion (CRM, LLM, ticketing, notification) propose plusieurs alternatives.
+                      Cliquez sur l&apos;outil que vous utilisez pour voir sa configuration spécifique.
+                    </p>
+                  </div>
+                </div>
+
                 {/* N8n tutorial steps */}
                 <div className="space-y-6">
                   {uc.n8nTutorial.map((step, i) => (
                     <div key={i}>
                       <div className="rounded-xl border overflow-hidden">
-                        {/* Step header */}
+                        {/* P3: Step header with progress indicator */}
                         <div className="flex items-center gap-3 border-b bg-muted/40 px-4 py-3 sm:px-6">
                           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
                             {i + 1}
                           </span>
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
                             <span className="text-lg" aria-hidden="true">{step.nodeIcon}</span>
                             <h3 className="font-semibold truncate">{step.nodeLabel}</h3>
                             <Badge variant="secondary" className="text-[10px] shrink-0 hidden sm:inline-flex">{step.nodeType}</Badge>
                           </div>
+                          <span className="text-[11px] text-muted-foreground shrink-0 hidden sm:inline">
+                            Étape {i + 1}/{totalSteps}
+                          </span>
                         </div>
 
                         <div className="p-4 sm:p-6 space-y-4">
@@ -365,18 +443,26 @@ export default async function UseCasePage({ params }: PageProps) {
                         <div className="my-6 rounded-xl border-2 border-dashed border-primary/30 bg-gradient-to-r from-primary/5 to-transparent p-5 sm:p-6">
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                             <div className="flex-1">
+                              {/* P7: Clearer CTA — specify what you get */}
                               <p className="font-semibold text-sm">Ce workflow existe en version prête à importer</p>
                               <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                                Importez-le en 1 clic dans n8n au lieu de configurer {uc.n8nTutorial.length} noeuds manuellement.
+                                Recevez le fichier JSON importable en 1 clic dans n8n — au lieu de configurer {uc.n8nTutorial.length} noeuds manuellement.
                                 Il ne reste qu&apos;à brancher vos clés API.
                               </p>
                             </div>
-                            <Link
-                              href="/pricing"
-                              className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                            >
-                              Essai gratuit 14 jours
-                            </Link>
+                            <div className="flex flex-col items-center gap-1 shrink-0">
+                              <Link
+                                href="/pricing"
+                                className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                              >
+                                Recevoir le workflow JSON
+                              </Link>
+                              {/* P14: visible "sans carte bancaire" */}
+                              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                                Essai gratuit 14 jours — sans carte bancaire
+                              </span>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -459,7 +545,7 @@ export default async function UseCasePage({ params }: PageProps) {
             )}
           </section>
 
-          {/* Blurred JSON preview */}
+          {/* P4: Blurred JSON preview — clarified messaging */}
           {uc.n8nTutorial && (
             <div className="rounded-xl border overflow-hidden">
               <div className="border-b bg-muted/40 px-4 py-3 sm:px-6 flex items-center justify-between">
@@ -469,7 +555,10 @@ export default async function UseCasePage({ params }: PageProps) {
                 </div>
                 <Badge variant="secondary" className="text-[10px]">Pro</Badge>
               </div>
-              <div className="relative p-4 sm:p-6">
+              <div className="px-4 pt-3 sm:px-6 text-xs text-muted-foreground leading-relaxed">
+                Ce fichier JSON s&apos;importe en 1 clic dans n8n. Aucun code à écrire — il vous suffit de brancher vos clés API.
+              </div>
+              <div className="relative p-4 sm:p-6 pt-3">
                 <div className="overflow-hidden rounded-lg border bg-[#1e1e2e] p-4 max-h-32 select-none" style={{ filter: "blur(3px)", WebkitUserSelect: "none" }}>
                   <pre className="text-xs font-mono text-[#cdd6f4] whitespace-pre-wrap" aria-hidden="true">
 {`{
@@ -484,16 +573,22 @@ export default async function UseCasePage({ params }: PageProps) {
 }`}
                   </pre>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 pt-6">
                   <Link
                     href="/pricing"
                     className="rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
                   >
-                    Débloquer le workflow JSON &rarr;
+                    Recevoir ce fichier JSON &rarr;
                   </Link>
+                  <span className="text-[11px] text-muted-foreground bg-background/80 px-2 py-0.5 rounded">Import en 1 clic — aucun code requis</span>
                 </div>
               </div>
             </div>
+          )}
+
+          {/* P13: Micro-engagement — quick ROI estimator */}
+          {uc.n8nTutorial && (
+            <QuickROIEstimator />
           )}
 
           {/* DIY vs Pro comparison table */}
@@ -505,6 +600,7 @@ export default async function UseCasePage({ params }: PageProps) {
                   <tr className="border-b bg-muted/30">
                     <th className="text-left p-3 sm:p-4 font-medium text-muted-foreground w-1/3"></th>
                     <th className="text-center p-3 sm:p-4 font-semibold">Gratuit (DIY)</th>
+                    {/* P6: Price revealed here — after value is established */}
                     <th className="text-center p-3 sm:p-4 font-semibold text-primary bg-primary/5">Pro — 29&euro;/mois</th>
                   </tr>
                 </thead>
@@ -556,32 +652,77 @@ export default async function UseCasePage({ params }: PageProps) {
                   L&apos;abonnement Pro coûte 29&euro;/mois — soit moins de 1&euro; par jour pour automatiser ce processus.
                 </p>
               </div>
-              <Link
-                href="/pricing"
-                className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Essai gratuit 14 jours
-              </Link>
+              <div className="flex flex-col items-center gap-1 shrink-0">
+                <Link
+                  href="/pricing"
+                  className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  Recevoir ce workflow
+                </Link>
+                <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                  14 jours gratuits — sans carte bancaire
+                </span>
+              </div>
             </div>
           </section>
 
-          {/* Final contextual CTA */}
+          {/* P11: Objection handling */}
+          <div className="rounded-xl border bg-muted/10 p-5 sm:p-6 space-y-4">
+            <h3 className="font-semibold text-sm">Questions fréquentes</h3>
+            <div className="space-y-3">
+              <details className="group" open>
+                <summary className="cursor-pointer text-sm font-medium flex items-center gap-2 select-none">
+                  <span className="text-primary group-open:rotate-90 transition-transform">&#9654;</span>
+                  Est-ce que ça marche avec mes outils ?
+                </summary>
+                <p className="mt-2 ml-5 text-sm text-muted-foreground leading-relaxed">
+                  Oui. Le workflow fonctionne avec n8n (gratuit et open-source). Chaque étape du tutoriel propose plusieurs alternatives pour les connecteurs : CRM (HubSpot, Pipedrive, Salesforce, Google Sheets), LLM (OpenAI, Anthropic, Mistral, Ollama), ticketing (Zendesk, Freshdesk, Crisp, Intercom) et notifications (Slack, Teams, Gmail, Discord). Vous pouvez aussi l&apos;adapter à tout outil disposant d&apos;une API.
+                </p>
+              </details>
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-medium flex items-center gap-2 select-none">
+                  <span className="text-primary group-open:rotate-90 transition-transform">&#9654;</span>
+                  29&euro;/mois c&apos;est trop juste pour tester
+                </summary>
+                <p className="mt-2 ml-5 text-sm text-muted-foreground leading-relaxed">
+                  L&apos;essai est 100% gratuit pendant 14 jours, sans carte bancaire. Vous pouvez importer et tester ce workflow immédiatement. Si ça ne vous convient pas, vous n&apos;avez rien à annuler — l&apos;essai s&apos;arrête tout seul.
+                </p>
+              </details>
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-medium flex items-center gap-2 select-none">
+                  <span className="text-primary group-open:rotate-90 transition-transform">&#9654;</span>
+                  Je préfère construire moi-même avec le tutoriel gratuit
+                </summary>
+                <p className="mt-2 ml-5 text-sm text-muted-foreground leading-relaxed">
+                  C&apos;est tout à fait possible — le tutoriel ci-dessus est complet et fonctionnel. Comptez environ {uc.estimatedTime || "2-4h"} de configuration. L&apos;abonnement Pro vous fait gagner ce temps : le même workflow, prêt à importer en 5 minutes, avec les mises à jour incluses.
+                </p>
+              </details>
+            </div>
+          </div>
+
+          {/* Final contextual CTA — P7: clearer about what you get */}
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex-1">
                 <p className="font-semibold">Vous avez lu le tutoriel — il ne reste plus qu&apos;à le brancher</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Obtenez le workflow JSON prêt à importer + accès à tous les workflows du catalogue.
-                  Sans engagement. Annulation en un clic.
+                  Recevez le fichier JSON de ce workflow, importable en 1 clic dans n8n.
+                  + accès aux {WORKFLOW_COUNT}+ workflows du catalogue.
                 </p>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col items-center gap-1.5">
                 <Link
                   href="/pricing"
                   className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Commencer l&apos;essai gratuit
+                  Recevoir ce workflow
                 </Link>
+                {/* P14: prominent "sans carte bancaire" */}
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                  Essai gratuit 14 jours — sans carte bancaire
+                </span>
                 <Link
                   href="/pricing"
                   className="text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -626,7 +767,7 @@ export default async function UseCasePage({ params }: PageProps) {
           )}
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar — P6: price removed, benefits-only until comparison table */}
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-4">
             <Card>
@@ -683,13 +824,10 @@ export default async function UseCasePage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            {/* Sidebar Pro CTA */}
+            {/* Sidebar Pro CTA — P6: benefits-focused, no price (revealed in comparison table) */}
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="pt-6 space-y-3">
-                <div className="flex items-baseline justify-between">
-                  <p className="text-sm font-semibold">Plan Pro</p>
-                  <p className="text-lg font-bold">29&euro;<span className="text-xs font-normal text-muted-foreground">/mois</span></p>
-                </div>
+                <p className="text-sm font-semibold">Gagnez du temps avec Pro</p>
                 <ul className="space-y-1.5 text-xs text-muted-foreground">
                   <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> Ce workflow prêt à importer</li>
                   <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> {WORKFLOW_COUNT}+ workflows inclus</li>
@@ -700,18 +838,22 @@ export default async function UseCasePage({ params }: PageProps) {
                   href="/pricing"
                   className="block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Essai gratuit 14 jours
+                  Découvrir les tarifs
                 </Link>
-                <p className="text-center text-[10px] text-muted-foreground">Sans carte bancaire. Annulation en un clic.</p>
+                {/* P14: visible badge */}
+                <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                  Essai gratuit 14 jours — sans carte bancaire
+                </p>
               </CardContent>
             </Card>
 
-            {/* Email capture for not-ready visitors */}
+            {/* P8: Email capture with lead magnet */}
             <Card>
               <CardContent className="pt-6 space-y-2">
-                <p className="text-sm font-semibold">Pas encore prêt ?</p>
+                <p className="text-sm font-semibold">Recevez ce workflow en PDF</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Recevez ce workflow + nos meilleurs tutos IA chaque semaine. Gratuit.
+                  Le schéma complet de ce workflow + nos meilleurs tutos IA chaque semaine. Gratuit, sans spam.
                 </p>
                 <NewsletterSignup variant="compact" />
               </CardContent>
