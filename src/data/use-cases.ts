@@ -4,7 +4,7 @@ export const useCases: UseCase[] = [
   {
     slug: "agent-triage-support-client",
     title: "Agent de Triage Support Client",
-    subtitle: "Classifiez et routez automatiquement les tickets de support grâce à l'IA",
+    subtitle: "Triez 200 tickets par jour en 10 minutes au lieu de 3 heures — sans changer vos outils",
     problem:
       "Les équipes support sont submergées par un volume croissant de tickets. Le triage manuel est lent, sujet aux erreurs de classification, et retarde la résolution des demandes critiques.",
     value:
@@ -50,6 +50,30 @@ export const useCases: UseCase[] = [
                     │  Vector DB   │
                     │  (KB interne)│
                     └──────────────┘`,
+    storytelling: {
+      sector: "E-commerce",
+      persona: "Sarah, Responsable Support chez un e-commerçant (35 salariés)",
+      painPoint: "Son équipe de 4 agents reçoit 180 tickets par jour. Chaque matin, Sarah passe 45 minutes à trier manuellement les urgences. Un client VIP en panne depuis 2 jours ? Noyé entre une question sur les frais de port et une demande de mot de passe. Résultat : des SLA explosés, des clients frustrés, et une équipe épuisée.",
+      story: "Sarah a mis en place ce workflow n8n un vendredi après-midi. Le lundi matin, les tickets étaient déjà triés automatiquement à son arrivée. Les urgences techniques remontaient directement à l'équipe dev sur Slack. Les questions facturation allaient au service comptable. Et pour chaque ticket, l'IA proposait un brouillon de réponse.",
+      result: "En 3 semaines : temps de première réponse passé de 4h à 23 min. Taux de satisfaction client remonté de 72% à 91%. Sarah a réaffecté 1 agent à temps plein sur des tâches à valeur ajoutée (fidélisation, upsell).",
+    },
+    beforeAfter: {
+      inputLabel: "Ticket client reçu",
+      inputText: "Bonjour, mon application plante systématiquement quand je clique sur \"Valider ma commande\". J'ai essayé sur Chrome et Safari. Ça fait 3 jours que je ne peux plus commander. Mon numéro client est C-4892.",
+      outputFields: [
+        { label: "Catégorie", value: "Technique" },
+        { label: "Urgence", value: "P1 — Critique (bloquant, client impacté)" },
+        { label: "Équipe", value: "Équipe Dev / Bug Fix" },
+        { label: "Suggestion de réponse", value: "Bonjour, nous avons bien identifié le problème sur la page de validation de commande. Notre équipe technique est mobilisée. Vous recevrez une mise à jour sous 2h." },
+        { label: "Confiance", value: "0.94" },
+      ],
+    },
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Environ 1h30 pour configurer le workflow complet",
+      "Optionnel : accès API à votre CRM et outil de ticketing",
+    ],
     tutorial: [
       {
         title: "Prérequis et configuration",
@@ -202,6 +226,7 @@ def test_billing_ticket():
         nodeIcon: "🔗",
         description: "Ce nœud reçoit les tickets entrants. Votre système de support (Zendesk, Freshdesk, Crisp, ou un formulaire web) enverra un POST à cette URL chaque fois qu'un nouveau ticket est créé.",
         configuration: `1. Ajoutez un nœud "Webhook" sur le canvas\n2. Méthode HTTP : POST\n3. Path : /triage-ticket\n4. Authentication : Header Auth\n5. Nom du header : X-API-Key\n6. Valeur : créez un mot de passe aléatoire (ex: via generate-random.org)\n7. Response Mode : "Last Node" (la réponse sera le résultat final du workflow)\n8. Cliquez sur "Listen for Test Event", puis envoyez un ticket test depuis votre outil`,
+        expectedOutput: `{ "id": "T-4892", "content": "Mon application plante quand je clique sur Valider ma commande...", "email": "client@exemple.fr", "name": "Jean Dupont" }`,
         customization: `• Si vous utilisez Zendesk : configurez un webhook dans Admin > Extensions > Webhooks pointant vers l'URL du Webhook n8n\n• Si vous utilisez Freshdesk : allez dans Admin > Automations > Rules et ajoutez une action "Trigger Webhook"\n• Si vous utilisez un formulaire web : faites un fetch() POST vers l'URL avec le body JSON {content, email, name}\n• Adaptez le Header Auth en fonction de la sécurité requise dans votre contexte`,
         errorHandling: `• Erreur 404 : vérifiez que le workflow est bien activé (toggle en haut à droite)\n• Erreur 401 : le header X-API-Key ne correspond pas — vérifiez la valeur dans votre outil source\n• Pas de données reçues : testez d'abord avec "Test workflow" et envoyez un JSON manuel via Postman ou curl`,
       },
@@ -211,6 +236,7 @@ def test_billing_ticket():
         nodeIcon: "🌐",
         description: "Ce nœud récupère les informations du client depuis votre CRM pour enrichir le contexte avant la classification. L'historique client permet une meilleure priorisation. Choisissez la variante correspondant à votre outil.",
         configuration: `Ce nœud est optionnel — si vous n'avez pas de CRM, passez directement au nœud suivant.\nChoisissez votre outil ci-dessous pour la configuration complète.`,
+        expectedOutput: `{ "name": "Jean Dupont", "company": "ACME SAS", "plan": "Premium", "created_at": "2024-03-15", "lifetime_value": 2400 }`,
         errorHandling: `• Erreur 401/403 : votre clé API est expirée ou n'a pas les bonnes permissions\n• Erreur 404 (contact inconnu) : ajoutez un nœud "IF" après celui-ci pour gérer le cas où le client n'existe pas → passez un contexte vide\n• Timeout : augmentez la valeur dans Options ou vérifiez que votre CRM est accessible depuis le serveur n8n`,
         variants: [
           {
@@ -251,6 +277,7 @@ def test_billing_ticket():
         nodeType: "Code",
         nodeIcon: "⚙️",
         description: "Ce nœud JavaScript construit le prompt qui sera envoyé au LLM. Il combine le contenu du ticket avec les données CRM pour créer un prompt structuré qui guide la classification.",
+        expectedOutput: `{ "prompt": "Tu es un agent de triage support client expert. Analyse le ticket ci-dessous... [contenu du ticket]", "ticketId": "T-4892" }`,
         configuration: `1. Ajoutez un nœud "Code"\n2. Langage : JavaScript\n3. Collez le code suivant :\n\nconst ticket = $('Webhook').item.json;\nconst crm = $('HTTP Request — Contexte CRM').item.json;\n\nconst prompt = \`Tu es un agent de triage support client expert.\nAnalyse le ticket ci-dessous et retourne un JSON avec :\n- "categorie": "technique" | "facturation" | "commercial" | "autre"\n- "urgence": "P1" | "P2" | "P3" | "P4"\n- "equipe": le nom de l'équipe cible\n- "suggestion_reponse": une suggestion de réponse au client\n- "confiance": un score de 0 à 1\n\nContexte client CRM : \${crm.name || 'Inconnu'}, Plan: \${crm.plan || 'N/A'}, Ancienneté: \${crm.created_at || 'N/A'}\n\nTicket :\n\${ticket.content}\n\nRéponds UNIQUEMENT en JSON valide, sans explication.\`;\n\nreturn [{ json: { prompt, ticketId: ticket.id || 'unknown' } }];`,
         customization: `• Modifiez les catégories ("technique", "facturation"…) pour correspondre à VOS catégories de tickets\n• Ajoutez des catégories spécifiques à votre métier (ex: "livraison", "retour produit" pour du e-commerce)\n• Adaptez les niveaux d'urgence (P1-P4) à votre grille SLA interne\n• Si vous n'avez pas de nœud CRM, remplacez la ligne crm par : const crm = {};`,
         errorHandling: `• "Cannot read property 'json' of undefined" : le nœud précédent n'a pas renvoyé de données — vérifiez la connexion et le nommage exact des nœuds référencés\n• Erreur de syntaxe JS : vérifiez les backticks et les template literals \${}\n• Le prompt est tronqué : vérifiez que le contenu du ticket n'est pas trop long — ajoutez ticket.content.substring(0, 3000) si nécessaire`,
@@ -261,6 +288,7 @@ def test_billing_ticket():
         nodeIcon: "🤖",
         description: "Ce nœud envoie le prompt au LLM et récupère la classification structurée en JSON. C'est le cœur du workflow. Choisissez votre fournisseur LLM ci-dessous.",
         configuration: `Choisissez votre fournisseur LLM ci-dessous.\nTous les providers utilisent un nœud "HTTP Request" avec méthode POST.`,
+        expectedOutput: `{ "choices": [{ "message": { "content": "{ \\"categorie\\": \\"technique\\", \\"urgence\\": \\"P1\\", \\"equipe\\": \\"Équipe Dev\\", \\"suggestion_reponse\\": \\"Nous avons identifié le problème...\\", \\"confiance\\": 0.94 }" } }] }`,
         errorHandling: `• Erreur 429 (rate limit) : ajoutez un nœud "Wait" de 1-2s avant cet appel\n• Erreur 500/503 : problème côté provider — ajoutez un nœud "IF" de retry : si erreur, attendez 5s et relancez\n• Réponse non-JSON : reformulez le prompt avec "Réponds UNIQUEMENT en JSON valide, sans explication"`,
         variants: [
           {
@@ -295,6 +323,7 @@ def test_billing_ticket():
         nodeType: "Code",
         nodeIcon: "⚙️",
         description: "Ce nœud extrait et valide le JSON retourné par le LLM. Il s'assure que la réponse est bien structurée avant de continuer le workflow.",
+        expectedOutput: `{ "categorie": "technique", "urgence": "P1", "equipe": "Équipe Dev", "suggestion_reponse": "Nous avons identifié le problème sur la validation de commande...", "confiance": 0.94, "ticketId": "T-4892" }`,
         configuration: `1. Ajoutez un nœud "Code"\n2. Langage : JavaScript\n3. Collez le code suivant :\n\nconst response = $input.item.json;\nconst content = response.choices[0].message.content;\nconst classification = JSON.parse(content);\n\n// Validation basique\nconst validCategories = ['technique', 'facturation', 'commercial', 'autre'];\nconst validUrgences = ['P1', 'P2', 'P3', 'P4'];\n\nif (!validCategories.includes(classification.categorie)) {\n  classification.categorie = 'autre';\n}\nif (!validUrgences.includes(classification.urgence)) {\n  classification.urgence = 'P3';\n}\n\nclassification.ticketId = $('Code — Préparer le prompt').item.json.ticketId;\n\nreturn [{ json: classification }];`,
         customization: `• Adaptez le tableau validCategories à vos catégories métier\n• Adaptez validUrgences à vos niveaux SLA\n• Ajoutez des règles métier : par ex. si le client est "Enterprise" dans le CRM, forcez minimum P2\n• Vous pouvez ajouter un champ "confiance_min" : si classification.confiance < 0.6, routez vers un humain`,
         errorHandling: `• "Unexpected token" (JSON invalide) : le LLM n'a pas retourné du JSON valide — enveloppez le JSON.parse dans un try/catch et renvoyez une classification par défaut (categorie: "autre", urgence: "P3")\n• "Cannot read property 'choices'" : la réponse OpenAI a un format inattendu — loggez response pour débugger\n• Classification incohérente : ajoutez des console.log() pour inspecter les données à chaque étape dans l'onglet "Output" de n8n`,
@@ -304,6 +333,7 @@ def test_billing_ticket():
         nodeType: "Switch",
         nodeIcon: "🔀",
         description: "Ce nœud route le ticket vers le bon chemin selon le niveau d'urgence. Les tickets P1 (critiques) déclenchent une notification immédiate, les autres suivent le flux normal.",
+        expectedOutput: `Le ticket est redirigé vers la sortie 0 (P1 → urgence critique). Les données passent intactes au nœud suivant connecté à cette sortie.`,
         configuration: `1. Ajoutez un nœud "Switch"\n2. Mode : "Rules"\n3. Routing Rules :\n   — Rule 0 : {{ $json.urgence }} equals "P1" → Output 0 (Urgences critiques)\n   — Rule 1 : {{ $json.urgence }} equals "P2" → Output 1 (Urgences hautes)\n   — Fallback : Output 2 (P3/P4, traitement normal)\n4. Connectez chaque sortie vers les actions appropriées`,
         customization: `• Ajoutez des règles basées sur la catégorie en plus de l'urgence : par ex. "facturation" → équipe Finance, "technique" → équipe Tech\n• Vous pouvez utiliser un nœud "Switch" supplémentaire après chaque sortie pour un routage plus fin\n• Pour une logique plus complexe : remplacez le Switch par un nœud "Code" qui retourne l'index de sortie`,
         errorHandling: `• Aucune sortie déclenchée : vérifiez que la valeur de $json.urgence correspond exactement à vos règles (majuscules, espaces)\n• Tout passe par le Fallback : le champ "urgence" est peut-être nommé différemment — inspectez l'output du nœud précédent`,
@@ -313,6 +343,7 @@ def test_billing_ticket():
         nodeType: "HTTP Request",
         nodeIcon: "🎫",
         description: "Ce nœud met à jour le ticket dans votre système de support avec la classification IA : catégorie, urgence, équipe assignée, et suggestion de réponse. Choisissez votre outil de ticketing.",
+        expectedOutput: `Le ticket T-4892 est mis à jour avec : priorité "urgent", tags ["ia-triage", "technique"], assigné à l'équipe Dev, note interne avec la suggestion de réponse IA.`,
         configuration: `Choisissez votre outil de ticketing ci-dessous.\nSi vous n'avez pas d'outil de ticketing, utilisez Google Sheets ou Notion pour centraliser les résultats.`,
         variants: [
           {
@@ -360,6 +391,7 @@ def test_billing_ticket():
         nodeType: "Notification",
         nodeIcon: "💬",
         description: "Ce nœud notifie l'équipe concernée avec le résultat de la classification. Pour les tickets P1, connectez la sortie 0 du Switch directement vers ce nœud pour une alerte immédiate.",
+        expectedOutput: `Message envoyé sur #support-triage : "Nouveau ticket classifié — Technique, P1, Équipe Dev — Suggestion : Nous avons identifié le problème..."`,
         configuration: `Choisissez votre outil de communication ci-dessous.\nLe message envoyé contiendra : catégorie, urgence, équipe assignée, et suggestion de réponse.`,
         variants: [
           {

@@ -46,9 +46,24 @@ export interface N8nTutorialStep {
   nodeIcon: string;
   description: string;
   configuration: string;
+  expectedOutput?: string;
   customization?: string;
   errorHandling?: string;
   variants?: N8nToolVariant[];
+}
+
+export interface StorytellingBlock {
+  sector: string;
+  persona: string;
+  painPoint: string;
+  story: string;
+  result: string;
+}
+
+export interface BeforeAfterExample {
+  inputLabel: string;
+  inputText: string;
+  outputFields: { label: string; value: string }[];
 }
 
 export interface UseCase {
@@ -64,6 +79,9 @@ export interface UseCase {
   recommendedStack: StackItem[];
   lowCostAlternatives: StackItem[];
   architectureDiagram: string;
+  storytelling?: StorytellingBlock;
+  beforeAfter?: BeforeAfterExample;
+  prerequisites?: string[];
   tutorial: TutorialSection[];
   n8nTutorial?: N8nTutorialStep[];
   enterprise: EnterpriseSection;

@@ -35,52 +35,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-function PersonaCard({ functions, sectors, metiers }: { functions: string[]; sectors: string[]; metiers: string[] }) {
-  const personaMap: Record<string, { name: string; role: string; emoji: string }> = {
-    "Support": { name: "Sarah", role: "Responsable Support Client", emoji: "🎧" },
-    "Sales": { name: "Thomas", role: "Directeur Commercial", emoji: "📈" },
-    "Marketing": { name: "Julie", role: "Responsable Marketing Digital", emoji: "🎯" },
-    "RH": { name: "Nadia", role: "DRH", emoji: "👥" },
-    "Finance": { name: "Marc", role: "Directeur Financier", emoji: "💰" },
-    "IT": { name: "Alexandre", role: "CTO / Responsable IT", emoji: "💻" },
-    "Conformite": { name: "Camille", role: "Responsable Conformité", emoji: "⚖️" },
-    "Compliance": { name: "Camille", role: "Responsable Conformité", emoji: "⚖️" },
-    "Supply Chain": { name: "Pierre", role: "Directeur Supply Chain", emoji: "📦" },
-    "Commercial": { name: "Thomas", role: "Directeur Commercial", emoji: "📈" },
-    "CRM": { name: "Léa", role: "Responsable CRM", emoji: "🤝" },
-    "Legal": { name: "Isabelle", role: "Directrice Juridique", emoji: "📜" },
-    "Juridique": { name: "Isabelle", role: "Directrice Juridique", emoji: "📜" },
-    "Product": { name: "Romain", role: "Product Manager", emoji: "🧩" },
-    "Operations": { name: "Laurent", role: "Directeur des Opérations", emoji: "⚙️" },
-    "RSE": { name: "Elise", role: "Responsable RSE", emoji: "🌱" },
-    "Risk": { name: "Philippe", role: "Directeur des Risques", emoji: "🛡️" },
-    "Comptabilité": { name: "Marc", role: "Directeur Comptable", emoji: "💰" },
-    "Stratégie": { name: "Antoine", role: "Directeur Stratégie", emoji: "🧭" },
-    "Sécurité": { name: "Alexandre", role: "RSSI", emoji: "🔒" },
-    "Data": { name: "Sophie", role: "Chief Data Officer", emoji: "📊" },
-    "Organisation": { name: "Laurent", role: "Directeur Organisation", emoji: "⚙️" },
-    "Productivité": { name: "Marie", role: "Responsable Efficacité", emoji: "⚡" },
-  };
-
-  const fn = functions[0] || "IT";
-  const persona = personaMap[fn] || { name: "Alex", role: "Responsable opérationnel", emoji: "👤" };
-  const sector = sectors[0] || "Services";
-
-  return (
-    <div className="rounded-xl border-l-4 border-l-primary bg-muted/30 p-4 sm:p-5 mb-6">
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">{persona.emoji}</span>
-        <div>
-          <p className="font-semibold text-sm">{persona.name}, {persona.role}</p>
-          <p className="text-xs text-muted-foreground">Secteur : {sector} · Métier : {metiers[0] || fn}</p>
-          <p className="mt-2 text-sm text-muted-foreground italic leading-relaxed">
-            &laquo; Je cherche à automatiser ce processus pour libérer mon équipe des tâches répétitives et me concentrer sur les décisions à forte valeur ajoutée. &raquo;
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default async function UseCasePage({ params }: PageProps) {
   const { slug } = await params;
@@ -140,184 +94,87 @@ export default async function UseCasePage({ params }: PageProps) {
       <div className="lg:hidden mb-8 rounded-xl border bg-muted/30 p-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sommaire</h2>
         <nav className="flex flex-wrap gap-2">
-          <a href="#presentation" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Présentation</a>
-          <a href="#stack" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Stack</a>
+          {uc.storytelling && (
+            <a href="#histoire" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Cas concret</a>
+          )}
+          {uc.beforeAfter && (
+            <a href="#avant-apres" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Avant / Après</a>
+          )}
           <a href="#tutoriel" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">
             {uc.n8nTutorial ? "Tutoriel n8n" : "Tutoriel"}
           </a>
-          {!uc.n8nTutorial && uc.n8nWorkflow && (
-            <a href="#workflow-n8n" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Workflow n8n</a>
-          )}
-          {uc.enterprise && (
-            <a href="#enterprise" className="rounded-full border px-3 py-1 text-xs hover:bg-accent transition-colors">Enterprise</a>
-          )}
         </nav>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="reading-width space-y-10 lg:mx-0 lg:max-w-none">
-          {/* 1. Présentation */}
-          <section id="presentation">
-            <h2 className="text-2xl font-bold mb-4">Présentation du cas d&apos;usage</h2>
-
-            <PersonaCard functions={uc.functions} sectors={uc.sectors} metiers={uc.metiers} />
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Problème</h3>
-                <p className="text-muted-foreground leading-relaxed">{uc.problem}</p>
+          {/* 1. Storytelling */}
+          {uc.storytelling && (
+            <section id="histoire">
+              <div className="rounded-xl border bg-muted/20 p-5 sm:p-8 space-y-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Badge variant="secondary" className="text-xs">{uc.storytelling.sector}</Badge>
+                  <span>Cas concret</span>
+                </div>
+                <p className="font-semibold">{uc.storytelling.persona}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{uc.storytelling.painPoint}</p>
+                <Separator />
+                <p className="text-sm leading-relaxed">{uc.storytelling.story}</p>
+                <div className="rounded-lg border-l-4 border-l-primary bg-primary/5 p-4">
+                  <p className="text-sm font-medium leading-relaxed">{uc.storytelling.result}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Valeur apportée</h3>
-                <p className="text-muted-foreground leading-relaxed">{uc.value}</p>
-              </div>
+            </section>
+          )}
 
+          {/* 2. Before / After */}
+          {uc.beforeAfter && (
+            <section id="avant-apres">
+              <h2 className="text-2xl font-bold mb-4">Ce que fait ce workflow</h2>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <h3 className="font-semibold">Inputs</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                      {uc.inputs.map((input, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                          {input}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <h3 className="font-semibold">Outputs</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                      {uc.outputs.map((output, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-chart-2 shrink-0" />
-                          {output}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
+                <div className="rounded-xl border p-4 sm:p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Avant — {uc.beforeAfter.inputLabel}</p>
+                  <div className="rounded-lg bg-muted/50 p-4">
+                    <p className="text-sm italic leading-relaxed">&laquo; {uc.beforeAfter.inputText} &raquo;</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">Après — Classification IA</p>
+                  <div className="space-y-2">
+                    {uc.beforeAfter.outputFields.map((field, i) => (
+                      <div key={i} className="flex items-start gap-2 text-sm">
+                        <span className="font-medium shrink-0 w-28">{field.label}</span>
+                        <span className="text-muted-foreground">{field.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <h3 className="font-semibold">Risques</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                      {uc.risks.map((risk, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
-                          {risk}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-                <Card className="border-primary/20 bg-primary/5">
-                  <CardHeader className="pb-2">
-                    <h3 className="font-semibold">ROI indicatif</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm font-medium leading-relaxed">{uc.roiIndicatif}</p>
-                    <div className="mt-3 flex gap-2">
-                      <Link
-                        href="/calculateur-roi"
-                        className="text-xs text-primary font-medium hover:underline"
-                      >
-                        Calculer votre ROI personnalisé &rarr;
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="mt-4 rounded-lg border bg-muted/30 p-4">
+                <p className="text-sm font-medium">{uc.roiIndicatif}</p>
+                <Link href="/calculateur-roi" className="text-xs text-primary font-medium hover:underline mt-1 inline-block">
+                  Calculer votre ROI personnalisé &rarr;
+                </Link>
               </div>
-            </div>
-          </section>
-
-          {/* Mobile CTA — visible on all devices, positioned early for engagement */}
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-6 lg:hidden">
-            <p className="font-semibold text-sm">Cet agent peut être adapté à votre contexte</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Outils intégrés, processus personnalisés, estimation de ROI sur mesure.
-            </p>
-            <div className="mt-3 flex gap-2">
-              <Link
-                href="/demande"
-                className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                Demander un accompagnement
-              </Link>
-              <Link
-                href="/pricing"
-                className="shrink-0 rounded-lg border px-4 py-2.5 text-center text-sm font-medium hover:bg-muted transition-colors"
-              >
-                Plans
-              </Link>
-            </div>
-          </div>
+            </section>
+          )}
 
           <Separator />
 
-          {/* 2. Stack recommandée */}
-          <section id="stack">
-            <h2 className="text-2xl font-bold mb-4">Stack recommandée</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Card>
-                <CardHeader className="pb-2">
-                  <h3 className="font-semibold">Stack principale</h3>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {uc.recommendedStack.map((item, i) => (
-                      <li key={i} className="flex items-center justify-between text-sm">
-                        <span>{item.name}</span>
-                        <Badge variant="outline" className="text-xs">{item.category}</Badge>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <h3 className="font-semibold">Alternatives low-cost</h3>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {uc.lowCostAlternatives.map((item, i) => (
-                      <li key={i} className="flex items-center justify-between text-sm">
-                        <span>{item.name}</span>
-                        <div className="flex items-center gap-1">
-                          {item.isFree && (
-                            <Badge variant="secondary" className="text-xs">Gratuit</Badge>
-                          )}
-                          <Badge variant="outline" className="text-xs">{item.category}</Badge>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+          {/* Prerequisites */}
+          {uc.prerequisites && uc.prerequisites.length > 0 && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 sm:p-6">
+              <h3 className="font-semibold mb-3">Avant de commencer</h3>
+              <ul className="space-y-2">
+                {uc.prerequisites.map((p, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <span className="mt-0.5 text-primary">&#10003;</span>
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-
-            {/* Architecture diagram */}
-            <div className="mt-6">
-              <h3 className="font-semibold mb-3">Schéma d&apos;architecture</h3>
-              <div className="overflow-x-auto rounded-lg border bg-muted/50 p-4">
-                <pre className="text-xs sm:text-sm font-mono whitespace-pre leading-relaxed">
-                  {uc.architectureDiagram}
-                </pre>
-              </div>
-            </div>
-          </section>
-
-          <Separator />
+          )}
 
           {/* 3. Tutoriel n8n (primary) or code tutorial (fallback) */}
           <section id="tutoriel">
@@ -372,6 +229,14 @@ export default async function UseCasePage({ params }: PageProps) {
                         <p className="text-sm text-muted-foreground leading-relaxed">
                           {step.description}
                         </p>
+
+                        {/* Expected output */}
+                        {step.expectedOutput && (
+                          <div className="rounded-lg border border-chart-2/30 bg-chart-2/5 p-3">
+                            <p className="text-xs font-semibold mb-1.5 text-chart-2">Résultat attendu :</p>
+                            <pre className="text-xs font-mono text-muted-foreground whitespace-pre-wrap">{step.expectedOutput}</pre>
+                          </div>
+                        )}
 
                         {/* Variants (when available) or single configuration */}
                         {step.variants && step.variants.length > 0 ? (
@@ -551,13 +416,13 @@ export default async function UseCasePage({ params }: PageProps) {
             )}
           </section>
 
-          {/* Mid-page CTA */}
+          {/* Contextual CTA */}
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex-1">
-                <p className="font-semibold">Besoin d&apos;aide pour implémenter ce workflow ?</p>
+                <p className="font-semibold">Vous voulez ce workflow connecté à vos outils, avec vos règles métier ?</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Notre équipe peut adapter ce workflow à votre contexte spécifique.
+                  On configure le workflow pour vous en 48h : connexion à votre CRM, vos catégories, vos SLA, vos canaux de notification.
                 </p>
               </div>
               <div className="flex gap-2">
@@ -565,85 +430,43 @@ export default async function UseCasePage({ params }: PageProps) {
                   href="/demande"
                   className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Demander un accompagnement
+                  Demander la configuration
                 </Link>
               </div>
             </div>
           </div>
 
-          <Separator />
-
-          {/* 4. Workflow n8n summary (only when no n8n tutorial — otherwise it's shown inline above) */}
+          {/* Workflow n8n summary (only when no n8n tutorial) */}
           {!uc.n8nTutorial && uc.n8nWorkflow && (
-            <section id="workflow-n8n">
-              <h2 className="text-2xl font-bold mb-4">Workflow n8n / Automatisation</h2>
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    {uc.n8nWorkflow.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="secondary" className="text-xs">
-                      Trigger : {uc.n8nWorkflow.triggerType}
-                    </Badge>
-                  </div>
-                  <h4 className="font-semibold text-sm mb-2">Nodes du workflow :</h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {uc.n8nWorkflow.nodes.map((node, i) => (
-                      <div key={i} className="flex items-center gap-1">
-                        {i > 0 && <span className="text-muted-foreground text-xs">→</span>}
-                        <Badge variant="outline" className="text-xs font-mono">
-                          {node}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
-          )}
-
-          <Separator />
-
-          {/* 5. Enterprise */}
-          {uc.enterprise && (
-            <section id="enterprise">
-              <h2 className="text-2xl font-bold mb-4">Considérations Enterprise</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
+            <>
+              <Separator />
+              <section id="workflow-n8n">
+                <h2 className="text-2xl font-bold mb-4">Workflow n8n / Automatisation</h2>
                 <Card>
-                  <CardHeader className="pb-2">
-                    <h3 className="font-semibold text-sm">Données personnelles (PII/RGPD)</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{uc.enterprise.piiHandling}</p>
+                  <CardContent className="pt-6">
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                      {uc.n8nWorkflow.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <Badge variant="secondary" className="text-xs">
+                        Trigger : {uc.n8nWorkflow.triggerType}
+                      </Badge>
+                    </div>
+                    <h4 className="font-semibold text-sm mb-2">Nodes du workflow :</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {uc.n8nWorkflow.nodes.map((node, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                          {i > 0 && <span className="text-muted-foreground text-xs">→</span>}
+                          <Badge variant="outline" className="text-xs font-mono">
+                            {node}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <h3 className="font-semibold text-sm">Audit & Traçabilité</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{uc.enterprise.auditLog}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <h3 className="font-semibold text-sm">Human-in-the-Loop</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{uc.enterprise.humanInTheLoop}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <h3 className="font-semibold text-sm">Monitoring & Alertes</h3>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{uc.enterprise.monitoring}</p>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
+              </section>
+            </>
           )}
         </div>
 
@@ -682,16 +505,17 @@ export default async function UseCasePage({ params }: PageProps) {
               </CardHeader>
               <CardContent>
                 <nav className="space-y-1 text-sm">
-                  <a href="#presentation" className="block text-muted-foreground hover:text-foreground transition-colors">Présentation</a>
-                  <a href="#stack" className="block text-muted-foreground hover:text-foreground transition-colors">Stack recommandée</a>
+                  {uc.storytelling && (
+                    <a href="#histoire" className="block text-muted-foreground hover:text-foreground transition-colors">Cas concret</a>
+                  )}
+                  {uc.beforeAfter && (
+                    <a href="#avant-apres" className="block text-muted-foreground hover:text-foreground transition-colors">Avant / Après</a>
+                  )}
                   <a href="#tutoriel" className="block text-muted-foreground hover:text-foreground transition-colors">
                     {uc.n8nTutorial ? "Tutoriel n8n" : "Tutoriel"}
                   </a>
                   {!uc.n8nTutorial && uc.n8nWorkflow && (
                     <a href="#workflow-n8n" className="block text-muted-foreground hover:text-foreground transition-colors">Workflow n8n</a>
-                  )}
-                  {uc.enterprise && (
-                    <a href="#enterprise" className="block text-muted-foreground hover:text-foreground transition-colors">Enterprise</a>
                   )}
                 </nav>
               </CardContent>
@@ -699,15 +523,15 @@ export default async function UseCasePage({ params }: PageProps) {
 
             <Card className="border-primary/30 bg-primary/5">
               <CardContent className="pt-6 space-y-3">
-                <p className="text-sm font-semibold">Besoin d&apos;un workflow adapté ?</p>
+                <p className="text-sm font-semibold">On le configure pour vous ?</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Notre équipe adapte ce workflow à votre contexte : outils, processus et contraintes spécifiques.
+                  Workflow connecté à vos outils, vos règles métier, vos SLA. Prêt en 48h.
                 </p>
                 <Link
                   href="/demande"
                   className="block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Demander un accompagnement
+                  Demander la configuration
                 </Link>
                 <Link
                   href="/pricing"
