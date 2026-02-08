@@ -3,7 +3,7 @@ import { UseCase } from "./types";
 export const useCases: UseCase[] = [
   {
     slug: "agent-triage-support-client",
-    title: "Agent de Triage Support Client",
+    title: "Réduire le temps de réponse support client grâce à l'IA",
     subtitle: "Triez 200 tickets par jour en 10 minutes au lieu de 3 heures — sans changer vos outils",
     problem:
       "Les équipes support sont submergées par un volume croissant de tickets. Le triage manuel est lent, sujet aux erreurs de classification, et retarde la résolution des demandes critiques.",
@@ -456,9 +456,9 @@ def test_billing_ticket():
     sectors: ["Services", "E-commerce", "Telecom"],
     metiers: ["Support Client"],
     functions: ["Support"],
-    metaTitle: "Agent IA de Triage Support Client — Guide complet",
+    metaTitle: "Réduire le temps de réponse support client avec l'IA — Guide complet",
     metaDescription:
-      "Implémentez un agent IA de triage automatique pour votre support client. Classification, routage intelligent, stack technique et tutoriel pas-à-pas avec ROI détaillé.",
+      "Automatisez le tri, la priorisation et la réponse aux tickets support avec un agent IA. Workflow n8n prêt à importer, tutoriel pas-à-pas et ROI détaillé.",
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
