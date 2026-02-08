@@ -76,7 +76,7 @@ export default async function UseCasePage({ params }: PageProps) {
             </p>
           </div>
           <Link
-            href="/demande?plan=pro"
+            href="/pricing"
             className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             Obtenir le workflow Pro
@@ -372,7 +372,7 @@ export default async function UseCasePage({ params }: PageProps) {
                               </p>
                             </div>
                             <Link
-                              href="/demande?plan=pro"
+                              href="/pricing"
                               className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                             >
                               Essai gratuit 14 jours
@@ -486,7 +486,7 @@ export default async function UseCasePage({ params }: PageProps) {
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Link
-                    href="/demande?plan=pro"
+                    href="/pricing"
                     className="rounded-lg bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg"
                   >
                     Débloquer le workflow JSON &rarr;
@@ -557,7 +557,7 @@ export default async function UseCasePage({ params }: PageProps) {
                 </p>
               </div>
               <Link
-                href="/demande?plan=pro"
+                href="/pricing"
                 className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 Essai gratuit 14 jours
@@ -577,7 +577,7 @@ export default async function UseCasePage({ params }: PageProps) {
               </div>
               <div className="flex flex-col gap-2">
                 <Link
-                  href="/demande?plan=pro"
+                  href="/pricing"
                   className="shrink-0 rounded-lg bg-primary px-5 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   Commencer l&apos;essai gratuit
@@ -697,7 +697,7 @@ export default async function UseCasePage({ params }: PageProps) {
                   <li className="flex items-center gap-1.5"><span className="text-primary">&#10003;</span> Nouveaux workflows chaque mois</li>
                 </ul>
                 <Link
-                  href="/demande?plan=pro"
+                  href="/pricing"
                   className="block w-full rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   Essai gratuit 14 jours
