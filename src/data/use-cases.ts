@@ -1353,6 +1353,64 @@ def generate_report_pdf(data: dict, commentary: str, period: str):
     metaTitle: "Agent IA de Rapports Financiers — Guide Expert",
     metaDescription:
       "Automatisez vos rapports financiers avec un agent IA. Collecte de données ERP, détection d'anomalies et commentaires automatiques. Stack et tutoriel inclus.",
+    storytelling: {
+      sector: "Finance",
+      persona: "Marc, Directeur Financier chez un groupe industriel (250 salariés)",
+      painPoint: "Chaque fin de mois, Marc et son équipe de 3 contrôleurs de gestion passent 5 jours à produire le reporting financier consolidé. Entre les erreurs de copier-coller d'Excel, les écarts inexpliqués entre filiales, et les commentaires analytiques à rédiger pour le comité de direction, ils finissent régulièrement les rapports à 23h la veille de la présentation. Un mois, une erreur de 120K€ sur un compte de charges n'a été détectée qu'après envoi au conseil d'administration.",
+      story: "Marc a configuré l'agent sur un week-end en connectant son ERP SAP et ses templates Excel existants. Le premier rapport généré automatiquement contenait non seulement tous les tableaux de bord habituels, mais aussi des commentaires pertinents sur les écarts budgétaires et 3 anomalies détectées que l'équipe avait ratées lors du cycle précédent. L'agent a même proposé des actions correctives adaptées à chaque écart.",
+      result: "En 2 mois : production du rapport mensuel passée de 5 jours à 4 heures. 12 anomalies comptables détectées automatiquement et corrigées avant clôture. L'équipe finance a été réaffectée sur des missions à valeur ajoutée : analyse stratégique, construction budgétaire et accompagnement opérationnel. Le DAF présente désormais des rapports plus riches au COMEX tout en gagnant 80% de temps.",
+    },
+    beforeAfter: {
+      inputLabel: "Données comptables du mois",
+      inputText: "Charges de personnel février 2025 : 187 450€ (budget : 165 000€) — Filiale Lyon : CA 420K€ vs 380K€ prévu — Provisions clients douteux : +45K€ vs janvier — Investissements IT : 89K€ non budgétés",
+      outputFields: [
+        { label: "Écart budgétaire charges personnel", value: "+22 450€ (+13,6%) — Probable recrutement non budgété ou heures sup" },
+        { label: "Performance filiale Lyon", value: "Surperformance de 10,5% — Vérifier nouvel apporteur d'affaires" },
+        { label: "Anomalie détectée", value: "Provisions clients douteux en hausse anormale — Analyser compte client XYZ (32K€)" },
+        { label: "Investissement IT hors budget", value: "89K€ d'infrastructure cloud — Demander validation rétrospective COMEX" },
+        { label: "Recommandation", value: "Ajuster budget charges RH T2 et auditer processus d'approbation IT" },
+      ],
+      beforeContext: "Export ERP SAP · Clôture 28 février 2025",
+      afterLabel: "Analyse financière IA",
+      afterDuration: "45 secondes",
+      afterSummary: "Rapport généré avec 4 écarts détectés et commentaires analytiques",
+    },
+    roiEstimator: {
+      label: "Combien de rapports financiers produisez-vous par mois ?",
+      unitLabel: "Rapport manuel / mois",
+      timePerUnitMinutes: 240,
+      timeWithAISeconds: 180,
+      options: [1, 2, 4, 8, 12],
+    },
+    faq: [
+      {
+        question: "Quels formats de données comptables sont supportés (SAP, Excel, CSV) ?",
+        answer: "L'agent supporte nativement les exports SAP, Oracle Financials et Sage via API ou fichiers CSV/Excel. Pour les ERPs moins courants, vous pouvez utiliser un export CSV standardisé. La configuration initiale prend 2 à 3 heures par source de données. Un template Excel suffit pour démarrer en mode MVP.",
+      },
+      {
+        question: "L'IA peut-elle se tromper dans ses analyses et créer des erreurs comptables ?",
+        answer: "L'agent ne modifie jamais les données comptables sources. Il génère uniquement des commentaires analytiques et détecte des anomalies sur la base de règles paramétrables (seuils d'écart, patterns inhabituels). Les commentaires sont clairement identifiés comme générés par IA. Vous gardez le contrôle final sur la validation avant diffusion au COMEX.",
+      },
+      {
+        question: "Est-ce conforme aux normes comptables (PCG, IFRS) et auditable ?",
+        answer: "L'agent génère des rapports selon vos templates existants déjà conformes aux normes. Les calculs financiers utilisent des formules standards auditables. Chaque commentaire analytique peut être tracé jusqu'aux données sources. Les CAC (commissaires aux comptes) peuvent auditer les règles de détection d'anomalies qui sont explicites et documentées dans le prompt.",
+      },
+      {
+        question: "Combien coûte l'analyse IA d'un rapport financier mensuel ?",
+        answer: "Avec GPT-4o : environ 0,15€ par rapport (analyse de 50 pages de données). Avec Claude Sonnet : environ 0,10€. Avec Ollama (gratuit, local) : 0€ mais nécessite un serveur avec 32 Go RAM pour les gros volumes. Pour un reporting mensuel complet, comptez moins de 2€/mois avec OpenAI.",
+      },
+      {
+        question: "Mes données financières confidentielles sont-elles sécurisées ?",
+        answer: "Les données ne transitent que via l'API du LLM en HTTPS et ne sont jamais stockées ni utilisées pour l'entraînement des modèles (garantie contractuelle OpenAI/Anthropic). Pour une sécurité maximale, utilisez Azure OpenAI avec data residency EU ou Ollama en local (0 donnée externe). Ajoutez un chiffrement de bout en bout avec vos propres clés si requis par votre RSSI.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès export depuis votre ERP (SAP, Oracle, Sage) ou fichiers Excel/CSV mensuels",
+      "Templates de rapports financiers existants (Excel ou PowerPoint)",
+      "Environ 3h pour configurer le workflow et calibrer les règles de détection d'anomalies",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -1531,11 +1589,69 @@ def execute_runbook(runbook_id: str, params: dict) -> dict:
     metaTitle: "Agent IA de Gestion des Incidents IT — Guide DevOps",
     metaDescription:
       "Automatisez le diagnostic et la résolution des incidents IT avec un agent IA. Corrélation de logs, runbooks automatiques et escalade intelligente. Guide DevOps.",
+    storytelling: {
+      sector: "Infrastructure IT",
+      persona: "Thomas, Responsable Ops chez un éditeur SaaS (120 salariés)",
+      painPoint: "L'équipe IT de Thomas gère 400 alertes par semaine. 60% sont des incidents récurrents déjà documentés dans leurs runbooks, mais chaque analyste doit chercher manuellement la procédure, interpréter les logs, puis exécuter la correction. Un incident de perte de connexion base de données survenu un vendredi soir à 22h a nécessité 3h de diagnostic alors que la solution (restart du pool de connexions) était documentée depuis 6 mois. Résultat : SLA dépassé, clients impactés et équipe épuisée.",
+      story: "Thomas a branché l'agent sur Datadog et PagerDuty un mercredi après-midi. Dès le premier incident (erreur 502 en production), l'agent a analysé les logs nginx, identifié un spike de trafic sur un endpoint spécifique, et proposé automatiquement le runbook de scale-up horizontal. Thomas a validé l'action en un clic. L'incident a été résolu en 8 minutes au lieu de 45 minutes habituellement.",
+      result: "En 6 semaines : 42% des incidents L1/L2 résolus automatiquement sans intervention humaine. MTTR (temps moyen de résolution) réduit de 85 minutes à 12 minutes sur les incidents récurrents. L'équipe IT peut désormais se concentrer sur les incidents complexes et les projets d'amélioration continue. Thomas a économisé l'équivalent de 1,5 ETP sur son budget support.",
+    },
+    beforeAfter: {
+      inputLabel: "Alerte Datadog reçue",
+      inputText: "[CRITICAL] Production - Database connection pool exhausted - Host: db-prod-01 - 23:47 UTC - Error rate: 156 errors/min - Last occurrence: SELECT query timeout on users table - Memory: 87% - CPU: 34%",
+      outputFields: [
+        { label: "Diagnostic", value: "Saturation du pool de connexions PostgreSQL — Probable fuite de connexions non fermées" },
+        { label: "Cause racine suspectée", value: "Déploiement v2.4.1 il y a 2h — Code review montre connexions non fermées dans module auth" },
+        { label: "Runbook identifié", value: "RB-047: Restart pool connexions + rollback version si persistant" },
+        { label: "Action recommandée", value: "1) Restart pool connexions 2) Rollback vers v2.4.0 3) Ticket dev pour fix connexion leak" },
+        { label: "Impact estimé", value: "Critique — 2400 utilisateurs impactés — Résolution estimée : 5 min si validation immédiate" },
+      ],
+      beforeContext: "PagerDuty · incident #8472 · 23:47 UTC",
+      afterLabel: "Diagnostic automatique IA",
+      afterDuration: "8 secondes",
+      afterSummary: "Cause identifiée, runbook proposé, action de remédiation prête à exécuter",
+    },
+    roiEstimator: {
+      label: "Combien d'incidents IT traitez-vous par semaine ?",
+      unitLabel: "Diagnostic manuel / sem.",
+      timePerUnitMinutes: 25,
+      timeWithAISeconds: 45,
+      options: [10, 25, 50, 100, 200],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il exécuter automatiquement des actions correctives ou juste proposer ?",
+        answer: "Par défaut, l'agent propose les actions et attend validation humaine via Slack ou PagerDuty. Vous pouvez activer l'exécution automatique pour des actions à faible risque (restart de service, purge de cache, scale-up). Les actions critiques (rollback prod, suppression de données) nécessitent toujours une validation humaine avec timeout de 5 minutes.",
+      },
+      {
+        question: "Quels outils de monitoring sont supportés (Datadog, Grafana, New Relic) ?",
+        answer: "Le workflow supporte nativement Datadog, Grafana, Prometheus et PagerDuty via webhooks. Pour New Relic, AWS CloudWatch ou Azure Monitor, utilisez un nœud HTTP Request. La configuration prend 15 à 30 minutes par outil. L'agent peut aussi parser des logs bruts (JSON, syslog) via un nœud personnalisé.",
+      },
+      {
+        question: "Que se passe-t-il si l'IA se trompe et aggrave l'incident ?",
+        answer: "Le workflow inclut un système de rollback automatique : chaque action exécutée est versionnée et réversible en 1 clic. Les actions à haut risque nécessitent une double validation (on-call + lead tech). Un mode audit log toutes les décisions IA pour post-mortem. En 6 mois de prod chez nos early adopters, 0 incident aggravé par l'agent car les garde-fous sont strictement paramétrés.",
+      },
+      {
+        question: "Combien coûte le diagnostic IA par incident ?",
+        answer: "Avec GPT-4o : environ 0,01€ par incident (analyse logs + recherche runbook). Avec Ollama (gratuit, local) : 0€ mais plus lent (20s vs 8s) et nécessite 16 Go RAM. Pour 100 incidents/semaine avec GPT-4o : moins de 5€/mois. Le ROI est immédiat dès le premier incident critique résolu en minutes au lieu d'heures.",
+      },
+      {
+        question: "Comment l'agent apprend-il de nouveaux types d'incidents non documentés ?",
+        answer: "L'agent utilise une base vectorielle (ChromaDB ou Pinecone) de vos runbooks existants. Après chaque incident résolu manuellement, un workflow optionnel génère automatiquement un draft de runbook à partir du post-mortem. Vous le validez et il est indexé pour les prochains incidents. La base de connaissances s'enrichit continuellement sans intervention.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API à votre outil de monitoring (Datadog, Grafana, PagerDuty)",
+      "Base de runbooks existante (Notion, Confluence ou fichiers Markdown)",
+      "Environ 2h pour configurer les webhooks et indexer vos runbooks",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-rédaction-contenu-marketing",
+    slug: "agent-redaction-contenu-marketing",
     title: "Agent de Rédaction de Contenu Marketing",
     subtitle: "Générez du contenu marketing de qualité à grande échelle",
     problem:
@@ -1716,6 +1832,64 @@ Article: {article[:2000]}"""
     metaTitle: "Agent IA de Rédaction Marketing — Guide Content",
     metaDescription:
       "Générez du contenu marketing de qualité avec un agent IA. Articles SEO, posts réseaux sociaux et newsletters automatisés. Tutoriel complet avec stack technique.",
+    storytelling: {
+      sector: "Marketing Digital",
+      persona: "Julie, Responsable Contenu chez une scale-up B2B SaaS (45 salariés)",
+      painPoint: "Julie et son équipe de 2 rédacteurs doivent produire 12 articles de blog par mois, 60 posts LinkedIn, 8 newsletters et des landing pages pour chaque nouvelle feature. Résultat : ils passent 70% de leur temps à rédiger des premiers jets moyens au lieu de se concentrer sur la stratégie éditoriale et l'optimisation. Un article de fond prend 6h à rédiger, et la cohérence du tone of voice varie selon qui écrit. Les délais de publication glissent régulièrement.",
+      story: "Julie a configuré l'agent en lui fournissant 10 articles existants pour calibrer le tone of voice et une charte éditoriale de 3 pages. Le premier test : un article sur \"L'automatisation des workflows métier\". L'agent a produit un draft de 1200 mots structuré, optimisé SEO, avec des exemples concrets et le bon ton. Julie a passé 20 minutes à affiner certains passages et ajouter une touche personnelle. L'article était prêt à publier.",
+      result: "En 3 mois : production de contenu passée de 12 à 28 articles par mois sans recrutement. Temps de rédaction réduit de 6h à 1h30 par article (draft IA + finalisation humaine). Julie a réaffecté 60% du temps de son équipe sur la stratégie SEO, l'analyse de performance et la création de contenus premium (ebooks, webinars). Le trafic organique a augmenté de 45% grâce au volume publié.",
+    },
+    beforeAfter: {
+      inputLabel: "Brief éditorial fourni",
+      inputText: "Article blog 1500 mots — Sujet : 'Comment réduire les coûts IT avec l'automatisation intelligente' — Persona : DSI PME 50-200 salariés — Angle : ROI mesurable et cas d'usage concrets — Mots-clés : automatisation IT, réduction coûts infrastructure, optimisation budget tech — Ton : expert mais accessible, concret, orienté résultats",
+      outputFields: [
+        { label: "Titre SEO proposé", value: "Réduire vos coûts IT de 30% grâce à l'automatisation intelligente : 5 cas d'usage ROI" },
+        { label: "Structure générée", value: "Intro accroche chiffrée + 5 sections cas d'usage + tableau ROI + FAQ + CTA" },
+        { label: "Mots-clés intégrés", value: "18 occurrences naturelles des KW cibles + variations sémantiques" },
+        { label: "Longueur", value: "1542 mots — Temps lecture estimé : 6 min" },
+        { label: "Méta-description SEO", value: "Découvrez comment 5 DSI ont réduit leurs coûts IT de 25 à 40% avec l'automatisation. Cas d'usage, ROI et guide pratique." },
+      ],
+      beforeContext: "Brief marketing · persona DSI · 2025-02-08",
+      afterLabel: "Génération de contenu IA",
+      afterDuration: "34 secondes",
+      afterSummary: "Draft complet généré avec structure, SEO optimisé et tone of voice de la marque",
+    },
+    roiEstimator: {
+      label: "Combien d'articles ou posts produisez-vous par semaine ?",
+      unitLabel: "Rédaction manuelle / sem.",
+      timePerUnitMinutes: 120,
+      timeWithAISeconds: 240,
+      options: [2, 5, 10, 20, 40],
+    },
+    faq: [
+      {
+        question: "Comment l'agent apprend-il le tone of voice spécifique de ma marque ?",
+        answer: "Vous fournissez 5 à 10 articles existants représentatifs de votre style éditorial. L'agent les analyse et extrait les patterns linguistiques, le niveau de formalité, le type de vocabulaire et la structure narrative. Vous pouvez aussi fournir une charte éditoriale écrite. Après 3-4 générations avec vos retours, le ton devient très cohérent.",
+      },
+      {
+        question: "L'agent peut-il générer du contenu dans plusieurs langues (FR, EN, DE) ?",
+        answer: "Oui, l'agent supporte le multilingue. Vous définissez la langue cible dans le brief éditorial. Pour un article en français traduit en anglais et allemand, l'agent génère 3 versions adaptées culturellement (pas juste une traduction). Les idiomes, exemples et références sont localisés. La qualité dépend du LLM : Claude Sonnet excellent en FR/EN/DE, GPT-4o très bon partout.",
+      },
+      {
+        question: "Comment éviter le plagiat et le contenu trop générique ?",
+        answer: "Le workflow inclut une étape de vérification d'unicité via Copyscape API (optionnel, 0.03€/vérification). L'agent est prompté pour générer des insights originaux basés sur votre expertise métier. Vous devez fournir des angles spécifiques, des données internes et des exemples concrets dans le brief pour éviter le contenu générique. La finalisation humaine reste indispensable pour la différenciation.",
+      },
+      {
+        question: "Combien coûte la génération IA d'un article de blog de 1500 mots ?",
+        answer: "Avec Claude Sonnet 4.5 : environ 0.08€ par article (génération + optimisation SEO). Avec GPT-4o : environ 0.12€. Avec Mistral Large : environ 0.05€. Avec Ollama (gratuit, local) : 0€ mais plus lent (3 min vs 30s). Pour 20 articles/mois avec Claude : moins de 2€/mois. Le coût est dérisoire comparé au salaire d'un rédacteur (60-80€/h).",
+      },
+      {
+        question: "Le contenu généré par IA est-il détectable et pénalisé par Google ?",
+        answer: "Google ne pénalise pas le contenu IA en soi, mais le contenu de faible qualité (générique, non original, sans valeur ajoutée). L'agent génère des drafts que vous devez enrichir avec votre expertise, vos données et votre point de vue unique. Ajoutez des études de cas, des statistiques internes et des insights métier. Le contenu final sera considéré comme original par Google si vous apportez cette couche humaine.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (Anthropic Claude, OpenAI, Mistral recommandés pour la qualité rédactionnelle)",
+      "5 à 10 articles existants représentatifs de votre tone of voice",
+      "Charte éditoriale et guidelines SEO (mots-clés, personas cibles)",
+      "Environ 1h pour configurer le workflow et calibrer le style éditorial",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -1901,11 +2075,69 @@ def create_onboarding_checklist(department: str, name: str) -> dict:
     metaTitle: "Agent IA d'Onboarding — Guide RH",
     metaDescription:
       "Créez un assistant IA d'onboarding pour vos nouveaux collaborateurs. Chatbot RAG sur Slack, parcours personnalisé et checklist automatique. Guide RH complet.",
+    storytelling: {
+      sector: "Ressources Humaines",
+      persona: "Nadia, DRH chez un cabinet de conseil (180 salariés)",
+      painPoint: "Le cabinet de Nadia recrute 15 à 20 consultants par trimestre. Chaque onboarding mobilise 8h de temps RH : envoi de documents éparpillés par email, réponses aux 50 mêmes questions (mutuelle, tickets resto, accès VPN), relances pour compléter les formulaires administratifs. Un nouveau consultant a attendu 3 semaines pour obtenir ses accès informatiques car sa demande était perdue dans les emails. Résultat : expérience collaborateur désastreuse et productivité RH mobilisée sur du répétitif au lieu du conseil.",
+      story: "Nadia a configuré l'agent en indexant toute la documentation RH (guide collaborateur, procédures, FAQ) dans ChromaDB. Le premier nouvel embauché a reçu un accès Slack au chatbot IA dès la signature du contrat. Il a posé 23 questions en 2 jours (mutuelle, congés, notes de frais) et obtenu des réponses instantanées 24/7. L'agent lui a envoyé des rappels automatiques pour compléter les formulaires obligatoires. Nadia a suivi la progression en temps réel sur un dashboard.",
+      result: "En 4 mois : temps RH par onboarding réduit de 8h à 1h30 (uniquement les tâches à valeur humaine : entretien d'accueil, présentation équipe). 92% des questions traitées par l'agent sans solliciter les RH. Time-to-productivity réduit de 6 semaines à 3 semaines grâce à un parcours structuré et des rappels proactifs. Satisfaction onboarding passée de 6.2/10 à 8.7/10.",
+    },
+    beforeAfter: {
+      inputLabel: "Question du nouveau collaborateur",
+      inputText: "Bonjour, je commence lundi prochain. Comment ça se passe pour la mutuelle d'entreprise ? Est-ce que je dois faire une démarche ou c'est automatique ? Et pour mes enfants, ils sont couverts aussi ? Merci !",
+      outputFields: [
+        { label: "Réponse mutuelle", value: "Votre affiliation à la mutuelle Alan est automatique dès votre 1er jour. Vous recevrez un email d'Alan sous 48h pour créer votre espace personnel." },
+        { label: "Couverture ayants droit", value: "Vos enfants sont couverts gratuitement (100% pris en charge employeur). Vous devrez les déclarer dans votre espace Alan avec leur acte de naissance." },
+        { label: "Documents à fournir", value: "Carte Vitale + RIB + acte de naissance enfants (scan PDF accepté)" },
+        { label: "Prochaine étape", value: "Formulaire de déclaration ayants droit envoyé par email — À compléter avant le 15/02" },
+        { label: "Contact support", value: "Questions spécifiques : nadia.rh@entreprise.com ou support Alan 24/7" },
+      ],
+      beforeContext: "Slack DM · Nouveau collaborateur · 3 jours avant prise de poste",
+      afterLabel: "Réponse chatbot RH IA",
+      afterDuration: "3 secondes",
+      afterSummary: "Réponse complète avec next steps et rappel formulaire à compléter",
+    },
+    roiEstimator: {
+      label: "Combien de collaborateurs accueillez-vous par trimestre ?",
+      unitLabel: "Onboarding manuel / trim.",
+      timePerUnitMinutes: 120,
+      timeWithAISeconds: 300,
+      options: [5, 10, 20, 40, 80],
+    },
+    faq: [
+      {
+        question: "Comment garantir que l'agent ne donne pas d'informations RH erronées ou obsolètes ?",
+        answer: "La base de connaissances doit être mise à jour régulièrement (workflow de synchro automatique depuis Notion ou Confluence). L'agent inclut un disclaimer : 'Information générée automatiquement — En cas de doute, contactez nadia.rh@entreprise.com'. Pour les questions légales/contractuelles sensibles, l'agent répond 'Je vous mets en relation avec les RH pour cette question spécifique' et crée un ticket Slack.",
+      },
+      {
+        question: "L'agent peut-il gérer les spécificités d'onboarding par département (IT, Sales, Ops) ?",
+        answer: "Oui. Vous créez des parcours d'onboarding personnalisés par poste/département dans la base vectorielle. L'agent détecte automatiquement le profil du collaborateur (info fournie lors de la création du compte Slack) et adapte les réponses, checklists et rappels. Un dev reçoit des infos sur les accès GitHub, un commercial sur Salesforce, etc.",
+      },
+      {
+        question: "Est-ce conforme au RGPD pour le traitement des données RH des nouveaux collaborateurs ?",
+        answer: "Vous devez informer les collaborateurs que l'IA intervient dans l'onboarding (mention dans le guide d'accueil). Les données RH ne sont jamais envoyées au LLM : seules les questions des collaborateurs sont traitées. Les réponses proviennent de la base vectorielle locale. Pour une conformité maximale, utilisez Ollama (local) ou Azure OpenAI avec data residency EU.",
+      },
+      {
+        question: "Combien coûte l'IA par collaborateur onboardé ?",
+        answer: "Avec GPT-4o-mini : environ 0.05€ par collaborateur (20-30 questions traitées en moyenne). Avec Ollama (gratuit, local) : 0€ mais nécessite un serveur dédié. Pour 20 collaborateurs/trimestre avec GPT-4o-mini : moins de 1€/trimestre. Le ROI est immédiat : 1 onboarding automatisé = 6h30 RH économisées soit ~400€ de coût salarial.",
+      },
+      {
+        question: "Peut-on intégrer l'agent directement dans Teams ou Slack ?",
+        answer: "Oui. Le workflow n8n inclut des connecteurs natifs pour Slack et Microsoft Teams. L'agent apparaît comme un bot dans un canal dédié #onboarding ou en DM privé. La configuration prend 20 minutes via l'API Slack/Teams. Vous pouvez aussi déployer une interface web avec un chatbot intégré pour les collaborateurs n'ayant pas encore accès Slack.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI GPT-4o-mini, Anthropic, ou Ollama gratuit)",
+      "Base de documentation RH existante (Notion, Confluence, Google Docs ou fichiers Markdown)",
+      "Accès API à Slack ou Microsoft Teams pour déployer le chatbot",
+      "Environ 2h pour indexer la documentation RH et configurer les parcours par poste",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-détection-fraude",
+    slug: "agent-detection-fraude",
     title: "Agent de Détection de Fraude Multi-secteur",
     subtitle: "Détectez les transactions frauduleuses en temps réel sur vos plateformes e-commerce, SaaS et paiements en ligne",
     problem:
@@ -2112,6 +2344,64 @@ def log_decision(transaction_id: str, decision: str, analysis: str):
     metaTitle: "Agent IA de Détection de Fraude Multi-secteur — Guide Expert",
     metaDescription:
       "Implémentez un agent IA de détection de fraude temps réel. ML + LLM, conformité LCB-FT et réduction des faux positifs.",
+    storytelling: {
+      sector: "Fintech",
+      persona: "Karim, Head of Risk chez une néobanque (85 salariés)",
+      painPoint: "La néobanque de Karim traite 45 000 transactions par jour. Son système de détection de fraude basé sur des règles statiques génère 320 alertes quotidiennes, dont 280 sont des faux positifs (87%). Son équipe de 4 analystes fraude passe 6h par jour à trier manuellement ces alertes, pendant que de vraies fraudes sophistiquées passent sous le radar car elles ne matchent pas les patterns connus. Le mois dernier, une fraude de 28K€ par triangulation de cartes n'a été détectée qu'après 12 jours.",
+      story: "Karim a déployé l'agent en combinant un modèle ML de scoring avec Claude pour l'analyse contextuelle. Dès la première semaine, l'agent a réduit les faux positifs de 87% à 23% en comprenant le contexte (achat inhabituel mais légitime vs vraie fraude). Une transaction suspecte de 4200€ à 3h du matin vers un marchand inconnu a été bloquée automatiquement : l'agent a détecté un pattern de fraude par phishing en corrélant 5 signaux faibles (device nouveau + géoloc inhabituelle + montant rond + marchand à risque + vitesse de transaction anormale).",
+      result: "En 2 mois : faux positifs réduits de 70% (de 280 à 85 alertes/jour). Détection de 34% de fraudes supplémentaires non capturées par les règles (nouvelles attaques par social engineering, fraude documentaire IA). Temps d'analyse par transaction réduit de 12 min à 2 min. Karim a réaffecté 2 analystes sur la lutte anti-blanchiment (LCB-FT) et économisé 180K€ de pertes frauduleuses sur le trimestre.",
+    },
+    beforeAfter: {
+      inputLabel: "Transaction suspecte détectée",
+      inputText: "Transaction #TXN-8472 — Montant : 3850€ — Marchand : ELECTRON-SHOP-2425 (Bulgarie) — Heure : 02:47 CET — Device : iPhone 14 (nouveau, jamais vu) — Géoloc : Sofia (client habituel : Paris) — Client depuis : 18 mois — Historique : achats moyens 45-120€",
+      outputFields: [
+        { label: "Score de risque", value: "92/100 — Probabilité de fraude très élevée" },
+        { label: "Classification", value: "FRAUDULEUSE — Fraude par vol de carte probable" },
+        { label: "Signaux détectés", value: "5 red flags : device nouveau + géoloc inhabituelle + montant 80x supérieur moyenne + horaire suspect + marchand à risque" },
+        { label: "Décision automatique", value: "BLOQUÉE — Transaction refusée + carte gelée + SMS client envoyé" },
+        { label: "Explication client", value: "Transaction inhabituelle détectée pour votre sécurité. Si légitime, confirmez par SMS code 847251" },
+      ],
+      beforeContext: "Flux temps réel · 02:47 CET · Carte ****4829",
+      afterLabel: "Analyse fraude IA",
+      afterDuration: "1,2 secondes",
+      afterSummary: "Transaction bloquée automatiquement, client alerté, analyse fraud ops générée",
+    },
+    roiEstimator: {
+      label: "Combien de transactions analysez-vous par jour ?",
+      unitLabel: "Analyse manuelle / sem.",
+      timePerUnitMinutes: 8,
+      timeWithAISeconds: 5,
+      options: [100, 500, 1000, 5000, 10000],
+    },
+    faq: [
+      {
+        question: "Comment éviter de bloquer des transactions légitimes et frustrer les clients ?",
+        answer: "L'agent intègre un système de scoring à seuils paramétrables : score <40 = auto-approuvé, 40-75 = validation par SMS/3D Secure, >75 = blocage + contact client. Pour les clients VIP ou transactions récurrentes légitimes (abonnements), vous pouvez whitelister des patterns. L'agent apprend continuellement des confirmations clients pour affiner le modèle et réduire les faux positifs.",
+      },
+      {
+        question: "Quelle est la latence d'analyse ? Les paiements temps réel sont-ils supportés ?",
+        answer: "Latence moyenne : 1.2 à 2 secondes avec GPT-4o en API. Pour du temps réel strict (<500ms), utilisez un modèle ML léger en première couche (XGBoost local) qui filtre 95% des transactions safe, puis l'agent IA n'analyse que les 5% suspectes. Architecture hybrid ML + LLM recommandée pour les gros volumes (>10K txn/jour).",
+      },
+      {
+        question: "Est-ce conforme aux réglementations anti-fraude (DSP2, 3DS, LCB-FT) ?",
+        answer: "Le workflow respecte la DSP2 : Strong Customer Authentication (SCA) pour transactions >30€ si score de risque élevé. Le 3D Secure est déclenché automatiquement pour les seuils intermédiaires. Pour la LCB-FT, l'agent peut générer des rapports SAR (Suspicious Activity Report) pré-remplis pour les transactions suspectes >10K€. Les décisions IA sont auditables et expliquables (requis par la régulation).",
+      },
+      {
+        question: "Combien coûte l'analyse IA par transaction ?",
+        answer: "Avec GPT-4o : environ 0.001€ par transaction analysée (contexte moyen). Avec Ollama (gratuit, local) : 0€ mais latence de 5-8s inacceptable pour du temps réel. Architecture optimale : modèle ML local (0€) pour filtrage + LLM sur les 5% suspects = coût moyen de 0.00005€/txn. Pour 50K txn/jour : environ 75€/mois. Le ROI est immédiat : 1 fraude de 5K€ évitée = 5 mois d'IA payés.",
+      },
+      {
+        question: "L'agent peut-il détecter de nouvelles techniques de fraude inconnues ?",
+        answer: "Oui, c'est l'avantage clé du LLM vs règles statiques. L'agent analyse le contexte global et détecte des patterns inhabituels même sans règle explicite. Il peut identifier une fraude par deepfake (KYC falsifié), triangulation de cartes, ou social engineering en corrélant des signaux faibles. Vous devez réentraîner le modèle ML tous les mois avec les nouvelles fraudes détectées pour maintenir la performance.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI GPT-4o, Anthropic Claude recommandés pour l'analyse contextuelle)",
+      "Historique de transactions (6-12 mois) avec labels fraude/légitime pour calibration initiale",
+      "Accès API à votre PSP (Payment Service Provider) ou système de paiement",
+      "Environ 4h pour configurer les seuils de risque et les règles de décision automatique",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -2313,6 +2603,64 @@ Génère une analyse avec tendances et recommandations."""
     metaTitle: "Agent IA d'Automatisation des Achats — Guide Supply Chain",
     metaDescription:
       "Automatisez vos processus achats avec un agent IA. Comparaison de devis, validation workflow, suivi fournisseurs et optimisation des coûts. Guide Supply Chain.",
+    storytelling: {
+      sector: "Achats & Procurement",
+      persona: "Laurent, Directeur Achats chez un industriel agroalimentaire (420 salariés)",
+      painPoint: "L'équipe achats de Laurent traite 180 demandes d'achat par mois. Chaque demande nécessite de solliciter 3 à 5 fournisseurs, comparer manuellement les devis reçus par email (formats PDF hétérogènes), vérifier la conformité aux contrats cadres, puis router pour validation hiérarchique. Une demande d'achat de matière première urgente a pris 11 jours à traiter alors que la production était bloquée. Résultat : l'équipe passe 65% de son temps sur de l'administratif au lieu de négocier et d'optimiser les coûts.",
+      story: "Laurent a configuré l'agent en indexant son catalogue fournisseurs et ses contrats cadres. La première demande traitée automatiquement : achat de 500kg de farine bio. L'agent a extrait les 4 devis PDF reçus par email, comparé les prix unitaires, délais et conditions de paiement, identifié que le fournisseur A était 8% moins cher mais hors contrat cadre, et recommandé le fournisseur B (conforme contrat + délai 48h). Laurent a validé en 2 minutes, le bon de commande était généré automatiquement.",
+      result: "En 3 mois : cycle d'achat moyen réduit de 9 jours à 2 jours. Économies achats de 12% grâce à la comparaison systématique et détection d'opportunités d'optimisation. Taux de conformité aux contrats cadres passé de 73% à 96%. Laurent a réaffecté 40% du temps de son équipe sur la négociation stratégique avec les fournisseurs clés et la recherche de nouveaux sourcing.",
+    },
+    beforeAfter: {
+      inputLabel: "Demande d'achat interne",
+      inputText: "Demande #ACH-2847 — Service Production — Besoin : 200 cartons d'emballage alimentaire certifié contact alimentaire — Budget max : 2800€ HT — Délai souhaité : 5 jours — Fournisseurs à consulter : PackPro, EcoBox, CartonsPlus",
+      outputFields: [
+        { label: "Devis comparés", value: "3 devis analysés — PackPro : 2650€ (7j) · EcoBox : 2420€ (4j) · CartonsPlus : 2890€ (3j)" },
+        { label: "Recommandation", value: "EcoBox — Meilleur rapport qualité/prix/délai — Conforme contrat cadre référence CC-2024-089" },
+        { label: "Économie réalisée", value: "230€ vs budget (8,2%) — Délai respecté (4j < 5j demandés)" },
+        { label: "Validation requise", value: "Chef de service (montant <5K€) — Circuit validation déclenché automatiquement" },
+        { label: "Bon de commande", value: "Pré-rempli avec EcoBox — Prêt à envoyer après validation — Réf BC-2025-0847" },
+      ],
+      beforeContext: "ERP · Demande service production · 2025-02-08",
+      afterLabel: "Analyse comparative achats IA",
+      afterDuration: "28 secondes",
+      afterSummary: "Devis comparés, fournisseur recommandé, BC pré-rempli, validation routée",
+    },
+    roiEstimator: {
+      label: "Combien de demandes d'achat traitez-vous par mois ?",
+      unitLabel: "Traitement manuel / mois",
+      timePerUnitMinutes: 45,
+      timeWithAISeconds: 120,
+      options: [20, 50, 100, 200, 500],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il extraire des devis PDF avec des formats différents par fournisseur ?",
+        answer: "Oui. L'agent utilise Claude Sonnet 4.5 ou GPT-4o avec vision pour parser n'importe quel PDF (scan, format structuré, tableau complexe). Il extrait automatiquement : prix unitaire, quantité, délai, conditions de paiement, frais de port. La précision est de 95%+ même sur des devis manuscrits scannés. Pour les formats très exotiques, vous pouvez ajouter un template d'extraction personnalisé.",
+      },
+      {
+        question: "Comment l'agent vérifie-t-il la conformité aux contrats cadres ?",
+        answer: "Vos contrats cadres sont indexés dans une base vectorielle (Pinecone ou ChromaDB). L'agent vérifie automatiquement : fournisseur référencé ? Prix conforme aux grilles tarifaires ? Volumes min/max respectés ? Délais de paiement conformes ? Si non-conformité détectée, l'agent alerte et demande validation exceptionnelle avec justification. Un tableau de bord compliance suit le taux de conformité par service.",
+      },
+      {
+        question: "Peut-on automatiser complètement la validation ou faut-il toujours une validation humaine ?",
+        answer: "Vous paramétrez des seuils : achats <1K€ = validation auto si conforme contrat cadre, 1K-10K€ = validation chef de service, >10K€ = validation directeur achats. Les achats hors contrat ou hors budget nécessitent toujours validation humaine. L'agent gère automatiquement le workflow de validation multi-niveaux via Slack ou email avec délais de réponse et escalade.",
+      },
+      {
+        question: "L'agent peut-il négocier automatiquement avec les fournisseurs ?",
+        answer: "Pas de négociation automatique (trop risqué). Mais l'agent prépare des éléments de négociation : comparatif de prix vs marché, historique d'achats fournisseur, opportunités de volumes groupés, leviers de négociation identifiés. Il peut générer des emails de demande de devis structurés avec specs techniques. La négociation finale reste humaine pour préserver la relation fournisseur.",
+      },
+      {
+        question: "Combien coûte l'analyse IA d'une demande d'achat avec 3 devis ?",
+        answer: "Avec Claude Sonnet 4.5 : environ 0.12€ par demande (extraction 3 PDFs + comparaison + recommandation). Avec GPT-4o : environ 0.15€. Avec Mistral Large : environ 0.08€. Pour 100 demandes/mois avec Claude : 12€/mois. Le ROI est immédiat : 1 demande traitée en 2 min au lieu de 45 min = 43 min économisées × taux horaire acheteur (40-60€/h).",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM avec vision (Anthropic Claude Sonnet, OpenAI GPT-4o recommandés pour l'extraction PDF)",
+      "Catalogue fournisseurs et contrats cadres (Excel, PDF ou base de données ERP)",
+      "Accès email pour réception des devis ou intégration API ERP/logiciel achats",
+      "Environ 3h pour indexer les contrats cadres et configurer les règles de validation",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -2527,11 +2875,69 @@ async def analyze(file: UploadFile = File(...)):
     metaTitle: "Agent IA d'Analyse de Contrats — Guide Juridique Complet",
     metaDescription:
       "Automatisez l'analyse de vos contrats avec un agent IA. Détection de clauses à risque, génération de redlines et rapport de conformité.",
+    storytelling: {
+      sector: "Juridique",
+      persona: "Maître Sophie Dupont, Directrice Juridique chez un groupe retail (320 salariés)",
+      painPoint: "Sophie et son équipe de 2 juristes relisent 40 à 60 contrats par mois (fournisseurs, clients, partenaires). Chaque contrat de 25 pages nécessite 3h de relecture ligne par ligne pour identifier les clauses à risque (limitation de responsabilité, pénalités, résiliation), comparer aux standards internes et générer des redlines. Un contrat fournisseur signé sans relecture approfondie contenait une clause de non-concurrence abusive qui a coûté 85K€ lors d'un litige. L'équipe est submergée et les délais de validation retardent les projets business.",
+      story: "Sophie a configuré l'agent en indexant la bibliothèque de clauses standards du groupe et les grilles de risque juridique. Le premier contrat analysé : un partenariat commercial de 18 pages. En 4 minutes, l'agent a identifié 7 clauses problématiques (dont une limitation de garantie à 1 an vs 2 ans standard groupe), généré des redlines avec suggestions de reformulation, et attribué un score de risque global de 68/100. Sophie a validé l'analyse, ajouté 2 commentaires métier, et renvoyé les redlines au partenaire le jour même.",
+      result: "En 4 mois : temps de revue contractuelle réduit de 3h à 35 min par contrat (analyse IA + validation juriste). Détection de 12 clauses à risque qui auraient été manquées en relecture manuelle (formulations inhabituelles, clauses enfouies en annexes). Délai de validation contractuelle réduit de 12 jours à 2 jours. Sophie a réaffecté 50% du temps de son équipe sur du conseil stratégique aux opérationnels et la veille juridique.",
+    },
+    beforeAfter: {
+      inputLabel: "Contrat commercial à analyser",
+      inputText: "[PDF 22 pages] Contrat de partenariat distribution — Durée : 3 ans tacite reconduction — Clause résiliation : préavis 6 mois par LRAR — Limitation garantie : 12 mois pièces et MO — Pénalités retard livraison : 2% CA par semaine — Clause de confidentialité : 5 ans post-contrat — Juridiction compétente : Tribunal Commerce Lyon",
+      outputFields: [
+        { label: "Score de risque global", value: "72/100 — Risque MOYEN-ÉLEVÉ — Nécessite négociation de 4 clauses" },
+        { label: "Clause à risque #1", value: "Limitation garantie 12 mois vs standard groupe 24 mois — Impact commercial majeur" },
+        { label: "Clause à risque #2", value: "Reconduction tacite 3 ans — Risque d'engagement long sans porte de sortie" },
+        { label: "Clause à risque #3", value: "Pénalités retard 2%/semaine = jusqu'à 104%/an — Disproportionné vs CA" },
+        { label: "Redlines générées", value: "4 modifications suggérées — Garantie 24 mois · Reconduction 1 an · Pénalités plafonnées 10% CA annuel" },
+      ],
+      beforeContext: "Contrat partenaire XYZ · Service commercial · 2025-02-08",
+      afterLabel: "Analyse juridique IA",
+      afterDuration: "52 secondes",
+      afterSummary: "7 clauses à risque détectées, score risque calculé, redlines générées avec justifications",
+    },
+    roiEstimator: {
+      label: "Combien de contrats analysez-vous par mois ?",
+      unitLabel: "Revue manuelle / mois",
+      timePerUnitMinutes: 180,
+      timeWithAISeconds: 300,
+      options: [5, 10, 20, 40, 80],
+    },
+    faq: [
+      {
+        question: "L'IA peut-elle halluciner et inventer des clauses qui n'existent pas dans le contrat ?",
+        answer: "Le risque existe si mal prompté. Le workflow utilise une architecture RAG (Retrieval Augmented Generation) : l'agent cite systématiquement la page et le paragraphe source de chaque clause analysée. Vous pouvez vérifier instantanément. Le prompt inclut l'instruction stricte : 'Ne jamais inventer de clause. Si incertain, marquer comme À VÉRIFIER MANUELLEMENT'. Un juriste doit toujours valider l'analyse finale.",
+      },
+      {
+        question: "Comment l'agent compare-t-il avec mes standards juridiques internes ?",
+        answer: "Vous indexez votre bibliothèque de clauses standards (contrats types, playbooks juridiques, précédents négociés) dans une base vectorielle. L'agent compare automatiquement chaque clause du contrat analysé avec vos standards et signale les écarts. Vous pouvez paramétrer des seuils d'alerte par type de clause (garantie, responsabilité, résiliation, confidentialité).",
+      },
+      {
+        question: "L'agent gère-t-il les contrats en anglais ou autres langues ?",
+        answer: "Oui. Claude Sonnet 4.5 et GPT-4o analysent parfaitement les contrats en anglais, allemand, espagnol et italien. La qualité baisse légèrement pour les langues moins courantes (polonais, tchèque). Vous pouvez analyser un contrat multilingue (clauses en FR + annexes EN) : l'agent détecte automatiquement la langue par section. Les redlines sont générées dans la langue source.",
+      },
+      {
+        question: "Mes contrats confidentiels sont-ils sécurisés avec un LLM cloud ?",
+        answer: "Les données ne sont jamais stockées ni utilisées pour l'entraînement via l'API OpenAI/Anthropic (garantie contractuelle). Pour une sécurité maximale : utilisez Azure OpenAI avec data residency EU et chiffrement client, ou Ollama en local (0 donnée externe). Ajoutez un disclaimer CONFIDENTIEL sur chaque analyse générée. Conformité RGPD et secret professionnel avocat garantis.",
+      },
+      {
+        question: "Combien coûte l'analyse IA d'un contrat de 20-30 pages ?",
+        answer: "Avec Claude Sonnet 4.5 : environ 0.25€ par contrat (extraction + analyse clause par clause + génération redlines). Avec GPT-4o : environ 0.35€. Avec Ollama (gratuit, local) : 0€ mais lent (5 min vs 50s). Pour 40 contrats/mois avec Claude : 10€/mois. Le ROI est massif : 1 contrat analysé en 35 min au lieu de 3h = 2h25 économisées × taux horaire juriste (80-120€/h).",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM avec vision (Anthropic Claude Sonnet 4.5, OpenAI GPT-4o recommandés)",
+      "Bibliothèque de clauses standards internes et contrats types de référence",
+      "Grille de risque juridique par type de clause (responsabilité, garantie, résiliation, etc.)",
+      "Environ 3h pour indexer vos standards juridiques et calibrer les seuils de risque",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-prévision-demande",
+    slug: "agent-prevision-demande",
     title: "Agent de Prévision de Demande",
     subtitle: "Anticipez la demande grâce à l'IA combinant données historiques et signaux externes",
     problem:
@@ -2741,6 +3147,64 @@ async def forecast(req: ForecastRequest):
     metaTitle: "Agent IA de Prévision de Demande — Guide Supply Chain",
     metaDescription:
       "Optimisez vos prévisions de demande avec un agent IA combinant données historiques et signaux externes. Réduction des ruptures et surstocks.",
+    storytelling: {
+      sector: "Retail & Supply Chain",
+      persona: "Amandine, Directrice Supply Chain chez une chaîne de magasins bio (65 points de vente)",
+      painPoint: "Amandine gère les approvisionnements de 65 magasins avec des prévisions basées sur des moyennes mobiles Excel. Résultat : 15% de ruptures de stock sur les produits frais (fruits, légumes) en période de forte demande, et 12% de casse sur les invendus en période creuse. Une canicule imprévue fin mai a provoqué une rupture totale de pastèques pendant 4 jours (-38K€ de CA perdu), tandis que 240kg de courges ont fini à la poubelle en octobre faute d'anticipation d'une météo douce. Les prévisions ne tiennent compte ni de la météo, ni des événements locaux, ni des tendances de consommation.",
+      story: "Amandine a configuré l'agent en connectant ses données de ventes POS, l'API météo et le calendrier événementiel local. La première prévision testée : demande de tomates pour la semaine suivante. L'agent a prédit une hausse de 28% sur 3 magasins parisiens en détectant un festival végétarien prévu le week-end + météo ensoleillée annoncée. Amandine a ajusté les commandes en conséquence. Résultat : 0 rupture, taux de vente de 97% vs 84% habituellement.",
+      result: "En 3 mois : ruptures de stock réduites de 15% à 4% grâce aux prévisions ajustées en temps réel. Casse/invendus réduits de 12% à 5% par optimisation des volumes. Amélioration de 32% de la précision des prévisions vs méthodes traditionnelles. CA additionnel estimé : +180K€/trimestre grâce aux ventes non perdues pour rupture. Amandine a automatisé 70% des commandes récurrentes et se concentre sur les négociations fournisseurs.",
+    },
+    beforeAfter: {
+      inputLabel: "Demande de prévision",
+      inputText: "Produit : Fraises Gariguette (France) — Période : Semaine du 14 au 20 avril 2025 — Périmètre : 12 magasins Île-de-France — Historique ventes S-4 : 890kg · S-3 : 1240kg · S-2 : 1180kg · S-1 : 1350kg — Météo prévue : ensoleillé 18-22°C",
+      outputFields: [
+        { label: "Prévision médiane", value: "1680 kg — Hausse de 24% vs semaine précédente anticipée" },
+        { label: "Scénario optimiste", value: "1920 kg (+42%) si météo ensoleillée confirmée et promotions concurrents" },
+        { label: "Scénario pessimiste", value: "1380 kg (+2%) si pluie imprévue ou alerte sanitaire médias" },
+        { label: "Signaux détectés", value: "Météo favorable · Début saison fraises · Vacances scolaires zone C · Tendance Instagram +18%" },
+        { label: "Recommandation", value: "Commander 1750 kg (scénario médian +5% sécurité) — Répartir sur 12 magasins selon historique local" },
+      ],
+      beforeContext: "ERP Retail · POS 12 magasins · 2025-04-07",
+      afterLabel: "Prévision de demande IA",
+      afterDuration: "18 secondes",
+      afterSummary: "Prévision granulaire avec 3 scénarios, signaux externes détectés, recommandation d'approvisionnement",
+    },
+    roiEstimator: {
+      label: "Combien de références produits gérez-vous en prévision de demande ?",
+      unitLabel: "Prévision manuelle / sem.",
+      timePerUnitMinutes: 20,
+      timeWithAISeconds: 15,
+      options: [50, 100, 250, 500, 1000],
+    },
+    faq: [
+      {
+        question: "Quelles sources de données externes l'agent peut-il intégrer (météo, événements, tendances) ?",
+        answer: "L'agent se connecte nativement à : API météo (OpenWeatherMap, Météo France), Google Trends, calendrier événementiel local (concerts, matchs, salons), promotions concurrents (scraping optionnel), tendances réseaux sociaux (mentions Instagram/TikTok). Vous pouvez ajouter des sources custom via webhook. L'agent détecte automatiquement les corrélations entre signaux externes et pics de demande.",
+      },
+      {
+        question: "Comment l'agent gère-t-il les événements exceptionnels imprévisibles (crise, pandémie) ?",
+        answer: "Les événements exceptionnels sans précédent historique (COVID, crise sanitaire) sont difficiles à modéliser. L'agent détecte les anomalies en temps réel (chute ou pic de demande anormal) et ajuste les prévisions jour après jour. Vous pouvez forcer un scénario de crise manuellement (ex : confinement) pour recalculer les prévisions. Un mode 'alerte' permet de basculer sur des prévisions ultra-prudentes en cas d'incertitude forte.",
+      },
+      {
+        question: "Quelle est la précision des prévisions par rapport aux méthodes statistiques classiques ?",
+        answer: "En moyenne, +25 à 35% de précision vs moyennes mobiles ou régression linéaire, grâce à l'intégration des signaux externes. La précision varie selon la catégorie produit : excellente sur produits saisonniers (fruits, légumes, BBQ), bonne sur produits à tendance (bio, vegan), moyenne sur produits de base (pâtes, riz). Prévoyez 4 semaines de calibration pour atteindre la précision optimale.",
+      },
+      {
+        question: "L'agent peut-il générer automatiquement les commandes fournisseurs ou juste des recommandations ?",
+        answer: "Par défaut, l'agent génère des recommandations d'approvisionnement que vous validez. Vous pouvez activer le mode auto-commande pour les produits récurrents à faible risque (stock de sécurité élevé, fournisseurs fiables). Les commandes exceptionnelles (volumes >2x la moyenne) nécessitent validation humaine. L'agent peut envoyer les commandes directement à vos fournisseurs via EDI ou email si intégré à votre ERP.",
+      },
+      {
+        question: "Combien coûte l'analyse IA d'une prévision de demande pour 100 produits ?",
+        answer: "Avec GPT-4o : environ 0.20€ par session de prévision (100 produits analysés collectivement). Avec Ollama (gratuit, local) : 0€ mais plus lent (2 min vs 20s). Pour une prévision hebdomadaire de 500 produits avec GPT-4o : environ 4€/mois. Le ROI est immédiat : 1% de réduction de casse sur 100K€ de CA mensuel = 1000€ économisés soit 250 mois d'IA payés.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Historique de ventes (6-12 mois minimum) extrait de votre ERP ou système POS",
+      "Accès API météo (OpenWeatherMap gratuit jusqu'à 1000 calls/jour)",
+      "Environ 2h pour connecter vos sources de données et calibrer les modèles de prévision",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -2973,11 +3437,69 @@ async def get_report(days: int = 30):
     metaTitle: "Agent IA d'Analyse des Retours Clients — Guide Produit",
     metaDescription:
       "Analysez automatiquement vos retours clients avec un agent IA. Sentiment, thèmes récurrents et recommandations produit priorisées.",
+    storytelling: {
+      sector: "SaaS B2B",
+      persona: "Léa, Head of Product chez un éditeur de logiciel RH (95 salariés)",
+      painPoint: "Léa reçoit 300 retours clients par semaine dispersés entre 4 canaux : avis App Store/Capterra (120), tickets support Zendesk (140), réponses NPS (30), mentions Twitter/LinkedIn (10). Lire et analyser manuellement tout ce feedback prend 8h par semaine à son équipe produit. Résultat : des signaux critiques passent inaperçus. Un bug majeur sur l'export de paie signalé 47 fois en 2 semaines n'a été détecté qu'au bout de 11 jours car noyé dans le flux. Les décisions produit sont prises sur des intuitions au lieu de données structurées.",
+      story: "Léa a configuré l'agent en connectant Zendesk, Typeform (NPS), App Store API et un scraper LinkedIn. Dès la première semaine, l'agent a agrégé et analysé les 320 retours reçus. Le dashboard a remonté automatiquement le top 5 des irritants : 1) Export paie buggé (47 mentions, sentiment -0.82), 2) Interface mobile lente (23 mentions), 3) Manque intégration Slack (18 mentions). Léa a priorisé le fix export paie qui a été déployé en 3 jours au lieu de traîner 3 semaines.",
+      result: "En 2 mois : temps d'analyse des retours réduit de 8h à 45 min par semaine. Détection de 5 bugs critiques en moyenne 4,2 jours plus tôt grâce aux alertes automatiques. NPS passé de 32 à 48 en 3 mois grâce à des actions produit ultra-ciblées sur les irritants réels. Léa a réaffecté 85% du temps d'analyse feedback sur la conception de nouvelles features et les interviews utilisateurs qualitatifs.",
+    },
+    beforeAfter: {
+      inputLabel: "Retours clients de la semaine",
+      inputText: "142 retours collectés — Sources : 68 tickets Zendesk · 41 avis App Store · 18 réponses NPS · 15 mentions réseaux sociaux — Période : 1er au 7 février 2025 — Produit : Logiciel RH v4.2",
+      outputFields: [
+        { label: "Sentiment global", value: "6.2/10 — Stable vs semaine précédente (6.1/10) — 52% positif · 31% neutre · 17% négatif" },
+        { label: "Top irritant #1", value: "Export bulletin paie PDF corrompu — 34 mentions (-0.79 sentiment) — Impact : 12% utilisateurs" },
+        { label: "Top irritant #2", value: "Lenteur interface mobile — 19 mentions (-0.61 sentiment) — Temps chargement >8s rapporté" },
+        { label: "Insight positif", value: "Nouvelle feature gestion congés très appréciée — 28 mentions (+0.84 sentiment) — Demandes variantes premium" },
+        { label: "Recommandation produit", value: "URGENT : Fix export paie (ROI majeur satisfaction) · MOYEN : Optimiser perf mobile · EXPLORE : Variantes premium congés" },
+      ],
+      beforeContext: "Multi-sources · 142 retours agrégés · Semaine 6/2025",
+      afterLabel: "Analyse de sentiment IA",
+      afterDuration: "23 secondes",
+      afterSummary: "Sentiment calculé, top irritants identifiés, recommandations produit priorisées par impact",
+    },
+    roiEstimator: {
+      label: "Combien de retours clients recevez-vous par semaine ?",
+      unitLabel: "Analyse manuelle / sem.",
+      timePerUnitMinutes: 4,
+      timeWithAISeconds: 3,
+      options: [50, 100, 200, 500, 1000],
+    },
+    faq: [
+      {
+        question: "Quelles sources de feedback client l'agent peut-il agréger automatiquement ?",
+        answer: "L'agent se connecte nativement à : Zendesk, Intercom, Freshdesk (tickets support), Typeform/SurveyMonkey (NPS/CSAT), App Store/Google Play API (avis apps), Trustpilot/Capterra/G2 (avis B2B), scraper réseaux sociaux (Twitter, LinkedIn mentions). Vous pouvez ajouter des sources custom via webhook ou CSV upload. Tous les retours sont dédupliqués et agrégés dans un dashboard unifié.",
+      },
+      {
+        question: "Comment l'agent détecte-t-il le sarcasme ou l'ironie dans les avis clients ?",
+        answer: "Les LLMs récents (Claude Sonnet 4.5, GPT-4o) sont bons pour détecter le sarcasme grâce au contexte. Exemple : 'Super, encore un bug, bravo !' est correctement classé comme négatif. La précision est de ~85% sur le sarcasme évident. Pour les cas ambigus, l'agent marque le sentiment comme 'INCERTAIN' et vous pouvez le re-classifier manuellement. Un audit trimestriel permet d'affiner le modèle.",
+      },
+      {
+        question: "L'agent peut-il identifier des tendances émergentes avant qu'elles deviennent massives ?",
+        answer: "Oui, c'est un cas d'usage clé. L'agent détecte les signaux faibles : un sujet mentionné 5 fois en 2 jours alors qu'il n'était jamais remonté = alerte early warning. Vous paramétrez des seuils d'alerte (ex : >10 mentions d'un thème en 48h = notification Slack). Cela permet d'identifier des bugs naissants, des demandes features récurrentes, ou des insatisfactions avant qu'elles explosent.",
+      },
+      {
+        question: "Comment éviter de biaiser les décisions produit en sur-réagissant à une minorité vocale ?",
+        answer: "L'agent pondère automatiquement les retours par volume (nombre de mentions) ET impact business (ARR du client, usage produit). Un client enterprise qui paie 50K€/an a un poids supérieur à un freemium. Vous paramétrez les pondérations selon votre modèle économique. Le dashboard affiche toujours : volume total, % d'utilisateurs impactés, ARR concerné. Vous gardez le contexte pour décider.",
+      },
+      {
+        question: "Combien coûte l'analyse IA de 500 retours clients par semaine ?",
+        answer: "Avec GPT-4o : environ 0.50€ par batch de 500 retours analysés (sentiment + classification thématique + priorisation). Avec Claude Sonnet : environ 0.40€. Avec Ollama (gratuit, local) : 0€ mais plus lent (5 min vs 20s). Pour 500 retours/semaine avec GPT-4o : environ 2€/mois. Le ROI est énorme : 1 bug critique détecté 1 semaine plus tôt = potentiellement 10-50K€ de churn évité.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (Anthropic Claude Sonnet, OpenAI GPT-4o recommandés pour l'analyse de sentiment)",
+      "Accès API à vos outils de feedback (Zendesk, Intercom, Typeform, App Store Connect)",
+      "Historique de retours clients (3-6 mois) pour calibrer les thèmes récurrents",
+      "Environ 2h pour connecter les sources de feedback et configurer les alertes thématiques",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-veille-réglementaire",
+    slug: "agent-veille-reglementaire",
     title: "Agent de Veille Réglementaire",
     subtitle: "Surveillez les évolutions réglementaires et évaluez leur impact sur votre organisation",
     problem:
@@ -3214,6 +3736,64 @@ async def scan():
     metaTitle: "Agent IA de Veille Réglementaire — Guide Conformité",
     metaDescription:
       "Automatisez votre veille réglementaire avec un agent IA. Surveillance EU AI Act, RGPD, DORA et analyse de gap automatique.",
+    storytelling: {
+      sector: "Conformité & Régulation",
+      persona: "Maître Jean-Philippe Martin, Directeur Conformité chez une fintech (140 salariés)",
+      painPoint: "Jean-Philippe doit suivre l'évolution réglementaire européenne et française sur 6 domaines : paiements (DSP2, DSP3), lutte anti-blanchiment (LCB-FT, TRACFIN), protection des données (RGPD), IA (EU AI Act), cybersécurité (NIS2, DORA). Il passe 12h par semaine à scanner les publications officielles (EUR-Lex, CNIL, ACPR) et interpréter leur impact. Un nouveau règlement DORA sur la résilience opérationnelle publié en juin est passé inaperçu pendant 5 semaines car noyé dans les 847 pages du JOUE. Résultat : retard de mise en conformité et risque de sanction ACPR.",
+      story: "Jean-Philippe a configuré l'agent en définissant son périmètre sectoriel (fintech, paiements, France + EU) et ses processus métier critiques (KYC, onboarding, scoring crédit). L'agent surveille quotidiennement EUR-Lex, le JOUE et le site CNIL. Une semaine après activation, l'agent détecte une consultation publique CNIL sur l'IA dans le scoring crédit (deadline dans 45 jours). Il génère automatiquement une synthèse vulgarisée de 2 pages, identifie 3 gaps de conformité vs pratiques actuelles, et propose un plan d'action avec échéances. Jean-Philippe répond à la consultation à temps.",
+      result: "En 5 mois : temps de veille réglementaire réduit de 12h à 2h par semaine. Détection de 8 nouvelles réglementations pertinentes en moyenne 3,2 semaines plus tôt qu'avant. 0 mise en conformité manquée ou en retard. Économie estimée : 150K€ de sanctions évitées + 80h de temps juriste réaffecté sur conseil opérationnel. Le scoring de conformité global de la fintech est passé de 78% à 94% audité par l'ACPR.",
+    },
+    beforeAfter: {
+      inputLabel: "Publication réglementaire détectée",
+      inputText: "[EUR-Lex] Règlement délégué (UE) 2025/341 — Publication : 3 février 2025 — Sujet : Exigences techniques pour la résilience opérationnelle des PSP (DORA) — Périmètre : Prestataires services paiement EU — Entrée en vigueur : 1er janvier 2026 — 127 pages",
+      outputFields: [
+        { label: "Synthèse vulgarisée", value: "Nouvelles obligations de tests de résilience IT trimestriels + plan de continuité d'activité (PCA) renforcé pour PSP" },
+        { label: "Impact identifié", value: "MOYEN-ÉLEVÉ — 4 nouvelles obligations vs pratiques actuelles — Concerne infrastructure IT et PCA" },
+        { label: "Gap de conformité #1", value: "Tests résilience IT : actuellement annuels, nouveau règlement exige trimestriels + scénarios cyber avancés" },
+        { label: "Gap de conformité #2", value: "PCA : actuel non conforme Article 7.3 (RTO max 4h) — RTO actuel : 12h" },
+        { label: "Plan d'action recommandé", value: "1) Audit infrastructure IT (Mars 2025) 2) Mise à jour PCA RTO<4h (Juin 2025) 3) Tests trimestriels dès Q3 2025" },
+      ],
+      beforeContext: "EUR-Lex · Publication JOUE · 2025-02-03",
+      afterLabel: "Analyse réglementaire IA",
+      afterDuration: "67 secondes",
+      afterSummary: "Synthèse rédigée, impacts identifiés, gaps détectés, plan d'action généré avec échéances",
+    },
+    roiEstimator: {
+      label: "Combien d'heures par semaine consacrez-vous à la veille réglementaire ?",
+      unitLabel: "Veille manuelle / sem.",
+      timePerUnitMinutes: 60,
+      timeWithAISeconds: 300,
+      options: [2, 5, 10, 20, 40],
+    },
+    faq: [
+      {
+        question: "Quelles sources réglementaires officielles l'agent peut-il surveiller automatiquement ?",
+        answer: "L'agent scrape quotidiennement : EUR-Lex (réglements, directives EU), Journal Officiel UE et FR, sites régulateurs sectoriels (CNIL, ACPR, AMF, ANSSI), publications Parlement Européen et Commission. Vous paramétrez le périmètre par mots-clés (RGPD, IA, paiements, etc.) et géographie (France, EU, US). Les publications pertinentes sont notifiées par email ou Slack sous 24h.",
+      },
+      {
+        question: "L'agent peut-il se tromper dans l'interprétation juridique d'un texte réglementaire ?",
+        answer: "Oui, le risque existe surtout sur les textes ambigus ou très techniques. L'agent génère une synthèse et une interprétation, mais ajoute systématiquement un disclaimer : 'Analyse automatique à valider par un juriste'. Pour les textes critiques (sanctions lourdes possibles), l'agent marque 'REVUE JURISTE OBLIGATOIRE'. Vous restez responsable de la validation finale et de la décision de mise en conformité.",
+      },
+      {
+        question: "Comment l'agent priorise-t-il les réglementations selon leur impact sur mon activité ?",
+        answer: "Lors de la configuration, vous définissez : secteur d'activité (fintech, santé, industrie), géographie (France, EU, multi-pays), processus métier critiques (KYC, données personnelles, cybersécurité). L'agent utilise ces critères pour scorer chaque nouvelle réglementation : impact NUL / FAIBLE / MOYEN / ÉLEVÉ / CRITIQUE. Les réglementations CRITIQUE déclenchent une alerte Slack immédiate + email dirigeants.",
+      },
+      {
+        question: "L'agent peut-il générer automatiquement des plans de mise en conformité actionnables ?",
+        answer: "Oui. Après analyse du texte réglementaire, l'agent génère un plan d'action avec : 1) Liste des obligations nouvelles, 2) Gap analysis vs pratiques actuelles (si vous avez indexé votre registre de conformité), 3) Actions correctives recommandées avec échéances basées sur la date d'entrée en vigueur, 4) Budget estimé et ressources nécessaires. Le plan reste un draft à valider et adapter à votre contexte.",
+      },
+      {
+        question: "Combien coûte la surveillance IA d'un périmètre réglementaire complet ?",
+        answer: "Avec GPT-4o : environ 2€ par semaine (scraping quotidien + analyse de 5-10 textes pertinents détectés). Avec Claude Sonnet : environ 1.50€/semaine. Avec Ollama (gratuit, local) : 0€ mais nécessite infrastructure dédiée. Pour une surveillance continue avec GPT-4o : environ 8€/mois. Le ROI est évident : 1 sanction RGPD évitée (moyenne 50K€) = 520 ans d'IA payés.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (Anthropic Claude Sonnet, OpenAI GPT-4o recommandés pour l'analyse juridique)",
+      "Définition précise du périmètre réglementaire à surveiller (secteur, géo, thématiques)",
+      "Optionnel : registre de conformité actuel pour analyse de gap automatique",
+      "Environ 2h pour configurer les sources réglementaires et les critères de priorisation",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -3434,6 +4014,64 @@ async def process_meeting(
     metaTitle: "Agent IA de Compte-Rendu de Réunion — Guide Opérationnel",
     metaDescription:
       "Automatisez vos comptes-rendus de réunion avec un agent IA. Transcription, extraction de décisions et suivi des actions en temps réel.",
+    storytelling: {
+      sector: "Conseil en stratégie",
+      persona: "Thomas, Directeur Associé chez un cabinet de conseil (120 salariés)",
+      painPoint: "Son équipe organise 35 réunions clients par semaine. Problème : seulement 30% sont documentées, et quand un compte-rendu existe, il arrive 3 jours après la réunion. Les actions décidées se perdent, les clients redemandent ce qui a été validé, et les équipes passent des heures à retrouver qui doit faire quoi. Résultat : perte de crédibilité client et exécution chaotique des projets.",
+      story: "Thomas a connecté l'agent à Google Meet et Slack un mercredi matin. Dès la première réunion client, la transcription s'est lancée automatiquement. 3 minutes après la fin du call, tous les participants ont reçu un compte-rendu structuré : synthèse en 8 points, 5 décisions prises, 7 actions assignées avec échéances. Le client a répondu \"c'est la première fois qu'on reçoit un CR aussi vite et aussi clair\".",
+      result: "En 6 semaines : 100% des réunions documentées vs 30% avant. Temps de rédaction passé de 30 min à 0 min par réunion (gain de 17h/semaine). Taux de réalisation des actions dans les délais remonté de 58% à 89%. Les consultants ont réaffecté ce temps sur de la production facturée.",
+    },
+    beforeAfter: {
+      inputLabel: "Réunion client enregistrée",
+      inputText: "— Sophie : On valide la roadmap Q2 alors ? Marc, tu peux boucler le cahier des charges d'ici vendredi ?\n— Marc : Oui, mais il me faut la validation budget avant jeudi.\n— Thomas : OK, je relance la DG demain matin. Pour la partie tech, on embarque l'API de paiement dès le sprint 1 ?\n— Sophie : Non, on reporte au sprint 2, la priorité c'est l'onboarding utilisateur.",
+      outputFields: [
+        { label: "Décision 1", value: "Roadmap Q2 validée, démarrage confirmé" },
+        { label: "Décision 2", value: "API de paiement repoussée au sprint 2, priorité onboarding" },
+        { label: "Action 1", value: "Marc : Livrer cahier des charges — échéance vendredi 14/02" },
+        { label: "Action 2", value: "Thomas : Obtenir validation budget DG — échéance jeudi 13/02" },
+        { label: "Participants", value: "Sophie (cliente), Marc (Product Owner), Thomas (Dir. Projet)" },
+      ],
+      beforeContext: "reunion-client-02.mp4 · 43 min · 3 participants",
+      afterLabel: "Transcription + Synthèse IA",
+      afterDuration: "3 minutes",
+      afterSummary: "Compte-rendu structuré envoyé automatiquement aux 3 participants",
+    },
+    roiEstimator: {
+      label: "Combien de réunions organisez-vous par semaine ?",
+      unitLabel: "Rédaction CR / sem.",
+      timePerUnitMinutes: 30,
+      timeWithAISeconds: 180,
+      options: [5, 10, 20, 35, 50],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il distinguer qui parle dans la réunion ?",
+        answer: "Oui, si vous utilisez Whisper avec diarisation activée ou un service comme AssemblyAI. L'agent attribue chaque intervention au bon participant en croisant les métadonnées de la visio (noms affichés) et l'analyse vocale. Pour de meilleurs résultats, demandez aux participants de se présenter en début de réunion.",
+      },
+      {
+        question: "Que se passe-t-il si des informations confidentielles sont discutées ?",
+        answer: "Vous avez deux options : 1) Utiliser Whisper.cpp en local (gratuit, 100% on-premise, aucune donnée ne quitte votre serveur) ou 2) Configurer OpenAI Whisper avec leur option 'Zero Data Retention' (les audio ne sont pas stockés après transcription). Pour le LLM, privilégiez Claude ou un modèle local via Ollama pour garantir la confidentialité.",
+      },
+      {
+        question: "L'agent peut-il gérer des réunions en plusieurs langues ?",
+        answer: "Oui, Whisper gère 99 langues. Si votre réunion mélange français et anglais, l'agent détecte automatiquement les changements de langue et produit une transcription multilingue. La synthèse finale peut être générée dans la langue de votre choix via un simple paramètre dans le prompt LLM.",
+      },
+      {
+        question: "Comment sont assignées les actions automatiquement ?",
+        answer: "L'agent détecte les formulations d'engagement ('je m'occupe de...', 'Marc, tu peux...', 'on doit livrer X avant vendredi'). Il extrait le responsable, la tâche et l'échéance. Les actions sont ensuite envoyées dans votre outil de gestion (Notion, Asana, Linear) ou par email. Vous pouvez paramétrer un workflow de validation avant envoi si besoin.",
+      },
+      {
+        question: "Quel est le coût réel par réunion transcrite ?",
+        answer: "Avec Whisper API d'OpenAI : 0,006$/min, soit ~0,25€ pour une réunion de 1h. Avec GPT-4.1 pour la synthèse : ~0,15€ par compte-rendu. Total : environ 0,40€/réunion. Alternative gratuite : Whisper.cpp local + Ollama (Llama 3.1), coût = 0€, uniquement l'électricité de votre serveur.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Un accès API à votre outil de visio (Google Meet, Zoom, Teams) ou upload manuel d'audio",
+      "Optionnel : Une base PostgreSQL ou Notion pour stocker les comptes-rendus",
+      "Environ 2h pour configurer le workflow complet avec tests",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -3664,11 +4302,70 @@ async def sla_dashboard():
     metaTitle: "Agent IA de Surveillance des SLA — Guide IT/Support",
     metaDescription:
       "Surveillez vos SLA en temps réel avec un agent IA. Prédiction de dépassement, escalade automatique et reporting de performance.",
+    storytelling: {
+      sector: "Opérateur télécoms",
+      persona: "Karim, Responsable SLA & Performance chez un opérateur télécoms B2B (850 salariés)",
+      painPoint: "Son équipe gère 120 contrats SLA clients avec des centaines de métriques à surveiller (disponibilité réseau, temps de réponse, résolution d'incidents). Chaque mois, 3 à 5 SLA sont violés, déclenchant 40K€ de pénalités en moyenne. Pire : ils découvrent les violations 2h après la breach, trop tard pour agir. Les tableurs Excel de suivi sont obsolètes dès qu'ils sont ouverts.",
+      story: "Karim a branché l'agent sur les APIs de monitoring (Datadog, PagerDuty) un lundi matin. Dès le premier jour, l'agent a détecté un SLA critique à 92% de consommation à 14h, alors que la breach était prévue à 17h si la tendance continuait. Il a automatiquement escaladé vers le manager d'astreinte qui a dépêché un technicien. La violation a été évitée avec 35 minutes de marge.",
+      result: "En 3 mois : violations de SLA réduites de 5 par mois à 1 par trimestre. Détection anticipée : 85% des risques détectés 1 à 3h avant la breach potentielle. Économie de pénalités : 180K€ évités sur l'année. Les équipes ne surveillent plus des dashboards toute la journée, elles interviennent uniquement sur alerte intelligente.",
+    },
+    beforeAfter: {
+      inputLabel: "Métriques de performance en temps réel",
+      inputText: "SLA_CLIENT_ORANGE_B2B : Disponibilité réseau backbone 99.95% garanti\nMétrique actuelle : 99.89% (14:23:12)\nTendance 3h : -0.04% par heure\nSeuil critique : 99.95%\nTemps avant breach si tendance continue : 1h47min",
+      outputFields: [
+        { label: "Statut SLA", value: "WARNING — Risque de breach détecté" },
+        { label: "Prédiction", value: "Violation probable à 16:10 si aucune action (confiance 87%)" },
+        { label: "Cause racine probable", value: "Incident réseau partiel Zone Nord — 3 nœuds en dégradé" },
+        { label: "Action recommandée", value: "Escalade L2 immédiate + mobilisation technicien Zone Nord" },
+        { label: "Impact financier", value: "Pénalité contractuelle : 42 000€ si breach confirmée" },
+      ],
+      beforeContext: "client-orange-b2b · SLA99.95 · Datadog API",
+      afterLabel: "Analyse prédictive IA",
+      afterDuration: "8 secondes",
+      afterSummary: "Alerte envoyée au manager d'astreinte + ticket créé dans ServiceNow",
+    },
+    roiEstimator: {
+      label: "Combien de contrats SLA gérez-vous ?",
+      unitLabel: "Vérification manuelle / sem.",
+      timePerUnitMinutes: 45,
+      timeWithAISeconds: 5,
+      options: [10, 25, 50, 100, 200],
+    },
+    faq: [
+      {
+        question: "Comment l'agent prédit-il les violations de SLA à l'avance ?",
+        answer: "L'agent analyse la tendance des métriques sur une fenêtre glissante (ex: dernières 3h), calcule la vélocité de dégradation et projette le moment où le seuil contractuel sera franchi. Il croise cette projection avec l'historique d'incidents similaires et les patterns saisonniers pour affiner la prédiction. Si la confiance dépasse 75%, une alerte est déclenchée.",
+      },
+      {
+        question: "L'agent peut-il s'intégrer à notre SIEM existant (Splunk, Elastic) ?",
+        answer: "Oui, l'agent se connecte à n'importe quelle source via API REST, webhooks ou requêtes SQL directes. Il est compatible avec Splunk, Elastic, Datadog, Prometheus, Grafana, New Relic, etc. Vous configurez les requêtes de collecte de métriques dans n8n et l'agent ingère les données toutes les X minutes (configurable).",
+      },
+      {
+        question: "Que se passe-t-il en cas de faux positif répété ?",
+        answer: "L'agent apprend de vos feedbacks. Si vous marquez une alerte comme 'faux positif', le modèle ajuste son seuil de sensibilité pour ce type de métrique. Vous pouvez aussi configurer des règles métier explicites (ex: 'ignorer les warnings entre 2h et 6h du matin pour la métrique X'). L'objectif est de réduire la fatigue d'alerte sous 5% de faux positifs.",
+      },
+      {
+        question: "L'escalade automatique peut-elle appeler directement un technicien ?",
+        answer: "Oui, via intégration PagerDuty, OpsGenie ou un simple webhook vers votre système d'astreinte. Vous paramétrez des règles graduées : WARNING → Slack au manager, CRITICAL → SMS au technicien d'astreinte + création ticket ServiceNow, BREACH → Appel téléphonique automatique au responsable d'astreinte. Tout est configurable sans code dans n8n.",
+      },
+      {
+        question: "Peut-on auditer les décisions prises par l'agent ?",
+        answer: "Absolument. Chaque prédiction, alerte et escalade est loguée dans PostgreSQL avec le contexte complet : métriques analysées, raisonnement du LLM, score de confiance, actions déclenchées et outcome (vraie alerte ou faux positif). Vous disposez d'un dashboard de traçabilité complet pour les audits de conformité ou les post-mortems d'incidents.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API en lecture à vos outils de monitoring (Datadog, Splunk, Prometheus...)",
+      "Une base PostgreSQL ou TimescaleDB pour stocker l'historique des métriques",
+      "Optionnel : Intégration PagerDuty ou OpsGenie pour les escalades automatiques",
+      "Environ 3h pour configurer le monitoring et les règles d'escalade",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-génération-propositions-commerciales",
+    slug: "agent-generation-propositions-commerciales",
     title: "Agent de Génération de Propositions Commerciales",
     subtitle: "Générez automatiquement des propositions commerciales personnalisées et des devis sur mesure",
     problem:
@@ -4260,7 +4957,7 @@ async def engagement_dashboard(department: str = None):
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-évaluation-fournisseurs",
+    slug: "agent-evaluation-fournisseurs",
     title: "Agent d'Évaluation des Fournisseurs",
     subtitle: "Évaluez vos fournisseurs automatiquement avec des scorecards, une détection de risques et des notations ESG",
     problem:
@@ -4856,6 +5553,65 @@ async def reputation_dashboard(days: int = 7):
     metaTitle: "Agent IA de Surveillance de Réputation — Guide Marketing",
     metaDescription:
       "Surveillez votre réputation de marque en temps réel avec un agent IA. Détection de crise, analyse de sentiment et templates de réponse automatiques.",
+    storytelling: {
+      sector: "Hôtellerie de luxe",
+      persona: "Céline, Directrice Marketing & Communication chez une chaîne hôtelière (450 salariés)",
+      painPoint: "Sa marque est mentionnée 200 fois par jour sur les réseaux sociaux, TripAdvisor, Google Reviews et les forums. Impossible à suivre manuellement. Le mois dernier, un client mécontent a posté une vidéo virale sur TikTok (800K vues) critiquant l'hygiène d'un hôtel. L'équipe a découvert la crise 18h après la publication, trop tard : les médias avaient déjà relayé. Impact : -12% de réservations sur 3 semaines.",
+      story: "Céline a configuré l'agent pour surveiller 15 mots-clés de marque et 8 hashtags critiques. Le mardi suivant, à 11h23, l'agent détecte un pic anormal de mentions négatives sur Twitter avec le hashtag #NomDeLaMarque. Score de tonalité : -72/100. Il alerte immédiatement Céline avec un template de réponse pré-rédigé adapté au contexte. En 18 minutes, la réponse officielle est publiée, la situation maîtrisée avant qu'elle n'explose.",
+      result: "En 2 mois : détection de crise 6x plus rapide (moyenne 25 min vs 3h avant). 4 crises potentielles détectées et neutralisées avant propagation. Score de sentiment global remonté de 62/100 à 78/100. L'équipe ne passe plus 2h/jour à scroller les réseaux sociaux, elle intervient uniquement sur alerte qualifiée.",
+    },
+    beforeAfter: {
+      inputLabel: "Flux de mentions réseaux sociaux",
+      inputText: "@ClientMecontent sur Twitter : 'Incroyable. 3e fois que je réserve chez @NomDeLaMarque et 3e fois que la clim ne fonctionne pas. 340€ la nuit pour dormir dans un sauna. INADMISSIBLE. Je déconseille fortement. #NomDeLaMarque #Arnaque #ServiceClient'\n\nEngagement : 247 likes, 89 retweets en 35 minutes",
+      outputFields: [
+        { label: "Tonalité", value: "Très négative (-85/100)" },
+        { label: "Niveau de crise", value: "MEDIUM — Viralité en cours, intervention sous 30 min recommandée" },
+        { label: "Thématique", value: "Qualité de service — Problème technique récurrent (climatisation)" },
+        { label: "Impact estimé", value: "Portée actuelle : ~18K personnes · Potentiel viral : 65%" },
+        { label: "Template de réponse", value: "Bonjour, nous sommes sincèrement désolés pour cette expérience. Votre confort est notre priorité. Pourriez-vous nous envoyer votre numéro de réservation en DM ? Nous souhaitons corriger cela immédiatement et vous proposer un geste commercial. — L'équipe [Nom]" },
+      ],
+      beforeContext: "@ClientMecontent · Twitter · il y a 12 min · Viralité détectée",
+      afterLabel: "Analyse de sentiment IA",
+      afterDuration: "5 secondes",
+      afterSummary: "Alerte crise envoyée + template de réponse généré + ticket créé dans Zendesk",
+    },
+    roiEstimator: {
+      label: "Combien de mentions recevez-vous par semaine ?",
+      unitLabel: "Veille manuelle / sem.",
+      timePerUnitMinutes: 2,
+      timeWithAISeconds: 3,
+      options: [50, 200, 500, 1000, 2000],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il surveiller tous les réseaux sociaux ?",
+        answer: "Oui, via les APIs officielles de Twitter/X, Meta (Facebook/Instagram), LinkedIn, TikTok, YouTube, et via scraping pour Reddit, forums spécialisés et sites d'avis (TripAdvisor, Google Reviews, Trustpilot). Vous configurez les sources à surveiller et les mots-clés. L'agent collecte les mentions toutes les 5-10 min et les analyse en temps réel.",
+      },
+      {
+        question: "Comment l'agent distingue-t-il une vraie crise d'un simple avis négatif isolé ?",
+        answer: "L'agent analyse 4 critères : 1) Tonalité du message (score -100 à +100), 2) Vélocité de propagation (likes, partages, commentaires), 3) Influenceur ou compte standard (nombre d'abonnés), 4) Mots-clés à risque ('arnaque', 'scandale', 'boycott'). Si 3+ critères dépassent les seuils configurés, une alerte de crise est déclenchée. Sinon, c'est classé comme 'veille normale'.",
+      },
+      {
+        question: "Les templates de réponse sont-ils personnalisables ?",
+        answer: "Totalement. Vous fournissez à l'agent votre charte de communication, votre tone of voice et des exemples de réponses types pour différents scénarios (insatisfaction produit, problème livraison, crise virale, etc.). Le LLM génère ensuite des réponses adaptées au contexte tout en respectant votre style. Vous pouvez imposer une validation humaine avant publication.",
+      },
+      {
+        question: "Que se passe-t-il si une mention est dans une langue étrangère ?",
+        answer: "L'agent détecte automatiquement la langue (via Claude ou GPT) et traduit la mention en français pour analyse. Le score de tonalité et la détection de crise fonctionnent en multilingue (anglais, espagnol, allemand, italien, etc.). Le template de réponse peut être généré dans la langue d'origine du message pour cohérence.",
+      },
+      {
+        question: "Peut-on exporter un rapport hebdomadaire de réputation ?",
+        answer: "Oui, l'agent génère automatiquement un rapport PDF ou Notion tous les lundis avec : évolution du score de sentiment (graphique sur 4 semaines), top 5 des mentions positives et négatives, nombre de crises détectées/résolues, temps moyen de réponse, et recommandations d'actions pour la semaine. Vous pouvez le personnaliser entièrement dans n8n.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Clés API des réseaux sociaux à surveiller (Twitter, Meta, etc.) — certaines sont gratuites",
+      "Une base PostgreSQL ou Notion pour stocker l'historique des mentions",
+      "Optionnel : Intégration Slack ou email pour recevoir les alertes de crise",
+      "Environ 2h30 pour configurer les sources et les règles de détection de crise",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -5129,6 +5885,66 @@ async def get_prediction(equipment_id: str):
     metaTitle: "Agent IA de Maintenance Prédictive Industrielle — Guide Opérations",
     metaDescription:
       "Anticipez les pannes industrielles avec un agent IA connecté à vos capteurs IoT. Maintenance prédictive, détection d'anomalies et planification automatique.",
+    storytelling: {
+      sector: "Industrie agroalimentaire",
+      persona: "Fabien, Directeur Technique chez un fabricant de produits laitiers (280 salariés)",
+      painPoint: "Son usine tourne 24/7 avec 18 lignes de production. Chaque arrêt non planifié coûte 15K€/heure en perte de production. Le mois dernier, un roulement de convoyeur a lâché sans prévenir, stoppant 2 lignes pendant 11h. Coût total : 165K€ + 40K€ de pièces en urgence. Les capteurs IoT installés il y a 2 ans collectent des données que personne n'analyse, faute de temps et de compétences.",
+      story: "Fabien a connecté l'agent aux 47 capteurs IoT (vibrations, température, acoustique) via MQTT. L'agent a ingéré 6 mois d'historique pour comprendre les patterns normaux. Le jeudi suivant, à 3h12 du matin, l'agent détecte une anomalie vibratoire subtile sur la ligne 12 (fréquence inhabituelle à 4200Hz). Il prédit une panne de roulement sous 18h avec 91% de confiance et crée automatiquement un ordre de travail dans la GMAO. Le technicien intervient à 8h, remplace le roulement en 2h lors d'une fenêtre de maintenance planifiée. Arrêt évité.",
+      result: "En 6 mois : arrêts non planifiés réduits de 12 à 3 (75%). Durée de vie des équipements allongée de 18% grâce à la maintenance au bon moment. Économie nette : 520K€ de pertes de production évitées. ROI atteint en 8 mois. Les équipes maintenance sont passées du mode pompier au mode pilotage stratégique.",
+    },
+    beforeAfter: {
+      inputLabel: "Données capteurs IoT en temps réel",
+      inputText: "Équipement : Convoyeur_Ligne12_Roulement_B\nVibration actuelle : 4.2 mm/s (normale : 2.1-3.5)\nTempérature : 68°C (normale : 45-60°C)\nFréquence dominante : 4200 Hz (inhabituelle)\nDonnées historiques : 6 mois · 47 capteurs · 2.3M mesures",
+      outputFields: [
+        { label: "Score de santé", value: "67/100 — Dégradation détectée" },
+        { label: "Diagnostic", value: "Usure avancée du roulement, défaut d'alignement probable" },
+        { label: "Prédiction de panne", value: "Panne probable sous 14-20h (confiance 91%)" },
+        { label: "Action recommandée", value: "Remplacement roulement en maintenance préventive sous 12h" },
+        { label: "Ordre de travail", value: "OT-2024-1847 créé dans GMAO · Pièces : REF-R12-4200 · Durée estimée : 2h" },
+      ],
+      beforeContext: "Ligne12_Roulement_B · MQTT broker · Capteur vibration+temp",
+      afterLabel: "Analyse prédictive IA",
+      afterDuration: "12 secondes",
+      afterSummary: "Ordre de travail créé dans GMAO + alerte envoyée au chef d'équipe maintenance",
+    },
+    roiEstimator: {
+      label: "Combien d'équipements critiques surveillez-vous ?",
+      unitLabel: "Inspection manuelle / sem.",
+      timePerUnitMinutes: 20,
+      timeWithAISeconds: 10,
+      options: [10, 25, 50, 100, 200],
+    },
+    faq: [
+      {
+        question: "Quels types de capteurs IoT sont compatibles ?",
+        answer: "L'agent fonctionne avec tout capteur publiant via MQTT, OPC-UA, Modbus ou HTTP. Les types courants : capteurs de vibration (accéléromètres), température (thermocouples), pression, acoustique, courant électrique, débit. L'important est d'avoir un flux de données en temps réel. Même des capteurs industriels anciens peuvent être connectés via des passerelles IoT type Raspberry Pi.",
+      },
+      {
+        question: "Comment l'agent apprend-il ce qui est normal ou anormal pour chaque machine ?",
+        answer: "Vous lui fournissez un historique de données sur 3 à 6 mois minimum. L'agent utilise du machine learning (isolation forest, autoencodeur) pour modéliser le comportement normal de chaque équipement. Ensuite, toute déviation statistique significative par rapport à cette baseline déclenche une alerte. Plus l'historique est riche, meilleure est la détection. Il s'améliore en continu avec le feedback des mainteneurs.",
+      },
+      {
+        question: "Que se passe-t-il si un capteur tombe en panne ?",
+        answer: "L'agent détecte automatiquement les capteurs défaillants (absence de données, valeurs aberrantes répétées type 0 ou 999) et génère une alerte 'capteur HS'. Il désactive temporairement les prédictions pour cet équipement et se base sur les capteurs voisins si possible. Vous recevez une notification pour intervenir sur le capteur. Cette résilience évite les faux positifs liés à des données corrompues.",
+      },
+      {
+        question: "L'agent peut-il s'intégrer à notre GMAO existante (SAP, Maximo) ?",
+        answer: "Oui, via API REST ou webhooks. L'agent peut créer automatiquement des ordres de travail dans SAP PM, IBM Maximo, Infor EAM, ou des GMAO plus simples (Dimo Maint, CARL Source). Vous configurez le mapping des champs (équipement, type d'intervention, priorité, pièces) et l'agent pousse les ordres de travail directement. Plus besoin de saisie manuelle.",
+      },
+      {
+        question: "Quel est le délai minimum de prédiction avant panne ?",
+        answer: "Cela dépend du type de défaillance et de la qualité des données. En moyenne : 12 à 48h pour un roulement, 2 à 7 jours pour un moteur électrique, 1 à 3 jours pour une fuite de compresseur. Les dégradations lentes (usure progressive) sont plus faciles à prédire que les pannes brutales (rupture soudaine). L'agent vous indique toujours son niveau de confiance et l'horizon de prédiction.",
+      },
+    ],
+    prerequisites: [
+      "Un broker MQTT (Mosquitto gratuit) ou connexion OPC-UA à vos automates industriels",
+      "Des capteurs IoT installés sur vos équipements critiques (vibration, température, pression)",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Une base TimescaleDB ou InfluxDB (gratuite) pour stocker les séries temporelles",
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Optionnel : Accès API à votre GMAO pour créer automatiquement les ordres de travail",
+      "Environ 4h pour configurer la collecte de données et les règles de prédiction",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -5394,6 +6210,66 @@ async def get_product_pricing(product_id: str):
     metaTitle: "Agent IA de Tarification Dynamique — Guide Sales & E-commerce",
     metaDescription:
       "Optimisez vos prix automatiquement avec un agent IA. Analyse concurrentielle, gestion du stock dormant et maximisation de la marge nette en temps réel.",
+    storytelling: {
+      sector: "E-commerce mode",
+      persona: "Laura, Directrice E-commerce chez une marque de prêt-à-porter (95 salariés)",
+      painPoint: "Son catalogue compte 2400 références. Chaque semaine, l'équipe pricing passe 6h à analyser les prix concurrents sur 150 produits clés, ajuster manuellement les prix en fonction des stocks et lancer des promotions à l'aveugle. Résultat : 340K€ de stock dormant invendu en fin de saison, marge nette érodée à 18% au lieu des 28% cibles. Et pendant ce temps, les concurrents ajustent leurs prix 3 fois par jour.",
+      story: "Laura a connecté l'agent à Shopify et à un scraper de prix concurrents (5 sites surveillés). Dès le lendemain, l'agent a détecté que 47 robes d'été avaient un stock > 30 jours et étaient 12% plus chères que la concurrence. Il a recommandé une baisse de prix de 8% sur ces références. Laura a validé, les ventes ont bondi de 340% sur ces produits en 5 jours. Le stock est passé de 34 jours à 11 jours. Marge préservée grâce à la rotation accélérée.",
+      result: "En 4 mois : marge nette remontée de 18% à 24% (+33% relatif). Stock dormant réduit de 340K€ à 120K€ (-65%). Taux de rotation des stocks amélioré de 40%. L'équipe ne passe plus 6h/semaine sur le pricing, elle valide les recommandations de l'agent en 30 min et se concentre sur la stratégie de collection.",
+    },
+    beforeAfter: {
+      inputLabel: "Produit à analyser",
+      inputText: "Robe d'été LUNA - Réf SKU-2847\nPrix actuel : 89€\nStock actuel : 247 unités (34 jours de couverture)\nVentes 7 derniers jours : 12 unités\nPrix concurrents : Zara 79€ · H&M 74€ · Mango 82€ · ASOS 85€\nSaison : Fin de saison (J-45 avant renouvellement collection)",
+      outputFields: [
+        { label: "Prix optimal recommandé", value: "82€ (-7,9%)" },
+        { label: "Confiance", value: "89% — Basé sur élasticité prix historique + benchmark concurrentiel" },
+        { label: "Impact estimé volume", value: "+45% de ventes attendues (18 → 26 unités/semaine)" },
+        { label: "Impact estimé marge", value: "+3 200€ de marge nette sur 4 semaines vs statu quo" },
+        { label: "Justification", value: "Stock élevé (34j) + concurrents 8% moins chers + fin de saison proche. Baisse modérée préserve la marge tout en accélérant rotation." },
+      ],
+      beforeContext: "SKU-2847 · Shopify · Concurrent scraping · Stock WMS",
+      afterLabel: "Recommandation pricing IA",
+      afterDuration: "6 secondes",
+      afterSummary: "Prix optimal calculé + simulation d'impact + recommandation envoyée pour validation",
+    },
+    roiEstimator: {
+      label: "Combien de références produits gérez-vous ?",
+      unitLabel: "Analyse pricing / sem.",
+      timePerUnitMinutes: 4,
+      timeWithAISeconds: 5,
+      options: [100, 500, 1000, 2500, 5000],
+    },
+    faq: [
+      {
+        question: "L'agent ajuste-t-il les prix automatiquement ou faut-il valider ?",
+        answer: "Par défaut, l'agent recommande et vous validez manuellement. Mais vous pouvez configurer une validation automatique avec des garde-fous : 'appliquer auto si variation < 10% et confiance > 85%'. Pour les ajustements majeurs (>15%) ou produits stratégiques, une validation humaine reste obligatoire. Vous gardez toujours le contrôle final.",
+      },
+      {
+        question: "Comment l'agent collecte-t-il les prix concurrents ?",
+        answer: "Deux méthodes : 1) Via APIs officielles de comparateurs de prix (Google Shopping, Kelkoo), 2) Via scraping web léger (BeautifulSoup + Playwright) sur les sites concurrents configurés. Vous définissez la liste de concurrents à surveiller et la fréquence (1x/jour ou temps réel). Les données sont stockées dans PostgreSQL pour analyse de tendances.",
+      },
+      {
+        question: "L'agent peut-il gérer des règles métier complexes (prix plancher, marge minimale) ?",
+        answer: "Absolument. Vous configurez des contraintes : prix plancher absolu par catégorie, marge minimale (ex: jamais < 15%), plafond de variation par ajustement (ex: max -20% d'un coup), exclusion de certains produits (ex: nouveautés jamais soldées avant J+30). L'agent optimise dans ces contraintes et vous alerte s'il ne peut pas atteindre l'objectif sans les violer.",
+      },
+      {
+        question: "Que se passe-t-il si les concurrents lancent une guerre des prix ?",
+        answer: "L'agent détecte les variations anormales de prix concurrents (baisse >20% en <24h sur plusieurs références). Il vous alerte avec une analyse : 'Concurrent X a baissé 47 produits de 25% en moyenne. Suivre ou ignorer ?' Vous décidez de la stratégie (suivre, attendre, différencier). L'agent peut simuler l'impact de chaque scénario (volume vs marge) pour vous aider à décider.",
+      },
+      {
+        question: "L'agent fonctionne-t-il sur plusieurs canaux de vente (site, marketplaces) ?",
+        answer: "Oui, il peut gérer des stratégies de pricing différenciées par canal : un prix sur votre site Shopify, un autre sur Amazon, un autre en magasin physique. Il optimise par canal en tenant compte des commissions marketplace, des coûts de distribution et de la stratégie de marge cible. Les ajustements peuvent être synchronisés ou indépendants selon votre configuration.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API à votre plateforme e-commerce (Shopify, WooCommerce, PrestaShop, Magento)",
+      "Accès API ou scraping web pour surveiller 3 à 10 concurrents clés",
+      "Une base PostgreSQL pour stocker l'historique des prix et des ventes",
+      "Optionnel : Accès API à votre ERP/WMS pour données de stock en temps réel",
+      "Environ 3h pour configurer les sources de données et les règles de pricing",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -5664,6 +6540,66 @@ async def trigger_reindex(space_key: str = "ALL"):
     metaTitle: "Agent IA de Gestion de Base de Connaissances — Guide IT & Knowledge",
     metaDescription:
       "Structurez et maintenez votre documentation interne avec un agent IA. RAG, détection de contenus obsolètes et réponses instantanées aux collaborateurs.",
+    storytelling: {
+      sector: "ESN / Intégration IT",
+      persona: "Marc, DSI chez une ESN spécialisée en intégration cloud (320 salariés)",
+      painPoint: "Ses équipes gèrent 40 clients avec des stacks techniques variées. La documentation est éparpillée : Confluence (vieux projets), Notion (nouveaux projets), Google Drive (procédures), SharePoint (contrats). Résultat : chaque consultant passe 1h45/jour à chercher de l'info ('Comment configurer le SSO sur cette infra Azure client ?'). Les mêmes questions reviennent 15 fois par mois sur Slack. Le turnover aggrave le problème : le savoir part avec les collaborateurs.",
+      story: "Marc a lancé l'agent un vendredi soir. Il a indexé 2400 documents en 3h (Confluence, Notion, Drive). Le lundi matin, un consultant demande sur Slack : 'Quelle est la procédure pour déployer un cluster Kubernetes chez le client AXA ?' L'agent répond en 8 secondes avec un lien direct vers la procédure à jour (Notion) + un schéma d'architecture (Confluence). Le consultant a gagné 35 minutes.",
+      result: "En 2 mois : temps de recherche d'info réduit de 1h45 à 25 min/jour par consultant (gain de 6h30/semaine/personne × 180 consultants = 1170h/semaine récupérées). Questions répétitives sur Slack réduites de 72%. Score de qualité documentaire remonté de 54/100 à 81/100 grâce aux suggestions de mise à jour automatiques. ROI atteint en 4 mois.",
+    },
+    beforeAfter: {
+      inputLabel: "Question d'un collaborateur",
+      inputText: "Comment activer l'authentification multifacteur (MFA) sur un compte AWS client en respectant notre procédure de sécurité ? C'est pour le client TotalEnergies, projet CloudMigration.",
+      outputFields: [
+        { label: "Réponse", value: "Voici la procédure complète pour activer MFA sur AWS conformément à notre standard de sécurité :" },
+        { label: "Source 1", value: "📄 Procédure_AWS_MFA_v3.2.pdf (Confluence) · Mis à jour il y a 12 jours" },
+        { label: "Source 2", value: "📄 Checklist_Sécurité_Cloud_Clients.md (Notion) · Section 4.3 · Validé par RSSI" },
+        { label: "Source 3", value: "📊 Architecture_TotalEnergies_CloudMigration.pdf (Drive) · Schéma infra p.8" },
+        { label: "Étapes clés", value: "1) Activer MFA virtuel via AWS IAM · 2) Configurer Google Authenticator ou Authy · 3) Tester l'accès avec MFA · 4) Documenter dans registre de config client" },
+        { label: "Contact expert", value: "Pour ce client spécifique, contacter Sophie Lemaire (Architecte Cloud, sophie.lemaire@esn.fr)" },
+      ],
+      beforeContext: "Question Slack #help-cloud · Marc Durand · il y a 2 min",
+      afterLabel: "Réponse IA avec sources",
+      afterDuration: "8 secondes",
+      afterSummary: "Réponse complète publiée sur Slack avec 3 sources documentaires citées",
+    },
+    roiEstimator: {
+      label: "Combien de collaborateurs utilisent la base de connaissances ?",
+      unitLabel: "Recherche d'info / sem.",
+      timePerUnitMinutes: 105,
+      timeWithAISeconds: 25,
+      options: [20, 50, 100, 250, 500],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il accéder à plusieurs sources de documentation en même temps ?",
+        answer: "Oui, c'est sa force principale. Il se connecte simultanément à Confluence, Notion, SharePoint, Google Drive, Dropbox, et même des bases de tickets Jira/Zendesk. Vous configurez les connecteurs dans n8n (la plupart ont des APIs officielles). L'agent indexe tout dans une base vectorielle unique (Pinecone ou ChromaDB) pour recherche unifiée. Plus besoin de chercher dans 5 outils différents.",
+      },
+      {
+        question: "Comment l'agent détecte-t-il les contenus obsolètes ?",
+        answer: "Il analyse la date de dernière modification et croise avec les mentions dans les tickets de support ou les questions récurrentes. Si un document n'a pas été mis à jour depuis >12 mois ET qu'il concerne une technologie/processus encore en usage, il le signale comme 'potentiellement obsolète'. Vous recevez un rapport mensuel avec la liste à vérifier. Vous pouvez paramétrer les seuils (ex: 6 mois pour la doc technique critique).",
+      },
+      {
+        question: "L'agent peut-il halluciner des réponses inexistantes ?",
+        answer: "C'est un risque réel avec les LLM. Pour le minimiser : 1) L'agent fonctionne en mode RAG strict (il cite toujours ses sources et ne répond que si un document pertinent existe), 2) Vous configurez un seuil de confiance minimum (ex: ne répondre que si score de similarité >75%), 3) Chaque réponse affiche les documents sources consultés pour traçabilité. Si aucun document pertinent n'est trouvé, l'agent répond 'Je n'ai pas trouvé de documentation sur ce sujet' plutôt que d'inventer.",
+      },
+      {
+        question: "Comment gérer les droits d'accès aux documents confidentiels ?",
+        answer: "L'agent respecte les permissions natives de chaque source. Si un document est restreint dans Confluence ou Notion (visible uniquement par certains groupes), l'agent n'y accédera pas pour les utilisateurs non autorisés. Vous pouvez aussi configurer des règles supplémentaires : 'Exclure tous les documents du dossier /RH/Salaires de l'indexation' ou 'Restreindre l'accès aux docs clients uniquement aux consultants affectés à ce client'.",
+      },
+      {
+        question: "Peut-on auditer toutes les questions posées et réponses données ?",
+        answer: "Absolument. Chaque requête est loguée dans PostgreSQL avec : qui a posé la question, quand, la question exacte, la réponse générée, les documents sources consultés, et le score de confiance. Vous disposez d'un dashboard de suivi pour les audits de conformité RGPD ou simplement pour identifier les gaps documentaires (questions fréquentes sans bonne réponse = besoin de créer un nouveau document).",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API à vos sources de documentation (Confluence, Notion, SharePoint, Google Drive)",
+      "Une base vectorielle (Pinecone gratuit jusqu'à 1M vecteurs, ou ChromaDB gratuit illimité)",
+      "Optionnel : Intégration Slack ou Teams pour répondre aux questions directement dans le chat",
+      "Environ 3h pour configurer les connecteurs et indexer la documentation initiale",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -5926,6 +6862,66 @@ async def energy_report(period: str = "monthly"):
     metaTitle: "Agent IA d'Optimisation Énergétique — Guide Opérations & RSE",
     metaDescription:
       "Réduisez vos coûts énergétiques et votre empreinte carbone avec un agent IA. Analyse temps réel, ajustement HVAC automatique et reporting carbone.",
+    storytelling: {
+      sector: "Distribution grande surface",
+      persona: "Nadia, Directrice RSE & Exploitation chez une enseigne de supermarchés (1200 salariés)",
+      painPoint: "Son réseau compte 45 magasins. Facture énergétique totale : 3,2M€/an. Problème : impossible de maîtriser les consommations. Les systèmes HVAC tournent à plein régime même quand les magasins sont vides à 21h. Les groupes froids des rayons frais consomment 30% de trop par manque d'optimisation. Le décret tertiaire impose -40% de consommation d'ici 2030, et Nadia est à -8% seulement. Pénalités réglementaires en vue.",
+      story: "Nadia a déployé l'agent sur 5 magasins pilotes avec des compteurs intelligents Linky déjà installés. L'agent a analysé les courbes de consommation sur 3 mois et détecté des anomalies massives : éclairage parking allumé 24/7 (bug automate), HVAC surchauffant à 23°C alors que 19°C suffisait, groupes froids dégivrant en pleine heure de pointe tarifaire. L'agent a ajusté automatiquement les consignes. Résultat : -18% de consommation sur ces 5 magasins en 6 semaines, sans impact sur le confort ni la conservation des produits.",
+      result: "En 6 mois sur 45 magasins : facture énergétique réduite de 3,2M€ à 2,6M€/an (-19%, soit 600K€ économisés). Empreinte carbone réduite de 840 tonnes CO2eq/an. Conformité décret tertiaire accélérée : trajectoire -40% d'ici 2030 désormais atteignable. ROI atteint en 14 mois. Nadia a transformé la contrainte réglementaire en avantage compétitif.",
+    },
+    beforeAfter: {
+      inputLabel: "Données de consommation magasin",
+      inputText: "Magasin Bordeaux-Lac · Mardi 18h-22h\nConsommation totale : 247 kWh (4h)\nDétail : HVAC 112 kWh · Éclairage 68 kWh · Groupes froids 54 kWh · Divers 13 kWh\nTarif heures pleines : 0,18€/kWh\nAfluence magasin : 340 clients (18h-20h) puis 45 clients (20h-22h)\nTempérature extérieure : 12°C · Occupation après 20h : <10%",
+      outputFields: [
+        { label: "Anomalie détectée", value: "HVAC surchauffe inutile après 20h + éclairage excessif zones vides" },
+        { label: "Gaspillage estimé", value: "48 kWh/jour évitables (18% de la consommation 18h-22h)" },
+        { label: "Action recommandée", value: "Réduire consigne HVAC à 18°C après 20h · Éteindre 60% de l'éclairage zones non fréquentées" },
+        { label: "Économie estimée", value: "127€/jour · 3 800€/mois · 46 000€/an pour ce magasin uniquement" },
+        { label: "Impact confort", value: "Nul — Température reste dans plage acceptable (18-20°C) et zones éclairées là où clients présents" },
+      ],
+      beforeContext: "Magasin Bordeaux-Lac · Linky API · 4h de données",
+      afterLabel: "Analyse énergétique IA",
+      afterDuration: "15 secondes",
+      afterSummary: "Gaspillages détectés + consignes d'optimisation envoyées à l'automate GTB du magasin",
+    },
+    roiEstimator: {
+      label: "Quelle est votre facture énergétique annuelle ?",
+      unitLabel: "Analyse manuelle / mois",
+      timePerUnitMinutes: 180,
+      timeWithAISeconds: 60,
+      options: [100000, 500000, 1000000, 2500000, 5000000],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il piloter directement les automates de gestion technique du bâtiment (GTB) ?",
+        answer: "Oui, s'ils exposent une API ou un protocole standard (BACnet, Modbus, KNX, MQTT). L'agent envoie des consignes d'ajustement (température HVAC, intensité lumineuse, horaires de fonctionnement) directement aux automates. Vous pouvez configurer une validation humaine avant application, ou autoriser les ajustements automatiques dans une plage définie (ex: HVAC entre 18 et 21°C uniquement).",
+      },
+      {
+        question: "Comment l'agent évite-t-il de dégrader le confort des occupants ?",
+        answer: "Il respecte des contraintes strictes que vous paramétrez : température min/max, taux d'humidité, luminosité minimale par zone. Il croise aussi les données d'occupation (capteurs de présence, badgeage, planning) pour ne jamais couper le chauffage/clim dans une zone occupée. Si un ajustement risque d'impacter le confort, l'agent vous alerte pour validation manuelle avant d'agir.",
+      },
+      {
+        question: "L'agent peut-il optimiser les achats d'énergie en fonction des tarifs dynamiques ?",
+        answer: "Oui, c'est une fonctionnalité clé. L'agent récupère les tarifs spot en temps réel (via API RTE pour l'électricité en France, ou votre fournisseur d'énergie). Il décale automatiquement les consommations flexibles (recharge batteries, préchauffage, dégivrage groupes froids) vers les heures creuses tarifaires. Sur une année, cela représente 5 à 12% d'économies supplémentaires selon la volatilité des tarifs.",
+      },
+      {
+        question: "Que se passe-t-il si un compteur intelligent tombe en panne ?",
+        answer: "L'agent détecte automatiquement les compteurs défaillants (absence de données, valeurs aberrantes) et génère une alerte maintenance. Il désactive temporairement les optimisations pour cette zone et passe en mode dégradé (consignes par défaut sécurisées). Vous recevez une notification pour intervenir sur le compteur. Les autres zones continuent d'être optimisées normalement.",
+      },
+      {
+        question: "L'agent aide-t-il à la conformité réglementaire (décret tertiaire, taxonomie EU) ?",
+        answer: "Absolument. Il génère automatiquement les rapports de consommation annuels requis par le décret tertiaire, calcule votre trajectoire de réduction vs l'objectif -40% (ou -50%, -60% selon l'échéance), et vous alerte si vous déviez de la trajectoire. Pour la taxonomie EU, il calcule l'empreinte carbone Scope 2 (émissions indirectes liées à l'énergie achetée) et exporte les données au format requis pour la CSRD.",
+      },
+    ],
+    prerequisites: [
+      "Des compteurs intelligents installés (Linky, ou sous-compteurs IoT par zone/usage)",
+      "Accès API aux données de consommation en temps réel (ou collecte MQTT)",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Une base TimescaleDB ou InfluxDB (gratuite) pour stocker les séries temporelles",
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Optionnel : Accès API aux automates GTB pour pilotage automatique (BACnet, Modbus, KNX)",
+      "Environ 3h pour configurer la collecte de données et les règles d'optimisation",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -6214,11 +7210,71 @@ async def get_today_routes():
     metaTitle: "Agent IA de Planification Logistique Terrain — Guide Supply Chain",
     metaDescription:
       "Optimisez les tournées de vos équipes terrain avec un agent IA. Replanification en temps réel, réduction des km et amélioration de la ponctualité.",
+    storytelling: {
+      sector: "Services à domicile",
+      persona: "Julien, Directeur Opérations chez un réseau de dépannage électrique (180 salariés)",
+      painPoint: "Son réseau gère 35 techniciens qui réalisent 250 interventions par jour en Île-de-France. Chaque matin, les planificateurs passent 2h à optimiser les tournées manuellement sur Excel. Problème : dès 10h, un technicien est malade, un autre bloqué dans les embouteillages A86, une urgence débarque chez un client prioritaire. Le planning explose, les techniciens font 40 km de trop, les clients attendent 2h de plus que prévu. Résultat : taux de ponctualité à 63%, coûts de carburant +25%, clients mécontents.",
+      story: "Julien a connecté l'agent au CRM (interventions planifiées), à l'API Google Maps (trafic temps réel) et au système de géolocalisation des techniciens. Dès le premier jour, l'agent a recalculé les tournées en tenant compte du trafic réel. Un technicien coincé sur A86 ? L'agent a automatiquement réaffecté ses 3 prochaines interventions à 2 collègues à proximité et notifié les clients des nouveaux horaires par SMS. Gain : 0 intervention annulée, clients prévenus en temps réel.",
+      result: "En 3 mois : taux de ponctualité remonté de 63% à 88%. Kilomètres parcourus réduits de 18% (économie de 42K€/an en carburant). +12% d'interventions réalisées par jour par technicien (passage de 7,1 à 8,0 interventions/jour en moyenne). Satisfaction client remontée de 71/100 à 87/100. Les planificateurs ne passent plus 2h/matin sur Excel, ils supervisent les replanifications automatiques en 20 min.",
+    },
+    beforeAfter: {
+      inputLabel: "Planning de tournée technicien",
+      inputText: "Technicien : Marc Dubois · Zone : Val-de-Marne (94)\nInterventions planifiées : 8 (9h-18h)\n1) 09h00 Créteil · 2) 10h30 Vitry · 3) 12h00 Ivry · 4) 14h00 Villejuif · 5) 15h30 Cachan · 6) 16h30 Arcueil · 7) 17h30 Gentilly\nAléas : Trafic A86 perturbé +35 min · Intervention 2 (Vitry) annulée par client · Urgence à traiter à Kremlin-Bicêtre avant 15h",
+      outputFields: [
+        { label: "Replanification", value: "7 interventions recalculées avec nouvel itinéraire optimisé" },
+        { label: "Nouvel ordre", value: "1) Créteil 09h · 2) Urgence Kremlin-Bicêtre 10h15 · 3) Ivry 11h45 · 4) Villejuif 13h30 · 5) Cachan 15h · 6) Arcueil 16h15 · 7) Gentilly 17h30" },
+        { label: "Intervention annulée", value: "Vitry réaffectée à technicien Sophie Martin (proximité, disponible 14h)" },
+        { label: "Temps de trajet économisé", value: "47 min · 23 km évités grâce au contournement A86" },
+        { label: "Notifications", value: "7 SMS clients envoyés avec nouveaux horaires précis (±15 min)" },
+      ],
+      beforeContext: "Marc Dubois · Val-de-Marne · Trafic API + urgence détectée",
+      afterLabel: "Replanification IA",
+      afterDuration: "11 secondes",
+      afterSummary: "Tournée recalculée + interventions réaffectées + clients notifiés automatiquement",
+    },
+    roiEstimator: {
+      label: "Combien d'interventions terrain réalisez-vous par semaine ?",
+      unitLabel: "Planification manuelle / sem.",
+      timePerUnitMinutes: 2,
+      timeWithAISeconds: 8,
+      options: [50, 150, 300, 600, 1200],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il gérer des contraintes métier complexes (compétences, matériel, fenêtres horaires) ?",
+        answer: "Oui, totalement. Vous paramétrez les contraintes : compétences requises par type d'intervention (électricien vs plombier), matériel embarqué dans le véhicule (échelle 6m dispo ou non), fenêtres horaires strictes client ('uniquement 14h-16h'), durée estimée par type d'intervention. L'agent optimise dans ces contraintes et vous alerte s'il ne peut pas tout caser sans les violer.",
+      },
+      {
+        question: "Comment l'agent prend-il en compte le trafic en temps réel ?",
+        answer: "Il se connecte aux APIs de géolocalisation (Google Maps Traffic, Here Maps, TomTom) qui fournissent les temps de trajet avec trafic actuel et prédictif. L'agent recalcule les tournées toutes les X minutes (configurable : 10-30 min). Si un technicien va être en retard >15 min à cause d'un bouchon imprévu, l'agent déclenche une replanification automatique et notifie le client du nouveau créneau.",
+      },
+      {
+        question: "Que se passe-t-il si un technicien tombe malade le matin même ?",
+        answer: "L'agent détecte l'absence (via mise à jour CRM ou notification manuelle) et réaffecte automatiquement toutes ses interventions aux techniciens disponibles les plus proches. Il optimise pour minimiser les trajets supplémentaires et respecte les fenêtres horaires clients. Les clients concernés reçoivent un SMS automatique : 'Votre technicien a changé. [Nom] arrivera à [heure]. Merci de votre compréhension.' Temps de replanification : <30 secondes.",
+      },
+      {
+        question: "L'agent peut-il prioriser les interventions urgentes ou clients VIP ?",
+        answer: "Absolument. Vous définissez des règles de priorité : urgences (panne totale) traitées sous 2h max, clients VIP/contrat premium passent avant clients standard, interventions payantes prioritaires vs SAV gratuit. L'agent applique ces règles lors de l'optimisation. Si une urgence arrive, il peut décaler des interventions non critiques pour insérer l'urgence au plus vite.",
+      },
+      {
+        question: "Peut-on visualiser les tournées optimisées sur une carte ?",
+        answer: "Oui, l'agent peut exporter les tournées au format compatible avec Google Maps, Waze, ou des outils métier (Nomadia, Geoconcept). Les techniciens reçoivent leur itinéraire optimisé directement sur leur smartphone avec navigation turn-by-turn. Vous disposez aussi d'un dashboard de supervision temps réel affichant tous les techniciens sur une carte avec leur position GPS actuelle et leurs prochaines interventions.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API à votre CRM ou outil de gestion d'interventions (ServiceMax, Salesforce Field Service, Praxedo)",
+      "Clé API Google Maps, Here Maps ou TomTom pour calcul d'itinéraires et trafic temps réel",
+      "Une base PostgreSQL pour stocker les plannings et l'historique des interventions",
+      "Optionnel : Système de géolocalisation GPS des véhicules/techniciens (Geotab, Webfleet)",
+      "Environ 3h pour configurer les connecteurs et les règles d'optimisation logistique",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-conformité-fiscale",
+    slug: "agent-conformite-fiscale",
     title: "Agent de Conformité Fiscale et Optimisation TVA",
     subtitle: "Automatisez la catégorisation TVA, la surveillance réglementaire et les déclarations fiscales grâce à l'IA",
     problem:
@@ -6429,6 +7485,66 @@ async def categorize(req: BatchRequest):
     metaTitle: "Agent IA de Conformité Fiscale et Optimisation TVA — Guide Expert",
     metaDescription:
       "Automatisez la catégorisation TVA et la conformité fiscale avec un agent IA. OSS, IOSS, facturation électronique : tutoriel complet et ROI détaillé.",
+    storytelling: {
+      sector: "E-commerce international",
+      persona: "Élise, Directrice Financière chez un e-commerçant vendant en Europe (65 salariés)",
+      painPoint: "Son entreprise vend dans 12 pays UE. Cauchemar fiscal : chaque pays a ses taux de TVA (5% à 27%), ses règles OSS/IOSS pour la vente à distance, ses seuils de franchise. Chaque mois, l'équipe finance passe 12h à catégoriser manuellement 4500 transactions, calculer la TVA par pays, pré-remplir 3 déclarations (France, OSS, IOSS). Marge d'erreur : 3 à 5% des transactions mal catégorisées. L'an dernier : redressement fiscal de 28K€ + pénalités pour erreurs de TVA sur ventes Allemagne.",
+      story: "Élise a connecté l'agent à Shopify et à son ERP (Sage). L'agent a analysé l'historique de 6 mois et détecté immédiatement 247 transactions mal catégorisées (taux de TVA erroné, mauvais régime OSS). Il a recalculé le bon taux pour chaque transaction en fonction du pays client, du type de produit et du montant. Dès le mois suivant, la déclaration TVA était pré-remplie automatiquement. L'équipe finance a juste vérifié et validé. Temps passé : 12h → 1h30.",
+      result: "En 5 mois : temps de préparation des déclarations TVA réduit de 85% (60h/an récupérées). Taux d'erreur de catégorisation tombé de 4% à 0,3%. 0 redressement fiscal depuis le déploiement. L'agent a aussi détecté une opportunité d'optimisation : basculer 12% des ventes sur un régime TVA plus avantageux légalement, générant 8K€ d'économie de TVA annuelle.",
+    },
+    beforeAfter: {
+      inputLabel: "Transaction e-commerce à catégoriser",
+      inputText: "Transaction #TXN-2024-18847\nClient : Allemagne (DE) · Particulier (B2C)\nMontant HT : 145,00€\nProduit : Complément alimentaire (catégorie : Santé/Bien-être)\nCanal : Vente en ligne Shopify\nSeuil OSS dépassé : Oui (CA annuel DE > 10 000€)",
+      outputFields: [
+        { label: "Régime TVA applicable", value: "OSS (One Stop Shop) — Vente à distance intra-UE B2C" },
+        { label: "Taux de TVA", value: "19% (taux réduit Allemagne pour compléments alimentaires)" },
+        { label: "Montant TVA", value: "27,55€" },
+        { label: "Montant TTC", value: "172,55€" },
+        { label: "Déclaration", value: "À reporter dans OSS Allemagne (ligne 'Compléments alimentaires 19%')" },
+        { label: "Confiance", value: "96% — Catégorisation basée sur Code NC produit + règles TVA DE 2024" },
+      ],
+      beforeContext: "TXN-2024-18847 · Shopify API · Client B2C Allemagne",
+      afterLabel: "Catégorisation TVA IA",
+      afterDuration: "4 secondes",
+      afterSummary: "Transaction catégorisée avec bon taux TVA + ligne pré-remplie dans déclaration OSS",
+    },
+    roiEstimator: {
+      label: "Combien de transactions traitez-vous par mois ?",
+      unitLabel: "Catégorisation manuelle / mois",
+      timePerUnitMinutes: 0.15,
+      timeWithAISeconds: 2,
+      options: [500, 2000, 5000, 10000, 25000],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il gérer les régimes TVA complexes (OSS, IOSS, autoliquidation, triangulaires) ?",
+        answer: "Oui, c'est précisément son point fort. Vous configurez votre situation fiscale (pays d'établissement, seuils OSS dépassés ou non, régimes applicables) et l'agent applique les règles automatiquement : OSS pour ventes UE B2C, IOSS pour importations <150€, autoliquidation pour ventes B2B intra-UE, TVA intérieure pour ventes domestiques. Pour les opérations triangulaires, il détecte les 3 parties et applique le bon traitement fiscal.",
+      },
+      {
+        question: "Comment l'agent se maintient-il à jour des évolutions réglementaires ?",
+        answer: "Vous avez deux options : 1) Mise à jour manuelle du référentiel de taux TVA dans une base PostgreSQL (vous recevez une alerte mensuelle si un taux a changé en Europe), 2) Connexion à une API de veille réglementaire (ex: Taxamo, Avalara) qui push automatiquement les changements de taux. L'agent applique les nouveaux taux dès leur entrée en vigueur et vous alerte si une transaction passée serait affectée rétroactivement.",
+      },
+      {
+        question: "L'agent peut-il pré-remplir les déclarations TVA officielles (CA3, OSS, IOSS) ?",
+        answer: "Absolument. Il génère automatiquement les fichiers au format requis : CA3 (déclaration TVA France), formulaire OSS (portail DGFIP), IOSS (portail Import One Stop Shop). Les montants sont pré-calculés par ligne, vous n'avez qu'à vérifier et soumettre. Pour l'OSS, il ventile automatiquement par pays de destination et par taux applicable. Gain de temps : 80-90% sur la préparation des déclarations.",
+      },
+      {
+        question: "Que se passe-t-il si l'agent détecte une anomalie ou un doute ?",
+        answer: "Il génère une alerte avec contexte : 'Transaction #12847 : doute sur taux TVA (produit catégorie ambiguë). Taux appliqué : 5.5% (réduit). À vérifier manuellement.' Vous recevez un rapport d'anomalies hebdomadaire avec toutes les transactions nécessitant une vérification humaine. Vous validez ou corrigez, et l'agent apprend de vos corrections pour améliorer sa précision sur les cas similaires futurs.",
+      },
+      {
+        question: "L'agent peut-il aider à l'optimisation fiscale légale ?",
+        answer: "Oui, il analyse vos flux de transactions et détecte des opportunités d'optimisation : basculer certaines ventes sur un régime plus avantageux (ex: livraison intracommunautaire B2B en franchise de TVA), structurer différemment les flux pour rester sous un seuil OSS, ou choisir le pays d'établissement optimal pour minimiser la TVA globale. Toutes les recommandations respectent strictement la légalité fiscale EU. Vous pouvez ensuite consulter votre expert-comptable pour validation avant mise en œuvre.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API à votre plateforme e-commerce (Shopify, WooCommerce, PrestaShop) ou ERP (Sage, Odoo)",
+      "Une base PostgreSQL avec référentiel des taux de TVA par pays et type de produit",
+      "Optionnel : Accès API à un service de veille réglementaire (Taxamo, Avalara) pour mises à jour auto",
+      "Environ 2h30 pour configurer le référentiel TVA et les règles de catégorisation",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -6656,6 +7772,66 @@ async def investigate(alert_group_id: str):
     metaTitle: "Agent SOC Autonome de Cybersécurité — Guide Expert IA",
     metaDescription:
       "Déployez un agent IA SOC autonome pour détecter, corréler et répondre aux cybermenaces. Corrélation SIEM, investigation automatisée et conformité NIS2.",
+    storytelling: {
+      sector: "Fintech / Paiement",
+      persona: "David, RSSI chez une fintech de paiement en ligne (420 salariés)",
+      painPoint: "Son SOC reçoit 4200 alertes de sécurité par jour provenant de 8 outils différents (SIEM Splunk, EDR CrowdStrike, firewall Palo Alto, WAF Cloudflare). Problème : 85% sont des faux positifs. Ses 3 analystes SOC L1 sont submergés, ils traitent 120 alertes/jour et passent à côté de vraies menaces. Le mois dernier : une tentative d'exfiltration de données client est passée inaperçue pendant 14h, noyée dans 600 alertes 'bruit de fond'. La directive NIS2 impose désormais une détection sous 24h et notification sous 72h. Intenable en mode manuel.",
+      story: "David a branché l'agent sur Splunk (SIEM) et CrowdStrike (EDR) un vendredi soir. Le lundi matin, l'agent avait déjà corrélé 3 jours d'alertes et identifié 12 incidents réels sur 12 600 alertes (99% de bruit éliminé). À 11h47, l'agent détecte une séquence anormale : connexion SSH depuis une IP russe → escalade de privilèges root → accès base PostgreSQL → exfiltration de 2,4 Mo de données. Temps de détection : 8 minutes. L'agent bloque automatiquement l'IP source, isole le serveur compromis et crée un dossier d'investigation complet. L'analyste L2 reçoit le dossier 12 min après le début de l'attaque, avec timeline, IoC et actions de remédiation déjà appliquées.",
+      result: "En 4 mois : volume d'alertes à traiter manuellement réduit de 4200/jour à 180/jour (-96%). MTTD (Mean Time To Detect) divisé par 6 (de 3h12 à 32 min en moyenne). MTTR (Mean Time To Respond) divisé par 4 (de 2h40 à 38 min). 0 incident critique passé inaperçu depuis le déploiement. David a pu réaffecter 2 analystes L1 sur des missions proactives (threat hunting, amélioration des playbooks). Conformité NIS2 garantie.",
+    },
+    beforeAfter: {
+      inputLabel: "Flux d'alertes SIEM + EDR",
+      inputText: "11:47:12 — Splunk Alert: Connexion SSH réussie depuis IP 185.220.101.47 (Russie) sur srv-db-prod-03\n11:48:03 — CrowdStrike Alert: Escalade privilèges (sudo su -) détectée sur srv-db-prod-03 · User: backup_bot\n11:49:22 — Splunk Alert: Requête SQL inhabituelle (SELECT * FROM customers) · Volume: 247K lignes\n11:50:18 — Firewall Alert: Transfert sortant 2,4 Mo vers IP 185.220.101.47:8443 (port non standard)",
+      outputFields: [
+        { label: "Corrélation", value: "INCIDENT CRITIQUE — Exfiltration de données en cours" },
+        { label: "Sévérité", value: "P1 — Critique · Confiance 94% · Score MITRE ATT&CK: T1078 (Valid Accounts) + T1048 (Exfiltration Over C2)" },
+        { label: "Timeline", value: "11:47 Accès initial → 11:48 Escalade privilèges → 11:49 Accès BDD → 11:50 Exfiltration détectée" },
+        { label: "Remédiations appliquées", value: "IP 185.220.101.47 bloquée (firewall) · Serveur srv-db-prod-03 isolé (réseau) · Compte backup_bot désactivé" },
+        { label: "Dossier d'escalade", value: "Rapport complet généré avec IoC, logs, captures réseau et recommandations forensics · Envoyé à analyste L2 David" },
+      ],
+      beforeContext: "4 alertes SIEM/EDR · 3 min 06 sec · srv-db-prod-03",
+      afterLabel: "Corrélation + Investigation IA",
+      afterDuration: "8 minutes",
+      afterSummary: "Incident détecté, corrélé, remédié automatiquement et escaladé vers L2 avec dossier complet",
+    },
+    roiEstimator: {
+      label: "Combien d'alertes de sécurité recevez-vous par jour ?",
+      unitLabel: "Triage manuel / jour",
+      timePerUnitMinutes: 4,
+      timeWithAISeconds: 15,
+      options: [100, 500, 1500, 3000, 6000],
+    },
+    faq: [
+      {
+        question: "Comment l'agent corrèle-t-il les alertes provenant de plusieurs outils (SIEM, EDR, firewall) ?",
+        answer: "Il normalise d'abord toutes les alertes au format commun (timestamp, source IP, destination, type d'événement, sévérité). Ensuite, il applique des règles de corrélation temporelle et contextuelle : si plusieurs alertes concernent le même asset dans une fenêtre de 10 min ET suivent un pattern d'attaque connu (kill chain MITRE ATT&CK), il les regroupe en incident unique. Le LLM analyse ensuite la séquence pour confirmer la corrélation et scorer la sévérité réelle.",
+      },
+      {
+        question: "L'agent peut-il appliquer des remédiations automatiques sans intervention humaine ?",
+        answer: "Oui, mais vous contrôlez le niveau d'autonomie. Par défaut : blocage d'IP suspecte (firewall) et isolation d'endpoint (EDR) sont automatiques pour incidents P1/P2. Actions plus risquées (shutdown serveur, suppression de compte admin) nécessitent validation humaine. Vous configurez des playbooks de réponse avec garde-fous : 'bloquer IP auto uniquement si confiance >90% ET IP externe non whitelistée'. L'agent exécute dans ces limites et vous alerte pour le reste.",
+      },
+      {
+        question: "Comment l'agent évite-t-il les faux négatifs (vraie menace classée comme bénigne) ?",
+        answer: "C'est le risque le plus critique. Pour le minimiser : 1) L'agent applique une approche 'défense en profondeur' (si 2+ signaux faibles concordent, escalade en suspect), 2) Il croise avec Threat Intelligence externe (abuse.ch, AlienVault OTX) pour détecter les IoC connus, 3) Toute alerte marquée 'bénigne' par l'agent est archivée 90 jours pour audit a posteriori. Vous pouvez aussi forcer l'escalade humaine sur certains types d'événements critiques (ex: accès base production toujours vérifié).",
+      },
+      {
+        question: "Que se passe-t-il si l'agent se trompe et bloque une IP ou un compte légitime ?",
+        answer: "Vous recevez immédiatement une notification de l'action de blocage avec contexte. Si c'est un faux positif (ex: VPN d'un collaborateur), vous pouvez débloquer instantanément via le dashboard. L'agent apprend de la correction : vous marquez l'IP comme 'légitime/whitelist' et il ne la bloquera plus. Chaque action de remédiation est loguée et réversible en <2 min pour limiter l'impact d'un éventuel faux positif.",
+      },
+      {
+        question: "L'agent peut-il envoyer des données sensibles (logs, IoC) au LLM cloud ?",
+        answer: "C'est un risque de confidentialité majeur. Solutions : 1) Utiliser un LLM on-premise (Ollama + Llama 3.1, 100% local), 2) Anonymiser les logs avant envoi au LLM (remplacer IPs internes, noms utilisateurs par des tokens), 3) Utiliser Claude ou GPT en mode 'Zero Data Retention' (données non stockées après traitement). Pour les environnements ultra-sensibles (finance, santé), la solution 1 (LLM local) est fortement recommandée.",
+      },
+    ],
+    prerequisites: [
+      "Accès API en lecture à votre SIEM (Splunk, Elastic, Microsoft Sentinel, Wazuh)",
+      "Accès API à vos outils de sécurité (EDR, firewall, WAF) pour collecte d'alertes et remédiations",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit pour confidentialité max)",
+      "Une base Elasticsearch ou PostgreSQL pour stocker l'historique des incidents et investigations",
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted (recommandé pour SOC)",
+      "Optionnel : Flux de Threat Intelligence (abuse.ch, AlienVault OTX, MISP) pour enrichissement IoC",
+      "Environ 4h pour configurer les connecteurs et les playbooks de réponse à incidents",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -6889,6 +8065,64 @@ async def handle_pr(webhook: PRWebhook):
     metaTitle: "Agent IA de QA Logicielle Autonome — Guide Complet",
     metaDescription:
       "Automatisez vos tests logiciels avec un agent IA. Génération de tests, exécution CI/CD et détection de régressions. Tutoriel pas-à-pas.",
+    storytelling: {
+      sector: "SaaS B2B",
+      persona: "Lucas, CTO chez un éditeur de logiciels RH (42 salariés)",
+      painPoint: "L'équipe de Lucas livre 3 releases par semaine. Les développeurs utilisent GitHub Copilot et génèrent du code plus vite que jamais, mais l'équipe QA (2 personnes) ne suit plus. Les tests manuels prennent 6 heures par release, et 40% des régressions passent en production, générant des tickets support et une dette technique croissante. Le taux de couverture de tests plafonne à 35%.",
+      story: "Lucas a déployé l'agent de QA sur le pipeline CI/CD un vendredi soir. Dès lundi matin, chaque pull request déclenchait automatiquement la génération de tests. L'agent analysait le diff du code, générait des cas de test pertinents (y compris edge cases), les exécutait dans le pipeline et commentait directement sur GitHub avec un rapport détaillé. L'équipe dev validait ou ajustait les tests avant le merge.",
+      result: "En 5 semaines : couverture de tests passée de 35% à 78%. Régressions en production réduites de 65%. L'équipe QA a gagné 18 heures par semaine, réallouées à des tests exploratoires à forte valeur ajoutée et à l'amélioration continue du framework de tests.",
+    },
+    beforeAfter: {
+      inputLabel: "Pull Request analysée",
+      inputText: "feat: ajout du filtre par département dans la page \"Annuaire employés\"\n\nChangements:\n- Nouveau composant FilterByDepartment.tsx\n- Modification de EmployeeList.tsx pour intégrer le filtre\n- Ajout endpoint API /api/employees?department=X",
+      outputFields: [
+        { label: "Tests générés", value: "12 tests (8 unitaires, 4 intégration)" },
+        { label: "Couverture", value: "92% des branches du nouveau code" },
+        { label: "Edge cases détectés", value: "Département vide, caractères spéciaux, département inexistant" },
+        { label: "Résultat exécution", value: "✓ 11/12 passed · ✗ 1 failed (timeout API)" },
+        { label: "Recommandation", value: "Ajouter un test de performance sur l'endpoint avec 10k+ employés" },
+      ],
+      beforeContext: "Pull Request #342 · il y a 8 min",
+      afterLabel: "Analyse IA du code",
+      afterDuration: "45 secondes",
+      afterSummary: "Tests générés, exécutés et rapport publié sur GitHub",
+    },
+    roiEstimator: {
+      label: "Combien de pull requests traitez-vous par semaine ?",
+      unitLabel: "Tests manuels / sem.",
+      timePerUnitMinutes: 25,
+      timeWithAISeconds: 180,
+      options: [5, 15, 30, 50, 100],
+    },
+    faq: [
+      {
+        question: "Quels langages et frameworks de tests sont supportés ?",
+        answer: "L'agent génère du code de test pour Python (pytest, unittest), JavaScript/TypeScript (Jest, Vitest, Playwright), Java (JUnit), et Go (testing). Il s'adapte automatiquement au framework détecté dans votre codebase. Pour un framework spécifique non listé, vous pouvez ajouter des exemples de tests dans le prompt système.",
+      },
+      {
+        question: "L'agent peut-il détecter les edge cases critiques ou seulement des tests basiques ?",
+        answer: "L'agent est entraîné pour identifier les edge cases : valeurs nulles, chaînes vides, injections SQL, débordements numériques, cas limites métier. La qualité dépend du contexte fourni : plus vous documentez vos specs et vos bugs historiques, meilleurs sont les tests. Comptez 2-3 semaines d'affinage du prompt avec des exemples réels pour atteindre 90% de pertinence.",
+      },
+      {
+        question: "Quel est le coût API par pull request analysée ?",
+        answer: "Avec Claude Sonnet 4.5 : environ 0.08-0.15€ par PR (selon la taille du diff). Avec GPT-4o-mini : environ 0.03€. Avec Ollama + CodeLlama (gratuit, local) : 0€ mais nécessite une machine avec GPU et 16 Go de RAM. Pour 50 PRs/semaine avec Claude, comptez 20-30€/mois.",
+      },
+      {
+        question: "Comment éviter les faux positifs (tests trop stricts) ou faux négatifs (tests superficiels) ?",
+        answer: "Le workflow inclut un mécanisme de feedback : après chaque exécution, les développeurs peuvent marquer un test comme \"pertinent\" ou \"à revoir\" via un commentaire GitHub. Ces annotations sont stockées et injectées dans le contexte du LLM pour affiner progressivement la génération. Après 30-50 PRs, la qualité converge à 85-90% de précision.",
+      },
+      {
+        question: "Les tests générés sont-ils versionnés avec le code ?",
+        answer: "Oui. L'agent crée un commit avec les tests générés dans une branche dédiée (ex: tests/PR-342) et ouvre automatiquement une pull request liée à la PR originale. Le développeur peut modifier les tests avant de merger. Tous les tests sont versionnés dans Git comme du code normal, garantissant la traçabilité complète.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API à votre dépôt Git (GitHub, GitLab, Bitbucket)",
+      "Un pipeline CI/CD actif (GitHub Actions, GitLab CI, Jenkins, CircleCI)",
+      "Environ 3h pour configurer le workflow complet et l'intégrer au pipeline",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -7113,6 +8347,64 @@ async def send_negotiation_email(contract_id: str, approved: bool):
     metaTitle: "Agent IA de Négociation Achats Indirects — Guide Complet",
     metaDescription:
       "Optimisez vos achats indirects avec un agent IA. Benchmark tarifaire, négociation automatisée et suivi des savings. Tutoriel pas-à-pas.",
+    storytelling: {
+      sector: "Industrie manufacturière",
+      persona: "Sophie, Directrice Achats chez un fabricant de composants électroniques (280 salariés)",
+      painPoint: "Sophie gère un budget achats indirects de 8M€/an (fournitures, services IT, maintenance, marketing). Elle sait que 15 à 20% d'économies sont réalisables, mais son équipe de 3 acheteurs est débordée par les achats directs stratégiques. Résultat : 67 contrats reconduits tacitement en 2025 sans renégociation, dont un contrat de maintenance bureautique à 42k€/an jamais challengé depuis 2019. Les fournisseurs le savent et ne font aucun effort tarifaire.",
+      story: "Sophie a déployé l'agent sur un pilote de 15 contrats. L'agent a analysé les contrats PDF, extrait les montants et dates d'échéance, effectué un benchmark automatique via des bases tarifaires et le web, puis généré des emails de renégociation avec plusieurs scénarios (baisse de 10%, extension de durée contre remise, passage à un concurrent identifié). Sophie validait chaque email avant envoi. L'agent suivait les réponses fournisseurs et mettait à jour le tableau de suivi.",
+      result: "Sur 15 contrats pilotes : 12 renégociés avec succès (moyenne -12% de réduction), 2 fournisseurs changés (économie de 23% et 31%), 1 résiliation car service inutilisé. Économies totales : 127k€ sur 6 mois. Temps investi par Sophie : 8 heures au total (vs 40h si fait manuellement). Déploiement prévu sur les 200+ contrats indirects en 2026.",
+    },
+    beforeAfter: {
+      inputLabel: "Contrat analysé",
+      inputText: "Contrat de maintenance bureautique N°2019-MB-042\nFournisseur: ITServices Pro\nMontant annuel: 42 000 EUR HT\nDate de signature: 15/03/2019\nReconduction tacite annuelle\nDernière augmentation: +3.5% en 2024",
+      outputFields: [
+        { label: "Benchmark marché", value: "Prix moyen marché: 31 500 EUR (-25% vs contrat actuel)" },
+        { label: "Potentiel économies", value: "10 500 EUR/an si alignement sur tarif marché" },
+        { label: "Fournisseurs alternatifs", value: "3 identifiés (TechSupport+, OfficeGuru, LocalIT)" },
+        { label: "Stratégie recommandée", value: "Option 1: Négocier -20% · Option 2: Mise en concurrence" },
+        { label: "Email généré", value: "Prêt à envoyer avec 2 scénarios (réduction ou switch)" },
+      ],
+      beforeContext: "Contrat échéance 15/03/2026 · il y a 90 jours",
+      afterLabel: "Analyse IA des achats",
+      afterDuration: "12 secondes",
+      afterSummary: "Benchmark réalisé, économies identifiées, email de négociation prêt",
+    },
+    roiEstimator: {
+      label: "Combien de contrats indirects renégociez-vous par an ?",
+      unitLabel: "Analyse manuelle / an",
+      timePerUnitMinutes: 180,
+      timeWithAISeconds: 600,
+      options: [5, 15, 30, 50, 100],
+    },
+    faq: [
+      {
+        question: "Comment l'agent effectue-t-il le benchmark tarifaire ?",
+        answer: "L'agent combine plusieurs sources : bases tarifaires sectorielles (ex: Observatoire des Achats), scraping de sites web de fournisseurs concurrents (pages tarifs publiques), analyse de vos propres données historiques, et requêtes web ciblées. Les résultats sont agrégés et présentés avec un intervalle de confiance (ex: 28-34k€ pour 90% des cas). Vous pouvez ajouter vos propres sources via des API.",
+      },
+      {
+        question: "L'agent peut-il envoyer les emails de négociation directement ou dois-je valider ?",
+        answer: "Par défaut, l'agent génère les emails et les présente pour validation humaine. C'est le mode recommandé pour garder le contrôle relationnel. Vous pouvez activer l'envoi automatique pour des catégories d'achats non stratégiques (ex: fournitures de bureau <5k€), avec un workflow d'approbation basé sur des seuils. La traçabilité complète est conservée.",
+      },
+      {
+        question: "Quel est le risque de détériorer la relation fournisseur avec un ton agressif ?",
+        answer: "Le prompt de l'agent est calibré pour un ton professionnel et collaboratif. Il présente des données factuelles (benchmark, évolution du périmètre) et propose des options gagnant-gagnant (extension de durée, volumes, simplification contractuelle). Vous définissez le ton par catégorie de fournisseur (stratégique, transactionnel, critique). Le brouillon est toujours relu avant envoi.",
+      },
+      {
+        question: "Les données contractuelles et tarifaires sont-elles sécurisées ?",
+        answer: "Les contrats PDF sont traités via l'API du LLM mais ne sont pas stockés par le fournisseur IA (traitement en mémoire, no-training clause). Les données de benchmark sont stockées dans votre PostgreSQL local. Pour une sécurité maximale, utilisez Ollama en local ou Azure OpenAI avec data residency EU. Aucun tarif n'est partagé avec des tiers.",
+      },
+      {
+        question: "Combien de temps faut-il pour configurer l'agent sur mon portefeuille achats ?",
+        answer: "Comptez 1 journée pour la configuration initiale : connexion à votre ERP ou outil de gestion des contrats, import de la bibliothèque de contrats, calibration du prompt avec 3-5 exemples de négociations réussies. Ensuite, ajoutez 1h par nouvelle catégorie d'achats pour affiner les critères de benchmark et le ton des emails. Le pilote sur 10-15 contrats prend 2 semaines.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Vos contrats fournisseurs au format PDF ou export depuis votre ERP",
+      "Accès à une base de benchmark tarifaire (ou utilisation du scraping web)",
+      "Environ 1 journée pour la configuration initiale et le pilote",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -7364,6 +8656,64 @@ async def ask(req: QuestionRequest):
     metaTitle: "Agent IA d'Analytics Conversationnel — Guide Complet",
     metaDescription:
       "Interrogez vos données en langage naturel avec un agent IA. Questions → SQL → réponses avec graphiques. Démocratisation des données, tutoriel pas-à-pas.",
+    storytelling: {
+      sector: "E-commerce",
+      persona: "Julien, Directeur Marketing chez une marketplace de mode (95 salariés)",
+      painPoint: "Julien a des questions data tous les jours : \"Quel est le taux de conversion par device ce mois-ci ?\", \"Top 10 produits vendus en Île-de-France ?\", \"Évolution du panier moyen depuis septembre ?\". Son équipe data est débordée (backlog de 3 semaines) et lui-même ne maîtrise pas SQL. Résultat : il prend des décisions sur des données vieilles de 15 jours, perd en réactivité face à la concurrence, et rate des opportunités (ex: un pic de ventes non détecté à temps pour booster l'acquisition).",
+      story: "Julien a testé l'agent d'analytics conversationnel sur Slack. Il pose sa question en langage naturel, l'agent traduit en SQL, interroge la base de données, et répond avec un tableau et un graphique en moins de 30 secondes. Il a formé son équipe marketing (6 personnes) en 1 heure. Désormais, chacun accède aux données sans passer par la data team. Le canal Slack #ask-data contient 200+ questions par semaine.",
+      result: "Backlog de demandes data divisé par 5 (de 3 semaines à 3 jours pour les analyses complexes). Temps d'accès à une donnée : de 2-3 jours à 30 secondes. Nombre de décisions data-driven multiplié par 4. L'équipe data se concentre sur les analyses prédictives et le ML, plus sur les requêtes SQL basiques.",
+    },
+    beforeAfter: {
+      inputLabel: "Question posée sur Slack",
+      inputText: "Quel est le taux de conversion par device (mobile, desktop, tablette) pour les 7 derniers jours, et comment ça évolue par rapport au mois dernier ?",
+      outputFields: [
+        { label: "Requête SQL", value: "SELECT device, COUNT(DISTINCT session_id) as visits, COUNT(DISTINCT order_id) as orders..." },
+        { label: "Mobile", value: "2.8% (-0.3 pts vs mois dernier)" },
+        { label: "Desktop", value: "4.2% (+0.1 pts vs mois dernier)" },
+        { label: "Tablette", value: "3.1% (stable)" },
+        { label: "Graphique", value: "📊 Bar chart comparatif inclus" },
+      ],
+      beforeContext: "#ask-data · il y a 12 sec",
+      afterLabel: "Requête SQL exécutée",
+      afterDuration: "8 secondes",
+      afterSummary: "Réponse générée avec données et graphique comparatif",
+    },
+    roiEstimator: {
+      label: "Combien de demandes data traitez-vous par semaine ?",
+      unitLabel: "Requêtes SQL / sem.",
+      timePerUnitMinutes: 20,
+      timeWithAISeconds: 15,
+      options: [10, 25, 50, 100, 200],
+    },
+    faq: [
+      {
+        question: "Comment l'agent garantit-il que la requête SQL générée est correcte ?",
+        answer: "L'agent suit un processus en 3 étapes : (1) génération de la requête SQL à partir du schéma de base et du dictionnaire métier, (2) validation syntaxique automatique et test sur un échantillon limité (LIMIT 10), (3) exécution complète uniquement si le test passe. En cas d'erreur, l'agent reformule et retente. Le taux de succès est de 92% dès la première requête, 98% après 1 retry.",
+      },
+      {
+        question: "Comment éviter qu'un utilisateur accède à des données sensibles (salaires, données personnelles) ?",
+        answer: "Le système implémente un contrôle d'accès basé sur les rôles : chaque utilisateur Slack est mappé à un rôle (Marketing, Ventes, Finance) avec des permissions spécifiques sur les tables et colonnes. Les tables sensibles (RH, données personnelles RGPD) sont exclues par défaut. Vous définissez une whitelist de tables accessibles par rôle. Les requêtes sont loggées pour audit.",
+      },
+      {
+        question: "Que se passe-t-il si la requête est trop lourde et impacte la base de production ?",
+        answer: "Le workflow inclut un garde-fou : la requête est d'abord exécutée avec EXPLAIN ANALYZE pour estimer le coût. Si le coût dépasse un seuil (ex: >10 secondes estimées), l'agent demande confirmation à l'utilisateur ou redirige vers un read replica. Vous pouvez aussi configurer un timeout max (ex: 30s) et un rate limit par utilisateur (ex: 10 requêtes/heure).",
+      },
+      {
+        question: "L'agent peut-il générer des graphiques personnalisés (courbes, pie charts, etc.) ?",
+        answer: "Oui. L'agent détecte automatiquement le type de visualisation adapté : bar chart pour les comparaisons, line chart pour les évolutions temporelles, pie chart pour les répartitions, scatter plot pour les corrélations. Vous pouvez spécifier le type dans votre question (ex: \"montre-moi ça en courbe\"). Les graphiques sont générés avec Chart.js ou Plotly et envoyés directement sur Slack.",
+      },
+      {
+        question: "Combien coûte l'agent par question posée ?",
+        answer: "Avec Claude Sonnet 4.5 : environ 0.005-0.01€ par question (selon la complexité du schéma). Avec GPT-4o-mini : environ 0.002€. Avec Ollama + Llama 3 en local : 0€ mais nécessite un serveur avec 16 Go de RAM. Pour 200 questions/semaine avec Claude, comptez 4-8€/mois. Le coût réel est 100x inférieur au coût d'un data analyst humain.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès à votre base de données (PostgreSQL, MySQL, BigQuery, Snowflake)",
+      "Un espace Slack ou Teams pour l'interface conversationnelle",
+      "Un dictionnaire métier mappant les termes business aux colonnes SQL (2-3h de setup)",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -7583,6 +8933,64 @@ async def run_audit(file: UploadFile, référentiel: str = "ISO27001"):
     metaTitle: "Agent IA d'Audit Interne Automatisé — Guide Complet",
     metaDescription:
       "Automatisez vos audits internes avec un agent IA. Analyse de conformité, détection de non-conformités et rapports structurés. Tutoriel pas-à-pas avec stack complète.",
+    storytelling: {
+      sector: "Services financiers",
+      persona: "Marie, Responsable Audit Interne chez une fintech (120 salariés)",
+      painPoint: "Marie et son équipe de 2 auditeurs doivent couvrir 42 processus internes (conformité RGPD, ISO 27001, SOX, AML). Chaque audit manuel prend 2 semaines et mobilise 1 personne à temps plein. En pratique, seulement 8 à 10 audits sont réalisés par an, soit 20% des processus couverts. Les non-conformités sont détectées tardivement (ex: une faille RGPD découverte 7 mois après son apparition), augmentant les risques réglementaires et financiers (amendes potentielles CNIL de 4% du CA).",
+      story: "Marie a déployé l'agent d'audit sur un pilote RGPD couvrant 12 processus. L'agent a analysé en continu les documents internes, les politiques de confidentialité, les logs d'accès aux données, et les a comparés aux exigences RGPD dans sa base vectorielle. En 48 heures, il a généré 12 rapports d'audit structurés avec scores de conformité, liste des écarts, et recommandations priorisées. Marie et son équipe ont validé les résultats en 3 heures.",
+      result: "Couverture d'audit passée de 20% à 95% des processus sur l'année. Temps de réalisation d'un audit réduit de 10 jours à 3 jours (incluant validation humaine). Détection des non-conformités 5x plus rapide, avec alertes automatiques en cas d'écart critique. 2 failles RGPD détectées et corrigées avant tout incident.",
+    },
+    beforeAfter: {
+      inputLabel: "Processus audité",
+      inputText: "Audit RGPD — Processus de gestion des données clients (collecte, stockage, accès, suppression)\n\nDocuments analysés:\n- Politique de confidentialité v3.2\n- Procédure interne de gestion des demandes RGPD\n- Logs d'accès base de données clients (30 derniers jours)\n- Registre des traitements",
+      outputFields: [
+        { label: "Score de conformité", value: "76/100 (Conforme avec réserves)" },
+        { label: "Conformités", value: "8 points conformes (base légale, DPO désigné, registre à jour...)" },
+        { label: "Non-conformités critiques", value: "2 identifiées : Pas de chiffrement au repos, Délai suppression >30 jours" },
+        { label: "Observations", value: "3 points d'amélioration (politique obsolète, formation manquante...)" },
+        { label: "Recommandations", value: "5 actions priorisées avec deadlines suggérées" },
+      ],
+      beforeContext: "Audit RGPD planifié · Référentiel RGPD 2024",
+      afterLabel: "Analyse IA de conformité",
+      afterDuration: "18 minutes",
+      afterSummary: "Rapport d'audit généré avec non-conformités et plan d'action",
+    },
+    roiEstimator: {
+      label: "Combien d'audits réalisez-vous par an ?",
+      unitLabel: "Audit manuel / an",
+      timePerUnitMinutes: 4800,
+      timeWithAISeconds: 3600,
+      options: [5, 10, 20, 40, 80],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il auditer des référentiels complexes comme ISO 27001 ou SOX ?",
+        answer: "Oui. L'agent est pré-chargé avec les principaux référentiels (ISO 27001, ISO 9001, RGPD, SOX, PCI-DSS, HDS) dans sa base vectorielle. Pour chaque référentiel, il connaît les exigences, les preuves attendues, et les critères de conformité. Vous pouvez ajouter des référentiels propriétaires ou sectoriels en important les documents dans la base vectorielle (format PDF ou Markdown).",
+      },
+      {
+        question: "Comment l'agent évite-t-il les faux positifs (alertes non justifiées) ?",
+        answer: "L'agent applique un principe de prudence : chaque non-conformité détectée inclut (1) l'extrait du document analysé, (2) l'exigence référentiel non respectée, (3) un niveau de confiance (0-100%). Les alertes avec confiance <70% sont marquées \"à valider par un auditeur\". Après calibration sur 10-15 audits, le taux de faux positifs descend sous 5%. Un feedback humain améliore progressivement la précision.",
+      },
+      {
+        question: "L'audit IA peut-il remplacer un auditeur humain certifié ?",
+        answer: "Non. L'agent automatise la collecte des preuves, l'analyse de conformité et la génération du rapport, mais le jugement final reste humain. C'est un assistant qui fait gagner 70% du temps (la partie mécanique) pour que l'auditeur se concentre sur l'analyse des risques, les interviews et les recommandations stratégiques. Pour les audits certifiants (ex: ISO 27001), un auditeur certifié reste obligatoire.",
+      },
+      {
+        question: "Les données auditées sont-elles envoyées au LLM et sécurisées ?",
+        answer: "Les documents sont traités via l'API du LLM mais ne sont pas stockés ni utilisés pour l'entraînement (no-training clause avec OpenAI/Anthropic). Pour une sécurité maximale, utilisez Ollama en local ou Azure OpenAI avec data residency EU. Les logs d'accès et données sensibles peuvent être anonymisés avant analyse (ex: hasher les emails, masquer les IPs).",
+      },
+      {
+        question: "L'agent génère-t-il un plan d'action avec les non-conformités ?",
+        answer: "Oui. Pour chaque non-conformité détectée, l'agent génère une recommandation corrective priorisée (critique, majeure, mineure) avec une deadline suggérée selon la criticité. Les recommandations sont exportées dans un tableau de suivi (Excel, Notion, Jira) avec un champ de statut (à faire, en cours, terminé). Vous pouvez ajouter un workflow d'assignation automatique aux responsables de processus.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Vos documents de procédures internes au format PDF, Word ou Markdown",
+      "Les référentiels applicables (ISO 27001, RGPD, SOX, etc.) importés dans la base vectorielle",
+      "Environ 2 jours pour la configuration initiale et le premier audit pilote",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -8205,7 +9613,7 @@ async def get_stats():
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-enrichissement-données",
+    slug: "agent-enrichissement-donnees",
     title: "Agent d'Enrichissement de Données CRM",
     subtitle: "Enrichissez automatiquement vos contacts CRM avec des données externes qualifiées",
     problem:
@@ -9287,7 +10695,7 @@ async def get_tendances(jours: int = 7):
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-génération-rapports-esg",
+    slug: "agent-generation-rapports-esg",
     title: "Agent de Génération de Rapports ESG",
     subtitle: "Automatisez la collecte de données et la génération de rapports ESG/RSE conformes aux réglementations",
     problem:
@@ -12480,6 +13888,64 @@ def test_reponse_naturelle():
     metaTitle: "Agent IA de Planification de Rendez-vous Commercial — Guide Complet",
     metaDescription:
       "Automatisez la prise de rendez-vous et la qualification de prospects avec un agent IA conversationnel. Intégration CRM, Calendar et scoring BANT. Tutoriel pas-à-pas.",
+    storytelling: {
+      sector: "SaaS B2B",
+      persona: "Thomas, VP Sales chez un éditeur de logiciel CRM (65 salariés)",
+      painPoint: "L'équipe de 4 SDR de Thomas passe 65% de leur temps sur des tâches admin : relancer les prospects par email, coordonner les agendas entre prospects et commerciaux (15 allers-retours en moyenne), qualifier manuellement chaque lead entrant. Résultat : seulement 12 rendez-vous confirmés par SDR par semaine, alors que 35 demandes entrantes arrivent chaque semaine. Le délai de réponse moyen aux demandes web est de 26 heures, et 40% des prospects chauds sont perdus avant même d'avoir un premier contact.",
+      story: "Thomas a branché l'agent de planification sur le formulaire de contact du site web et la boîte email sales@. Dès qu'un prospect remplit le formulaire, l'agent démarre une conversation (email ou chat) pour qualifier le besoin, pose 3-4 questions ciblées (budget, timeline, nombre d'utilisateurs), identifie le bon commercial selon le territoire et la taille du deal, propose 3 créneaux disponibles dans son agenda Google, et confirme le rendez-vous avec invitation calendrier et rappels automatiques.",
+      result: "Délai de première réponse passé de 26h à 90 secondes. Taux de prise de rendez-vous augmenté de 40% (de 12 à 17 RDV/semaine/SDR). Temps administratif des SDR réduit de 65% à 20%, libérant 18h/semaine pour la prospection active. Taux de show-up amélioré de 15% grâce aux rappels automatiques 24h et 2h avant le RDV.",
+    },
+    beforeAfter: {
+      inputLabel: "Demande prospect reçue",
+      inputText: "Formulaire de contact:\n\nNom: Amélie Durand\nEntreprise: LogiTransport\nEmail: a.durand@logitransport.fr\nTéléphone: +33 6 12 34 56 78\nMessage: Nous cherchons un CRM pour gérer notre équipe commerciale de 15 personnes. Besoin d'une démo rapidement.",
+      outputFields: [
+        { label: "Score qualification", value: "82/100 (Prospect chaud)" },
+        { label: "Profil BANT", value: "Budget: 10-20k€ · Authority: Directrice Commerciale · Need: CRM 15 users · Timeline: <2 mois" },
+        { label: "Commercial attribué", value: "Marc Leblanc (territoire Île-de-France, expert logistique)" },
+        { label: "Rendez-vous confirmé", value: "Jeudi 13 fév. 2026, 14h-14h45 (visio Google Meet)" },
+        { label: "Briefing", value: "Fiche prospect envoyée à Marc avec contexte et historique web" },
+      ],
+      beforeContext: "Formulaire soumis · il y a 2 min",
+      afterLabel: "Qualification et planification IA",
+      afterDuration: "90 secondes",
+      afterSummary: "Prospect qualifié, commercial assigné, rendez-vous confirmé avec briefing",
+    },
+    roiEstimator: {
+      label: "Combien de demandes entrantes traitez-vous par semaine ?",
+      unitLabel: "Qualification manuelle / sem.",
+      timePerUnitMinutes: 15,
+      timeWithAISeconds: 90,
+      options: [10, 25, 50, 100, 200],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il gérer la qualification en plusieurs langues (français, anglais, etc.) ?",
+        answer: "Oui. L'agent détecte automatiquement la langue du prospect (via le formulaire ou l'email) et adapte la conversation. Il est pré-configuré pour français, anglais, espagnol, allemand et italien. Pour ajouter une langue, il suffit de traduire le script de qualification (5-6 questions) dans le prompt. La détection de langue est fiable à 98%.",
+      },
+      {
+        question: "Comment l'agent attribue-t-il le bon commercial au prospect ?",
+        answer: "L'attribution suit des règles configurables : par territoire géographique (ex: Amélie en Île-de-France → Marc), par secteur d'activité (ex: logistique → expert logistique), par taille de deal (ex: >50k€ → Account Executive senior), ou par disponibilité (round-robin). Vous définissez les règles dans un Google Sheets ou directement dans le workflow n8n. Les règles peuvent être combinées avec des priorités.",
+      },
+      {
+        question: "Que se passe-t-il si aucun créneau n'est disponible dans les prochains jours ?",
+        answer: "L'agent propose les 3 créneaux les plus proches disponibles (même si c'est dans 10 jours). Si le prospect indique une urgence, l'agent envoie un message Slack au manager commercial pour débloquer un créneau ou réorganiser un rendez-vous interne. Vous pouvez aussi configurer des créneaux \"tampon\" réservés aux prospects très chauds (score >85).",
+      },
+      {
+        question: "Le ton de l'agent est-il personnalisable pour respecter notre image de marque ?",
+        answer: "Oui. Le ton est entièrement configurable via le prompt système : formel vs casual, tutoiement vs vouvoiement, longueur des messages, usage d'émojis ou non. Vous pouvez tester différents tons et mesurer leur impact sur le taux de conversion. Les emails incluent votre signature et logo automatiquement. 90% des prospects ne détectent pas qu'ils parlent à une IA.",
+      },
+      {
+        question: "L'agent peut-il envoyer des rappels automatiques avant le rendez-vous ?",
+        answer: "Oui. Le workflow inclut un système de rappels automatiques : (1) confirmation immédiate avec invitation calendrier, (2) rappel 24h avant avec lien visio et agenda, (3) rappel 2h avant avec bouton \"Reporter si besoin\". Les rappels réduisent le no-show de 30-40%. Si le prospect reporte, l'agent propose automatiquement 3 nouveaux créneaux sans intervention humaine.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API à vos calendriers commerciaux (Google Calendar, Outlook, Calendly)",
+      "Connexion à votre CRM (HubSpot, Salesforce, Pipedrive) pour enrichir les données prospect",
+      "Environ 2h pour configurer les règles d'attribution et les scripts de qualification",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -12964,6 +14430,64 @@ def test_traduction_japonais():
     metaTitle: "Agent IA de Traduction et Localisation de Contenu — Guide Complet",
     metaDescription:
       "Localisez automatiquement vos contenus marketing pour l'international avec un agent IA. Glossaire de marque, adaptation culturelle et contrôle qualité intégré. Tutoriel pas-à-pas.",
+    storytelling: {
+      sector: "E-commerce",
+      persona: "Claire, CMO chez une marque de cosmétiques bio (55 salariés)",
+      painPoint: "Claire veut lancer sa boutique en ligne en Allemagne, Espagne et Italie. Elle doit traduire 420 fiches produit, 80 pages de contenu marketing, 35 emails de nurturing, et adapter tout ça aux spécificités culturelles de chaque marché (références, unités, devises, réglementations cosmétiques). Devis d'agence de traduction : 18 500€ pour les 3 langues, délai 6 semaines. Avec Google Translate gratuit, le résultat est littéral et perd tout le ton premium de la marque (\"crème anti-âge\" devient \"anti-aging cream\" au lieu de \"age-defying elixir\").",
+      story: "Claire a testé l'agent de traduction sur un pilote de 50 fiches produit en allemand. Elle a fourni le glossaire de marque (termes spécifiques à ne jamais traduire, ton à respecter), le guide de style par marché, et le contexte (e-commerce, audience féminine 30-50 ans, premium). L'agent a traduit les 50 fiches en 35 minutes, adapté les références culturelles (ex: \"senteur de lavande provençale\" → \"Duft provenzalischen Lavendels\"), converti les formats (ml en oz pour certains marchés), et respecté le ton premium.",
+      result: "Coût de traduction réduit de 85% (18 500€ → 2 700€ incluant relecture humaine). Time-to-market divisé par 10 (6 semaines → 4 jours). Qualité jugée équivalente à une traduction humaine après relecture sur 8% du volume. Capacité de tester 5 nouveaux marchés en parallèle sans exploser le budget. Cohérence terminologique de 99% grâce au glossaire automatisé.",
+    },
+    beforeAfter: {
+      inputLabel: "Fiche produit à traduire (FR → DE)",
+      inputText: "Sérum Éclat Jeunesse Bio — 30ml\n\nDécouvrez notre sérum visage enrichi en acide hyaluronique et vitamine C naturelle. Sa texture ultra-légère pénètre instantanément pour révéler l'éclat de votre peau. Formulé sans parabènes, testé dermatologiquement.\n\nPrix: 42,90 EUR\nLivraison offerte dès 50 EUR d'achat",
+      outputFields: [
+        { label: "Titre traduit", value: "Bio Jugend-Strahlen Serum — 30ml" },
+        { label: "Description localisée", value: "Entdecken Sie unser Gesichtsserum mit Hyaluronsäure und natürlichem Vitamin C. Die ultraleichte Textur zieht sofort ein und lässt Ihre Haut strahlen. Ohne Parabene, dermatologisch getestet." },
+        { label: "Prix adapté", value: "42,90 EUR (Deutschland)" },
+        { label: "Adaptations culturelles", value: "\"Éclat\" → \"Strahlen\" (plus naturel), \"Testé dermato\" → standard attendu DE" },
+        { label: "Score qualité", value: "94/100 (fluency: 96, accuracy: 98, style: 90)" },
+      ],
+      beforeContext: "Fiche produit source · Marché cible: Allemagne",
+      afterLabel: "Traduction et localisation IA",
+      afterDuration: "22 secondes",
+      afterSummary: "Contenu traduit, localisé et adapté culturellement pour le marché allemand",
+    },
+    roiEstimator: {
+      label: "Combien de mots traduisez-vous par mois ?",
+      unitLabel: "Traduction manuelle / mois",
+      timePerUnitMinutes: 0.2,
+      timeWithAISeconds: 1,
+      options: [5000, 10000, 25000, 50000, 100000],
+    },
+    faq: [
+      {
+        question: "Quelles langues sont supportées et quelle est la qualité par langue ?",
+        answer: "L'agent supporte 40+ langues avec une qualité variable. Qualité excellente (95%+) : EN, DE, ES, IT, PT, NL. Qualité très bonne (90-95%) : PL, SV, DA, NO, CS, RU, ZH, JA. Qualité correcte (85-90%) : AR, HI, TR, KO. Pour les langues rares, nous recommandons une relecture humaine sur 30% du contenu. Les paires FR→EN et FR→DE sont quasi-natives.",
+      },
+      {
+        question: "Comment l'agent respecte-t-il le glossaire de marque et évite les incohérences ?",
+        answer: "Le glossaire est injecté dans le contexte de chaque traduction sous forme de table (terme FR → terme DE + note de contexte). L'agent est instruit de vérifier chaque terme du glossaire avant de traduire. Un post-processing automatique vérifie que 100% des termes du glossaire sont bien utilisés. Vous pouvez ajouter des règles (ex: \"bio\" ne se traduit jamais, toujours en minuscule).",
+      },
+      {
+        question: "L'agent peut-il traduire du contenu technique (légal, médical, finance) ?",
+        answer: "Oui, mais avec précautions. Pour du contenu à risque juridique ou médical, nous recommandons : (1) fournir un glossaire technique exhaustif, (2) activer la relecture humaine obligatoire sur 100% du volume, (3) utiliser Claude Opus 4.6 pour une précision maximale. L'agent indique un score de confiance par segment : les segments <80% sont automatiquement marqués pour relecture.",
+      },
+      {
+        question: "Comment l'agent gère-t-il les formats (HTML, Markdown, JSON) sans casser la structure ?",
+        answer: "L'agent détecte automatiquement le format du fichier source. Pour HTML/Markdown, il traduit uniquement le contenu textuel et préserve les balises, URLs, attributs. Pour JSON, il traduit les valeurs des clés spécifiées (ex: \"title\", \"description\") et ignore le reste. La structure du fichier est 100% préservée. Vous pouvez tester avec un fichier exemple avant de lancer la production.",
+      },
+      {
+        question: "Quel est le processus de relecture humaine recommandé ?",
+        answer: "Nous recommandons une relecture par échantillonnage : 10% du volume en relecture complète (sélection aléatoire), 100% des segments avec score de confiance <85%. Les relecteurs humains peuvent corriger directement dans l'interface, et leurs corrections alimentent un fichier de feedback qui améliore progressivement les traductions futures (fine-tuning du prompt). Après 50k mots traduits, la qualité converge et la relecture peut descendre à 5%.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Vos contenus source au format texte, HTML, Markdown ou JSON",
+      "Un glossaire de marque et guide de style par langue cible (optionnel mais recommandé)",
+      "Environ 1h pour la configuration initiale et un test pilote sur 20-50 contenus",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -13116,6 +14640,64 @@ def test_traduction_japonais():
     metaTitle: "Agent IA d'Automatisation des Emails — Guide Complet",
     metaDescription:
       "Automatisez le tri et la réponse à vos emails avec un agent IA. Classification intelligente, priorisation automatique et brouillons de réponse personnalisés. Tutoriel pas-à-pas.",
+    storytelling: {
+      sector: "SaaS B2B",
+      persona: "Karim, Head of Customer Success chez un éditeur de logiciel RH (78 salariés)",
+      painPoint: "L'équipe CS de Karim (5 personnes) reçoit 350 emails clients par jour : demandes de support, questions pré-vente, feedbacks produit, réclamations, demandes de factures. Le tri manuel prend 2h par jour par personne. Les emails urgents (ex: client bloqué en prod, menace de churn) sont noyés dans la masse et détectés avec 6-8h de retard. Les réponses varient selon l'agent, créant des incohérences (ex: 2 agents donnent des réponses contradictoires au même client).",
+      story: "Karim a branché l'agent de tri sur la boîte support@. Chaque email entrant est analysé en temps réel : l'agent le catégorise (support technique, billing, feature request, churn risk), attribue une priorité (P1 à P4), génère un brouillon de réponse personnalisé basé sur la FAQ interne et l'historique client, et route vers le bon agent CS. Les emails P1 déclenchent une alerte Slack instantanée. Les brouillons sont validés en 1 clic par les agents avant envoi.",
+      result: "Temps de tri réduit de 2h à 15 min par jour par agent (gain de 8h/jour pour l'équipe). Temps de première réponse divisé par 4 (de 6h à 1h30 en moyenne). Taux de satisfaction email passé de 78% à 89%. Zéro email critique manqué depuis le déploiement (avant : 2-3 par mois). Les agents se concentrent sur les cas complexes et la relation client.",
+    },
+    beforeAfter: {
+      inputLabel: "Email client reçu",
+      inputText: "Objet: Problème de facturation urgent\n\nBonjour,\n\nNous avons été débités 2 fois ce mois-ci (1 890 EUR + 1 890 EUR au lieu de 1 890 EUR). Notre DAF demande un remboursement immédiat + avoir. Nous avons un audit comptable cette semaine. Merci de traiter en urgence.\n\nCordialement,\nJean Dupont\nDirecteur Financier\nEntreprise ABC (client depuis 2 ans)",
+      outputFields: [
+        { label: "Catégorie", value: "Billing / Facturation" },
+        { label: "Priorité", value: "P1 — Urgent (impact financier, deadline)" },
+        { label: "Agent assigné", value: "Sophie Martin (spécialiste billing)" },
+        { label: "Sentiment", value: "Négatif (frustration, urgence)" },
+        { label: "Brouillon réponse", value: "Bonjour Jean, nous avons bien identifié la double facturation. Nous traitons le remboursement sous 24h et vous envoyons l'avoir aujourd'hui. Toutes nos excuses. Sophie" },
+      ],
+      beforeContext: "support@entreprise.com · il y a 3 min",
+      afterLabel: "Tri et analyse IA",
+      afterDuration: "5 secondes",
+      afterSummary: "Email catégorisé, priorisé, assigné avec brouillon de réponse validé",
+    },
+    roiEstimator: {
+      label: "Combien d'emails support recevez-vous par jour ?",
+      unitLabel: "Tri manuel / jour",
+      timePerUnitMinutes: 2,
+      timeWithAISeconds: 10,
+      options: [50, 100, 200, 350, 500],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il traiter les emails avec pièces jointes (PDF, images, factures) ?",
+        answer: "Oui. L'agent extrait et analyse le texte des PDF (factures, contrats, screenshots) via OCR. Pour les images, il peut décrire le contenu visuel (ex: capture d'écran d'erreur) et l'inclure dans l'analyse. Les pièces jointes sont automatiquement sauvegardées dans un dossier cloud (Google Drive, Dropbox) et liées au ticket. La compatibilité couvre PDF, DOCX, XLSX, PNG, JPG.",
+      },
+      {
+        question: "Comment éviter que l'agent envoie une réponse inappropriée automatiquement ?",
+        answer: "Par défaut, l'agent génère un brouillon de réponse qui attend validation humaine en 1 clic (bouton \"Envoyer\" ou \"Modifier\" dans Slack/Gmail). Vous pouvez activer l'envoi automatique pour certaines catégories non sensibles (ex: confirmations, réponses FAQ simples) avec un score de confiance >90%. Les emails P1 et sensibles nécessitent toujours une validation humaine.",
+      },
+      {
+        question: "L'agent respecte-t-il le RGPD lors de l'analyse des emails ?",
+        answer: "Les emails sont traités en mémoire via l'API du LLM (pas de stockage chez OpenAI/Anthropic, no-training clause). Les données personnelles (noms, emails, adresses) sont automatiquement détectées et peuvent être pseudonymisées avant analyse si configuré. Vous pouvez utiliser Ollama en local ou Azure OpenAI EU pour une souveraineté totale des données. Un registre de traitement RGPD est généré automatiquement.",
+      },
+      {
+        question: "Comment l'agent apprend-il le ton et le style de réponse de mon entreprise ?",
+        answer: "Lors du setup, vous fournissez 10-15 exemples d'emails bien rédigés représentant votre ton (formel, casual, empathique, etc.). L'agent s'entraîne sur ces exemples. Après chaque réponse, l'agent CS peut marquer le brouillon comme \"bon\" ou \"à améliorer\" avec un commentaire. Ce feedback est stocké et injecté dans le contexte pour améliorer les futures réponses. Après 100-200 emails, le ton est maîtrisé à 95%.",
+      },
+      {
+        question: "Puis-je personnaliser les règles de routage (qui reçoit quel type d'email) ?",
+        answer: "Oui. Les règles de routage sont configurables dans un Google Sheets ou directement dans le workflow n8n : par catégorie (billing → Sophie, technique → Marc), par langue (anglais → James), par priorité (P1 → manager), par client (VIP → account manager dédié). Vous pouvez combiner plusieurs critères avec des priorités. Les règles sont modifiables en temps réel sans toucher au code.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès IMAP/API à votre boîte email (Gmail, Outlook, support@)",
+      "Une base de connaissances interne (FAQ, procédures) au format texte ou Markdown",
+      "Environ 2h pour la configuration et l'import de 10-15 exemples de réponses type",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -13270,11 +14852,69 @@ def test_traduction_japonais():
     metaTitle: "Agent IA d'Analyse des Appels Téléphoniques — Guide Expert",
     metaDescription:
       "Transcrivez et analysez vos appels commerciaux et support avec un agent IA. Whisper pour la transcription, Claude pour l'analyse de sentiment, détection d'objections et coaching. Tutoriel complet.",
+    storytelling: {
+      sector: "Assurance",
+      persona: "Nadia, Directrice du Service Client chez un assureur santé (320 salariés)",
+      painPoint: "L'équipe de Nadia gère 1 200 appels clients par semaine (assistance, sinistres, réclamations). Les appels sont enregistrés mais jamais réécoutés faute de temps. Les managers ne peuvent coacher qu'en écoutant 2-3 appels par semaine par conseiller, soit <2% du volume. Résultat : les bonnes pratiques ne sont pas partagées, les signaux faibles (insatisfaction, risque de résiliation) passent inaperçus, et les objections récurrentes ne sont pas détectées (ex: \"vos délais de remboursement sont trop longs\" répété 47 fois en janvier, sans action corrective).",
+      story: "Nadia a déployé l'agent d'analyse sur un pilote de 200 appels. Chaque appel est automatiquement transcrit via Whisper, puis l'agent LLM analyse la transcription : résumé en 3-5 points clés, sentiment par segment, objections détectées, engagements pris, score de qualité (0-100) selon une grille métier (écoute, empathie, solutions proposées). Les managers reçoivent un dashboard avec les tendances (top objections, mots-clés récurrents, taux de satisfaction moyen).",
+      result: "Temps de revue des appels réduit de 95% (de 15 min/appel à 45 sec pour lire le résumé IA). 3 signaux faibles détectés en 2 semaines (délais remboursement, parcours digital complexe, manque de clarté sur les garanties) et traités. Coaching des conseillers ciblé sur les vrais points faibles (ex: \"Marie excelle sur l'empathie mais manque de solutions concrètes\"). Taux de satisfaction client +12 points en 3 mois.",
+    },
+    beforeAfter: {
+      inputLabel: "Appel enregistré analysé",
+      inputText: "Appel entrant — Durée: 8min 34sec\n\nClient: Monsieur Laroche (n° contrat: 4892-AH)\nConseillère: Julie Martin\nMotif: Réclamation sur délai de remboursement\n\n[Enregistrement audio MP3 — 8.2 Mo]",
+      outputFields: [
+        { label: "Résumé", value: "Client mécontent d'un délai de remboursement de 18 jours (vs 10j annoncés). Conseillère a vérifié le dossier, identifié un blocage administratif, débloqué immédiatement, et offert un geste commercial de 20 EUR." },
+        { label: "Sentiment", value: "Négatif au début (frustration) → Neutre/Positif à la fin (satisfaction)" },
+        { label: "Objections", value: "\"18 jours c'est inacceptable\" · \"On m'avait promis 10 jours\" · \"Je vais résilier\"" },
+        { label: "Engagements", value: "Remboursement sous 48h · Geste commercial 20 EUR · Rappel sous 3 jours pour confirmer" },
+        { label: "Score qualité", value: "78/100 (Écoute: 85, Empathie: 80, Solution: 75, Conclusion: 70)" },
+      ],
+      beforeContext: "Appel du 8 fév. 2026 10:42 · Conseillère: Julie Martin",
+      afterLabel: "Transcription + analyse IA",
+      afterDuration: "2 minutes 10 secondes",
+      afterSummary: "Appel transcrit, analysé avec résumé, sentiment, objections et score qualité",
+    },
+    roiEstimator: {
+      label: "Combien d'appels enregistrez-vous par semaine ?",
+      unitLabel: "Écoute manuelle / sem.",
+      timePerUnitMinutes: 12,
+      timeWithAISeconds: 90,
+      options: [50, 100, 250, 500, 1000],
+    },
+    faq: [
+      {
+        question: "Quelle est la précision de la transcription Whisper sur les termes techniques ou les accents ?",
+        answer: "Whisper Large V3 atteint 95-98% de précision sur le français standard. Pour les termes techniques (médical, assurance, juridique), la précision descend à 85-90% sans fine-tuning. Vous pouvez fournir un glossaire de termes métier qui sera utilisé en post-processing pour corriger automatiquement (ex: \"feuille de soins\" souvent mal transcrit en \"feuille de soin\"). Les accents régionaux sont bien gérés.",
+      },
+      {
+        question: "L'enregistrement et l'analyse des appels sont-ils conformes au RGPD ?",
+        answer: "Vous devez obtenir le consentement explicite du client avant l'enregistrement (message pré-décroché obligatoire : \"Cet appel est enregistré à des fins de qualité\"). Les enregistrements doivent être supprimés après la période légale (ex: 30 jours pour le coaching, 5 ans pour les sinistres). Les transcriptions peuvent être anonymisées (masquage automatique des noms, numéros de contrat, emails). Un registre RGPD est généré automatiquement.",
+      },
+      {
+        question: "Puis-je personnaliser la grille d'évaluation qualité selon mes critères métier ?",
+        answer: "Oui. La grille d'évaluation est entièrement configurable dans le prompt système. Vous définissez les critères (ex: respect du script, identification client, reformulation du besoin, solutions proposées, engagement pris, conclusion positive) avec une pondération pour chaque critère. La grille peut être différente selon le type d'appel (assistance, vente, réclamation). Le score global est calculé automatiquement.",
+      },
+      {
+        question: "Comment l'agent détecte-t-il les signaux faibles (risque de churn, insatisfaction) ?",
+        answer: "L'agent analyse le sentiment et détecte des patterns linguistiques spécifiques : mentions de résiliation, comparaisons avec des concurrents, frustrations répétées, ton agressif, demandes non résolues. Un score de risque de churn (0-100) est calculé. Les appels avec risque >70% déclenchent une alerte Slack au manager avec le résumé et la recommandation (ex: \"Rappeler sous 24h avec une offre de rétention\").",
+      },
+      {
+        question: "Quel est le coût de transcription et d'analyse par appel ?",
+        answer: "Avec Whisper API (OpenAI) : environ 0.02€ pour 10 min de transcription. Avec Claude Sonnet 4.5 pour l'analyse : environ 0.03€ par appel. Total : 0.05€/appel. Pour 1 000 appels/semaine, comptez 200€/mois. Avec Whisper.cpp en local (gratuit) + Ollama (gratuit), le coût tombe à 0€ mais nécessite un serveur GPU avec 16 Go de RAM.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour Whisper (OpenAI) ou Whisper.cpp en local (gratuit)",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès aux enregistrements audio (fichiers WAV/MP3 ou API de votre système téléphonique)",
+      "Une grille d'évaluation qualité définie avec vos critères métier (1h de setup)",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-génération-rapports",
+    slug: "agent-generation-rapports",
     title: "Agent de Génération Automatique de Rapports",
     subtitle: "Générez automatiquement des rapports hebdomadaires et mensuels à partir de sources de données multiples",
     problem:
@@ -14810,7 +16450,7 @@ def test_traduction_japonais():
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-prévision-demande-stock",
+    slug: "agent-prevision-demande-stock",
     title: "Agent de Prevision de Demande et Optimisation des Stocks",
     subtitle: "Anticipez la demande et optimisez vos niveaux de stock grace a l'IA predictive",
     problem:
@@ -15086,7 +16726,7 @@ def test_traduction_japonais():
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-génération-contrats",
+    slug: "agent-generation-contrats",
     title: "Agent IA de Generation de Contrats",
     subtitle: "Generez automatiquement des contrats commerciaux personnalises a partir de modèles et de données CRM",
     problem:
@@ -15223,11 +16863,69 @@ def test_traduction_japonais():
     metaTitle: "Agent IA de Generation de Contrats -- Guide Complet",
     metaDescription:
       "Automatisez la génération de contrats commerciaux avec un agent IA connecte a votre CRM. Modeles, clauses intelligentes et PDF en 10 minutes. Tutoriel complet.",
+    storytelling: {
+      sector: "Services B2B",
+      persona: "Antoine, Directeur Commercial chez un cabinet de conseil IT (110 salariés)",
+      painPoint: "L'équipe commerciale d'Antoine conclut 35 contrats par mois (prestations, licences SaaS, contrats cadres). Chaque contrat nécessite 3h de travail : extraction manuelle des données client depuis le CRM (raison sociale, SIRET, adresse), copier-coller dans un modèle Word, sélection des clauses juridiques selon le secteur et le montant, puis relecture juridique complète (2h par le service juridique). Erreurs fréquentes : mauvais tarifs (5% des contrats), clauses manquantes (12% nécessitent un avenant), données client obsolètes. Le service juridique est devenu un goulot d'étranglement critique.",
+      story: "Antoine a configuré l'agent de génération de contrats connecté au CRM Salesforce. Quand une opportunité passe en statut \"Gagné\", le commercial clique sur \"Générer contrat\". L'agent extrait toutes les données à jour depuis Salesforce, sélectionne le bon modèle (licence SaaS, prestation, contrat cadre), remplit automatiquement toutes les variables, ajoute les clauses obligatoires selon le secteur (ex: clause bancaire pour clients finance), génère un PDF et une version Word éditable, et envoie le tout au service juridique avec une checklist pré-validée.",
+      result: "Temps de génération réduit de 3h à 12 minutes (incluant relecture rapide). Erreurs de saisie éliminées à 99% (vs 5% avant). Temps de relecture juridique réduit de 2h à 20 min (contrôle ciblé uniquement). Capacité de traitement passée de 35 à 80 contrats/mois sans recruter. Le service juridique se concentre sur les négociations complexes et les clauses sur-mesure.",
+    },
+    beforeAfter: {
+      inputLabel: "Opportunité CRM gagnée",
+      inputText: "Deal fermé — Salesforce ID: OPP-2026-0142\n\nClient: LogiTransport SAS\nSIRET: 123 456 789 00012\nMontant: 68 500 EUR HT\nType: Licence SaaS + Formation\nDurée: 24 mois\nContact: Amélie Durand, Directrice SI",
+      outputFields: [
+        { label: "Modèle sélectionné", value: "Contrat Licence SaaS avec Formation (v4.2)" },
+        { label: "Variables remplies", value: "18/18 (raison sociale, SIRET, montant, durée, contacts, tarifs, etc.)" },
+        { label: "Clauses ajoutées", value: "6 clauses (SLA 99.5%, confidentialité, RGPD, résiliation, paiement, formation)" },
+        { label: "Checklist conformité", value: "✓ 12/12 points validés (mentions obligatoires, CGV, tarifs, etc.)" },
+        { label: "Documents générés", value: "PDF signable + Word éditable + Résumé pour relecteur juridique" },
+      ],
+      beforeContext: "Opportunité Salesforce · Statut: Closed Won",
+      afterLabel: "Génération automatique IA",
+      afterDuration: "18 secondes",
+      afterSummary: "Contrat généré avec toutes les données CRM, clauses et documents prêts",
+    },
+    roiEstimator: {
+      label: "Combien de contrats générez-vous par mois ?",
+      unitLabel: "Rédaction manuelle / mois",
+      timePerUnitMinutes: 180,
+      timeWithAISeconds: 600,
+      options: [5, 15, 35, 60, 100],
+    },
+    faq: [
+      {
+        question: "Comment l'agent sélectionne-t-il le bon modèle de contrat et les bonnes clauses ?",
+        answer: "La sélection suit des règles configurables : type de contrat (licence, prestation, cadre, NDA), secteur client (finance → clauses bancaires, santé → clauses HDS/RGPD renforcées), montant (>100k€ → clause d'audit, garantie bancaire), durée. Vous définissez les règles dans un fichier de configuration. L'agent valide que toutes les clauses obligatoires sont présentes avant génération. Un log de justification est produit pour chaque sélection.",
+      },
+      {
+        question: "Que se passe-t-il si une variable CRM est manquante ou obsolète (ex: SIRET incorrect) ?",
+        answer: "L'agent détecte les variables manquantes et invalides (ex: SIRET incorrect via validation format, adresse incomplète). Si une variable critique est manquante, la génération est bloquée et un message Slack est envoyé au commercial avec la liste des données à compléter. Si la variable est optionnelle, l'agent laisse un placeholder (ex: [À compléter]) surligné en jaune dans le document Word.",
+      },
+      {
+        question: "L'agent peut-il générer des clauses personnalisées ou uniquement des clauses pré-définies ?",
+        answer: "L'agent génère principalement des contrats à partir de clauses pré-définies validées par votre juridique (sécurité maximale). Pour les négociations complexes nécessitant des clauses sur-mesure, vous pouvez activer le mode \"génération assistée\" : l'agent propose un brouillon de clause basé sur le contexte (ex: \"clause de reversement de 15% au partenaire X\") que le juriste valide et ajuste avant inclusion. Mode recommandé : 90% clauses pré-définies, 10% sur-mesure.",
+      },
+      {
+        question: "Les données contractuelles sensibles (tarifs, conditions) sont-elles sécurisées ?",
+        answer: "Les données contractuelles ne sont pas stockées par le LLM. Elles sont injectées dans le prompt à chaque exécution et ne persistent pas chez OpenAI/Anthropic (no-training clause). La bibliothèque de modèles et de clauses est stockée dans votre PostgreSQL local. Pour une sécurité maximale, utilisez Ollama en local ou Azure OpenAI EU. Tous les contrats générés sont loggés avec traçabilité complète (qui, quand, quelles données).",
+      },
+      {
+        question: "Puis-je intégrer l'agent avec mon outil de signature électronique (DocuSign, Yousign) ?",
+        answer: "Oui. Le workflow n8n inclut une intégration native avec DocuSign, Yousign, HelloSign et Adobe Sign. Une fois le contrat PDF généré et validé par le juridique, l'agent l'envoie automatiquement pour signature électronique avec les bons signataires (client + votre entreprise). Le statut de signature est remonté dans le CRM. La boucle complète (génération → validation → signature → archivage) est automatisée.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Accès API à votre CRM (Salesforce, HubSpot, Pipedrive) pour extraire les données clients",
+      "Vos modèles de contrats au format Word (.docx) avec variables balisées (format Jinja2)",
+      "Une bibliothèque de clauses juridiques structurée par catégorie et secteur (1-2 jours de setup)",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
   {
-    slug: "agent-audit-sécurité-code",
+    slug: "agent-audit-securite-code",
     title: "Agent IA d'Audit de Securite de Code",
     subtitle: "Analysez automatiquement votre code source pour detecter les vulnerabilites OWASP et les failles de sécurité",
     problem:
@@ -15365,6 +17063,64 @@ def test_traduction_japonais():
     metaTitle: "Agent IA d'Audit de Securite de Code -- Guide Complet",
     metaDescription:
       "Deployez un agent IA pour auditer automatiquement la sécurité de votre code sur chaque Pull Request. Detection OWASP, analyse AST et corrections automatiques.",
+    storytelling: {
+      sector: "Fintech",
+      persona: "Thomas, Lead Security Engineer chez une fintech (180 salariés)",
+      painPoint: "Son équipe de 3 développeurs produit 25 Pull Requests par semaine. Les audits de sécurité manuels prennent 2 jours par release, retardant systématiquement les mises en production. Le dernier audit externe a révélé 12 vulnérabilités critiques (injections SQL, secrets hardcodés) qui auraient dû être détectées dès la revue de code. Thomas estime que 40% des failles passent inaperçues jusqu'à la production.",
+      story: "Thomas a déployé l'agent en 3 heures un vendredi. Le lundi suivant, chaque Pull Request était automatiquement analysée. Sur la première PR testée, l'agent a détecté une injection SQL dans un endpoint d'API, commenté la ligne exacte avec un exemple d'exploitation, et proposé un snippet de code corrigé avec requête paramétrée. Les faux positifs ont chuté de 80% comparé à leur ancien outil SAST.",
+      result: "En 6 semaines : 100% des PRs analysées automatiquement en moins de 90 secondes. Détection de 47 vulnérabilités bloquées avant merge (dont 8 critiques OWASP Top 10). Temps de revue de sécurité divisé par 4. Le taux de faux positifs est passé de 92% à 18%, rendant les alertes enfin actionnables.",
+    },
+    beforeAfter: {
+      inputLabel: "Pull Request soumise",
+      inputText: "feat: Add user authentication endpoint\n\n```python\n@app.post('/login')\ndef login(username: str, password: str):\n    query = f\"SELECT * FROM users WHERE username='{username}' AND password='{password}'\"\n    user = db.execute(query)\n    return {\"token\": generate_token(user)}\n```",
+      outputFields: [
+        { label: "Vulnérabilité", value: "Injection SQL (OWASP A03:2021)" },
+        { label: "Sévérité", value: "CRITIQUE - Score CVSS 9.3" },
+        { label: "Ligne affectée", value: "login.py:4" },
+        { label: "Explication", value: "Concaténation directe des paramètres utilisateur dans la requête SQL. Un attaquant peut injecter ' OR '1'='1 pour bypasser l'authentification." },
+        { label: "Code corrigé", value: "Utiliser une requête paramétrée : db.execute('SELECT * FROM users WHERE username=? AND password=?', (username, password))" },
+      ],
+      beforeContext: "github.com/fintech/api/pull/247 · Il y a 5 min",
+      afterLabel: "Analyse sécurité IA",
+      afterDuration: "87 secondes",
+      afterSummary: "Vulnérabilité critique détectée et commentée dans la PR",
+    },
+    roiEstimator: {
+      label: "Combien de Pull Requests produisez-vous par semaine ?",
+      unitLabel: "Revue manuelle / sem.",
+      timePerUnitMinutes: 45,
+      timeWithAISeconds: 90,
+      options: [5, 15, 25, 50, 100],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il détecter les vulnérabilités zero-day inconnues ?",
+        answer: "Non. L'agent détecte les vulnérabilités connues du Top 10 OWASP, les patterns dangereux classiques (injections, XSS, CSRF, exposition de secrets) et les CVE connues dans les dépendances. Il ne remplace pas un audit de sécurité offensif par des experts pour identifier des vulnérabilités logiques métier ou des zero-days. Son rôle est de détecter 85-90% des vulnérabilités courantes automatiquement, libérant les experts pour les cas complexes.",
+      },
+      {
+        question: "Mon code source est confidentiel. Puis-je utiliser un LLM cloud ?",
+        answer: "C'est un risque que vous devez évaluer. Pour du code hautement sensible, préférez un modèle self-hosted comme CodeLlama via Ollama ou Llama 3 déployé sur votre infrastructure. Les performances de détection seront légèrement inférieures (-10 à 15%) mais votre code ne quitte jamais vos serveurs. Pour les projets non critiques, OpenAI et Anthropic offrent des garanties contractuelles de non-utilisation des données pour entraîner leurs modèles.",
+      },
+      {
+        question: "Comment l'agent gère-t-il les faux positifs ?",
+        answer: "L'agent utilise l'analyse de l'arbre de syntaxe abstrait (AST) pour comprendre le contexte du code, réduisant les faux positifs de 70-80% par rapport aux outils SAST classiques basés sur regex. Vous pouvez configurer des règles d'exception par projet et marquer des faux positifs pour améliorer le modèle. Un système de feedback permet aux développeurs de noter chaque alerte pour affiner progressivement la précision.",
+      },
+      {
+        question: "Quelle est la latence acceptable dans le pipeline CI/CD ?",
+        answer: "L'analyse complète d'une PR moyenne (150-300 lignes modifiées) prend entre 60 et 120 secondes. Pour ne pas bloquer le workflow, configurez l'agent en mode asynchrone : il poste les commentaires dans la PR pendant que les tests unitaires tournent. Les vulnérabilités critiques bloquent le merge, les warnings moyens/faibles sont informatifs sans bloquer.",
+      },
+      {
+        question: "L'agent peut-il analyser d'autres langages que Python ?",
+        answer: "Oui. Les LLM modernes comme GPT-4 ou Claude supportent nativement JavaScript/TypeScript, Python, Java, Go, Ruby, PHP, C# et Rust. Les performances varient selon le langage (meilleur sur Python/JS, légèrement moins précis sur Rust/Go). Utilisez tree-sitter pour parser l'AST de chaque langage et fournir un contexte structuré au LLM.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI, Anthropic, Mistral, ou Ollama gratuit)",
+      "Un token GitHub App avec permissions contents:read et pull_requests:write",
+      "Accès à une base PostgreSQL ou SQLite pour stocker l'historique des analyses",
+      "Environ 3-4 heures pour configurer l'intégration GitHub et l'agent d'analyse",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -15481,6 +17237,64 @@ def test_traduction_japonais():
     metaTitle: "Agent IA de Resume de Documents -- Guide Complet",
     metaDescription:
       "Resumez automatiquement des documents longs (rapports, contrats, etudes) grace a un agent IA. Pipeline OCR, chunking semantique et resume structure. Tutoriel complet avec code.",
+    storytelling: {
+      sector: "Assurance",
+      persona: "Nadia, Responsable Conformité chez un assureur (420 salariés)",
+      painPoint: "Son équipe traite 60 rapports de conformité réglementaire par mois, chacun faisant entre 80 et 250 pages. Nadia et ses 2 analystes passent 4 à 5 heures par rapport à identifier les obligations, dates limites et risques critiques. La semaine dernière, ils ont raté une échéance ACPR car une clause était noyée en page 173 d'une directive de 200 pages. Les clients internes (juridique, audit) attendent 3 jours pour recevoir une synthèse exploitable.",
+      story: "Nadia a testé l'agent sur un rapport ACPR de 180 pages qu'elle connaissait bien. En 4 minutes, l'agent a extrait les 12 obligations principales, identifié les 3 dates limites, créé un tableau comparatif avec la version précédente du règlement, et généré un résumé de 2 pages en bullet points hiérarchisés. La précision était de 95% comparée à son analyse manuelle précédente.",
+      result: "En 2 mois : traitement de 60 rapports par mois contre 35 auparavant (+71%). Temps de synthèse réduit de 4h30 à 35 minutes par document. Aucune échéance manquée depuis la mise en place. Les analystes se concentrent maintenant sur l'interprétation stratégique des obligations plutôt que sur la lecture exhaustive.",
+    },
+    beforeAfter: {
+      inputLabel: "Document uploadé",
+      inputText: "rapport_acpr_lutte_blanchiment_2025.pdf (167 pages, 52 MB)",
+      outputFields: [
+        { label: "Résumé exécutif", value: "Nouvelles obligations de vigilance renforcée pour les clients à risque politique. Mise en place obligatoire d'un système de surveillance des transactions suspectes avant le 30/09/2025." },
+        { label: "Obligations identifiées", value: "12 obligations majeures dont 3 critiques nécessitant adaptation des processus internes" },
+        { label: "Dates limites", value: "30/09/2025 (système surveillance), 15/12/2025 (formation équipes), 31/03/2026 (premier reporting)" },
+        { label: "Risques détectés", value: "Non-conformité passible de sanctions ACPR jusqu'à 10M€. Obligation de signalement renforcée sous 48h." },
+        { label: "Changements vs version précédente", value: "Seuil déclaration abaissé de 50k€ à 10k€. Nouvelles catégories de clients à risque ajoutées." },
+      ],
+      beforeContext: "rapport_acpr_lutte_blanchiment_2025.pdf · Uploadé il y a 2 min",
+      afterLabel: "Extraction et résumé IA",
+      afterDuration: "4 minutes 18 secondes",
+      afterSummary: "Document analysé, résumé structuré et tableau comparatif générés",
+    },
+    roiEstimator: {
+      label: "Combien de longs documents analysez-vous par mois ?",
+      unitLabel: "Analyse manuelle / sem.",
+      timePerUnitMinutes: 240,
+      timeWithAISeconds: 300,
+      options: [5, 10, 20, 40, 60],
+    },
+    faq: [
+      {
+        question: "L'agent peut-il traiter des documents scannés de mauvaise qualité ?",
+        answer: "Oui, mais avec des limites. L'agent utilise Tesseract OCR pour extraire le texte des scans. La précision dépend fortement de la qualité de numérisation : 95%+ pour des scans nets à 300 DPI, mais peut chuter à 70-80% pour des photocopies de mauvaise qualité ou des tickets thermiques effacés. Pour les documents critiques, privilégiez toujours des PDF natifs si disponibles. Vous pouvez aussi pré-traiter les images (redressement, amélioration du contraste) pour améliorer l'OCR.",
+      },
+      {
+        question: "Comment s'assurer que l'agent n'omet pas d'informations critiques ?",
+        answer: "L'agent ne doit jamais être utilisé seul sur des documents critiques contractuels ou réglementaires. Implémentez systématiquement une validation humaine sur les résumés générés. Pour les documents sensibles, configurez l'agent en mode 'extraction d'éléments clés' plutôt que résumé libre : demandez-lui explicitement d'identifier les obligations, montants, dates, risques et parties prenantes. Comparez toujours les premiers résumés IA avec vos analyses manuelles pour calibrer la confiance.",
+      },
+      {
+        question: "Peut-on personnaliser le format de sortie des résumés ?",
+        answer: "Absolument. Créez des templates de résumé adaptés à votre métier : structure en bullet points hiérarchiques, tableaux comparatifs, extraction de clauses par type, matrices de risques. L'agent peut générer du Markdown structuré, du JSON pour réinjecter dans d'autres systèmes, ou du HTML pour publication directe. Fournissez 2-3 exemples de résumés dans le prompt pour guider le format et le ton souhaités.",
+      },
+      {
+        question: "Quelle est la limite de taille des documents ?",
+        answer: "Les LLM ont une fenêtre de contexte limitée (128k tokens pour GPT-4 Turbo, 200k pour Claude 3.5 Sonnet). Un document de 100 pages représente environ 60-80k tokens. Pour les documents dépassant la limite, l'agent utilise une stratégie de chunking sémantique : il découpe par sections logiques, résume chaque section indépendamment, puis consolide les résumés partiels en un résumé global. Cette approche fonctionne jusqu'à 500-600 pages.",
+      },
+      {
+        question: "L'agent respecte-t-il le RGPD pour des documents contenant des données personnelles ?",
+        answer: "C'est votre responsabilité de garantir la conformité RGPD. Si vous envoyez des documents vers OpenAI ou Anthropic cloud, vérifiez leurs garanties contractuelles (DPA, clauses contractuelles types). Pour des documents hautement sensibles (dossiers médicaux, bancaires), préférez un déploiement self-hosted avec Ollama et un modèle open source. Anonymisez systématiquement les noms, emails et données sensibles avant traitement si possible.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (Claude 3.5 Sonnet recommandé pour les longs contextes)",
+      "Tesseract OCR installé si vous traitez des documents scannés (gratuit)",
+      "Un compte Supabase (free tier) ou PostgreSQL pour stocker les résumés",
+      "Environ 2-3 heures pour configurer le pipeline d'ingestion et les templates de résumé",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -15599,6 +17413,65 @@ def test_traduction_japonais():
     metaTitle: "Agent IA de Creation de Fiches Produit SEO -- Guide Complet",
     metaDescription:
       "Generez automatiquement des fiches produit SEO-optimisees a partir de données fournisseurs. Pipeline de génération en masse, validation qualité et export CMS. Tutoriel complet avec code.",
+    storytelling: {
+      sector: "E-commerce",
+      persona: "Karim, Directeur E-commerce chez un distributeur multimarques (95 salariés)",
+      painPoint: "Son équipe doit créer 800 nouvelles fiches produit par trimestre suite à l'intégration de 4 nouveaux fournisseurs. Avec 2 rédacteurs à temps plein produisant chacun 20 fiches par semaine, ils accumulent un retard de 600 références non publiées. Les descriptions fournisseurs sont copiées-collées, générant du contenu dupliqué pénalisé par Google. Le trafic SEO stagne depuis 8 mois et le taux de conversion des nouvelles fiches est 40% inférieur aux anciennes.",
+      story: "Karim a configuré l'agent en une après-midi avec les guidelines de marque et 10 exemples de fiches best-performers. Il a uploadé un CSV de 150 produits d'un nouveau fournisseur. En 90 minutes, l'agent a généré 150 fiches complètes : titres SEO optimisés incluant les mots-clés cibles, descriptions marketing de 280 mots en moyenne respectant le ton de marque, bullets techniques structurés, et balises meta uniques.",
+      result: "En 6 semaines : génération de 1200 fiches produit contre 320 manuellement (productivité x3.7). Score SEO moyen passé de 62/100 à 84/100 selon SEMrush. Trafic organique en hausse de 28% sur les nouvelles pages produit. Taux de conversion amélioré de 18% grâce à des descriptions plus engageantes et mieux structurées.",
+    },
+    beforeAfter: {
+      inputLabel: "Données fournisseur (CSV)",
+      inputText: "SKU: BLK-2847, Name: \"Wireless Bluetooth Earbuds\", Category: \"Audio\", Price: 49.90€, Features: \"BT 5.3 | 8h battery | IPX5 waterproof | USB-C charging\"",
+      outputFields: [
+        { label: "Titre H1 SEO", value: "Écouteurs Bluetooth Sans Fil BLK-2847 – Autonomie 8h, Étanche IPX5" },
+        { label: "Meta Title", value: "Écouteurs Bluetooth 8h Autonomie | Sans Fil IPX5 | Livraison Offerte" },
+        { label: "Description marketing", value: "Profitez d'une liberté sonore totale avec ces écouteurs Bluetooth 5.3 offrant 8 heures d'autonomie en lecture continue. Résistants à l'eau (certification IPX5), ils vous accompagnent pendant vos séances de sport les plus intenses. La recharge USB-C rapide vous offre 2h d'écoute après seulement 15 minutes de charge. Design ergonomique pour un confort optimal toute la journée." },
+        { label: "Bullets techniques", value: "• Bluetooth 5.3 pour connexion stable jusqu'à 10m\n• 8h d'autonomie + boîtier 24h supplémentaires\n• Certification IPX5 résistant eau et sueur\n• Recharge USB-C rapide" },
+        { label: "Schema.org JSON-LD", value: "{\"@type\": \"Product\", \"name\": \"Écouteurs BLK-2847\", \"offers\": {\"price\": \"49.90\", \"priceCurrency\": \"EUR\"}, \"aggregateRating\": {\"ratingValue\": \"4.5\"}}" },
+      ],
+      beforeContext: "catalogue_fournisseur_mars_2025.csv · 150 produits",
+      afterLabel: "Génération fiches IA",
+      afterDuration: "87 secondes",
+      afterSummary: "Fiche produit complète et SEO-optimisée générée",
+    },
+    roiEstimator: {
+      label: "Combien de nouvelles fiches produit créez-vous par mois ?",
+      unitLabel: "Rédaction manuelle / sem.",
+      timePerUnitMinutes: 12,
+      timeWithAISeconds: 45,
+      options: [50, 100, 200, 500, 1000],
+    },
+    faq: [
+      {
+        question: "Comment éviter que les descriptions de produits similaires soient trop ressemblantes ?",
+        answer: "Utilisez un système de variation contextuelle dans le prompt : demandez au LLM de mettre l'accent sur des caractéristiques différentes pour chaque produit d'une même catégorie. Par exemple, pour des écouteurs, variez entre mise en avant de l'autonomie, du design, du sport, de l'audio. Injectez aussi des données de différenciation concurrentielle pour que l'agent identifie les points forts uniques de chaque produit. Testez régulièrement avec des outils anti-plagiat pour mesurer l'unicité.",
+      },
+      {
+        question: "L'agent peut-il inventer des caractéristiques techniques inexistantes ?",
+        answer: "Oui, c'est un risque majeur appelé 'hallucination'. Pour le minimiser : 1) Fournissez toutes les specs techniques en structured data et demandez explicitement de ne rien inventer, 2) Utilisez un mode 'extractif strict' où l'agent ne peut que reformuler les données présentes, jamais ajouter d'info, 3) Implémentez une validation automatique : si l'output contient une spec absente de l'input, flaggez-le pour revue humaine. Pour les produits réglementés (cosmétique, alimentaire, médical), une validation humaine systématique est obligatoire.",
+      },
+      {
+        question: "Peut-on maintenir un ton de marque cohérent sur des milliers de fiches ?",
+        answer: "Absolument, c'est justement un avantage majeur des LLM. Créez un 'brand voice guide' détaillé : ton (professionnel/décontracté/luxe), vocabulaire à privilégier/éviter, structure type, niveau de langage. Fournissez 5-10 exemples de fiches existantes annotées 'c'est parfait car...'. Testez sur 50 fiches avant de scaler. Mesurez la cohérence avec des scores automatiques (vocabulaire, longueur des phrases, usage des adjectifs). Réajustez le prompt si dérive détectée.",
+      },
+      {
+        question: "Comment optimiser le SEO sans tomber dans le keyword stuffing ?",
+        answer: "Fournissez à l'agent une liste de mots-clés cibles par catégorie avec leur volume de recherche et difficulté. Demandez explicitement : inclure le mot-clé principal dans le H1, 1-2 fois dans les 100 premiers mots, 2-3 variantes sémantiques dans le corps. Fixez une densité maximale (2-3%). Utilisez un outil comme Yoast ou SEMrush en post-processing pour scorer chaque fiche. Les fiches sous 70/100 sont reflagguées pour amélioration. Privilégiez toujours la lisibilité humaine sur la sur-optimisation.",
+      },
+      {
+        question: "Quelle quantité de fiches peut-on générer par heure avec quel coût ?",
+        answer: "Avec GPT-4 Turbo : environ 100-150 fiches/heure à un coût de 0,15-0,25€ par fiche (incluant appel LLM + embeddings). Avec Claude Sonnet : 80-120 fiches/heure à 0,10-0,18€/fiche. Avec Ollama + Llama 3 local : illimité mais légèrement moins qualitatif, coût = électricité serveur (~0,02€/fiche). Pour 1000 fiches/mois, budget LLM : 100-250€ avec cloud, quasi-gratuit en local. Le bottleneck est rarement le LLM mais l'ingestion et validation des données.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI GPT-4 Turbo ou Anthropic Claude Sonnet)",
+      "Un catalogue produit structuré (CSV ou accès API fournisseur)",
+      "Un guide de ton de marque et 5-10 exemples de fiches produit modèles",
+      "Accès API à votre CMS/plateforme e-commerce (Shopify, WooCommerce, Prestashop)",
+      "Environ 3-4 heures pour configurer les templates et valider les premiers résultats",
+    ],
     createdAt: "2026-02-07",
     updatedAt: "2026-02-07",
   },
@@ -16032,11 +17905,71 @@ if __name__ == "__main__":
     metaTitle: "Agent IA de Veille Concurrentielle Automatisée — Guide Complet",
     metaDescription:
       "Déployez un agent IA de surveillance concurrentielle multi-sources avec détection de changements, alertes intelligentes et rapports stratégiques hebdomadaires. Tutoriel complet.",
+    storytelling: {
+      sector: "SaaS B2B",
+      persona: "Élise, Directrice Marketing chez un éditeur SaaS RH (140 salariés)",
+      painPoint: "Élise surveille 8 concurrents directs mais ne dispose que de 2h par semaine pour la veille. Elle manque systématiquement les annonces importantes : la semaine dernière, un concurrent a lancé une fonctionnalité IA que 3 prospects lui ont mentionnée lors de calls commerciaux, alors qu'elle n'était même pas au courant. Son équipe découvre les changements de prix concurrents avec 2 à 3 semaines de retard. Les rapports de veille sont obsolètes dès leur publication.",
+      story: "Élise a configuré l'agent en listant les 8 concurrents avec leurs URLs. L'agent scrape leurs sites, changelog, blog et LinkedIn toutes les 6 heures. Le mardi suivant, elle a reçu une alerte Slack : 'Concurrent A vient de publier une intégration ChatGPT dans leur pricing page'. Elle a pu adapter son pitch commercial avant le call client de l'après-midi. Le vendredi, un rapport hebdo de 3 pages synthétisait les 12 mouvements détectés.",
+      result: "En 8 semaines : détection de 47 mouvements concurrentiels significatifs (vs 12 identifiés manuellement auparavant). Temps de réaction moyen réduit de 18 jours à 8 heures. Couverture étendue à 15 sources par concurrent (vs 3 manuellement). L'équipe commerciale adapte son discours en temps réel grâce aux alertes contextuelles.",
+    },
+    beforeAfter: {
+      inputLabel: "Sources surveillées",
+      inputText: "competitor-a.com/pricing, competitor-a.com/blog, linkedin.com/company/competitor-a, twitter.com/competitorA",
+      outputFields: [
+        { label: "Changement détecté", value: "Baisse de prix de 15% sur le plan Enterprise (2499€ → 2099€/mois)" },
+        { label: "Type", value: "Prix - Impact stratégique ÉLEVÉ" },
+        { label: "Date détection", value: "2025-03-12 14:23" },
+        { label: "Contexte", value: "Coïncide avec l'annonce de 3 nouveaux concurrents sur le marché la semaine dernière. Probable stratégie défensive de parts de marché." },
+        { label: "Recommandation", value: "Préparer une réponse pricing ou renforcer l'argumentaire valeur pour justifier notre différentiel de 18%. Contacter les prospects en phase finale pour les rassurer sur notre positionnement." },
+        { label: "Sources", value: "competitor-a.com/pricing (diff HTML), mention LinkedIn CEO" },
+      ],
+      beforeContext: "Scraping automatique · Toutes les 6 heures",
+      afterLabel: "Analyse concurrentielle IA",
+      afterDuration: "12 secondes",
+      afterSummary: "Changement détecté, analysé et alerte envoyée sur Slack",
+    },
+    roiEstimator: {
+      label: "Combien de concurrents suivez-vous activement ?",
+      unitLabel: "Veille manuelle / sem.",
+      timePerUnitMinutes: 30,
+      timeWithAISeconds: 15,
+      options: [3, 5, 8, 12, 20],
+    },
+    faq: [
+      {
+        question: "Le scraping de sites concurrents est-il légal ?",
+        answer: "Zone grise juridique. En France et UE, le scraping de données publiques à des fins d'analyse concurrentielle est généralement toléré tant que vous respectez : 1) robots.txt du site, 2) charge serveur raisonnable (pas de spam de requêtes), 3) pas de contournement de protections techniques, 4) pas de republication des contenus scrapés. Privilégiez les flux RSS officiels, APIs publiques et sources légitimes quand disponibles. Consultez un juriste pour votre cas spécifique, surtout si vous scrapez à grande échelle.",
+      },
+      {
+        question: "Comment éviter les faux positifs sur des changements mineurs ?",
+        answer: "Configurez des seuils de pertinence. Par exemple : ne notifier que les changements de prix > 5%, les nouveaux articles blog contenant des mots-clés stratégiques (pas les posts RH/recrutement), les recrutements de C-level uniquement. Utilisez le LLM pour scorer l'impact stratégique de chaque changement (0-10) et filtrer les scores < 5. Créez une whitelist de patterns à ignorer (changements de design, corrections typo). Réajustez les seuils après 2-3 semaines selon le feedback.",
+      },
+      {
+        question: "Que faire si un concurrent change sa structure HTML fréquemment ?",
+        answer: "Utilisez des outils de scraping modernes comme Firecrawl ou Apify qui gèrent mieux les changements de structure. Implémentez un système de fallback : si le scraping par sélecteur CSS échoue, basculez sur extraction LLM du contenu brut. Stockez des versions successives de la page pour détecter les vrais changements vs les redesigns. Configurez des alertes de santé du scraper pour être notifié si un collecteur tombe en échec 3 fois d'affilée.",
+      },
+      {
+        question: "Peut-on surveiller aussi les brevets et dépôts de marques ?",
+        answer: "Absolument. Intégrez les flux RSS de l'INPI (France), EPO (Europe) et USPTO (USA) dans le pipeline. Configurez des alertes sur les noms de concurrents et mots-clés technologiques pertinents (ex: 'machine learning RH' pour votre secteur). Les dépôts de brevets sont des signaux d'innovation 6-18 mois avant commercialisation. Croisez avec les recrutements d'ingénieurs dans ces domaines pour identifier les pivots stratégiques concurrents.",
+      },
+      {
+        question: "Comment présenter ces insights à l'équipe dirigeante ?",
+        answer: "Générez un rapport hebdomadaire structuré : 1) Executive summary (3 mouvements majeurs de la semaine), 2) Tableau des changements par concurrent et type, 3) Analyse tendances long-terme (sur 3 mois glissants), 4) Recommandations actionnables. Utilisez des visualisations : timeline des événements, heatmap d'activité concurrentielle, graphes d'évolution prix. Envoyez en PDF ou publiez dans Notion/Confluence. Les alertes critiques partent en temps réel sur Slack avec un niveau de priorité.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (Claude Sonnet recommandé pour l'analyse contextuelle)",
+      "Firecrawl API ou Scrapy configuré pour le scraping web responsable",
+      "Un compte Supabase ou PostgreSQL pour stocker l'historique de veille",
+      "Intégration Slack ou email pour les alertes temps réel",
+      "Environ 4-5 heures pour configurer les sources et calibrer les seuils d'alerte",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
   {
-    slug: "agent-notes-frais-ocr-conformité",
+    slug: "agent-notes-frais-ocr-conformite",
     title: "Agent de Gestion des Notes de Frais avec OCR et Conformité",
     subtitle: "Automatisez l'extraction OCR, la vérification de conformité et l'imputation comptable des notes de frais en temps réel",
     problem:
@@ -16570,6 +18503,68 @@ async def submit_expense(
     metaTitle: "Agent IA de Gestion des Notes de Frais avec OCR — Guide Complet",
     metaDescription:
       "Automatisez le traitement des notes de frais avec OCR intelligent, contrôle de conformité en temps réel et imputation comptable automatique. Tutoriel pas-à-pas avec code Python.",
+    storytelling: {
+      sector: "Conseil",
+      persona: "Julien, Directeur Administratif et Financier chez un cabinet de conseil (280 salariés)",
+      painPoint: "Son équipe comptable de 5 personnes traite 1800 notes de frais par mois. La saisie manuelle génère 18% d'erreurs de montant ou de TVA. Les contrôles de conformité sont aléatoires : des dîners à 250€ passent alors que des trajets Uber légitimes sont bloqués. Le délai moyen de remboursement de 23 jours génère des plaintes récurrentes auprès des RH. La réconciliation avec les relevés Amex corporate mobilise 1,5 ETP à temps plein.",
+      story: "Julien a déployé l'agent connecté à l'app mobile de notes de frais. Les consultants photographient leurs tickets directement. L'OCR extrait montant, date, fournisseur et TVA en 3 secondes. L'agent vérifie automatiquement la conformité (plafond repas 35€ pour consultants junior, 50€ pour senior), détecte les doublons, rapproche avec le relevé Amex, et impute comptablement. Les managers valident en 1 clic les dossiers pré-vérifiés.",
+      result: "En 10 semaines : délai de remboursement réduit de 23 jours à 3,5 jours en moyenne. Taux d'erreur de saisie divisé par 12 (de 18% à 1,4%). Détection de 47 doublons et 12 cas de fraude potentielle. Charge comptable réduite de 1,5 ETP libérés pour des missions d'analyse. Satisfaction collaborateurs en hausse de 34 points.",
+    },
+    beforeAfter: {
+      inputLabel: "Ticket photographié",
+      inputText: "[Photo d'un ticket de restaurant : BRASSERIE LE CONSULAT, 15/03/2025, Total TTC: 67,50€, TVA 10%: 6,14€]",
+      outputFields: [
+        { label: "Fournisseur", value: "Brasserie Le Consulat, Paris 18e" },
+        { label: "Date", value: "15/03/2025" },
+        { label: "Montant HT", value: "61,36€" },
+        { label: "TVA 10%", value: "6,14€" },
+        { label: "Total TTC", value: "67,50€" },
+        { label: "Conformité", value: "⚠️ Dépassement plafond repas (limite: 50€, dépense: 67,50€). Justification requise." },
+        { label: "Imputation", value: "6256 - Frais de réception (Client: Renault / Projet: PROJ-2025-042)" },
+        { label: "Statut", value: "En attente validation manager (dépassement détecté)" },
+      ],
+      beforeContext: "ticket_20250315_1847.jpg · Uploadé via app mobile",
+      afterLabel: "Traitement OCR et conformité IA",
+      afterDuration: "4,2 secondes",
+      afterSummary: "Ticket extrait, vérifié, imputé et envoyé en validation",
+    },
+    roiEstimator: {
+      label: "Combien de notes de frais traitez-vous par mois ?",
+      unitLabel: "Saisie manuelle / sem.",
+      timePerUnitMinutes: 8,
+      timeWithAISeconds: 5,
+      options: [100, 300, 500, 1000, 2000],
+    },
+    faq: [
+      {
+        question: "L'OCR fonctionne-t-il sur les tickets thermiques effacés ?",
+        answer: "Partiellement. Les tickets thermiques bien conservés (< 6 mois) sont traités avec 90-95% de précision. Au-delà, ou si le ticket est exposé à la chaleur, l'encre thermique se dégrade et l'OCR peut échouer ou donner des résultats partiels. Solution : demandez aux collaborateurs de photographier IMMÉDIATEMENT après l'achat via l'app mobile. Stockez l'image originale en backup. Pour les tickets critiques, implémentez une règle : si confiance OCR < 80%, flag pour saisie manuelle avec ticket original requis.",
+      },
+      {
+        question: "Comment gérer les faux positifs de fraude sans frustrer les collaborateurs ?",
+        answer: "Calibrez finement les seuils selon le contexte métier. Par exemple : un repas à 120€ est suspect pour un consultant junior seul, mais normal pour un directeur avec 3 clients. Utilisez le machine learning sur l'historique pour définir des patterns normaux par collaborateur. Les alertes fraude doivent être gradées : jaune (vérification légère), orange (justification requise), rouge (blocage + escalade). Communiquez clairement les règles. Mesurez le taux de faux positifs hebdo et ajustez. Cible : < 5% de faux positifs.",
+      },
+      {
+        question: "L'imputation comptable automatique est-elle fiable ?",
+        answer: "Elle nécessite un apprentissage initial. Fournissez au LLM : 1) le plan comptable complet avec descriptions, 2) 100-200 exemples de notes de frais pré-imputées, 3) les règles métier (ex: restaurants = 6256 si client présent, 6257 si déplacement seul). Validez manuellement les 200 premières imputations et corrigez les erreurs. Le LLM apprend de ces corrections. Après 500 notes traitées, la précision atteint 92-95%. Les cas ambigus sont flagués pour revue humaine. Ne déléguez jamais 100% sans contrôle.",
+      },
+      {
+        question: "Peut-on intégrer directement avec les relevés bancaires ?",
+        answer: "Oui via API bancaires (DSP2 en Europe oblige les banques à ouvrir leurs APIs). Connectez-vous à l'API de votre banque corporate (Amex, BNP, Société Générale, etc.) pour récupérer les transactions en temps réel. L'agent rapproche automatiquement chaque justificatif uploadé avec la transaction bancaire correspondante (matching sur montant ± 2€ et date ± 3 jours). Les transactions bancaires sans justificatif sous 7 jours génèrent une relance automatique au collaborateur.",
+      },
+      {
+        question: "Quelles métriques suivre pour mesurer la performance du système ?",
+        answer: "Indicateurs clés : 1) Taux de précision OCR (cible > 95%), 2) Taux d'erreur d'imputation (cible < 5%), 3) Délai moyen de remboursement (cible < 5 jours), 4) % de notes traitées sans intervention humaine (cible > 80%), 5) Taux de faux positifs fraude (cible < 3%), 6) Temps comptable économisé en heures/mois. Dashboardez ces KPIs dans Metabase ou Tableau et suivez hebdomadairement. Alertez si une métrique dérive de > 10% par rapport à la baseline.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI GPT-4 Turbo recommandé)",
+      "Un moteur OCR (Tesseract gratuit ou Azure Document Intelligence)",
+      "Accès API à votre banque corporate (DSP2) pour réconciliation automatique",
+      "Une base PostgreSQL ou Supabase pour stocker les notes de frais",
+      "Environ 5-6 heures pour configurer l'OCR, les règles métier et l'imputation",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -17148,6 +19143,64 @@ async def handle_slack_event(request: Request):
     metaTitle: "Agent IA de Planification de Réunions Intelligente — Guide Complet",
     metaDescription:
       "Automatisez la planification de réunions avec un agent IA qui optimise les créneaux selon les disponibilités, fuseaux horaires et charge cognitive. Bot Slack inclus.",
+    storytelling: {
+      sector: "Tech",
+      persona: "Marion, Chief of Staff chez une scale-up tech (210 salariés)",
+      painPoint: "Marion passe 7 heures par semaine à coordonner les agendas des 6 membres du COMEX pour les réunions stratégiques. Les chaînes d'emails 'Qui peut mardi 14h ?' durent 2 jours. Les réunions s'enchaînent sans pause : le CEO a eu 9 réunions consécutives jeudi dernier, terminant épuisé. L'équipe de San Francisco se plaint de calls à 23h heure locale. 40% des réunions sont annulées ou décalées dans les 48h précédentes par manque de disponibilité réelle.",
+      story: "Marion a connecté l'agent aux calendriers Outlook des 120 cadres de l'entreprise avec leur consentement. Elle configure les préférences : CEO bloque 9h-11h pour deep work, pas de réunion après 18h pour l'équipe France, plages US-friendly pour San Francisco (15h-17h Paris = 6h-8h SF). Pour organiser un COMEX, elle sélectionne les 6 participants : l'agent propose 3 créneaux optimaux en 8 secondes avec scoring de pertinence.",
+      result: "En 5 semaines : temps de coordination divisé par 6 (de 7h à 65 minutes par semaine). Taux d'annulation des réunions réduit de 40% à 8%. Les collaborateurs reportent 25% de réunions en moins et 2h de deep work protégé par jour en moyenne. Score de satisfaction planning passé de 4,2/10 à 7,8/10.",
+    },
+    beforeAfter: {
+      inputLabel: "Demande de réunion",
+      inputText: "Organiser COMEX Q1 Review - 6 participants (CEO, CFO, CTO, CMO, CPO, VP Sales) - Durée: 2h - Priorité: Haute - Deadline: avant fin mars",
+      outputFields: [
+        { label: "Créneau 1 (score 94/100)", value: "Mardi 18 mars, 14h00-16h00 CET · Tous disponibles · Pas de conflit fuseau horaire · Salle Confluence réservée" },
+        { label: "Créneau 2 (score 87/100)", value: "Jeudi 20 mars, 10h00-12h00 CET · 5/6 disponibles (CPO a un conflit mineur décalable) · Charge réunion moyenne ce jour" },
+        { label: "Créneau 3 (score 81/100)", value: "Vendredi 21 mars, 15h00-17h00 CET · Tous disponibles mais fin de semaine (fatigue cognitive) · Aucune salle dispo (visio uniquement)" },
+        { label: "Ordre du jour suggéré", value: "1. Review KPIs Q1 (15min) · 2. Analyse écarts budget (30min) · 3. Priorités Q2 (45min) · 4. Décisions investissements (20min) · 5. AOB (10min)" },
+      ],
+      beforeContext: "Demande de Marion · Il y a 30 secondes",
+      afterLabel: "Optimisation planning IA",
+      afterDuration: "8,3 secondes",
+      afterSummary: "3 créneaux analysés, scorés et ordre du jour généré",
+    },
+    roiEstimator: {
+      label: "Combien de réunions multi-participants organisez-vous par semaine ?",
+      unitLabel: "Coordination manuelle / sem.",
+      timePerUnitMinutes: 20,
+      timeWithAISeconds: 10,
+      options: [5, 10, 20, 40, 80],
+    },
+    faq: [
+      {
+        question: "Les collaborateurs peuvent-ils refuser que l'IA accède à leur agenda ?",
+        answer: "Absolument. L'accès aux agendas doit être opt-in avec consentement explicite conforme RGPD. Expliquez clairement : 1) l'IA accède uniquement aux plages occupées/libres, PAS au contenu des événements, 2) les préférences personnelles sont respectées, 3) possibilité de bloquer des plages 'privées' invisibles pour l'IA. Les collaborateurs qui refusent peuvent continuer à être invités manuellement. Communiquez les bénéfices (moins de réunions mal placées, respect du temps de deep work).",
+      },
+      {
+        question: "Comment l'agent calcule-t-il le score de pertinence des créneaux ?",
+        answer: "Scoring multi-critères : Disponibilité (30 points max) = tous les participants libres, Fuseaux horaires (20 pts) = créneaux raisonnables pour tous (8h-19h heure locale), Charge cognitive (20 pts) = pas de 5e réunion du jour, respect du temps de deep work, Préférences (15 pts) = alignement avec préférences déclarées, Disponibilité salle (10 pts), Délai avant événement (5 pts) = pas trop loin ni trop proche. Total sur 100. Vous pouvez ajuster les pondérations selon vos priorités.",
+      },
+      {
+        question: "Que se passe-t-il si aucun créneau ne convient parfaitement ?",
+        answer: "L'agent propose les 3 meilleurs créneaux même s'ils sont imparfaits, avec explication des compromis : 'Créneau 1 score 62/100 : tous disponibles mais 2 participants ont déjà 4 réunions ce jour'. Vous pouvez alors : 1) accepter un compromis, 2) demander à l'agent de proposer des alternatives avec contraintes assouplies (ex: réunion de 90min au lieu de 2h), 3) raccourcir la liste de participants, 4) décaler la deadline. L'agent peut aussi suggérer d'annuler/fusionner d'autres réunions moins prioritaires.",
+      },
+      {
+        question: "Peut-on protéger des plages de deep work systématiquement ?",
+        answer: "Oui, c'est fortement recommandé. Chaque collaborateur définit ses préférences : 'Bloquer 9h-11h tous les matins pour deep work', 'Pas de réunion le vendredi après-midi', 'Jamais avant 10h'. L'agent respecte ces contraintes comme des indisponibilités dures. Vous pouvez aussi définir des règles organisationnelles globales : 'Pas de réunion 12h-14h', 'Vendredi après-midi réservé au travail async'. Ces plages apparaissent bloquées dans les calendriers pour toute l'organisation.",
+      },
+      {
+        question: "Comment gérer les réunions récurrentes et séries ?",
+        answer: "L'agent détecte les patterns de réunions récurrentes (ex: 'Weekly COMEX tous les lundis 10h'). Pour créer une série, spécifiez la récurrence (hebdo/bihebdo/mensuelle) et la durée (ex: 'pour les 3 prochains mois'). L'agent optimise en trouvant UN créneau optimal qui fonctionne pour toutes les occurrences futures. Il alerte si un participant a un conflit ponctuel prévisible (ex: 'Le 15 avril, le CFO a un conflit pour le board meeting'). Les récurrences bloquent automatiquement les créneaux futurs.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (OpenAI GPT-4 recommandé)",
+      "Accès API Google Calendar ou Microsoft Outlook (OAuth 2.0 pour les calendriers)",
+      "Optionnel : intégration à un système de booking de salles",
+      "Consentement RGPD des collaborateurs pour l'accès aux agendas",
+      "Environ 4-5 heures pour configurer les intégrations calendrier et les préférences",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -17727,6 +19780,64 @@ class FraudFeedbackLoop:
     metaTitle: "Agent IA de Détection de Fraude Transactionnelle — Guide Expert",
     metaDescription:
       "Construisez un agent IA combinant ML temps réel et analyse contextuelle LLM pour détecter la fraude bancaire. Réduction de 70% des faux positifs. Pipeline complet avec code.",
+    storytelling: {
+      sector: "Fintech",
+      persona: "David, Directeur Risque et Conformité chez une néobanque (350 salariés)",
+      painPoint: "Sa néobanque traite 2,8 millions de transactions par mois. Le système de règles actuel génère 28 000 alertes fraude mensuelles dont 96% sont des faux positifs. Son équipe de 8 analystes passe 80% de leur temps à investiguer des transactions légitimes, manquant les vraies fraudes sophistiquées. Le mois dernier, une fraude en carousel non détectée a coûté 180 000€. Le taux de friction client (challenges 3DS excessifs) atteint 12%, générant 400 plaintes mensuelles.",
+      story: "David a déployé l'agent en architecture hybride : le modèle ML filtre en < 50ms les 99% de transactions légitimes. Les 1% suspects (28 000/mois) sont analysés par le LLM qui examine le contexte comportemental complet, les patterns de dépense historiques et les liens entre transactions. Sur les premières 48h de test, l'agent a détecté 3 fraudes au virement que le système précédent avait manquées, tout en réduisant les faux positifs de 71%.",
+      result: "En 3 mois : faux positifs réduits de 96% à 28% (économie de 19 000 investigations mensuelles). Taux de détection de fraudes réelles augmenté de 67% à 91%. Perte mensuelle fraude réduite de 180k€ à 52k€ en moyenne. Taux de friction client divisé par 3 (de 12% à 3,8%). L'équipe se concentre sur les 8 000 alertes vraiment pertinentes et l'amélioration continue du modèle.",
+    },
+    beforeAfter: {
+      inputLabel: "Transaction suspecte détectée",
+      inputText: "Card ending 4729 · €850 · Merchant: ELECTRONICS-STORE-AMSTERDAM · 02:37 CET · Device: New (iPhone, IP NL) · Velocity: 3rd transaction in 2h",
+      outputFields: [
+        { label: "Score ML", value: "687/1000 (seuil LLM: 500)" },
+        { label: "Analyse LLM", value: "Transaction à risque MOYEN-ÉLEVÉ. Le porteur effectue normalement 2-3 transactions/mois de 30-80€ en France. Anomalies : 1) montant 10x supérieur à la moyenne, 2) nouveau pays (Pays-Bas, jamais visité), 3) heure inhabituelle (2h37, historique 9h-21h), 4) nouveau device. MAIS : le porteur a effectué une recherche Google 'electronics store amsterdam' il y a 6h depuis son device habituel, suggérant un voyage planifié." },
+        { label: "Action recommandée", value: "CHALLENGER avec 3D Secure (authentification forte). Ne pas bloquer directement car signaux mixtes." },
+        { label: "Confiance décision", value: "0,82" },
+      ],
+      beforeContext: "Transaction ID: TXN-8472847 · Stream temps réel",
+      afterLabel: "Analyse fraude hybride ML+LLM",
+      afterDuration: "127 millisecondes",
+      afterSummary: "Transaction analysée, risque évalué et 3DS déclenché",
+    },
+    roiEstimator: {
+      label: "Combien de transactions traitez-vous par mois ?",
+      unitLabel: "Analyse manuelle / sem.",
+      timePerUnitMinutes: 4,
+      timeWithAISeconds: 0.13,
+      options: [100000, 500000, 1000000, 5000000, 10000000],
+    },
+    faq: [
+      {
+        question: "Comment garantir une latence < 200ms pour ne pas dégrader l'expérience paiement ?",
+        answer: "Architecture en 2 étages : 1) Modèle ML ultra-rapide (XGBoost ou réseau de neurones léger) en < 50ms filtre 99% des transactions légitimes (score < 500). Approuvées immédiatement. 2) Les 1% suspects (score ≥ 500) passent au LLM pour analyse contextuelle (100-150ms). Latence totale : 50-200ms selon le path. Optimisations : cache Redis pour profils clients, embeddings précalculés, LLM distillé (Llama 3 8B) plutôt que GPT-4. Fallback : si LLM timeout > 200ms, applique règle ML stricte.",
+      },
+      {
+        question: "Comment éviter les biais discriminatoires dans le modèle ML ?",
+        answer: "Auditez régulièrement les métriques de performance par segment démographique (âge, genre, localisation). Si le taux de faux positifs varie significativement entre segments (ex: 35% pour immigrants vs 15% pour résidents), le modèle est biaisé. Causes fréquentes : historique de transactions court pour nouveaux arrivants, patterns de dépense culturellement différents mal compris. Solutions : 1) features contextuelles (durée de relation client) plutôt que démographiques directes, 2) re-balancement du dataset d'entraînement, 3) seuils de scoring ajustés par segment. Documentez pour conformité IA Act EU.",
+      },
+      {
+        question: "Que faire des transactions bloquées à tort (faux positifs résiduels) ?",
+        answer: "Workflow de déblocage rapide : 1) Notification push immédiate au client 'Transaction suspecte détectée, est-ce vous ?', 2) Validation en 1 clic (OTP ou biométrie), 3) Déblocage instantané + whitelist du marchand pour 24h. Mesurez le taux de déblocage client (cible > 90% en < 5min). Chaque faux positif confirmé réentraîne le modèle. Compensez les clients impactés (ex: si refus paiement en magasin causant gêne, geste commercial). Cible absolue : < 5% de transactions légitimes bloquées.",
+      },
+      {
+        question: "Comment détecter les fraudes sophistiquées en réseau (mules, carousels) ?",
+        answer: "Analyse de graphes en complément du scoring individuel. Construisez un graphe de relations : nœuds = comptes/cartes/devices/IPs, arêtes = transactions entre eux ou partage de métadonnées. Algorithmes de détection de communautés (Louvain) identifient les clusters suspects : 20 comptes créés le même jour, partageant 3 IPs, effectuant des virements circulaires. Le LLM analyse ensuite le pattern du cluster complet et flag si comportement typique de fraude organisée. Réentraînez sur les cas confirmés de réseaux.",
+      },
+      {
+        question: "Quelle explicabilité pour la conformité réglementaire (PSD2, IA Act) ?",
+        answer: "La PSD2 et l'IA Act européen exigent que les décisions de blocage soient explicables. Le LLM génère une explication en langage naturel pour chaque décision : 'Bloqué car montant 15x supérieur à votre moyenne, nouveau pays jamais visité, et device inconnu'. Stockez ces explications avec chaque transaction pour audit. Pour le ML, utilisez SHAP values pour expliquer les features contributives au score. Documentez le modèle (architecture, données d'entraînement, métriques de performance) dans un registre conforme IA Act.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (Claude Sonnet ou GPT-4 Turbo)",
+      "Un modèle ML de scoring entraîné (XGBoost, LightGBM ou réseau de neurones)",
+      "Base Redis pour cache en temps réel des profils clients",
+      "PostgreSQL pour stockage historique transactions et profils comportementaux",
+      "Environ 6-8 heures pour l'intégration + 2-3 semaines d'entraînement et calibrage du modèle ML",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
@@ -18407,6 +20518,66 @@ class CampaignAnalytics:
     metaTitle: "Agent IA de Personnalisation Email Marketing — Guide Complet",
     metaDescription:
       "Générez des emails marketing hyper-personnalisés à grande échelle avec un agent IA. Segmentation comportementale, recommandations produits et timing d'envoi optimal. Tutoriel complet.",
+    storytelling: {
+      sector: "E-commerce mode",
+      persona: "Léa, Responsable CRM chez un e-commerce de prêt-à-porter (65 salariés)",
+      painPoint: "Léa envoie 4 campagnes email par mois à 120 000 contacts segmentés grossièrement (homme/femme, 3 tranches d'âge). Les taux d'ouverture plafonnent à 16% et les clics à 2,1%. Ses A/B tests se limitent à 2 variantes d'objet sur 10% de la base. Elle sait que chaque client a des préférences uniques (style casual vs chic, budget, taille) mais n'a aucun moyen de personnaliser à cette échelle. 850 désabonnements le mois dernier car les emails sont 'non pertinents'.",
+      story: "Léa a connecté l'agent à Shopify (historique achats, navigation) et Klaviyo (comportement email). Pour la campagne Printemps, elle a uploadé le catalogue de 240 nouveaux produits. L'agent a généré 120 000 emails uniques : chaque destinataire a reçu un objet personnalisé, 5 recommandations produits basées sur ses achats passés et style préféré, et un timing d'envoi optimal (9h12 pour les matinaux, 20h30 pour les nocturnes).",
+      result: "En 8 semaines sur 3 campagnes personnalisées : taux d'ouverture passé de 16% à 23,4% (+46%). Taux de clic de 2,1% à 5,8% (+176%). Taux de conversion email de 0,8% à 2,3% (+188%). Désabonnements réduits de 850 à 290/mois (-66%). ROI campagnes multiplié par 3,2.",
+    },
+    beforeAfter: {
+      inputLabel: "Profil destinataire",
+      inputText: "Julie M., 34 ans · Achats: 3 robes casual (budget moyen 65€), 2 accessoires · Navigation: 12 visites catégorie 'workwear femme' · Clics email: ouvertures à 20h-21h · Préférence couleur: bleu, beige",
+      outputFields: [
+        { label: "Objet personnalisé", value: "Julie, 5 pièces workwear parfaites pour votre style casual-chic 💼" },
+        { label: "Heure d'envoi optimale", value: "20h35 (basé sur son historique d'ouverture)" },
+        { label: "Produits recommandés", value: "1. Blazer beige structuré (69€) · 2. Pantalon tailleur bleu marine (59€) · 3. Chemisier blanc casual (45€) · 4. Sac cabas cuir cognac (89€) · 5. Escarpins confort bleu (75€)" },
+        { label: "Ton du corps", value: "Casual-professionnel : 'Julie, on a pensé à vous en sélectionnant ces pièces workwear qui allient confort et élégance. Parfaites pour composer des looks bureau-dîner sans effort.'" },
+        { label: "CTA principal", value: "Découvrir ma sélection personnalisée" },
+        { label: "Score pertinence prédit", value: "0,87 (probabilité d'engagement élevée)" },
+      ],
+      beforeContext: "Campagne Printemps 2025 · 120 000 destinataires",
+      afterLabel: "Génération email personnalisé IA",
+      afterDuration: "2,3 secondes",
+      afterSummary: "Email unique généré avec recommandations et timing optimisé",
+    },
+    roiEstimator: {
+      label: "Combien d'emails marketing envoyez-vous par mois ?",
+      unitLabel: "Segmentation manuelle / sem.",
+      timePerUnitMinutes: 3,
+      timeWithAISeconds: 2,
+      options: [10000, 50000, 100000, 300000, 500000],
+    },
+    faq: [
+      {
+        question: "Le coût LLM n'explose-t-il pas en générant un email unique par destinataire ?",
+        answer: "Optimisation par clustering intelligent : l'agent détecte automatiquement les profils similaires (ex: 2500 'femmes 30-40 ans, style casual, budget moyen') et génère UN template personnalisé pour ce cluster, puis l'adapte marginalement par destinataire (prénom, 1-2 produits). Coût réel : 0,03-0,08€ pour 1000 emails selon le LLM. Pour 100k emails : 3-8€ de coût LLM. Le ROI est immédiat si vos taux de conversion doublent. Utilisez aussi du caching agressif pour les parties statiques de l'email.",
+      },
+      {
+        question: "Comment éviter que l'hyper-personnalisation soit perçue comme intrusive ?",
+        answer: "Transparence et contrôle utilisateur. 1) Expliquez dans votre politique de confidentialité que vous personnalisez les emails selon l'historique d'achat (obligatoire RGPD). 2) Offrez un centre de préférences où chaque contact choisit son niveau de personnalisation : 'basique', 'recommandations produits', 'hyper-personnalisé'. 3) Ne mentionnez jamais explicitement des données sensibles ('On a vu que vous avez abandonné votre panier'). 4) Testez auprès d'un panel : si > 10% trouvent ça 'flippant', réduisez le niveau de personnalisation.",
+      },
+      {
+        question: "Comment garantir que le LLM ne génère pas de fausses caractéristiques produit ?",
+        answer: "Mode extractif strict : fournissez au LLM le catalogue produit complet avec TOUTES les specs dans un format structuré (JSON). Promptez explicitement : 'Utilise UNIQUEMENT les caractéristiques présentes dans le catalogue. N'invente JAMAIS de specs, couleurs ou tailles non disponibles'. Implémentez une validation automatique : si l'output mentionne une spec absente du catalogue JSON, flag pour revue. Pour les produits réglementés (cosmétique, alimentaire), validez humainement 100% des descriptions avant envoi.",
+      },
+      {
+        question: "Peut-on A/B tester les emails personnalisés ?",
+        answer: "Oui mais différemment. L'A/B test classique (2 variantes fixes) n'a plus de sens avec 100k emails uniques. Testez plutôt : 1) Niveau de personnalisation (faible vs fort) sur 2 cohortes aléatoires, 2) Ton de voix (formel vs casual), 3) Nombre de produits recommandés (3 vs 5 vs 8), 4) Présence/absence d'urgence ('Plus que 24h' vs neutre). Mesurez les métriques par cohorte et appliquez le winning variant à la prochaine campagne. Le ML apprend progressivement quel niveau de personnalisation fonctionne par segment.",
+      },
+      {
+        question: "Comment mesurer l'attribution réelle des conversions à l'email personnalisé ?",
+        answer: "Tracking multi-touch avec UTM parameters uniques par destinataire. Chaque lien email inclut un code trackant (ex: utm_campaign=spring2025&utm_content=user_8472). Suivez le parcours complet : email ouvert → clic → ajout panier → achat. Comparez les cohortes email personnalisé IA vs email segmenté classique sur les mêmes périodes. Métriques clés : taux de conversion email, revenu par destinataire, attribution last-click et multi-touch. Utilisez Google Analytics 4 ou Segment pour le tracking cross-device.",
+      },
+    ],
+    prerequisites: [
+      "Un compte n8n Cloud (gratuit jusqu'à 5 workflows) ou n8n self-hosted",
+      "Une clé API pour un LLM (Claude Sonnet ou GPT-4 Turbo recommandé)",
+      "Accès API à votre plateforme email (Klaviyo, Brevo, Mailchimp) et e-commerce (Shopify, WooCommerce)",
+      "Base de données clients avec historique comportemental (achats, navigation, clics)",
+      "Catalogue produits structuré avec descriptions, prix, images et disponibilité",
+      "Environ 4-5 heures pour configurer les intégrations et calibrer le niveau de personnalisation",
+    ],
     createdAt: "2025-02-07",
     updatedAt: "2025-02-07",
   },
